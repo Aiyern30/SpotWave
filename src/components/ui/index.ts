@@ -13,3 +13,4 @@ export * from "./Pagination";
 export * from "./Skeleton";
 export * from "./Slider";
 export * from "./Switch";
+export * from "./Table";

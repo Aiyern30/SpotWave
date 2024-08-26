@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import ErrorPage from '@/app/Error';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
@@ -20,8 +20,8 @@ const Page = () => {
     const [playlists, setPlaylists] = useState<PlaylistsProps[]>([]);
     const router = useRouter();
 
-    const handleClick = (id: string) => {
-        router.push(`/Home/${id}`);
+    const handleClick = (id: string, name: string) => {
+        router.push(`/Home/${id}?name=${encodeURIComponent(name)}`);
     };
 
     useEffect(() => {
@@ -51,40 +51,38 @@ const Page = () => {
         }
     }, [token]);
 
+    const memoizedPlaylists = useMemo(() => playlists, [playlists]);
+
     useEffect(() => {
-        if (token) {
+        if (token && playlists.length === 0) {
             fetchSpotifyPlaylists();
         }
-    }, [token, fetchSpotifyPlaylists]);
-
-    const handleSidebarToggle = () => {
-        setSidebarOpen(prev => !prev);
-    };
+    }, [token, fetchSpotifyPlaylists, playlists.length]);
 
     return (
         <div className="flex h-screen">
             {token && (
                 <>
-                    <Sidebar isOpen={sidebarOpen} onClose={handleSidebarToggle} />
+                    <Sidebar isOpen={sidebarOpen} onClose={() => { setSidebarOpen(prev => !prev); }} />
                     <div
                         className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-56' : 'ml-0'}`}
                     >
                         <div className='p-4 space-y-4'>
                             <Header />
                             <div className="flex flex-wrap gap-8">
-                                {playlists.map((data) => (
+                                {memoizedPlaylists.map((data) => (
                                     <div
                                         key={data.id}
                                         className='group w-36 cursor-pointer'
-                                        onClick={() => handleClick(data.id)}
+                                        onClick={() => handleClick(data.id, data.title)}
                                     >
                                         <div className=''>
                                             <Avatar className='w-36 h-36 relative'>
                                                 <AvatarImage src={data.image} />
                                                 <AvatarFallback>CN</AvatarFallback>
-                                                <Button className='absolute bottom-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
+                                                {/* <Button className='absolute bottom-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
                                                     {'>'}
-                                                </Button>
+                                                </Button> */}
                                             </Avatar>
                                             <div>{data.title}</div>
                                             <div>{data.description}</div>
