@@ -241,8 +241,9 @@ const PlaylistPage = () => {
                   />
                 )}
                 <div className='flex flex-col space-y-3'>
-                  <div className='text-5xl'>{playlist?.name}</div>
-                  <div className='text-lg'>{playlist?.description}</div>
+                <div className='text-5xl'>{playlist?.name}</div>
+                <div className='text-lg'>{playlist?.description}</div>
+                  
                   <div className='flex space-x-3'>
                     <div className='text-sm'>
                       <Avatar>

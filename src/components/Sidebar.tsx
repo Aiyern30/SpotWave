@@ -47,7 +47,6 @@ const Sidebar = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
                                     return (
                                         <li key={title}>
                                             <a
-                                                onClick={onClose}
                                                 href={href}
                                                 className="flex items-center gap-5 p-5 transition-all border-b-2 hover:bg-slate-300 border-zinc-800 text-white"
                                             >
