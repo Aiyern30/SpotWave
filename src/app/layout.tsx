@@ -22,7 +22,7 @@ export default function RootLayout({
         {/* Add the Spotify SDK script */}
         <Script src="https://sdk.scdn.co/spotify-player.js" strategy="beforeInteractive" />
       </head>
-      <body className={inter.className}>{children}</body>
+      <body className="bg-primary-background">{children}</body>
     </html>
   );
 }

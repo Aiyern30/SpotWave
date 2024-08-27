@@ -1,3 +1,4 @@
+export * from "./Accordion";
 export * from "./Alert-dialog";
 export * from "./Alert";
 export * from "./Avatar";

@@ -4,6 +4,7 @@
 const nextConfig = {
   images: {
     domains: [
+      `i2o.scdn.co`,
       'mosaic.scdn.co',
       'i.scdn.co',
       'image-cdn-ak.spotifycdn.com',

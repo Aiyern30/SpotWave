@@ -9,11 +9,9 @@ interface SpotifyPlayerEvent {
   device_id: string;
 }
 
-
 export default function Home() {
   const CLIENT_ID = "5bf8d69f8aaf4727a4677c0ad2fef6ec";
-  // const REDIRECT_URI = process.env.NEXT_PUBLIC_REDIRECT_URI || "http://localhost:3000";
-  const REDIRECT_URI = "http://localhost:3000";
+  const REDIRECT_URI = process.env.NEXT_PUBLIC_REDIRECT_URI || "http://localhost:3000";
 
   const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
   const RESPONSE_TYPE = "token";
@@ -110,20 +108,18 @@ export default function Home() {
   // Handle the login process
   const handleLogin = () => {
     const scopes = [
-        "user-read-private",
-        "user-read-email",
-        "streaming",
-        "user-top-read",       // Access the user's top artists and tracks
-        "user-follow-read",    // Access the user's followed artists
-        "playlist-read-private", // Access the user's private playlists
-        "user-library-read",   // Access the user's saved tracks and albums
-        "user-read-recently-played" // Access the user's recently played tracks
+      "user-read-private",
+      "user-read-email",
+      "streaming",
+      "user-top-read", // Access the user's top artists and tracks
+      "user-follow-read", // Access the user's followed artists
+      "playlist-read-private", // Access the user's private playlists
+      "user-library-read", // Access the user's saved tracks and albums
+      "user-read-recently-played" // Access the user's recently played tracks
     ].join(' ');
 
     window.location.href = `${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=${RESPONSE_TYPE}&scope=${encodeURIComponent(scopes)}`;
-};
-
-
+  };
 
   return (
     <div className="flex justify-center items-center h-screen">

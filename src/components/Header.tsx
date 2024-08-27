@@ -8,11 +8,11 @@ const Header = () => {
   const name = searchParams.get("name");
 
   return (
-    <div className='flex flex-col space-y-3'>
+    <div className='flex flex-col space-y-3 '>
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/Home">Home</BreadcrumbLink>
+            <BreadcrumbLink  href="/Home">Home</BreadcrumbLink>
           </BreadcrumbItem>
           {router.map((segment, index) => {
             // Skip "Home" if it appears as a segment in the route
@@ -23,12 +23,12 @@ const Header = () => {
 
             return (
               <React.Fragment key={href}>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
+                <BreadcrumbSeparator className='text-white'/>
+                <BreadcrumbItem className='text-white'>
                   {isLast && name ? (
-                    <BreadcrumbPage>{name}</BreadcrumbPage>
+                    <BreadcrumbPage className='text-white'>{name}</BreadcrumbPage>
                   ) : (
-                    <BreadcrumbLink href={href}>
+                    <BreadcrumbLink href={href} >
                       {segment.charAt(0).toUpperCase() + segment.slice(1)}
                     </BreadcrumbLink>
                   )}

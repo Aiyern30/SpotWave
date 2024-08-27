@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import ErrorPage from '@/app/Error';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
-import { Avatar, AvatarFallback, AvatarImage, Button } from '@/components/ui';
+import { Avatar, AvatarFallback, AvatarImage, Card, CardFooter, CardHeader, CardTitle } from '@/components/ui';
 import { useRouter } from 'next/navigation';
 
 type PlaylistsProps = {
@@ -61,39 +60,37 @@ const Page = () => {
 
     return (
         <div className="flex h-screen">
-            {token && (
-                <>
-                    <Sidebar isOpen={sidebarOpen} onClose={() => { setSidebarOpen(prev => !prev); }} />
-                    <div
-                        className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-56' : 'ml-0'}`}
-                    >
-                        <div className='p-4 space-y-4'>
-                            <Header />
-                            <div className="flex flex-wrap gap-8">
-                                {memoizedPlaylists.map((data) => (
-                                    <div
-                                        key={data.id}
-                                        className='group w-36 cursor-pointer'
-                                        onClick={() => handleClick(data.id, data.title)}
-                                    >
-                                        <div className=''>
-                                            <Avatar className='w-36 h-36 relative'>
-                                                <AvatarImage src={data.image} />
-                                                <AvatarFallback>CN</AvatarFallback>
-                                                {/* <Button className='absolute bottom-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
-                                                    {'>'}
-                                                </Button> */}
-                                            </Avatar>
-                                            <div>{data.title}</div>
-                                            <div>{data.description}</div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+            <Sidebar 
+                isOpen={sidebarOpen} 
+                onClose={() => setSidebarOpen(prev => !prev)} 
+            />
+            <div 
+                className={`flex-1  transition-all ml-16 duration-300 ${sidebarOpen ? 'lg:ml-64 ml-16' : 'lg:ml-16'}`}
+            >
+                <div className='p-4 space-y-4 '>
+                    <Header />
+                    <div className="flex flex-wrap gap-8">
+                        {memoizedPlaylists.map((data) => (
+                            <Card 
+                                key={data.id}
+                                className='group w-36 cursor-pointer text-white' 
+                                onClick={() => handleClick(data.id, data.title)}
+                            >
+                                <CardHeader>
+                                    <Avatar className='w-36 h-36 relative p-1'>
+                                        <AvatarImage src={data.image} className='rounded-xl' />
+                                        <AvatarFallback>{data.image}</AvatarFallback>
+                                    </Avatar>
+                                </CardHeader>
+                                <CardTitle>{data.title}</CardTitle>
+                                <CardFooter className='text-sm'>
+                                    {data.description}
+                                </CardFooter>
+                            </Card>
+                        ))}
                     </div>
-                </>
-            )}
+                </div>
+            </div>
         </div>
     );
 };
