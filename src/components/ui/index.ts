@@ -2,11 +2,12 @@ export * from "./Accordion";
 export * from "./Alert-dialog";
 export * from "./Alert";
 export * from "./Avatar";
-export * from "./Breadcrumb";
+export * from "./Breadcrumb"
 export * from "./Button";
 export * from "./Card";
 export * from "./Carousel";
 export * from "./Dialog";
+export * from "./Dropdown-menu";
 export * from "./Drawer";
 export * from "./Input";
 export * from "./Label";

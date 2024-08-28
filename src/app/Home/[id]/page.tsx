@@ -6,8 +6,9 @@ import { useParams, useRouter } from 'next/navigation';
 import Sidebar from '@/app/Sidebar';
 import Header from '@/components/Header';
 import Image from 'next/image';
-import { Avatar, AvatarFallback, AvatarImage, Skeleton, Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow ,Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext, Card, CardFooter, CardHeader, CardTitle, CardContent} from '@/components/ui';
+import { Avatar, AvatarFallback, AvatarImage, Skeleton, Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow ,Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext, Card, CardFooter, CardHeader, CardTitle, CardContent, Button, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger} from '@/components/ui';
 import { GiDuration } from "react-icons/gi";
+import { table } from "console";
 
 interface Image {
   url: string;
@@ -167,38 +168,54 @@ const PlaylistPage = () => {
   const router = useRouter();
 
   const [displayUI, setDisplayUI] = useState<displayUIProps | string>("Table");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [inputPage, setInputPage] = useState<string>('');
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
 
   const handleArtistClick = (artistId: string) => {
     router.push(`/Artists/${artistId}`);
   };
-  const [currentPage, setCurrentPage] = useState(1);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
 
   const paginatedItems = useMemo(() => {
-      return playlist?.tracks?.items?.slice(startIndex, endIndex) || [];
+    return playlist?.tracks?.items?.slice(startIndex, endIndex) || [];
   }, [playlist?.tracks?.items, startIndex, endIndex]);
 
   const totalPages = Math.ceil((playlist?.tracks?.items?.length || 0) / itemsPerPage);
 
   const handlePageChange = (page: number) => {
-      setCurrentPage(page);
+    setCurrentPage(page);
+    setInputPage(String(page));
   };
 
   const handlePagePrevious = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-      e.preventDefault();
-      if (currentPage > 1) {
-          handlePageChange(currentPage - 1);
-      }
+    e.preventDefault();
+    if (currentPage > 1) {
+      handlePageChange(currentPage - 1);
+    }
   };
 
   const handlePageNext = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-      e.preventDefault();
-      if (currentPage < totalPages) {
-          handlePageChange(currentPage + 1);
-      }
+    e.preventDefault();
+    if (currentPage < totalPages) {
+      handlePageChange(currentPage + 1);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputPage(e.target.value);
+  };
+
+  const handleInputSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const page = parseInt(inputPage, 10);
+    if (page >= 1 && page <= totalPages) {
+      handlePageChange(page);
+    } else {
+      // Optionally show an error message for invalid page numbers
+    }
   };
 
   // const initializePlayer = useCallback(() => {
@@ -360,6 +377,36 @@ const PlaylistPage = () => {
 
 
               <div className="flex justify-end space-x-3 items-center">
+              <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="ml-auto">
+              Columns 
+              {/* <ChevronDown className="ml-2 h-4 w-4" /> */}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {/* {table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => {
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
+                  >
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                )
+              })} */}
+                                <DropdownMenuCheckboxItem>hi</DropdownMenuCheckboxItem>
+                                
+
+          </DropdownMenuContent>
+        </DropdownMenu>
                 <PiTable  size={35} onClick={() => setDisplayUI("Table")} className={`${displayUI === "Table" ? 'text-white' : 'text-[#707070]'}`}/>
                 <LuLayoutGrid size={30} onClick={() => setDisplayUI("Grid")} className={`${displayUI === "Grid" ? 'text-white' : 'text-[#707070]'}`}/>
 
@@ -464,7 +511,6 @@ const PlaylistPage = () => {
               />
               <AvatarFallback>{data.track.name}</AvatarFallback>
 
-              {/* Play Button Overlay */}
               <div
                 onClick={() => playPreview(data.track.preview_url)}
                 className="absolute bottom-2 right-2 flex items-center justify-center border rounded-full w-8 h-8 bg-play opacity-0 group-hover:opacity-100 transition-opacity duration-200"
@@ -508,43 +554,42 @@ const PlaylistPage = () => {
 )}
 
 
-<Pagination>
-                <PaginationContent>
-                    <PaginationItem>
-                        <PaginationPrevious
-                            href="#"
-                            onClick={handlePagePrevious}
-                            className={currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : ''}
-                        />
-                    </PaginationItem>
-                    {[...Array(totalPages)].map((_, pageIndex) => (
-                        <PaginationItem key={pageIndex}>
-                            <PaginationLink
-                                href="#"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    handlePageChange(pageIndex + 1);
-                                }}
-                                className={currentPage === pageIndex + 1 ? 'bg-blue-500 text-white' : ''}
-                            >
-                                {pageIndex + 1}
-                            </PaginationLink>
-                        </PaginationItem>
-                    ))}
-                    {totalPages > 1 && (
-                        <PaginationItem>
-                            <PaginationEllipsis />
-                        </PaginationItem>
-                    )}
-                    <PaginationItem>
-                        <PaginationNext
-                            href="#"
-                            onClick={handlePageNext}
-                            className={currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : ''}
-                        />
-                    </PaginationItem>
-                </PaginationContent>
-            </Pagination>
+<div className="flex justify-between items-center mt-4">
+  <Pagination>
+    <PaginationContent>
+      <PaginationPrevious
+        className={`p-2 ${currentPage === 1 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'cursor-pointer'}`}
+        onClick={handlePagePrevious}
+      >
+        Previous
+      </PaginationPrevious>
+      
+      <div className="flex items-center mx-4">
+    <span className="text-white">Page {currentPage} of {totalPages}</span>
+    <form onSubmit={handleInputSubmit} className="flex items-center ml-4">
+    <input
+      type="number"
+      min="1"
+      max={totalPages}
+      value={inputPage}
+      onChange={handleInputChange}
+      className="w-16 p-1 text-black"
+    />
+  </form>
+  </div>
+  
+      <PaginationNext
+        className={`p-2 ${currentPage === totalPages ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'cursor-pointer'}`}
+        onClick={handlePageNext}
+      >
+        Next
+      </PaginationNext>
+    </PaginationContent>
+  </Pagination>
+  
+  
+</div>
+
 
               </>
               : 
