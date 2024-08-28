@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator, BreadcrumbPage, Input } from './ui';
 
-const Header = () => {
+const HeaderContent = () => {
   const router = usePathname().split("/").filter(Boolean);
   const searchParams = useSearchParams();
   const name = searchParams.get("name");
@@ -15,7 +15,6 @@ const Header = () => {
             <BreadcrumbLink  href="/Home">Home</BreadcrumbLink>
           </BreadcrumbItem>
           {router.map((segment, index) => {
-            // Skip "Home" if it appears as a segment in the route
             if (segment.toLowerCase() === "home" && index === 0) return null;
 
             const isLast = index === router.length - 1;
@@ -45,5 +44,11 @@ const Header = () => {
     </div>
   );
 };
+
+const Header = () => (
+  <Suspense fallback={<div>Loading...</div>}>
+    <HeaderContent />
+  </Suspense>
+);
 
 export default Header;

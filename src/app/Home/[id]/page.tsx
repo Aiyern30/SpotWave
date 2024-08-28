@@ -238,51 +238,15 @@ const PlaylistPage = () => {
   };
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("Token");
-    if (storedToken) {
-      setToken(storedToken);
-      initializePlayer();
+    if (typeof window !== 'undefined') {
+      const storedToken = localStorage.getItem("Token");
+      if (storedToken) {
+        setToken(storedToken);
+        initializePlayer();
+      }
     }
   }, [initializePlayer]);
-
-  const fetchPlaylistDetails = useCallback(async (playlistId: string) => {
-    try {
-      const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-
-      if (data && data.tracks && Array.isArray(data.tracks.items)) {
-        const validTracks = data.tracks.items.filter((track: { track: { name: any; duration_ms: any; }; }) => track.track && track.track.name && track.track.duration_ms);
-
-        setPlaylist({
-          ...data,
-          tracks: {
-            ...data.tracks,
-            items: validTracks,
-          },
-        });
-
-        if (data.owner?.id) {
-          fetchUserProfile(data.owner.id);
-        }
-      } else {
-        console.warn("Invalid playlist data:", data);
-      }
-
-    } catch (error) {
-      console.error("Error fetching playlist details:", error);
-    }
-  }, [token]);
-
-
-  useEffect(() => {
-    if (token && id) {
-      fetchPlaylistDetails(id);
-    }
-  }, [token, id, fetchPlaylistDetails]);
+  
 
   const fetchUserProfile = useCallback(async (userId: string) => {
     try {
@@ -297,6 +261,46 @@ const PlaylistPage = () => {
       console.error("Error fetching user details:", error);
     }
   }, [token]);
+  
+  const fetchPlaylistDetails = useCallback(async (playlistId: string) => {
+    try {
+      const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+  
+      if (data && data.tracks && Array.isArray(data.tracks.items)) {
+        const validTracks = data.tracks.items.filter((track: { track: { name: any; duration_ms: any; }; }) => track.track && track.track.name && track.track.duration_ms);
+  
+        setPlaylist({
+          ...data,
+          tracks: {
+            ...data.tracks,
+            items: validTracks,
+          },
+        });
+  
+        if (data.owner?.id) {
+          // Call fetchUserProfile outside of the useCallback definition
+          fetchUserProfile(data.owner.id);
+        }
+      } else {
+        console.warn("Invalid playlist data:", data);
+      }
+  
+    } catch (error) {
+      console.error("Error fetching playlist details:", error);
+    }
+  }, [token, fetchUserProfile]);
+  
+  useEffect(() => {
+    if (token && id) {
+      fetchPlaylistDetails(id);
+    }
+  }, [token, id, fetchPlaylistDetails]);
+  
   const formatDuration = (durationMs: number | undefined) => {
     if (durationMs === undefined) return "00:00";
   
