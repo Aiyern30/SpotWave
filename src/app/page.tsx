@@ -2,14 +2,18 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui";
+import { motion } from "framer-motion";
 
-// Define a type for the player events
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui";
+import PulsingCirclesLoader from "@/components/BouncingDotsLoader";
+
 interface SpotifyPlayerEvent {
   device_id: string;
 }
 
 export default function Home() {
+  const text = "Framer Motion is a really cool tool".split(" ");
+
   const CLIENT_ID = "5bf8d69f8aaf4727a4677c0ad2fef6ec";
   const REDIRECT_URI = process.env.NEXT_PUBLIC_REDIRECT_URI || "http://localhost:3000";
 
@@ -17,6 +21,7 @@ export default function Home() {
   const RESPONSE_TYPE = "token";
 
   const [token, setToken] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
 
   // Function to check if the token is valid
@@ -93,6 +98,7 @@ export default function Home() {
         router.push("/Home");
       }
     } else if (token) {
+      setLoading(true);
       validateToken(token).then((isValid) => {
         if (isValid) {
           setToken(token);
@@ -101,6 +107,7 @@ export default function Home() {
           window.localStorage.removeItem("Token");
           setToken("");
         }
+        setLoading(false);
       });
     }
   }, [router, validateToken]);
@@ -111,31 +118,40 @@ export default function Home() {
       "user-read-private",
       "user-read-email",
       "streaming",
-      "user-top-read", // Access the user's top artists and tracks
-      "user-follow-read", // Access the user's followed artists
-      "playlist-read-private", // Access the user's private playlists
-      "user-library-read", // Access the user's saved tracks and albums
-      "user-read-recently-played" // Access the user's recently played tracks
+      "user-top-read",
+      "user-follow-read",
+      "playlist-read-private",
+      "user-library-read",
+      "user-read-recently-played",
+      "playlist-modify-public",  // If needed
+      "playlist-modify-private", // If needed
+      "app-remote-control"      // If needed
     ].join(' ');
 
     window.location.href = `${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=${RESPONSE_TYPE}&scope=${encodeURIComponent(scopes)}`;
   };
 
   return (
-    <div className="flex justify-center items-center h-screen">
-      <Card>
-        <CardHeader>
-          <CardTitle>Login to SpotWave</CardTitle>
-          <CardDescription>Log in to access your Spotify account</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {!token && (
-            <Button onClick={handleLogin}>
-              Login to Spotify
-            </Button>
-          )}
+    
+        <div className="flex justify-center items-center h-screen">
+                
+          {!token ? <>
+            <Card className="bg-white min-w-sm max-w-md w-full text-center">
+         <CardHeader>
+           <CardTitle className="text-xl">Login to SpotWave</CardTitle>
+           <CardDescription>Log in to access your Spotify account</CardDescription>
+         </CardHeader>
+         <CardContent className="text-center">
+           
+              <Button onClick={handleLogin}>
+                Login to Spotify
+              </Button>
+            
         </CardContent>
       </Card>
-    </div>
+          </> : <>
+          <PulsingCirclesLoader />
+          </>}
+        </div>
   );
 }

@@ -169,7 +169,7 @@ const PlaylistPage = () => {
   const [displayUI, setDisplayUI] = useState<displayUIProps | string>("Table");
 
   const handleArtistClick = (artistId: string) => {
-    router.push(`/artists/${artistId}`);
+    router.push(`/Artists/${artistId}`);
   };
   const [currentPage, setCurrentPage] = useState(1);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -349,7 +349,7 @@ const PlaylistPage = () => {
           <AvatarFallback>{playlist?.owner?.display_name}</AvatarFallback>
         </Avatar>
       </div>
-      <div className='text-sm hover:underline cursor-pointer' onClick={() => router.push(`/artists/${playlist.owner.id}`)}>
+      <div className='text-sm hover:underline cursor-pointer' onClick={() => router.push(`/Artists/${playlist.owner.id}`)}>
         {playlist?.owner?.display_name}
       </div>
     </div>
@@ -483,7 +483,7 @@ const PlaylistPage = () => {
             {data.track.album.artists.map((artist) => (
               <div
                 key={artist.id}
-                onClick={() => router.push(`/artists/${artist.id}`)}
+                onClick={() => router.push(`/Artists/${artist.id}`)}
                 className="cursor-pointer hover:underline"
               >
                 {artist.name}
@@ -493,7 +493,7 @@ const PlaylistPage = () => {
           <CardFooter className="text-sm space-x-3">
             <div
               className="hover:underline"
-              onClick={() => router.push(`/artists/${data.track.album.id}`)}
+              onClick={() => router.push(`/Albums/${data.track.album.id}`)}
             >
               {data.track.album.name}
             </div>
