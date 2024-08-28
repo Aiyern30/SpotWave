@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import Sidebar from '@/components/Sidebar';
+import Sidebar from '@/app/Sidebar';
 import Header from '@/components/Header';
 import { Avatar, AvatarFallback, AvatarImage, Card, CardFooter, CardHeader, CardTitle } from '@/components/ui';
 import { useRouter } from 'next/navigation';
@@ -15,7 +15,7 @@ type PlaylistsProps = {
 
 const Page = () => {
     const [token, setToken] = useState<string>("");
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
     const [playlists, setPlaylists] = useState<PlaylistsProps[]>([]);
     const router = useRouter();
 

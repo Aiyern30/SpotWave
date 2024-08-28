@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import ErrorPage from '@/app/Error';
-import Sidebar from '@/components/Sidebar';
+import Sidebar from '@/app/Sidebar';
 import Header from '@/components/Header';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, Avatar, AvatarFallback, AvatarImage, Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui';
 import { useRouter } from 'next/navigation';
@@ -40,7 +40,7 @@ interface RecentTracksProps {
 
 const Page = () => {
     const [token, setToken] = useState<string>("");
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
     const [followedArtists, setFollowedArtists] = useState<ArtistProps[]>([]);
     const [favoriteArtists, setFavoriteArtists] = useState<ArtistProps[]>([]);
     console.log('favoriteArtists',favoriteArtists)
@@ -149,7 +149,7 @@ const Page = () => {
                 onClose={() => setSidebarOpen(prev => !prev)} 
             />
             <div 
-                className={`flex-1 text-white transition-all ml-16 duration-300 ${sidebarOpen ? 'lg:ml-64 ml-16' : 'lg:ml-16'}`}
+                className={`flex-1  transition-all ml-16 duration-300 ${sidebarOpen ? 'lg:ml-64 ml-16' : 'lg:ml-16'}`}
             >
                         <div className='p-4 space-y-4'>
                             <Header />

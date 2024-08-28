@@ -1,9 +1,9 @@
 "use client"
 import { LuLayoutGrid } from "react-icons/lu";
-import { FaTable} from "react-icons/fa6";
+import { PiTable } from "react-icons/pi";
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
+import Sidebar from '@/app/Sidebar';
 import Header from '@/components/Header';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage, Skeleton, Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow ,Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext, Card, CardFooter, CardHeader, CardTitle, CardContent} from '@/components/ui';
@@ -152,7 +152,7 @@ const itemsPerPage = 10;
 
 const PlaylistPage = () => {
   const params = useParams();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const [playlist, setPlaylist] = useState<PlaylistProps | null>(null);
@@ -201,32 +201,32 @@ const PlaylistPage = () => {
       }
   };
 
-  const initializePlayer = useCallback(() => {
-    const newPlayer = new window.Spotify.Player({
-      name: 'Web Playback SDK',
-      getOAuthToken: (cb: (token: string) => void) => {
-        cb(token);
-      },
-      volume: 0.5,
-    });
+  // const initializePlayer = useCallback(() => {
+  //   const newPlayer = new window.Spotify.Player({
+  //     name: 'Web Playback SDK',
+  //     getOAuthToken: (cb: (token: string) => void) => {
+  //       cb(token);
+  //     },
+  //     volume: 0.5,
+  //   });
 
-    newPlayer.addListener('ready', ({ device_id }: { device_id: string }) => {
-      console.log('Player is ready with device ID:', device_id);
-      setPlayer(newPlayer);
-    });
+  //   newPlayer.addListener('ready', ({ device_id }: { device_id: string }) => {
+  //     console.log('Player is ready with device ID:', device_id);
+  //     setPlayer(newPlayer);
+  //   });
 
-    newPlayer.addListener('not_ready', ({ device_id }: { device_id: string }) => {
-      console.error(`The Spotify player is not ready. Device ID: ${device_id}`);
-    });
+  //   newPlayer.addListener('not_ready', ({ device_id }: { device_id: string }) => {
+  //     console.error(`The Spotify player is not ready. Device ID: ${device_id}`);
+  //   });
 
-    newPlayer.connect().then(success => {
-      if (success) {
-        console.log('The Spotify player has connected.');
-      } else {
-        console.error('Failed to connect the Spotify player.');
-      }
-    });
-  }, [token]);
+  //   newPlayer.connect().then(success => {
+  //     if (success) {
+  //       console.log('The Spotify player has connected.');
+  //     } else {
+  //       console.error('Failed to connect the Spotify player.');
+  //     }
+  //   });
+  // }, [token]);
 
   const playPreview = (url: string) => {
     if (audio) {
@@ -242,10 +242,12 @@ const PlaylistPage = () => {
       const storedToken = localStorage.getItem("Token");
       if (storedToken) {
         setToken(storedToken);
-        initializePlayer();
+        // initializePlayer();
       }
     }
-  }, [initializePlayer]);
+  // }, [initializePlayer]);
+}, []);
+
   
 
   const fetchUserProfile = useCallback(async (userId: string) => {
@@ -325,36 +327,40 @@ const PlaylistPage = () => {
               <Header />
               {playlist ? 
               <>
-              <div className='cover flex items-center p-4 space-x-4'>
-                {playlist?.images?.[0]?.url && (
-                  <Image
-                    src={playlist.images[0].url}
-                    width={150}
-                    height={150}
-                    alt={playlist?.name || 'Playlist cover image'}
-                    priority
-                  />
-                )}
-                <div className='flex flex-col space-y-3'>
-                <div className='text-5xl' >{playlist?.name}</div>
-                <div className='text-lg'>{playlist?.description}</div>
-                  
-                  <div className='flex space-x-3 items-center'>
-                    <div className='text-sm'>
-                      <Avatar>
-                        <AvatarImage src={user?.images[0].url} />
-                        <AvatarFallback>{playlist?.owner?.display_name}</AvatarFallback>
-                      </Avatar>
-                    </div>
-                    <div className='text-sm hover:underline cursor-pointer' onClick={()=> router.push(`/artists/${playlist.owner.id}`) }>{playlist?.owner?.display_name}</div>
-                  </div>
-                </div>
-              </div>
+              <div className='cover flex flex-col md:flex-row items-center p-4 space-x-4'>
+  {playlist?.images?.[0]?.url && (
+    <Image
+    src={playlist.images[0].url}
+    width={300} // Adjusted width
+    height={300} // Adjusted height
+    alt={playlist?.name || 'Playlist cover image'}
+    priority
+    className='w-full max-w-[300px] h-auto md:max-w-[150px] md:w-auto md:h-auto'
+  />
+  )}
+  <div className='flex flex-col space-y-3 mt-4 md:mt-0'>
+    <div className='text-5xl'>{playlist?.name}</div>
+    <div className='text-lg'>{playlist?.description}</div>
+    
+    <div className='flex space-x-3 items-center'>
+      <div className='text-sm'>
+        <Avatar>
+          <AvatarImage src={user?.images[0].url} />
+          <AvatarFallback>{playlist?.owner?.display_name}</AvatarFallback>
+        </Avatar>
+      </div>
+      <div className='text-sm hover:underline cursor-pointer' onClick={() => router.push(`/artists/${playlist.owner.id}`)}>
+        {playlist?.owner?.display_name}
+      </div>
+    </div>
+  </div>
+</div>
+
               
 
 
               <div className="flex justify-end space-x-3 items-center">
-                <FaTable size={30} onClick={() => setDisplayUI("Table")} className={`${displayUI === "Table" ? 'text-white' : 'text-[#707070]'}`}/>
+                <PiTable  size={35} onClick={() => setDisplayUI("Table")} className={`${displayUI === "Table" ? 'text-white' : 'text-[#707070]'}`}/>
                 <LuLayoutGrid size={30} onClick={() => setDisplayUI("Grid")} className={`${displayUI === "Grid" ? 'text-white' : 'text-[#707070]'}`}/>
 
               </div>

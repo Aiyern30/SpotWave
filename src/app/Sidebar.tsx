@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AiOutlineRollback } from 'react-icons/ai';
 import { BiHomeSmile, BiSolidMusic, BiUserCircle, BiSolidAlbum, BiSolidCompass, BiLogOut } from 'react-icons/bi';
+import { RiUserVoiceFill } from "react-icons/ri";
+
 
 import { GiHamburgerMenu } from 'react-icons/gi';
 import {
@@ -25,6 +27,12 @@ const Sidebar = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
     const [showLogoutDialog, setShowLogoutDialog] = useState<boolean>(false);
     const router = useRouter();
 
+    // Retrieve the initial state from localStorage only on the client side
+    useEffect(() => {
+        const storedState = localStorage.getItem('sidebar-compact');
+        setIsCompact(storedState === 'true');
+    }, []);
+
     useEffect(() => {
         setActiveItem(window.location.pathname);
     }, []);
@@ -36,6 +44,11 @@ const Sidebar = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
             setIsCompact(false);
         }
     }, [isOpen]);
+
+    useEffect(() => {
+        // Store the compact state in localStorage whenever it changes
+        localStorage.setItem('sidebar-compact', isCompact.toString());
+    }, [isCompact]);
 
     const handleItemClick = (href: string) => {
         setActiveItem(href);
@@ -52,10 +65,12 @@ const Sidebar = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) 
     };
 
     const handleLogout = () => {
-        // Clear the token here
-        localStorage.removeItem('token');
-        router.push('/'); // Redirect to login page or home
+        // Clear the token from localStorage
+        localStorage.removeItem('Token');
+        
+        router.push('/');
     };
+    
 
     return (
         <>
@@ -231,25 +246,27 @@ const items = [
     { title: 'Home', Icon: BiHomeSmile, href: '/Home' },
     { title: 'Explore', Icon: BiSolidCompass, href: '/Explore' },
     { title: 'Albums', Icon: BiSolidAlbum, href: '/Albums' },
-    { title: 'Songs', Icon: BiSolidMusic, href: '#' },
-    { title: 'Made For You', Icon: BiUserCircle, href: '#' },
+    { title: 'Artists', Icon: RiUserVoiceFill , href: '/Artists' },
+    { title: 'Songs', Icon: BiSolidMusic, href: '/Songs' },
+    { title: 'Profile', Icon: BiUserCircle, href: '/Profile' },
 ];
 
+// Framer motion animation variants
 const framerSidebarPanel = {
-    initial: { x: '-100%' },
+    initial: { x: -300 },
     animate: { x: 0 },
-    exit: { x: '-100%' },
-    transition: { duration: 0.5 },
+    exit: { x: -300 },
+    transition: { duration: 0.5, ease: 'easeInOut' },
 };
 
 const framerIcon = {
-    initial: { scale: 0.8 },
-    animate: { scale: 1 },
-    transition: { duration: 0.3 },
+    initial: { opacity: 0, scale: 0.5 },
+    animate: { opacity: 1, scale: 1 },
+    transition: { delay: 0.2, duration: 0.5, ease: 'easeInOut' },
 };
 
 const framerText = (idx: number) => ({
-    initial: { opacity: 0, x: -10 },
+    initial: { opacity: 0, x: -20 },
     animate: { opacity: 1, x: 0 },
-    transition: { delay: idx * 0.05, duration: 0.2 },
+    transition: { delay: 0.1 * idx, duration: 0.5, ease: 'easeInOut' },
 });
