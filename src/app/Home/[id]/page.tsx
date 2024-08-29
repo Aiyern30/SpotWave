@@ -173,8 +173,10 @@ const PlaylistPage = () => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
 
-  const handleArtistClick = (artistId: string) => {
-    router.push(`/Artists/${artistId}`);
+  
+  const handleArtistClick = (artistId: string, name: string) => {
+    router.push(`/Artists/${artistId}?name=${encodeURIComponent(name)}`);
+
   };
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -366,7 +368,8 @@ const PlaylistPage = () => {
           <AvatarFallback>{playlist?.owner?.display_name}</AvatarFallback>
         </Avatar>
       </div>
-      <div className='text-sm hover:underline cursor-pointer' onClick={() => router.push(`/Artists/${playlist.owner.id}`)}>
+      <div className='text-sm hover:underline cursor-pointer' onClick={() => router.push(`/Artists/${playlist.owner.id}?name=${encodeURIComponent(playlist.owner.display_name)}`)}>    
+
         {playlist?.owner?.display_name}
       </div>
     </div>
@@ -377,36 +380,7 @@ const PlaylistPage = () => {
 
 
               <div className="flex justify-end space-x-3 items-center">
-              <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns 
-              {/* <ChevronDown className="ml-2 h-4 w-4" /> */}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {/* {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                )
-              })} */}
-                                <DropdownMenuCheckboxItem>hi</DropdownMenuCheckboxItem>
-                                
-
-          </DropdownMenuContent>
-        </DropdownMenu>
+          
                 <PiTable  size={35} onClick={() => setDisplayUI("Table")} className={`${displayUI === "Table" ? 'text-white' : 'text-[#707070]'}`}/>
                 <LuLayoutGrid size={30} onClick={() => setDisplayUI("Grid")} className={`${displayUI === "Grid" ? 'text-white' : 'text-[#707070]'}`}/>
 
@@ -468,7 +442,7 @@ const PlaylistPage = () => {
                     {item.track?.artists.map((artist: any) => (
                       <span
                         key={artist.id}
-                        onClick={() => handleArtistClick(artist.id)}
+                        onClick={() => handleArtistClick(artist.id, artist.name)}
                         onMouseEnter={() => setHoveredArtist(artist.id)}
                         onMouseLeave={() => setHoveredArtist(null)}
                         className={`cursor-pointer ${

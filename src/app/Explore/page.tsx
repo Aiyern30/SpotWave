@@ -159,7 +159,7 @@ const Page = () => {
                                     <AccordionContent className='text-white'>
                                         <div className="flex flex-wrap gap-8">
                                             {memoizedFollowedArtists.map((artist) => (
-                                                <Card key={artist.id} className='group w-36 cursor-pointer'>
+                                                <Card key={artist.id} className='group w-36 cursor-pointer' onClick={() => router.push(`/Artists/${artist.id}?name=${encodeURIComponent(artist.name)}`)}>
                                                     <CardHeader>
                                                         <Avatar className='w-36 h-36 relative p-1'>
                                                             <AvatarImage src={artist.image} className='rounded-xl' />
@@ -181,7 +181,7 @@ const Page = () => {
                                     <AccordionContent className='text-white'>
                                         <div className="flex flex-wrap gap-8">
                                             {memoizedFavoriteArtists.map((artist) => (
-                                                <Card key={artist.id} className='group w-36 cursor-pointer'>
+                                                <Card key={artist.id} className='group w-36 cursor-pointer' onClick={() => router.push(`/Artists/${artist.id}?name=${encodeURIComponent(artist.name)}`)}>
                                                     <CardHeader>
                                                         <Avatar className='w-36 h-36 relative p-1'>
                                                             <AvatarImage src={artist.image} className='rounded-xl' />
