@@ -1,7 +1,18 @@
-import React, { useState, FormEvent, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
-import { usePathname, useSearchParams } from 'next/navigation';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator, BreadcrumbPage, Input, Avatar, AvatarFallback, AvatarImage } from './ui';
+import React, { useState, FormEvent, Suspense } from "react";
+import { useRouter } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+  Input,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "./ui";
 
 interface Artist {
   id: string;
@@ -17,13 +28,13 @@ interface Track {
   duration_ms: number;
 }
 
-type SearchResult = 
-  | { type: 'artist'; items: Artist[] }
-  | { type: 'song'; items: Track[] }
-  | { type: 'artistWithTopTracks'; artist: Artist; topTracks: Track[] };
+type SearchResult =
+  | { type: "artist"; items: Artist[] }
+  | { type: "song"; items: Track[] }
+  | { type: "artistWithTopTracks"; artist: Artist; topTracks: Track[] };
 
 const HeaderContent = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const router = useRouter();
@@ -35,8 +46,8 @@ const HeaderContent = () => {
 
   const handleSearch = async (event: FormEvent) => {
     event.preventDefault();
-    
-    if (searchTerm.trim() === '') {
+
+    if (searchTerm.trim() === "") {
       setSearchResults([]);
       setDropdownVisible(false);
       return;
@@ -44,11 +55,11 @@ const HeaderContent = () => {
 
     // Search for songs
     const songs = await searchSong(searchTerm);
-    console.log('Songs found:', songs);
+    console.log("Songs found:", songs);
 
     // Search for artists
     const artists = await searchArtist(searchTerm);
-    console.log('Artists found:', artists);
+    console.log("Artists found:", artists);
 
     // Prepare the results
     let results: SearchResult[] = [];
@@ -57,16 +68,22 @@ const HeaderContent = () => {
     if (artists.length > 0) {
       const artistId = artists[0].id;
       const topTracks = await fetchArtistTopTracks(artistId);
-      console.log('Top tracks for artist:', topTracks);
-      songIdsInTopTracks = new Set(topTracks.map(track => track.id));
-      results.push({ type: 'artistWithTopTracks', artist: artists[0], topTracks });
+      console.log("Top tracks for artist:", topTracks);
+      songIdsInTopTracks = new Set(topTracks.map((track) => track.id));
+      results.push({
+        type: "artistWithTopTracks",
+        artist: artists[0],
+        topTracks,
+      });
     }
 
     if (songs.length > 0) {
       // Filter out songs that are already in topTracks
-      const filteredSongs = songs.filter(song => !songIdsInTopTracks.has(song.id));
+      const filteredSongs = songs.filter(
+        (song) => !songIdsInTopTracks.has(song.id)
+      );
       if (filteredSongs.length > 0) {
-        results.push({ type: 'song', items: filteredSongs.slice(0, 5) }); // Limit to top 5 songs
+        results.push({ type: "song", items: filteredSongs.slice(0, 5) }); // Limit to top 5 songs
       }
     }
 
@@ -76,103 +93,129 @@ const HeaderContent = () => {
 
   const handleInputBlur = () => {
     setTimeout(() => {
-      if (!inputRef.current?.contains(document.activeElement) && !dropdownRef.current?.contains(document.activeElement)) {
+      if (
+        !inputRef.current?.contains(document.activeElement) &&
+        !dropdownRef.current?.contains(document.activeElement)
+      ) {
         setDropdownVisible(false);
       }
     }, 100);
   };
 
   const searchArtist = async (term: string): Promise<Artist[]> => {
-    const token = localStorage.getItem('Token');
-    console.log('Token:', token); // Ensure the token is valid
-  
+    const token = localStorage.getItem("Token");
+    console.log("Token:", token); // Ensure the token is valid
+
     if (!token) return [];
-  
+
     try {
-      const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(term)}&type=artist`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-  
+      const response = await fetch(
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(
+          term
+        )}&type=artist`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
       if (!response.ok) {
-        console.error('API response not OK:', response.statusText);
+        console.error("API response not OK:", response.statusText);
         return [];
       }
-  
+
       const data = await response.json();
-      console.log('Artist Search Response:', data);
-  
-      return data.artists?.items.map((artist: any) => ({
-        id: artist.id,
-        name: artist.name,
-        images: artist.images
-      })) || [];
+      console.log("Artist Search Response:", data);
+
+      return (
+        data.artists?.items.map((artist: any) => ({
+          id: artist.id,
+          name: artist.name,
+          images: artist.images,
+        })) || []
+      );
     } catch (error) {
-      console.error('Error searching for artist:', error);
+      console.error("Error searching for artist:", error);
       return [];
     }
   };
 
   const searchSong = async (term: string): Promise<Track[]> => {
-    const token = localStorage.getItem('Token');
+    const token = localStorage.getItem("Token");
     if (!token) return [];
-  
+
     try {
-      const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(term)}&type=track`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-  
+      const response = await fetch(
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(
+          term
+        )}&type=track`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
       const data = await response.json();
-      return data.tracks?.items.map((track: any) => ({
-        id: track.id,
-        name: track.name,
-        artists: track.artists,
-        album: track.album,
-        duration_ms: track.duration_ms
-      })) || [];
+      return (
+        data.tracks?.items.map((track: any) => ({
+          id: track.id,
+          name: track.name,
+          artists: track.artists,
+          album: track.album,
+          duration_ms: track.duration_ms,
+        })) || []
+      );
     } catch (error) {
-      console.error('Error searching for song:', error);
+      console.error("Error searching for song:", error);
       return [];
     }
   };
 
   const fetchArtistTopTracks = async (artistId: string): Promise<Track[]> => {
-    const token = localStorage.getItem('Token');
+    const token = localStorage.getItem("Token");
     if (!token) return [];
-  
+
     try {
-      const response = await fetch(`https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-  
+      const response = await fetch(
+        `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
       const data = await response.json();
-      return data.tracks.map((track: any) => ({
-        id: track.id,
-        name: track.name,
-        artists: track.artists,
-        album: track.album,
-        duration_ms: track.duration_ms
-      })) || [];
+      return (
+        data.tracks.map((track: any) => ({
+          id: track.id,
+          name: track.name,
+          artists: track.artists,
+          album: track.album,
+          duration_ms: track.duration_ms,
+        })) || []
+      );
     } catch (error) {
-      console.error('Error fetching top tracks for artist:', error);
+      console.error("Error fetching top tracks for artist:", error);
       return [];
     }
   };
 
-  const handleResultClick = (id: string, type: 'song' | 'artist', name: string) => {
-    if (type === 'song') {
+  const handleResultClick = (
+    id: string,
+    type: "song" | "artist",
+    name: string
+  ) => {
+    if (type === "song") {
       router.push(`/Songs/${id}?name=${encodeURIComponent(name)}`);
-    } else if (type === 'artist') {
+    } else if (type === "artist") {
       router.push(`/Artists/${id}?name=${encodeURIComponent(name)}`);
     }
-    setSearchTerm('');
+    setSearchTerm("");
     setSearchResults([]);
     setDropdownVisible(false);
   };
 
-  const breadcrumbSegments = pathname.split('/').filter(Boolean);
+  const breadcrumbSegments = pathname.split("/").filter(Boolean);
 
   return (
-    <div className='relative flex flex-col space-y-3'>
+    <div className="relative flex flex-col space-y-3">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -186,10 +229,12 @@ const HeaderContent = () => {
 
             return (
               <React.Fragment key={href}>
-                <BreadcrumbSeparator className='text-white'/>
-                <BreadcrumbItem className='text-white'>
+                <BreadcrumbSeparator className="text-white" />
+                <BreadcrumbItem className="text-white">
                   {isLast && name ? (
-                    <BreadcrumbPage className='text-white'>{name}</BreadcrumbPage>
+                    <BreadcrumbPage className="text-white">
+                      {name}
+                    </BreadcrumbPage>
                   ) : (
                     <BreadcrumbLink href={href}>
                       {segment.charAt(0).toUpperCase() + segment.slice(1)}
@@ -203,51 +248,88 @@ const HeaderContent = () => {
       </Breadcrumb>
 
       <form onSubmit={handleSearch}>
-        <div className='relative'>
+        <div className="relative">
           <Input
-            type='text'
-            placeholder='What do you want to play?'
+            type="text"
+            placeholder="What do you want to play?"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             ref={inputRef}
             onBlur={handleInputBlur}
           />
           {dropdownVisible && searchResults.length > 0 && (
-            <div ref={dropdownRef} className="absolute mt-2 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-[400px] overflow-auto" style={{ zIndex: 9999 }}>
+            <div
+              ref={dropdownRef}
+              className="absolute mt-2 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-[400px] overflow-auto"
+              style={{ zIndex: 9999 }}
+            >
               <ul>
                 {searchResults.map((result) => {
-                  if (result.type === 'artistWithTopTracks') {
+                  if (result.type === "artistWithTopTracks") {
                     return (
                       <React.Fragment key={result.artist.id}>
-                        <li className="p-2 border-b border-gray-200 hover:bg-gray-100 cursor-pointer" onClick={() => handleResultClick(result.artist.id, 'artist', result.artist.name)}>
+                        <li
+                          className="p-2 border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
+                          onClick={() =>
+                            handleResultClick(
+                              result.artist.id,
+                              "artist",
+                              result.artist.name
+                            )
+                          }
+                        >
                           <div className="flex items-center space-x-3">
-                            <Avatar className='w-36 h-36 relative p-1'>
-                              <AvatarImage 
-                                src={result.artist.images[0]?.url || '/default-artist.jpg'} 
-                                alt={result.artist.name} 
+                            <Avatar className="w-36 h-36 relative p-1">
+                              <AvatarImage
+                                src={
+                                  result.artist.images[0]?.url ||
+                                  "/default-artist.png"
+                                }
+                                alt={result.artist.name}
                               />
-                              <AvatarFallback>{result.artist.name}</AvatarFallback>
+                              <AvatarFallback>
+                                {result.artist.name}
+                              </AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="font-semibold text-xl text-black">{result.artist.name}</p>
+                              <p className="font-semibold text-xl text-black">
+                                {result.artist.name}
+                              </p>
                               <p className="text-gray-600">Artist</p>
                             </div>
                           </div>
                         </li>
                         {result.topTracks.slice(0, 5).map((track) => (
-                          <li key={track.id} className="p-2 border-b border-gray-200 hover:bg-gray-100 cursor-pointer" onClick={() => handleResultClick(track.id, 'song', track.name)}>
+                          <li
+                            key={track.id}
+                            className="p-2 border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
+                            onClick={() =>
+                              handleResultClick(track.id, "song", track.name)
+                            }
+                          >
                             <div className="flex items-center space-x-3">
-                              <Avatar className='w-20 h-20 relative p-1'>
-                                <AvatarImage 
-                                  src={track.album.images[0]?.url || '/default-album.jpg'} 
-                                  alt={track.name} 
+                              <Avatar className="w-20 h-20 relative p-1">
+                                <AvatarImage
+                                  src={
+                                    track.album.images[0]?.url ||
+                                    "/default-artist.png"
+                                  }
+                                  alt={track.name}
                                 />
                                 <AvatarFallback>{track.name}</AvatarFallback>
                               </Avatar>
                               <div className="flex flex-col">
-                                <p className="font-semibold text-black">{track.name}</p>
-                                <p className="text-gray-600">{track.artists.map(artist => artist.name).join(', ')}</p>
-                                <p className="text-gray-400">{formatDuration(track.duration_ms)}</p>
+                                <p className="font-semibold text-black">
+                                  {track.name}
+                                </p>
+                                <p className="text-gray-600">
+                                  {track.artists
+                                    .map((artist) => artist.name)
+                                    .join(", ")}
+                                </p>
+                                <p className="text-gray-400">
+                                  {formatDuration(track.duration_ms)}
+                                </p>
                               </div>
                             </div>
                           </li>
@@ -257,25 +339,44 @@ const HeaderContent = () => {
                   }
                   return null;
                 })}
-                {searchResults.find(result => result.type === 'song') && (
+                {searchResults.find((result) => result.type === "song") && (
                   <React.Fragment>
-                    <li className="p-2 border-b border-gray-200 bg-gray-100 text-gray-700 font-bold">Songs</li>
+                    <li className="p-2 border-b border-gray-200 bg-gray-100 text-gray-700 font-bold">
+                      Songs
+                    </li>
                     {searchResults.map((result) => {
-                      if (result.type === 'song') {
+                      if (result.type === "song") {
                         return result.items.slice(0, 5).map((track) => (
-                          <li key={track.id} className="p-2 border-b border-gray-200 hover:bg-gray-100 cursor-pointer" onClick={() => handleResultClick(track.id, 'song', track.name)}>
+                          <li
+                            key={track.id}
+                            className="p-2 border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
+                            onClick={() =>
+                              handleResultClick(track.id, "song", track.name)
+                            }
+                          >
                             <div className="flex items-center space-x-3">
-                              <Avatar className='w-20 h-20 relative p-1'>
-                                <AvatarImage 
-                                  src={track.album.images[0]?.url || '/default-album.jpg'} 
-                                  alt={track.name} 
+                              <Avatar className="w-20 h-20 relative p-1">
+                                <AvatarImage
+                                  src={
+                                    track.album.images[0]?.url ||
+                                    "/default-artist.png"
+                                  }
+                                  alt={track.name}
                                 />
                                 <AvatarFallback>{track.name}</AvatarFallback>
                               </Avatar>
                               <div className="flex flex-col">
-                                <p className="font-semibold text-black">{track.name}</p>
-                                <p className="text-gray-600">{track.artists.map(artist => artist.name).join(', ')}</p>
-                                <p className="text-gray-400">{formatDuration(track.duration_ms)}</p>
+                                <p className="font-semibold text-black">
+                                  {track.name}
+                                </p>
+                                <p className="text-gray-600">
+                                  {track.artists
+                                    .map((artist) => artist.name)
+                                    .join(", ")}
+                                </p>
+                                <p className="text-gray-400">
+                                  {formatDuration(track.duration_ms)}
+                                </p>
                               </div>
                             </div>
                           </li>
@@ -303,7 +404,7 @@ const Header = () => (
 const formatDuration = (durationMs: number) => {
   const minutes = Math.floor(durationMs / 60000);
   const seconds = ((durationMs % 60000) / 1000).toFixed(0);
-  return `${minutes}:${(parseInt(seconds, 10) < 10 ? '0' : '')}${seconds}`;
+  return `${minutes}:${parseInt(seconds, 10) < 10 ? "0" : ""}${seconds}`;
 };
 
 export default Header;
