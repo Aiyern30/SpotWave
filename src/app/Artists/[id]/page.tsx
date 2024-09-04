@@ -78,8 +78,8 @@ const ArtistProfilePage = () => {
   const [artistProfile, setArtistProfile] =
     useState<ArtistProfilePageProps | null>(null);
   const [topTracks, setTopTracks] = useState<TopTrack[]>([]);
+  console.log("topTracks", topTracks);
   const [albums, setAlbums] = useState<Albums[]>([]);
-  console.log("albums", albums);
   const [artistDetails, setArtistDetails] = useState<AboutProps | null>(null);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -343,9 +343,7 @@ const ArtistProfilePage = () => {
                     className="group w-36 cursor-pointer text-white relative"
                     onClick={(e) => {
                       e.stopPropagation(); // Prevent click from propagating to children
-                      router.push(
-                        `/Songs/${track.album.id}?name=${track.album.name}`
-                      );
+                      router.push(`/Songs/${track.id}?name=${track.name}`);
                     }}
                   >
                     <CardHeader>

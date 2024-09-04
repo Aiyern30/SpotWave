@@ -45,7 +45,8 @@ interface TrackProps {
 }
 const SongPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-  const [track, setTrack] = useState<TrackProps | null>(null); // Define a type for track if you have one
+  const [track, setTrack] = useState<TrackProps | null>(null);
+  console.log("track", track);
   const [loading, setLoading] = useState<boolean>(true);
 
   const pathname = usePathname();

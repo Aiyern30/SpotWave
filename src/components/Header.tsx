@@ -55,11 +55,9 @@ const HeaderContent = () => {
 
     // Search for songs
     const songs = await searchSong(searchTerm);
-    console.log("Songs found:", songs);
 
     // Search for artists
     const artists = await searchArtist(searchTerm);
-    console.log("Artists found:", artists);
 
     // Prepare the results
     let results: SearchResult[] = [];
@@ -68,7 +66,6 @@ const HeaderContent = () => {
     if (artists.length > 0) {
       const artistId = artists[0].id;
       const topTracks = await fetchArtistTopTracks(artistId);
-      console.log("Top tracks for artist:", topTracks);
       songIdsInTopTracks = new Set(topTracks.map((track) => track.id));
       results.push({
         type: "artistWithTopTracks",
@@ -104,7 +101,6 @@ const HeaderContent = () => {
 
   const searchArtist = async (term: string): Promise<Artist[]> => {
     const token = localStorage.getItem("Token");
-    console.log("Token:", token); // Ensure the token is valid
 
     if (!token) return [];
 
@@ -124,7 +120,6 @@ const HeaderContent = () => {
       }
 
       const data = await response.json();
-      console.log("Artist Search Response:", data);
 
       return (
         data.artists?.items.map((artist: any) => ({
