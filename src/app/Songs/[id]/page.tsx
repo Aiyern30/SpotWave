@@ -14,6 +14,12 @@ import {
   CardFooter,
   Skeleton,
   Button,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
 } from "@/components/ui";
 import Header from "@/components/Header";
 interface Image {
@@ -46,14 +52,34 @@ interface TrackProps {
 const SongPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [track, setTrack] = useState<TrackProps | null>(null);
-  console.log("track", track);
   const [loading, setLoading] = useState<boolean>(true);
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-
+  const [lyrics, setLyrics] = useState<String | null>(null);
+  console.log("lyrics", lyrics);
   const id = pathname.split("/").pop() || "";
+
+  const fetchLyrics = async (artist: string, title: string) => {
+    try {
+      const response = await fetch(
+        `https://api.lyrics.ovh/v1/${artist}/${title}`
+      );
+      const data = await response.json();
+      console.log("data", data);
+
+      // Check if the response contains an error or if the lyrics are empty
+      if (data.lyrics && data.lyrics.trim()) {
+        setLyrics(data.lyrics);
+      } else {
+        setLyrics("Lyrics not found");
+      }
+    } catch (error) {
+      console.error("Error fetching lyrics:", error);
+      setLyrics("Lyrics not found");
+    }
+  };
 
   const fetchTrackDetails = useCallback(async () => {
     const token = localStorage.getItem("Token");
@@ -154,6 +180,24 @@ const SongPage = () => {
                 </div>
               </div>
               <div>Popularity: {track.popularity}</div>
+              <Sheet>
+                <SheetTrigger>
+                  <Button
+                    onClick={() =>
+                      fetchLyrics(track.album.artists[0].name, track.album.name)
+                    }
+                  >
+                    View Lyrics
+                  </Button>
+                </SheetTrigger>
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle>Lyrics</SheetTitle>
+                    <SheetDescription>{lyrics}</SheetDescription>
+                  </SheetHeader>
+                </SheetContent>
+              </Sheet>
+
               {track.preview_url ? (
                 <div className="w-full max-w-md mx-auto rounded-lg overflow-hidden">
                   <ReactPlayer

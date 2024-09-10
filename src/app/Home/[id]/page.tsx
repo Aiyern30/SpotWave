@@ -35,6 +35,12 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
 } from "@/components/ui";
 import { GiDuration } from "react-icons/gi";
 import { table } from "console";
@@ -198,6 +204,8 @@ const PlaylistPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [inputPage, setInputPage] = useState<string>("");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [lyrics, setLyrics] = useState<String | null>(null);
+  console.log("lyrics", lyrics);
 
   const handleArtistClick = (artistId: string, name: string) => {
     router.push(`/Artists/${artistId}?name=${encodeURIComponent(name)}`);
@@ -250,33 +258,6 @@ const PlaylistPage = () => {
     }
   };
 
-  // const initializePlayer = useCallback(() => {
-  //   const newPlayer = new window.Spotify.Player({
-  //     name: 'Web Playback SDK',
-  //     getOAuthToken: (cb: (token: string) => void) => {
-  //       cb(token);
-  //     },
-  //     volume: 0.5,
-  //   });
-
-  //   newPlayer.addListener('ready', ({ device_id }: { device_id: string }) => {
-  //     console.log('Player is ready with device ID:', device_id);
-  //     setPlayer(newPlayer);
-  //   });
-
-  //   newPlayer.addListener('not_ready', ({ device_id }: { device_id: string }) => {
-  //     console.error(`The Spotify player is not ready. Device ID: ${device_id}`);
-  //   });
-
-  //   newPlayer.connect().then(success => {
-  //     if (success) {
-  //       console.log('The Spotify player has connected.');
-  //     } else {
-  //       console.error('Failed to connect the Spotify player.');
-  //     }
-  //   });
-  // }, [token]);
-
   const playPreview = (url: string) => {
     if (audio) {
       audio.pause();
@@ -296,6 +277,26 @@ const PlaylistPage = () => {
     }
     // }, [initializePlayer]);
   }, []);
+  const fetchLyrics = async (artist: string, title: string) => {
+    console.log("artist", artist, "title", title);
+    try {
+      const response = await fetch(
+        `https://api.lyrics.ovh/v1/${artist}/${title}`
+      );
+      const data = await response.json();
+      console.log("data", data);
+
+      // Check if the response contains an error or if the lyrics are empty
+      if (data.lyrics && data.lyrics.trim()) {
+        setLyrics(data.lyrics);
+      } else {
+        setLyrics("Lyrics not found");
+      }
+    } catch (error) {
+      console.error("Error fetching lyrics:", error);
+      setLyrics("Lyrics not found");
+    }
+  };
 
   const fetchUserProfile = useCallback(
     async (userId: string) => {
@@ -466,6 +467,9 @@ const PlaylistPage = () => {
                             <TableHead className="hidden md:table-cell">
                               Album
                             </TableHead>
+                            <TableHead className="hidden md:table-cell ">
+                              Lyrics
+                            </TableHead>
                             <TableHead className="hidden md:table-cell text-right">
                               <GiDuration className="float-right" />
                             </TableHead>
@@ -565,6 +569,30 @@ const PlaylistPage = () => {
                                 }
                               >
                                 {item.track.name}
+                              </TableCell>
+                              <TableCell>
+                                <Sheet>
+                                  <SheetTrigger>
+                                    <Button
+                                      onClick={() =>
+                                        fetchLyrics(
+                                          item.track.artists[0].name,
+                                          item.track.album.name
+                                        )
+                                      }
+                                    >
+                                      View
+                                    </Button>
+                                  </SheetTrigger>
+                                  <SheetContent>
+                                    <SheetHeader>
+                                      <SheetTitle>Lyrics</SheetTitle>
+                                      <SheetDescription>
+                                        {lyrics}
+                                      </SheetDescription>
+                                    </SheetHeader>
+                                  </SheetContent>
+                                </Sheet>
                               </TableCell>
                               <TableCell className="hidden md:table-cell text-right">
                                 {formatDuration(item.track?.duration_ms)}
