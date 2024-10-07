@@ -6,6 +6,8 @@ import { useParams, useRouter } from "next/navigation";
 import Sidebar from "@/app/Sidebar";
 import Header from "@/components/Header";
 import Image from "next/image";
+import { FaRegCopy, FaRegShareSquare } from "react-icons/fa";
+
 import {
   Avatar,
   AvatarFallback,
@@ -41,9 +43,24 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui";
 import { GiDuration } from "react-icons/gi";
-import { table } from "console";
+import { Mail, MessageSquare, PlusCircle, UserPlus } from "lucide-react";
+import { IoMdMore } from "react-icons/io";
 
 interface Image {
   url: string;
@@ -191,9 +208,7 @@ const PlaylistPage = () => {
 
   const [playlist, setPlaylist] = useState<PlaylistProps | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
-  console.log("playlists", playlist);
   const [token, setToken] = useState<string>("");
-  const [player, setPlayer] = useState<any>(null);
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
@@ -205,7 +220,7 @@ const PlaylistPage = () => {
   const [inputPage, setInputPage] = useState<string>("");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [lyrics, setLyrics] = useState<String | null>(null);
-  console.log("lyrics", lyrics);
+  const [dropMenuOpen, setDropMenuOpen] = useState<boolean>(false);
 
   const handleArtistClick = (artistId: string, name: string) => {
     router.push(`/Artists/${artistId}?name=${encodeURIComponent(name)}`);
@@ -272,11 +287,36 @@ const PlaylistPage = () => {
       const storedToken = localStorage.getItem("Token");
       if (storedToken) {
         setToken(storedToken);
-        // initializePlayer();
       }
     }
-    // }, [initializePlayer]);
   }, []);
+
+  const [playlists, setPlaylists] = useState([]);
+
+  useEffect(() => {
+    const getPlaylists = async () => {
+      const fetchedPlaylists = await fetchMyPlaylists();
+      setPlaylists(fetchedPlaylists);
+    };
+
+    getPlaylists();
+  }, [token]);
+
+  const fetchMyPlaylists = async () => {
+    try {
+      const response = await fetch("https://api.spotify.com/v1/me/playlists", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      return data.items;
+    } catch (error) {
+      console.error("Error fetching playlists:", error);
+      return [];
+    }
+  };
+
   const fetchLyrics = async (artist: string, title: string) => {
     console.log("artist", artist, "title", title);
     try {
@@ -284,9 +324,7 @@ const PlaylistPage = () => {
         `https://api.lyrics.ovh/v1/${artist}/${title}`
       );
       const data = await response.json();
-      console.log("data", data);
 
-      // Check if the response contains an error or if the lyrics are empty
       if (data.lyrics && data.lyrics.trim()) {
         setLyrics(data.lyrics);
       } else {
@@ -346,7 +384,6 @@ const PlaylistPage = () => {
           });
 
           if (data.owner?.id) {
-            // Call fetchUserProfile outside of the useCallback definition
             fetchUserProfile(data.owner.id);
           }
         } else {
@@ -398,8 +435,8 @@ const PlaylistPage = () => {
                     {playlist?.images?.[0]?.url && (
                       <Image
                         src={playlist.images[0].url}
-                        width={300} // Adjusted width
-                        height={300} // Adjusted height
+                        width={300}
+                        height={300}
                         alt={playlist?.name || "Playlist cover image"}
                         priority
                         className="w-full max-w-[300px] h-auto md:max-w-[150px] md:w-auto md:h-auto"
@@ -472,6 +509,9 @@ const PlaylistPage = () => {
                             </TableHead>
                             <TableHead className="hidden md:table-cell text-right">
                               <GiDuration className="float-right" />
+                            </TableHead>
+                            <TableHead className="hidden md:table-cell text-center w-12">
+                              Action
                             </TableHead>
                           </TableRow>
                         </TableHeader>
@@ -596,6 +636,97 @@ const PlaylistPage = () => {
                               </TableCell>
                               <TableCell className="hidden md:table-cell text-right">
                                 {formatDuration(item.track?.duration_ms)}
+                              </TableCell>
+                              <TableCell className=" ">
+                                <DropdownMenu
+                                  open={dropMenuOpen}
+                                  onOpenChange={setDropMenuOpen}
+                                >
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                      <IoMdMore className="w-8 h-8" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent className="w-56">
+                                    <DropdownMenuLabel>
+                                      Actions
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuSub>
+                                      <DropdownMenuSubTrigger>
+                                        <UserPlus className="mr-2 h-4 w-4" />
+                                        <span>Add to playlists</span>
+                                      </DropdownMenuSubTrigger>
+                                      <DropdownMenuPortal>
+                                        <DropdownMenuSubContent>
+                                          <DropdownMenuItem
+                                            onSelect={() =>
+                                              setDropMenuOpen(false)
+                                            }
+                                          >
+                                            <PlusCircle className="mr-2 h-4 w-4" />
+                                            <span>New Playlist</span>
+                                          </DropdownMenuItem>
+                                          <DropdownMenuItem>
+                                            <Select
+                                              onValueChange={() =>
+                                                setDropMenuOpen(false)
+                                              }
+                                            >
+                                              <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Your Library" />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                {playlists?.map(
+                                                  (myList: PlaylistProps) => (
+                                                    <SelectItem
+                                                      key={myList.id}
+                                                      value={myList.id}
+                                                    >
+                                                      {myList.name}
+                                                    </SelectItem>
+                                                  )
+                                                )}
+                                              </SelectContent>
+                                            </Select>
+                                          </DropdownMenuItem>
+                                        </DropdownMenuSubContent>
+                                      </DropdownMenuPortal>
+                                    </DropdownMenuSub>
+                                    <DropdownMenuItem
+                                      onSelect={() => setDropMenuOpen(false)}
+                                    >
+                                      <PlusCircle className="mr-2 h-4 w-4" />
+                                      <span>Saved to your Liked Songs</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSub>
+                                      <DropdownMenuSubTrigger>
+                                        <FaRegShareSquare className="mr-2 h-4 w-4" />
+                                        <span>Share</span>
+                                      </DropdownMenuSubTrigger>
+                                      <DropdownMenuPortal>
+                                        <DropdownMenuSubContent>
+                                          <DropdownMenuItem
+                                            onSelect={() =>
+                                              setDropMenuOpen(false)
+                                            }
+                                          >
+                                            <FaRegCopy className="mr-2 h-4 w-4" />
+                                            <span>Copy Song Link</span>
+                                          </DropdownMenuItem>
+                                          <DropdownMenuItem
+                                            onSelect={() =>
+                                              setDropMenuOpen(false)
+                                            }
+                                          >
+                                            <FaRegCopy className="mr-2 h-4 w-4" />
+                                            <span>Get Embed Link</span>
+                                          </DropdownMenuItem>
+                                        </DropdownMenuSubContent>
+                                      </DropdownMenuPortal>
+                                    </DropdownMenuSub>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </TableCell>
                             </TableRow>
                           ))}

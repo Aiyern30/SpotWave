@@ -28,8 +28,9 @@ export default function Home() {
   const text = "Framer Motion is a really cool tool".split(" ");
 
   const CLIENT_ID = "5bf8d69f8aaf4727a4677c0ad2fef6ec";
-  const REDIRECT_URI =
-    process.env.NEXT_PUBLIC_REDIRECT_URI || "http://localhost:3000";
+  // const REDIRECT_URI =
+  //   process.env.NEXT_PUBLIC_REDIRECT_URI || "http://localhost:3000";
+  const REDIRECT_URI = "http://localhost:3000";
 
   const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
   const RESPONSE_TYPE = "token";
@@ -134,11 +135,12 @@ export default function Home() {
       "streaming",
       "user-top-read",
       "user-follow-read",
-      "playlist-read-private",
+      "playlist-read-private", // Needed for reading private playlists
       "user-library-read",
+      "user-library-modify", // Needed for saving tracks to the library
       "user-read-recently-played",
-      "playlist-modify-public", // If needed
-      "playlist-modify-private", // If needed
+      "playlist-modify-public", // Needed for modifying public playlists
+      "playlist-modify-private", // Needed for modifying private playlists
       "app-remote-control", // If needed
     ].join(" ");
 
