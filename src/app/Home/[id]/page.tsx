@@ -7,6 +7,7 @@ import Sidebar from "@/app/Sidebar";
 import Header from "@/components/Header";
 import Image from "next/image";
 import { FaRegCopy, FaRegShareSquare } from "react-icons/fa";
+import { MdDeleteOutline } from "react-icons/md";
 
 import {
   Avatar,
@@ -199,12 +200,46 @@ interface displayUIProps {
   displayUI: "Table" | "Grid";
 }
 
+interface UserImage {
+  url: string;
+  height: number;
+  width: number;
+}
+
+interface UserFollowers {
+  href: string | null;
+  total: number;
+}
+
+interface ExplicitContent {
+  filter_enabled: boolean;
+  filter_locked: boolean;
+}
+
+interface User {
+  display_name: string;
+  external_urls: {
+    spotify: string;
+  };
+  href: string;
+  id: string;
+  images: UserImage[];
+  type: string;
+  uri: string;
+  followers: UserFollowers;
+  country: string;
+  product: string;
+  explicit_content: ExplicitContent;
+  email: string;
+}
+
 const itemsPerPage = 10;
 
 const PlaylistPage = () => {
   const params = useParams();
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  console.log("id", id);
 
   const [playlist, setPlaylist] = useState<PlaylistProps | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -231,6 +266,8 @@ const PlaylistPage = () => {
   const paginatedItems = useMemo(() => {
     return playlist?.tracks?.items?.slice(startIndex, endIndex) || [];
   }, [playlist?.tracks?.items, startIndex, endIndex]);
+
+  console.log("paginatedItems", paginatedItems);
 
   const totalPages = Math.ceil(
     (playlist?.tracks?.items?.length || 0) / itemsPerPage
@@ -291,7 +328,7 @@ const PlaylistPage = () => {
     }
   }, []);
 
-  const [playlists, setPlaylists] = useState([]);
+  const [playlists, setPlaylists] = useState<PlaylistProps[]>([]);
 
   useEffect(() => {
     const getPlaylists = async () => {
@@ -302,6 +339,82 @@ const PlaylistPage = () => {
     getPlaylists();
   }, [token]);
 
+  const [myID, setMyID] = useState<User | null>(null);
+  console.log("myID", myID);
+
+  useEffect(() => {
+    const fetchCurrentUserId = async () => {
+      try {
+        const response = await fetch("https://api.spotify.com/v1/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const userData = await response.json();
+        setMyID(userData);
+        return userData.id;
+      } catch (error) {
+        console.error("Error fetching user ID:", error);
+        return null;
+      }
+    };
+    fetchCurrentUserId();
+  }, [token]);
+
+  const [selectedLibraryID, setSelectedLibraryID] = useState<string>("");
+  console.log("selectedLibraryID", selectedLibraryID);
+
+  const AddPlaylist = async (playlistId: string, songId: string) => {
+    const requestUrl = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`;
+
+    try {
+      const response = await fetch(requestUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          uris: [`spotify:track:${songId}`],
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Track added to playlist:", data);
+      } else {
+        console.error("Error adding track:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error adding track:", error);
+    }
+  };
+
+  const removePlaylist = async (playlistID: string, trackID: string) => {
+    try {
+      const requestUrl = `https://api.spotify.com/v1/playlists/${playlistID}/tracks`;
+
+      const response = await fetch(requestUrl, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`, // Ensure token is valid and has required scopes
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tracks: [{ uri: `spotify:track:${trackID}` }], // Correctly format track URI
+        }),
+      });
+      if (response.ok) {
+        fetchPlaylistDetails(id);
+        console.log("Track removed from playlist.");
+      } else {
+        console.error("Error remove track:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error removing track:", error); // Log any caught errors
+    }
+  };
+
   const fetchMyPlaylists = async () => {
     try {
       const response = await fetch("https://api.spotify.com/v1/me/playlists", {
@@ -310,7 +423,12 @@ const PlaylistPage = () => {
         },
       });
       const data = await response.json();
-      return data.items;
+
+      const myPlaylists = data.items.filter(
+        (playlist: { owner: { id: string } }) => playlist.owner.id === myID?.id
+      );
+
+      return myPlaylists;
     } catch (error) {
       console.error("Error fetching playlists:", error);
       return [];
@@ -638,10 +756,7 @@ const PlaylistPage = () => {
                                 {formatDuration(item.track?.duration_ms)}
                               </TableCell>
                               <TableCell className=" ">
-                                <DropdownMenu
-                                  open={dropMenuOpen}
-                                  onOpenChange={setDropMenuOpen}
-                                >
+                                <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon">
                                       <IoMdMore className="w-8 h-8" />
@@ -659,21 +774,24 @@ const PlaylistPage = () => {
                                       </DropdownMenuSubTrigger>
                                       <DropdownMenuPortal>
                                         <DropdownMenuSubContent>
-                                          <DropdownMenuItem
-                                            onSelect={() =>
-                                              setDropMenuOpen(false)
-                                            }
-                                          >
+                                          <DropdownMenuItem>
                                             <PlusCircle className="mr-2 h-4 w-4" />
                                             <span>New Playlist</span>
                                           </DropdownMenuItem>
                                           <DropdownMenuItem>
                                             <Select
-                                              onValueChange={() =>
-                                                setDropMenuOpen(false)
-                                              }
+                                              onValueChange={(selectedID) => {
+                                                setSelectedLibraryID(
+                                                  selectedID
+                                                );
+
+                                                AddPlaylist(
+                                                  selectedLibraryID,
+                                                  item.track.id
+                                                );
+                                              }}
                                             >
-                                              <SelectTrigger className="w-full">
+                                              <SelectTrigger className="w-full text-black">
                                                 <SelectValue placeholder="Your Library" />
                                               </SelectTrigger>
                                               <SelectContent>
@@ -693,9 +811,7 @@ const PlaylistPage = () => {
                                         </DropdownMenuSubContent>
                                       </DropdownMenuPortal>
                                     </DropdownMenuSub>
-                                    <DropdownMenuItem
-                                      onSelect={() => setDropMenuOpen(false)}
-                                    >
+                                    <DropdownMenuItem>
                                       <PlusCircle className="mr-2 h-4 w-4" />
                                       <span>Saved to your Liked Songs</span>
                                     </DropdownMenuItem>
@@ -706,25 +822,34 @@ const PlaylistPage = () => {
                                       </DropdownMenuSubTrigger>
                                       <DropdownMenuPortal>
                                         <DropdownMenuSubContent>
-                                          <DropdownMenuItem
-                                            onSelect={() =>
-                                              setDropMenuOpen(false)
-                                            }
-                                          >
+                                          <DropdownMenuItem>
                                             <FaRegCopy className="mr-2 h-4 w-4" />
                                             <span>Copy Song Link</span>
                                           </DropdownMenuItem>
-                                          <DropdownMenuItem
-                                            onSelect={() =>
-                                              setDropMenuOpen(false)
-                                            }
-                                          >
+                                          <DropdownMenuItem>
                                             <FaRegCopy className="mr-2 h-4 w-4" />
                                             <span>Get Embed Link</span>
                                           </DropdownMenuItem>
                                         </DropdownMenuSubContent>
                                       </DropdownMenuPortal>
                                     </DropdownMenuSub>
+                                    {item.added_by.id === myID?.id && (
+                                      <DropdownMenuItem
+                                        onClick={() => {
+                                          removePlaylist(id, item.track.id);
+                                        }}
+                                      >
+                                        <>
+                                          <MdDeleteOutline
+                                            className="mr-2 h-4 w-4"
+                                            color="red"
+                                          />
+                                          <span className="text-red-500">
+                                            Remove from your library
+                                          </span>
+                                        </>
+                                      </DropdownMenuItem>
+                                    )}
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               </TableCell>
