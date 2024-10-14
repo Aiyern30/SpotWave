@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
-  Button,
   Card,
   CardContent,
   CardDescription,
@@ -16,7 +15,6 @@ import {
 const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
 import Spotify from "@/Spotify.json";
-import People from "@/People.json";
 import PeopleGuitar from "@/PeopleGuitar.json";
 import TypingAnimation from "@/components/magicui/Typing-animation";
 
@@ -25,12 +23,10 @@ interface SpotifyPlayerEvent {
 }
 
 export default function Home() {
-  const text = "Framer Motion is a really cool tool".split(" ");
-
   const CLIENT_ID = "5bf8d69f8aaf4727a4677c0ad2fef6ec";
-  const REDIRECT_URI =
-    process.env.NEXT_PUBLIC_REDIRECT_URI || "http://localhost:3000";
-  // const REDIRECT_URI = "http://localhost:3000";
+  // const REDIRECT_URI =
+  //   process.env.NEXT_PUBLIC_REDIRECT_URI || "http://localhost:3000";
+  const REDIRECT_URI = "http://localhost:3000";
 
   const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
   const RESPONSE_TYPE = "token";

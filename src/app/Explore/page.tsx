@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import ErrorPage from "@/app/Error";
+import ErrorPage from "@/app/not-found";
 import Sidebar from "@/app/Sidebar";
 import Header from "@/components/Header";
 import {
