@@ -62,176 +62,13 @@ import {
 import { GiDuration } from "react-icons/gi";
 import { Mail, MessageSquare, PlusCircle, UserPlus } from "lucide-react";
 import { IoMdMore } from "react-icons/io";
-
-interface Image {
-  url: string;
-  height: number;
-  width: number;
-}
-
-interface Artist {
-  external_urls: {
-    spotify: string;
-  };
-  href: string;
-  id: string;
-  name: string;
-  type: string;
-  uri: string;
-}
-
-interface Album {
-  album_type: string;
-  total_tracks: number;
-  available_markets: string[];
-  external_urls: {
-    spotify: string;
-  };
-  href: string;
-  id: string;
-  images: Image[];
-  name: string;
-  release_date: string;
-  release_date_precision: string;
-  restrictions: {
-    reason: string;
-  };
-  type: string;
-  uri: string;
-  artists: Artist[];
-}
-
-interface Track {
-  album: Album;
-  artists: Artist[];
-  available_markets: string[];
-  disc_number: number;
-  duration_ms: number;
-  explicit: boolean;
-  external_ids: {
-    isrc: string;
-    ean: string;
-    upc: string;
-  };
-  external_urls: {
-    spotify: string;
-  };
-  href: string;
-  id: string;
-  is_playable: boolean;
-  linked_from: {};
-  restrictions: {
-    reason: string;
-  };
-  name: string;
-  popularity: number;
-  preview_url: string;
-  track_number: number;
-  type: string;
-  uri: string;
-  is_local: boolean;
-}
-
-interface PlaylistProps {
-  collaborative: boolean;
-  description: string;
-  external_urls: {
-    spotify: string;
-  };
-  followers: {
-    href: string;
-    total: number;
-  };
-  href: string;
-  id: string;
-  images: Image[];
-  name: string;
-  owner: {
-    external_urls: {
-      spotify: string;
-    };
-    followers: {
-      href: string;
-      total: number;
-    };
-    href: string;
-    id: string;
-    type: string;
-    uri: string;
-    display_name: string;
-  };
-  public: boolean;
-  snapshot_id: string;
-  tracks: {
-    href: string;
-    limit: number;
-    next: string;
-    offset: number;
-    previous: string;
-    total: number;
-    items: {
-      added_at: string;
-      added_by: {
-        external_urls: {
-          spotify: string;
-        };
-        followers: {
-          href: string;
-          total: number;
-        };
-        href: string;
-        id: string;
-        type: string;
-        uri: string;
-      };
-      is_local: boolean;
-      track: Track;
-    }[];
-  };
-  type: string;
-  uri: string;
-}
-
-interface UserProfile {
-  images: Image[];
-}
-
-interface displayUIProps {
-  displayUI: "Table" | "Grid";
-}
-
-interface UserImage {
-  url: string;
-  height: number;
-  width: number;
-}
-
-interface UserFollowers {
-  href: string | null;
-  total: number;
-}
-
-interface ExplicitContent {
-  filter_enabled: boolean;
-  filter_locked: boolean;
-}
-
-interface User {
-  display_name: string;
-  external_urls: {
-    spotify: string;
-  };
-  href: string;
-  id: string;
-  images: UserImage[];
-  type: string;
-  uri: string;
-  followers: UserFollowers;
-  country: string;
-  product: string;
-  explicit_content: ExplicitContent;
-  email: string;
-}
+import {
+  displayUIProps,
+  PlaylistProps,
+  Track,
+  User,
+  UserProfile,
+} from "@/lib/types";
 
 const itemsPerPage = 10;
 
@@ -330,15 +167,6 @@ const PlaylistPage = () => {
 
   const [playlists, setPlaylists] = useState<PlaylistProps[]>([]);
 
-  useEffect(() => {
-    const getPlaylists = async () => {
-      const fetchedPlaylists = await fetchMyPlaylists();
-      setPlaylists(fetchedPlaylists);
-    };
-
-    getPlaylists();
-  }, [token]);
-
   const [myID, setMyID] = useState<User | null>(null);
   console.log("myID", myID);
 
@@ -415,25 +243,36 @@ const PlaylistPage = () => {
     }
   };
 
-  const fetchMyPlaylists = async () => {
-    try {
-      const response = await fetch("https://api.spotify.com/v1/me/playlists", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
+  useEffect(() => {
+    const fetchMyPlaylists = async () => {
+      try {
+        const response = await fetch(
+          "https://api.spotify.com/v1/me/playlists",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const data = await response.json();
 
-      const myPlaylists = data.items.filter(
-        (playlist: { owner: { id: string } }) => playlist.owner.id === myID?.id
-      );
+        const myPlaylists = data.items.filter(
+          (playlist: { owner: { id: string } }) =>
+            playlist.owner.id === myID?.id
+        );
 
-      return myPlaylists;
-    } catch (error) {
-      console.error("Error fetching playlists:", error);
-      return [];
-    }
-  };
+        setPlaylists(myPlaylists);
+      } catch (error) {
+        console.error("Error fetching playlists:", error);
+      }
+    };
+
+    const getPlaylists = async () => {
+      await fetchMyPlaylists();
+    };
+
+    getPlaylists();
+  }, [token]);
 
   const fetchLyrics = async (artist: string, title: string) => {
     console.log("artist", artist, "title", title);

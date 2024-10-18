@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { truncateText } from "@/lib/truncateText";
+
 import Sidebar from "@/app/Sidebar";
 import Header from "@/components/Header";
 import {
@@ -49,9 +51,9 @@ const Page = () => {
 
       const formattedPlaylists = data.items.map((playlist: any) => ({
         id: playlist.id,
-        image: playlist.images?.[0]?.url || "/default-image-url.jpg",
-        title: playlist.name || "Untitled Playlist",
-        description: playlist.description || "No description available",
+        image: playlist.images?.[0]?.url || "",
+        title: playlist.name || "",
+        description: playlist.description || "",
       }));
 
       setPlaylists(formattedPlaylists);
@@ -95,7 +97,9 @@ const Page = () => {
                   </Avatar>
                 </CardHeader>
                 <CardTitle>{data.title}</CardTitle>
-                <CardFooter className="text-sm">{data.description}</CardFooter>
+                <CardFooter className="text-sm">
+                  {truncateText(data.description, 100)}
+                </CardFooter>
               </Card>
             ))}
           </div>
