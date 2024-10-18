@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { truncateText } from "@/lib/truncateText";
+import { truncateText } from "@/components/truncateText";
 
 import Sidebar from "@/app/Sidebar";
 import Header from "@/components/Header";
