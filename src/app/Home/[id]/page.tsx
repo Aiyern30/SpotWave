@@ -63,7 +63,7 @@ import { GiDuration } from "react-icons/gi";
 import { Mail, MessageSquare, PlusCircle, UserPlus } from "lucide-react";
 import { IoMdMore } from "react-icons/io";
 import {
-  displayUIProps,
+  DisplayUIProps,
   PlaylistProps,
   Track,
   User,
@@ -87,7 +87,7 @@ const PlaylistPage = () => {
   const [hoveredArtist, setHoveredArtist] = useState<string | null>(null);
   const router = useRouter();
 
-  const [displayUI, setDisplayUI] = useState<displayUIProps | string>("Table");
+  const [displayUI, setDisplayUI] = useState<DisplayUIProps | string>("Table");
   const [currentPage, setCurrentPage] = useState(1);
   const [inputPage, setInputPage] = useState<string>("");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -272,7 +272,7 @@ const PlaylistPage = () => {
     };
 
     getPlaylists();
-  }, [token]);
+  }, [token, myID]);
 
   const fetchLyrics = async (artist: string, title: string) => {
     console.log("artist", artist, "title", title);

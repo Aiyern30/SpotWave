@@ -13,6 +13,8 @@ export interface Artist {
   name: string;
   type: string;
   uri: string;
+  genres: string[];
+  image: string;
 }
 
 export interface Album {
@@ -131,7 +133,7 @@ export interface UserProfile {
   images: Image[];
 }
 
-export interface displayUIProps {
+export interface DisplayUIProps {
   displayUI: "Table" | "Grid";
 }
 
@@ -166,4 +168,43 @@ export interface User {
   product: string;
   explicit_content: ExplicitContent;
   email: string;
+}
+
+export interface ImageLASTFM {
+  ["#text"]: string;
+  size: string;
+}
+
+export interface TrackDataLASTFM {
+  name: string;
+  playcount: string;
+  listeners: string;
+  artist: {
+    name: string;
+    id: string;
+  };
+  image: ImageLASTFM[];
+  id: string;
+}
+
+export interface TopTracksResponseLASTFM {
+  tracks: {
+    track: TrackDataLASTFM[];
+  };
+}
+
+export interface GlobalArtistPropsLASTFM {
+  name: string;
+  playcount: string;
+  listeners: string;
+  mbid: string;
+  url: string;
+  image: ImageLASTFM[];
+  id: string;
+}
+
+export interface ArtistsResponseLASTFM {
+  artists: {
+    artist: GlobalArtistPropsLASTFM[];
+  };
 }

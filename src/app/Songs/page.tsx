@@ -29,36 +29,14 @@ import {
 import { useRouter } from "next/navigation";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
-
-interface Image {
-  ["#text"]: string;
-  size: string;
-}
-
-interface TrackData {
-  name: string;
-  playcount: string;
-  listeners: string;
-  artist: {
-    name: string;
-    id: string;
-  };
-  image: Image[];
-  id: string;
-}
-
-interface TopTracksResponse {
-  tracks: {
-    track: TrackData[];
-  };
-}
-
-interface DisplayUIProps {
-  displayUI: "Table" | "Grid";
-}
+import {
+  DisplayUIProps,
+  TopTracksResponseLASTFM,
+  TrackDataLASTFM,
+} from "@/lib/types";
 
 const Page = () => {
-  const [tracks, setTracks] = useState<TrackData[]>([]);
+  const [tracks, setTracks] = useState<TrackDataLASTFM[]>([]);
   const [numTracks, setNumTracks] = useState<number>(10);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [displayUI, setDisplayUI] = useState<DisplayUIProps | string>("Table");
@@ -66,7 +44,7 @@ const Page = () => {
 
   const LASTFM_API_KEY = process.env.NEXT_PUBLIC_LASTFM_API_KEY;
 
-  const fetchSpotifyData = useCallback(async (tracks: TrackData[]) => {
+  const fetchSpotifyData = useCallback(async (tracks: TrackDataLASTFM[]) => {
     const updatedTracks = await Promise.all(
       tracks.map(async (track) => {
         const spotifyData = await searchTrackOnSpotify(
@@ -98,7 +76,7 @@ const Page = () => {
         const response = await fetch(
           `https://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks&limit=${limit}&api_key=${apiKey}&format=json`
         );
-        const data: TopTracksResponse = await response.json();
+        const data: TopTracksResponseLASTFM = await response.json();
 
         if (response.ok) {
           const tracksWithImages = await fetchSpotifyData(data.tracks.track);

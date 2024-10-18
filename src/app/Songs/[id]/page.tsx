@@ -22,36 +22,11 @@ import {
   SheetTrigger,
 } from "@/components/ui";
 import Header from "@/components/Header";
-interface Image {
-  url: string;
-}
-interface TrackProps {
-  id: string;
-  name: string;
-  duration_ms: number;
-  preview_url: string | null;
-  release_date: string;
-  external_urls: {
-    spotify: string;
-  };
-  popularity: string;
+import { Track } from "@/lib/types";
 
-  album: {
-    id: string;
-    name: string;
-    images: Image[];
-    artists: {
-      id: string;
-      name: string;
-    }[];
-    external_urls: {
-      spotify: string;
-    };
-  };
-}
 const SongPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-  const [track, setTrack] = useState<TrackProps | null>(null);
+  const [track, setTrack] = useState<Track | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   const pathname = usePathname();

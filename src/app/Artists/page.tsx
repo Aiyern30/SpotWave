@@ -29,34 +29,14 @@ import {
 import { useRouter } from "next/navigation";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
-
-interface Image {
-  ["#text"]: string;
-  size: string;
-}
-
-interface GlobalArtistProps {
-  name: string;
-  playcount: string;
-  listeners: string;
-  mbid: string;
-  url: string;
-  image: Image[];
-  id: string;
-}
-
-interface ArtistsResponse {
-  artists: {
-    artist: GlobalArtistProps[];
-  };
-}
-
-interface DisplayUIProps {
-  displayUI: "Table" | "Grid";
-}
+import {
+  ArtistsResponseLASTFM,
+  DisplayUIProps,
+  GlobalArtistPropsLASTFM,
+} from "@/lib/types";
 
 const Page = () => {
-  const [artists, setArtists] = useState<GlobalArtistProps[]>([]);
+  const [artists, setArtists] = useState<GlobalArtistPropsLASTFM[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [numArtists, setNumArtists] = useState<number>(10);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
@@ -66,7 +46,7 @@ const Page = () => {
   const LASTFM_API_KEY = process.env.NEXT_PUBLIC_LASTFM_API_KEY;
 
   const fetchSpotifyImages = useCallback(
-    async (artists: GlobalArtistProps[]) => {
+    async (artists: GlobalArtistPropsLASTFM[]) => {
       const updatedArtists = await Promise.all(
         artists.map(async (artist) => {
           const spotifyData = await searchArtistOnSpotify(artist.name);
@@ -94,7 +74,7 @@ const Page = () => {
         const response = await fetch(
           `https://ws.audioscrobbler.com/2.0/?method=chart.gettopartists&limit=${limit}&api_key=${apiKey}&format=json`
         );
-        const data: ArtistsResponse = await response.json();
+        const data: ArtistsResponseLASTFM = await response.json();
 
         if (response.ok) {
           const artistsWithImages = await fetchSpotifyImages(

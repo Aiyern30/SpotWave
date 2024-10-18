@@ -19,19 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui";
 import { useRouter } from "next/navigation";
-
-type ArtistProps = {
-  id: string;
-  image: string;
-  name: string;
-  genres: string[];
-};
-
-interface Image {
-  url: string;
-  height: number;
-  width: number;
-}
+import { Artist, Image } from "@/lib/types";
 
 interface RecentTracksProps {
   played_at: string;
@@ -54,8 +42,8 @@ interface RecentTracksProps {
 const Page = () => {
   const [token, setToken] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-  const [followedArtists, setFollowedArtists] = useState<ArtistProps[]>([]);
-  const [favoriteArtists, setFavoriteArtists] = useState<ArtistProps[]>([]);
+  const [followedArtists, setFollowedArtists] = useState<Artist[]>([]);
+  const [favoriteArtists, setFavoriteArtists] = useState<Artist[]>([]);
   console.log("favoriteArtists", favoriteArtists);
   const [recentTracks, setRecentTracks] = useState<RecentTracksProps[]>([]);
 
