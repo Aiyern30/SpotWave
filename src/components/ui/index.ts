@@ -18,3 +18,4 @@ export * from "./Slider";
 export * from "./Switch";
 export * from "./Select";
 export * from "./Table";
+export * from "./Textarea";
