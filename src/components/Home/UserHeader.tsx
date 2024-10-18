@@ -24,6 +24,16 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
   const [descriptionValue, setDescriptionValue] = useState(
     playlist.description || ""
   );
+  const [token, setToken] = useState<string>("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedToken = localStorage.getItem("Token");
+      if (storedToken) {
+        setToken(storedToken);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (playlist.owner.id === id?.id) {
@@ -60,6 +70,39 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
     ) {
       setNameEditing(false);
       setDescriptionEditing(false);
+      updatePlaylistDetails(); // Update playlist details when clicking outside
+    }
+  };
+
+  const updatePlaylistDetails = async () => {
+    if (!id || !playlist.id || !token) return; // Ensure the user ID, playlist ID, and token are available
+
+    const url = `https://api.spotify.com/v1/playlists/${playlist.id}`;
+
+    const body = {
+      name: inputValue,
+      description: descriptionValue,
+      public: false, // or true, depending on your requirement
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update playlist details");
+      }
+
+      const result = await response.json(); // Parse the response
+      console.log("Playlist updated successfully:", result); // Log success
+    } catch (error) {
+      console.error("Error updating playlist details:", error);
     }
   };
 
