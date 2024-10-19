@@ -41,41 +41,9 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
     }
   }, [playlist, id]);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUploadedImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-  };
-
-  const handleDescriptionChange = (
-    e: React.ChangeEvent<HTMLTextAreaElement>
-  ) => {
-    setDescriptionValue(e.target.value);
-  };
-
-  const handleClickOutside = (event: MouseEvent) => {
-    const target = event.target as HTMLElement;
-    if (
-      !target.closest(".input-container") &&
-      !target.closest(".description-container")
-    ) {
-      setNameEditing(false);
-      setDescriptionEditing(false);
-      updatePlaylistDetails(); // Update playlist details when clicking outside
-    }
-  };
-
+  // Update playlist details (name, description)
   const updatePlaylistDetails = async () => {
-    if (!id || !playlist.id || !token) return; // Ensure the user ID, playlist ID, and token are available
+    if (!id || !playlist.id || !token) return;
 
     const url = `https://api.spotify.com/v1/playlists/${playlist.id}`;
 
@@ -95,28 +63,107 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
         body: JSON.stringify(body),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to update playlist details");
+      if (response.ok) {
+        console.log("Playlist updated successfully");
+      } else {
+        console.error("Failed to update playlist details");
       }
-
-      const result = await response.json(); // Parse the response
-      console.log("Playlist updated successfully:", result); // Log success
     } catch (error) {
       console.error("Error updating playlist details:", error);
     }
   };
 
-  useEffect(() => {
-    if (nameEditing || descriptionEditing) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
+  // Upload image to Spotify
+  const uploadPlaylistImage = async (base64Data: string) => {
+    console.log(token);
+    const imageUrl = `https://api.spotify.com/v1/playlists/${playlist.id}/images`;
 
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [nameEditing, descriptionEditing]);
+    try {
+      const response = await fetch(imageUrl, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`, // Ensure token is correct
+          "Content-Type": "image/jpeg", // Spotify expects a raw image in base64
+        },
+        body: base64Data, // The raw base64 string without any JSON wrapping
+      });
+
+      if (response.ok) {
+        console.log("Playlist cover image updated successfully");
+      } else if (response.status === 401) {
+        console.error("Unauthorized. Check token.");
+      } else {
+        console.error("Failed to upload image:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error uploading playlist cover image:", error);
+    }
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const image = new window.Image(); // Use window context to access the Image constructor
+        image.src = reader.result as string;
+        image.onload = () => {
+          // Create a canvas to resize the image
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+
+          const MAX_SIZE = 300; // You can adjust this size as needed
+
+          // Scale the image to fit within the MAX_SIZE
+          let width = image.width;
+          let height = image.height;
+
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height *= MAX_SIZE / width;
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width *= MAX_SIZE / height;
+              height = MAX_SIZE;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          // Draw the resized image on the canvas
+          ctx?.drawImage(image, 0, 0, width, height);
+
+          // Convert the canvas back to base64
+          const resizedBase64String = canvas.toDataURL("image/jpeg");
+
+          // Strip the metadata prefix
+          const base64Data = resizedBase64String.split(",")[1];
+
+          // Upload resized image to Spotify
+          uploadPlaylistImage(base64Data);
+
+          // Update the displayed image
+          setUploadedImage(resizedBase64String);
+        };
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handling input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+  };
+
+  const handleDescriptionChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
+    setDescriptionValue(e.target.value);
+  };
 
   return (
     <div>
@@ -152,36 +199,38 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
                 placeholder="Your Library Name"
                 value={inputValue}
                 onChange={handleInputChange}
-                onBlur={() => setNameEditing(false)}
+                onBlur={() => {
+                  setNameEditing(false);
+                  updatePlaylistDetails(); // Update playlist details when title loses focus
+                }}
               />
             </div>
           ) : (
             <div
               className="text-5xl cursor-pointer"
-              onClick={() => {
-                setNameEditing(true);
-              }}
+              onClick={() => setNameEditing(true)}
             >
               {inputValue}
             </div>
           )}
 
           {isOwner && descriptionEditing ? (
-            <div className="description-container ">
+            <div className="description-container">
               <Textarea
                 placeholder="Playlist Description"
                 value={descriptionValue}
                 onChange={handleDescriptionChange}
-                onBlur={() => setDescriptionEditing(false)}
+                onBlur={() => {
+                  setDescriptionEditing(false);
+                  updatePlaylistDetails(); // Update playlist details when description loses focus
+                }}
                 className="max-h-40"
               />
             </div>
           ) : (
             <div
               className="text-lg cursor-pointer"
-              onClick={() => {
-                setDescriptionEditing(true);
-              }}
+              onClick={() => setDescriptionEditing(true)}
             >
               {descriptionValue || "No description"}
             </div>
@@ -198,7 +247,7 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
               </Avatar>
             </div>
             <div
-              className="text-sm hover:underline cursor-pointer font-bold "
+              className="text-sm hover:underline cursor-pointer font-bold"
               onClick={() =>
                 router.push(
                   `/Artists/${playlist.owner.id}?name=${encodeURIComponent(

@@ -19,7 +19,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Add the Spotify SDK script */}
         <Script
           src="https://sdk.scdn.co/spotify-player.js"
           strategy="beforeInteractive"

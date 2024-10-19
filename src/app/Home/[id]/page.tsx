@@ -71,7 +71,6 @@ const PlaylistPage = () => {
   const params = useParams();
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
-  console.log("id", id);
 
   const [playlist, setPlaylist] = useState<PlaylistProps | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -98,8 +97,6 @@ const PlaylistPage = () => {
   const paginatedItems = useMemo(() => {
     return playlist?.tracks?.items?.slice(startIndex, endIndex) || [];
   }, [playlist?.tracks?.items, startIndex, endIndex]);
-
-  console.log("paginatedItems", paginatedItems);
 
   const totalPages = Math.ceil(
     (playlist?.tracks?.items?.length || 0) / itemsPerPage
@@ -163,7 +160,6 @@ const PlaylistPage = () => {
   const [playlists, setPlaylists] = useState<PlaylistProps[]>([]);
 
   const [myID, setMyID] = useState<User | null>(null);
-  console.log("myID", myID);
 
   useEffect(() => {
     const fetchCurrentUserId = async () => {
@@ -185,7 +181,6 @@ const PlaylistPage = () => {
   }, [token]);
 
   const [selectedLibraryID, setSelectedLibraryID] = useState<string>("");
-  console.log("selectedLibraryID", selectedLibraryID);
 
   const AddPlaylist = async (playlistId: string, songId: string) => {
     const requestUrl = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`;
@@ -270,7 +265,6 @@ const PlaylistPage = () => {
   }, [token, myID]);
 
   const fetchLyrics = async (artist: string, title: string) => {
-    console.log("artist", artist, "title", title);
     try {
       const response = await fetch(
         `https://api.lyrics.ovh/v1/${artist}/${title}`
