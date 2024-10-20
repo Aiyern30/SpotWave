@@ -17,6 +17,7 @@ export * from "./Skeleton";
 export * from "./Sheet";
 export * from "./Slider";
 export * from "./Switch";
+export * from "./ScrollArea";
 export * from "./Select";
 export * from "./Table";
 export * from "./Textarea";
