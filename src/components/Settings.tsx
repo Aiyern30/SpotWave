@@ -1,12 +1,8 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { CiSettings } from "react-icons/ci";
-import {
-  FiEdit,
-  FiDownload,
-  FiDelete,
-  FiPlusCircle,
-  FiShare2,
-} from "react-icons/fi";
+import { FiDownload, FiDelete, FiPlusCircle, FiShare2 } from "react-icons/fi";
 import { BiUserPlus } from "react-icons/bi";
 import { AiOutlineLink } from "react-icons/ai";
 import {
@@ -29,18 +25,21 @@ import {
 } from "./ui";
 import { FaLaptopCode } from "react-icons/fa";
 import { PlaylistProps } from "@/lib/types";
+import { useRouter } from "next/navigation";
 
 interface SettingsProps {
-  playlist: PlaylistProps;
+  playlistID: string;
 }
 
-export default function Settings({ playlist }: SettingsProps) {
+export default function Settings({ playlistID }: SettingsProps) {
+  const router = useRouter();
+
   const [token, setToken] = useState<string>("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [currentPlaylist, setCurrentPlaylist] =
-    useState<PlaylistProps>(playlist);
-
+  const [currentPlaylist, setCurrentPlaylist] = useState<PlaylistProps | null>(
+    null
+  );
   useEffect(() => {
     const storedToken = localStorage.getItem("Token");
     if (storedToken) {
@@ -48,18 +47,16 @@ export default function Settings({ playlist }: SettingsProps) {
     }
   }, []);
 
-  const togglePrivacy = async () => {
-    const newPublicStatus = !currentPlaylist.public; // Toggle the public status
-    await updatePrivacy(newPublicStatus);
-
-    // No need to update local state here, as we will fetch new data
-    setIsDropdownOpen(false); // Close the dropdown menu after the action
-  };
+  useEffect(() => {
+    if (token) {
+      fetchPlaylistDetails();
+    }
+  }, [token]);
 
   const fetchPlaylistDetails = async () => {
     try {
       const response = await fetch(
-        `https://api.spotify.com/v1/playlists/${currentPlaylist.id}`,
+        `https://api.spotify.com/v1/playlists/${playlistID}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -79,46 +76,15 @@ export default function Settings({ playlist }: SettingsProps) {
 
       const data = await response.json();
       console.log("Fetched playlist details:", data);
-      setCurrentPlaylist(data); // Update the current playlist with new data
+      setCurrentPlaylist(data);
     } catch (error) {
       console.error("Error occurred while fetching playlist details:", error);
     }
   };
 
-  const updatePrivacy = async (newPublicStatus: boolean) => {
-    try {
-      const response = await fetch(
-        `https://api.spotify.com/v1/playlists/${currentPlaylist.id}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ public: newPublicStatus }),
-        }
-      );
-
-      console.log("Response Status:", response.status);
-      if (response.ok) {
-        console.log("Updated privacy successfully. Checking for new data...");
-        await fetchPlaylistDetails(); // Fetch updated playlist details
-      } else {
-        const errorText = await response.text();
-        console.error(
-          "Failed to update playlist:",
-          response.statusText,
-          errorText
-        );
-      }
-    } catch (error) {
-      console.error("Error occurred while updating privacy:", error);
-    }
-  };
-
   const deletePlaylist = async () => {
     const response = await fetch(
-      `https://api.spotify.com/v1/playlists/${currentPlaylist.id}/followers`,
+      `https://api.spotify.com/v1/playlists/${playlistID}/followers`,
       {
         method: "DELETE",
         headers: {
@@ -128,12 +94,13 @@ export default function Settings({ playlist }: SettingsProps) {
     );
 
     if (response.ok) {
+      router.push("/Home");
       console.log("Playlist deleted successfully");
     } else {
       console.error("Failed to delete playlist:", response.statusText);
     }
     setIsDeleteDialogOpen(false);
-    setIsDropdownOpen(false); // Close the dropdown menu after deletion
+    setIsDropdownOpen(false);
   };
 
   return (
@@ -163,10 +130,7 @@ export default function Settings({ playlist }: SettingsProps) {
           <DropdownMenuItem>
             <FiPlusCircle className="mr-2" /> Create playlists
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={togglePrivacy}>
-            <BiUserPlus className="mr-2" />
-            {currentPlaylist.public ? "Make private" : "Make public"}
-          </DropdownMenuItem>
+
           <DropdownMenuItem>
             <BiUserPlus className="mr-2" /> Invite collaborators
           </DropdownMenuItem>
