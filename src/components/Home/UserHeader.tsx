@@ -261,7 +261,7 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
             </div>
           </div>
         </div>
-        <div>
+        <div className="text-center mt-5 sm:mt-0">
           <Settings playlistID={playlist.id} />
         </div>
       </div>

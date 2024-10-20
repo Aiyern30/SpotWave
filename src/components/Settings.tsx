@@ -1,6 +1,7 @@
 "use client";
+import { ToastContainer, toast } from "react-toastify";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CiSettings } from "react-icons/ci";
 import { FiDownload, FiDelete, FiPlusCircle, FiShare2 } from "react-icons/fi";
 import { BiUserPlus } from "react-icons/bi";
@@ -40,6 +41,7 @@ export default function Settings({ playlistID }: SettingsProps) {
   const [currentPlaylist, setCurrentPlaylist] = useState<PlaylistProps | null>(
     null
   );
+
   useEffect(() => {
     const storedToken = localStorage.getItem("Token");
     if (storedToken) {
@@ -47,13 +49,7 @@ export default function Settings({ playlistID }: SettingsProps) {
     }
   }, []);
 
-  useEffect(() => {
-    if (token) {
-      fetchPlaylistDetails();
-    }
-  }, [token]);
-
-  const fetchPlaylistDetails = async () => {
+  const fetchPlaylistDetails = useCallback(async () => {
     try {
       const response = await fetch(
         `https://api.spotify.com/v1/playlists/${playlistID}`,
@@ -80,7 +76,7 @@ export default function Settings({ playlistID }: SettingsProps) {
     } catch (error) {
       console.error("Error occurred while fetching playlist details:", error);
     }
-  };
+  }, [token, playlistID]);
 
   const deletePlaylist = async () => {
     const response = await fetch(
@@ -103,23 +99,42 @@ export default function Settings({ playlistID }: SettingsProps) {
     setIsDropdownOpen(false);
   };
 
+  const copyInviteLink = () => {
+    const inviteLink = `https://open.spotify.com/playlist/${playlistID}?si=6576ac9c34fe4ed9&pt=39f1d270c5215a4a714c9ff6a0552c26`;
+
+    navigator.clipboard
+      .writeText(inviteLink)
+      .then(() => {
+        toast.success("Invite link copied to clipboard!");
+      })
+      .catch((err) => {
+        toast.error("Failed to copy invite link.");
+      });
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchPlaylistDetails();
+    }
+  }, [token, fetchPlaylistDetails]);
+
   return (
     <>
+      <ToastContainer />
       <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
         <DropdownMenuTrigger>
           <CiSettings size={45} />
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="mr-5">
+        <DropdownMenuContent className=" sm:mr-5">
           <DropdownMenuSeparator />
           <DropdownMenuItem>
             <FiPlusCircle className="mr-2" /> Add to profile
           </DropdownMenuItem>
-
           <DropdownMenuItem
             onSelect={(event) => {
               event.preventDefault();
               setIsDeleteDialogOpen(true);
-              setIsDropdownOpen(false); // Close the dropdown menu
+              setIsDropdownOpen(false);
             }}
           >
             <FiDelete className="mr-2" /> Delete
@@ -130,8 +145,7 @@ export default function Settings({ playlistID }: SettingsProps) {
           <DropdownMenuItem>
             <FiPlusCircle className="mr-2" /> Create playlists
           </DropdownMenuItem>
-
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={copyInviteLink}>
             <BiUserPlus className="mr-2" /> Invite collaborators
           </DropdownMenuItem>
           <DropdownMenuItem>
