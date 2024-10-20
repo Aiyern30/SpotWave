@@ -262,7 +262,7 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
           </div>
         </div>
         <div>
-          <Settings />
+          <Settings playlist={playlist} />
         </div>
       </div>
     </div>
