@@ -1,5 +1,6 @@
 "use client";
 import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import { useCallback, useEffect, useState } from "react";
 import { CiSettings } from "react-icons/ci";
@@ -99,6 +100,19 @@ export default function Settings({ playlistID }: SettingsProps) {
     setIsDropdownOpen(false);
   };
 
+  const copyPlaylistLink = () => {
+    const playlistLink = `https://open.spotify.com/playlist/${playlistID}`;
+
+    navigator.clipboard
+      .writeText(playlistLink)
+      .then(() => {
+        toast.success("Playlist link copied to clipboard!");
+      })
+      .catch((err) => {
+        toast.error("Failed to copy playlist link.");
+      });
+  };
+
   const copyInviteLink = () => {
     const inviteLink = `https://open.spotify.com/playlist/${playlistID}?si=6576ac9c34fe4ed9&pt=39f1d270c5215a4a714c9ff6a0552c26`;
 
@@ -139,25 +153,25 @@ export default function Settings({ playlistID }: SettingsProps) {
           >
             <FiDelete className="mr-2" /> Delete
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            <FiDownload className="mr-2" /> Download
-          </DropdownMenuItem>
-          <DropdownMenuItem>
+
+          <DropdownMenuItem
+            onClick={() => {
+              router.push("/Home/CreatePlaylist");
+            }}
+          >
             <FiPlusCircle className="mr-2" /> Create playlists
           </DropdownMenuItem>
           <DropdownMenuItem onClick={copyInviteLink}>
             <BiUserPlus className="mr-2" /> Invite collaborators
           </DropdownMenuItem>
-          <DropdownMenuItem>
-            <FiPlusCircle className="mr-2" /> Pin playlists
-          </DropdownMenuItem>
+
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <FiShare2 className="mr-2" /> Share
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={copyPlaylistLink}>
                   <AiOutlineLink className="mr-2" /> Copy link to playlist
                 </DropdownMenuItem>
                 <DropdownMenuItem>
