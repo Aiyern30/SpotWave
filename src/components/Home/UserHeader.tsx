@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { PlaylistProps, User, UserProfile } from "@/lib/types";
 import { useEffect, useState } from "react";
 import { formatDuration } from "../formDuration";
+import Settings from "../Settings";
 
 interface Playlist {
   playlist: PlaylistProps;
@@ -106,16 +107,14 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const image = new window.Image(); // Use window context to access the Image constructor
+        const image = new window.Image();
         image.src = reader.result as string;
         image.onload = () => {
-          // Create a canvas to resize the image
           const canvas = document.createElement("canvas");
           const ctx = canvas.getContext("2d");
 
-          const MAX_SIZE = 300; // You can adjust this size as needed
+          const MAX_SIZE = 300;
 
-          // Scale the image to fit within the MAX_SIZE
           let width = image.width;
           let height = image.height;
 
@@ -134,19 +133,14 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
           canvas.width = width;
           canvas.height = height;
 
-          // Draw the resized image on the canvas
           ctx?.drawImage(image, 0, 0, width, height);
 
-          // Convert the canvas back to base64
           const resizedBase64String = canvas.toDataURL("image/jpeg");
 
-          // Strip the metadata prefix
           const base64Data = resizedBase64String.split(",")[1];
 
-          // Upload resized image to Spotify
           uploadPlaylistImage(base64Data);
 
-          // Update the displayed image
           setUploadedImage(resizedBase64String);
         };
       };
@@ -154,7 +148,6 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
     }
   };
 
-  // Handling input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
@@ -167,9 +160,9 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
 
   return (
     <div>
-      <div className="cover flex flex-col md:flex-row items-center p-4 space-x-4 w-full">
+      <div className="cover flex flex-col md:flex-row p-4 space-x-4 w-full ">
         <div
-          className="relative group"
+          className="relative group "
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
@@ -193,7 +186,7 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
         </div>
         <div className="flex flex-col space-y-3 mt-4 md:mt-0 flex-grow">
           {isOwner && nameEditing ? (
-            <div className="input-container">
+            <div className="input-container flex justify-between">
               <Input
                 type="text"
                 placeholder="Your Library Name"
@@ -201,7 +194,7 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
                 onChange={handleInputChange}
                 onBlur={() => {
                   setNameEditing(false);
-                  updatePlaylistDetails(); // Update playlist details when title loses focus
+                  updatePlaylistDetails();
                 }}
               />
             </div>
@@ -222,7 +215,7 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
                 onChange={handleDescriptionChange}
                 onBlur={() => {
                   setDescriptionEditing(false);
-                  updatePlaylistDetails(); // Update playlist details when description loses focus
+                  updatePlaylistDetails();
                 }}
                 className="max-h-40"
               />
@@ -267,6 +260,9 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
               )}
             </div>
           </div>
+        </div>
+        <div>
+          <Settings />
         </div>
       </div>
     </div>
