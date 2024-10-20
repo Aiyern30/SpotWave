@@ -21,3 +21,4 @@ export * from "./ScrollArea";
 export * from "./Select";
 export * from "./Table";
 export * from "./Textarea";
+export * from "./Tabs";

@@ -39,7 +39,6 @@ const Sidebar = ({
   const [showLogoutDialog, setShowLogoutDialog] = useState<boolean>(false);
   const router = useRouter();
 
-  // Retrieve the initial state from localStorage only on the client side
   useEffect(() => {
     const storedState = localStorage.getItem("sidebar-compact");
     setIsCompact(storedState === "true");
@@ -58,7 +57,6 @@ const Sidebar = ({
   }, [isOpen]);
 
   useEffect(() => {
-    // Store the compact state in localStorage whenever it changes
     localStorage.setItem("sidebar-compact", isCompact.toString());
   }, [isCompact]);
 
@@ -77,7 +75,6 @@ const Sidebar = ({
   };
 
   const handleLogout = () => {
-    // Clear the token from localStorage
     localStorage.removeItem("Token");
 
     router.push("/");
@@ -85,7 +82,6 @@ const Sidebar = ({
 
   return (
     <>
-      {/* Toggle button for mobile */}
       <button
         onClick={handleOpen}
         className="p-3 border-2 border-zinc-800 rounded-xl lg:hidden block absolute top-5 left-5 z-60"
@@ -94,7 +90,6 @@ const Sidebar = ({
         <GiHamburgerMenu />
       </button>
 
-      {/* Full Sidebar for larger screens */}
       <AnimatePresence mode="wait" initial={false}>
         {(isOpen || isCompact) && (
           <motion.div
@@ -153,7 +148,6 @@ const Sidebar = ({
                 })}
               </ul>
             </div>
-            {/* Logout button */}
             <div className="flex items-center  border-t-2 border-zinc-800">
               <AlertDialog
                 open={showLogoutDialog}
@@ -206,7 +200,6 @@ const Sidebar = ({
         )}
       </AnimatePresence>
 
-      {/* Compact Sidebar for mobile screens */}
       <AnimatePresence mode="wait" initial={false}>
         {isCompact && (
           <motion.div
@@ -240,7 +233,6 @@ const Sidebar = ({
                 })}
               </ul>
             </div>
-            {/* Logout button for compact mode */}
             <div className="flex flex-col items-center py-5 text-white">
               <AlertDialog
                 open={showLogoutDialog}
@@ -297,10 +289,9 @@ const items = [
   // { title: 'Albums', Icon: BiSolidAlbum, href: '/Albums' },
   { title: "Artists", Icon: RiUserVoiceFill, href: "/Artists" },
   { title: "Songs", Icon: BiSolidMusic, href: "/Songs" },
-  // { title: "Profile", Icon: BiUserCircle, href: "/Profile" },
+  { title: "Profile", Icon: BiUserCircle, href: "/Profile" },
 ];
 
-// Framer motion animation variants
 const framerSidebarPanel = {
   initial: { x: -300 },
   animate: { x: 0 },
