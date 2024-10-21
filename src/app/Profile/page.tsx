@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import React, { useState } from "react";
 import Sidebar from "../Sidebar";
 import ProfileComponent from "./Profile";
+import PublicLibrary from "./PublicLibrary";
 
 const Profile = () => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
@@ -22,6 +23,7 @@ const Profile = () => {
         <div className="p-4 space-y-4 ">
           <Header />
           <ProfileComponent />
+          <PublicLibrary />
         </div>
       </div>
     </div>
