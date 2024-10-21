@@ -1,7 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { Avatar, AvatarFallback, AvatarImage, Input, Textarea } from "../ui";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Input,
+  Textarea,
+  Skeleton,
+} from "../ui"; // Ensure Skeleton is imported
 import { useRouter } from "next/navigation";
 import { PlaylistProps, User, UserProfile } from "@/lib/types";
 import { useEffect, useState } from "react";
@@ -26,6 +33,7 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
     playlist.description || ""
   );
   const [token, setToken] = useState<string>("");
+  const [loading, setLoading] = useState(true); // Loading state
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -40,6 +48,7 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
     if (playlist.owner.id === id?.id) {
       setIsOwner(true);
     }
+    setLoading(false); // Set loading to false when playlist and user are ready
   }, [playlist, id]);
 
   // Update playlist details (name, description)
@@ -76,7 +85,6 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
 
   // Upload image to Spotify
   const uploadPlaylistImage = async (base64Data: string) => {
-    console.log(token);
     const imageUrl = `https://api.spotify.com/v1/playlists/${playlist.id}/images`;
 
     try {
@@ -136,11 +144,9 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
           ctx?.drawImage(image, 0, 0, width, height);
 
           const resizedBase64String = canvas.toDataURL("image/jpeg");
-
           const base64Data = resizedBase64String.split(",")[1];
 
           uploadPlaylistImage(base64Data);
-
           setUploadedImage(resizedBase64String);
         };
       };
@@ -158,11 +164,26 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
     setDescriptionValue(e.target.value);
   };
 
+  // Render skeleton if loading
+  if (loading) {
+    return (
+      <div className="flex flex-col md:flex-row p-4 space-x-4 w-full">
+        <Skeleton className="h-[300px] w-[300px] rounded-xl" />
+        <div className="flex flex-col space-y-3 mt-4 md:mt-0 flex-grow">
+          <Skeleton className="h-10 w-[250px]" />
+          <Skeleton className="h-6 w-[200px]" />
+          <Skeleton className="h-6 w-[200px]" />
+          <Skeleton className="h-6 w-[100px]" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <div className="cover flex flex-col md:flex-row p-4 space-x-4 w-full ">
+      <div className="cover flex flex-col md:flex-row p-4 space-x-4 w-full">
         <div
-          className="relative group "
+          className="relative group"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >

@@ -6,6 +6,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Skeleton,
 } from "@/components/ui";
 import { Artist } from "@/lib/types";
 import { useRouter } from "next/navigation";
@@ -15,6 +16,7 @@ const FollowingArtists = () => {
   const router = useRouter();
   const [token, setToken] = useState<string>("");
   const [followedArtists, setFollowedArtists] = useState<Artist[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedToken = localStorage.getItem("Token");
@@ -50,6 +52,8 @@ const FollowingArtists = () => {
           }
         } catch (error) {
           console.error("Error fetching followed artists:", error);
+        } finally {
+          setLoading(false);
         }
       }
     };
@@ -64,26 +68,42 @@ const FollowingArtists = () => {
   return (
     <div>
       <div className="flex flex-wrap gap-8 text-white">
-        {memoizedFollowedArtists.map((artist) => (
-          <Card
-            key={artist.id}
-            className="group w-36 cursor-pointer"
-            onClick={() =>
-              router.push(
-                `/Artists/${artist.id}?name=${encodeURIComponent(artist.name)}`
-              )
-            }
-          >
-            <CardHeader>
-              <Avatar className="w-36 h-36 relative p-1">
-                <AvatarImage src={artist.image} className="rounded-xl" />
-                <AvatarFallback>{artist.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-            </CardHeader>
-            <CardTitle>{artist.name}</CardTitle>
-            <CardContent>{artist.genres.join(", ")}</CardContent>
-          </Card>
-        ))}
+        {loading
+          ? Array.from({ length: 10 }).map((_, index) => (
+              <Card key={index} className="group w-36 cursor-pointer space-y-2">
+                <CardHeader>
+                  <Skeleton className="w-36 h-36 rounded-xl" />
+                </CardHeader>
+                <CardTitle>
+                  <Skeleton className="h-5 w-32  mx-auto" />
+                </CardTitle>
+                <CardContent>
+                  <Skeleton className="h-4 w-28  mx-auto" />
+                </CardContent>
+              </Card>
+            ))
+          : memoizedFollowedArtists.map((artist) => (
+              <Card
+                key={artist.id}
+                className="group w-36 cursor-pointer"
+                onClick={() =>
+                  router.push(
+                    `/Artists/${artist.id}?name=${encodeURIComponent(
+                      artist.name
+                    )}`
+                  )
+                }
+              >
+                <CardHeader>
+                  <Avatar className="w-36 h-36 relative p-1">
+                    <AvatarImage src={artist.image} className="rounded-xl" />
+                    <AvatarFallback>{artist.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                </CardHeader>
+                <CardTitle>{artist.name}</CardTitle>
+                <CardContent>{artist.genres.join(", ")}</CardContent>
+              </Card>
+            ))}
       </div>
     </div>
   );
