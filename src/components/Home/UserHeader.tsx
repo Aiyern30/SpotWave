@@ -167,7 +167,9 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
           onMouseLeave={() => setIsHovered(false)}
         >
           <Image
-            src={uploadedImage || playlist.images[0]?.url || "/placeholder.jpg"}
+            src={
+              uploadedImage || playlist.images[0]?.url || "/default-artist.png"
+            }
             width={300}
             height={300}
             alt={playlist?.name || "Playlist cover image"}

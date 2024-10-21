@@ -114,10 +114,11 @@ const ProfileComponent = () => {
 
   return (
     <div className="profile-container flex flex-col md:flex-row p-6 space-y-6 md:space-y-0 md:space-x-8 w-full text-white bg-gray-900 rounded-lg shadow-lg">
-      {/* Profile Image Section */}
       <div className="flex justify-center md:justify-start">
         <Image
-          src={uploadedImage || myProfile?.images[0].url || "/placeholder.jpg"}
+          src={
+            uploadedImage || myProfile?.images[0].url || "/default-artist.png"
+          }
           width={150}
           height={150}
           alt={myProfile?.display_name || "User name"}
