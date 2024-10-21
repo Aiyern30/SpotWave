@@ -1,140 +1,165 @@
-// import React, { useEffect, useState } from "react";
-// import Image from "next/image";
-// import { Avatar, AvatarFallback, AvatarImage, Input,  } from "@/components/ui";
-// import { formatDuration } from "@/components/formDuration";
-// import { Settings } from "lucide-react";
-// import router from "next/router";
+import React, { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
+import { User } from "@/lib/types";
 
-// const ProfileComponent = () => {
-//     const [isHovered, setIsHovered] = useState(false);
-//   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-//   const [inputValue, setInputValue] = useState(playlist.name);
+const ProfileComponent = () => {
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [myProfile, setMyProfile] = useState<User | null>(null);
+  const [playlistsCount, setPlaylistsCount] = useState<number>(0);
+  const [followingArtistsCount, setFollowingArtistsCount] = useState<number>(0);
+  const [token, setToken] = useState<string>("");
 
-//   const [token, setToken] = useState<string>("");
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedToken = localStorage.getItem("Token");
+      if (storedToken) {
+        setToken(storedToken);
+      } else {
+        console.error("No token found. Please authenticate.");
+      }
+    }
+  }, []);
 
-//   useEffect(() => {
-//     if (typeof window !== "undefined") {
-//       const storedToken = localStorage.getItem("Token");
-//       if (storedToken) {
-//         setToken(storedToken);
-//       }
-//     }
-//   }, []);
+  // Fetch user profile
+  const fetchMyProfile = useCallback(async () => {
+    if (!token) {
+      console.error("Token not available");
+      return;
+    }
 
-//   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-//     const file = event.target.files?.[0];
+    try {
+      const response = await fetch("https://api.spotify.com/v1/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-//     if (file) {
-//       const reader = new FileReader();
-//       reader.onloadend = () => {
-//         const image = new window.Image();
-//         image.src = reader.result as string;
-//         image.onload = () => {
-//           const canvas = document.createElement("canvas");
-//           const ctx = canvas.getContext("2d");
+      if (!response.ok) {
+        console.error("Failed to fetch profile:", response.statusText);
+        return;
+      }
 
-//           const MAX_SIZE = 300;
+      const data = await response.json();
+      setMyProfile(data);
+      console.log("Profile data fetched:", data);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  }, [token]);
 
-//           let width = image.width;
-//           let height = image.height;
+  // Fetch user's playlists
+  const fetchMyPlaylists = useCallback(async () => {
+    if (!token) {
+      console.error("Token not available");
+      return;
+    }
 
-//           if (width > height) {
-//             if (width > MAX_SIZE) {
-//               height *= MAX_SIZE / width;
-//               width = MAX_SIZE;
-//             }
-//           } else {
-//             if (height > MAX_SIZE) {
-//               width *= MAX_SIZE / height;
-//               height = MAX_SIZE;
-//             }
-//           }
+    try {
+      const response = await fetch("https://api.spotify.com/v1/me/playlists", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-//           canvas.width = width;
-//           canvas.height = height;
+      if (!response.ok) {
+        console.error("Failed to fetch playlists:", response.statusText);
+        return;
+      }
 
-//           ctx?.drawImage(image, 0, 0, width, height);
+      const data = await response.json();
+      setPlaylistsCount(data.total); // Get the total number of playlists
+      console.log("Playlists fetched:", data);
+    } catch (error) {
+      console.error("Error fetching playlists:", error);
+    }
+  }, [token]);
 
-//           const resizedBase64String = canvas.toDataURL("image/jpeg");
+  // Fetch user's followed artists
+  const fetchFollowingArtists = useCallback(async () => {
+    if (!token) {
+      console.error("Token not available");
+      return;
+    }
 
-//           const base64Data = resizedBase64String.split(",")[1];
+    try {
+      const response = await fetch(
+        "https://api.spotify.com/v1/me/following?type=artist",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-//           uploadPlaylistImage(base64Data);
+      if (!response.ok) {
+        console.error("Failed to fetch followed artists:", response.statusText);
+        return;
+      }
 
-//           setUploadedImage(resizedBase64String);
-//         };
-//       };
-//       reader.readAsDataURL(file);
-//     }
-//   };
+      const data = await response.json();
+      setFollowingArtistsCount(data.artists.total); // Get the total number of followed artists
+      console.log("Following artists fetched:", data);
+    } catch (error) {
+      console.error("Error fetching followed artists:", error);
+    }
+  }, [token]);
 
-//   const uploadPlaylistImage = async (base64Data: string) => {
-//     console.log(token);
-//     const imageUrl = `https://api.spotify.com/v1/playlists/${playlist.id}/images`;
+  useEffect(() => {
+    if (token) {
+      fetchMyProfile();
+      fetchMyPlaylists();
+      fetchFollowingArtists();
+    }
+  }, [token, fetchMyProfile, fetchMyPlaylists, fetchFollowingArtists]);
 
-//     try {
-//       const response = await fetch(imageUrl, {
-//         method: "PUT",
-//         headers: {
-//           Authorization: `Bearer ${token}`, // Ensure token is correct
-//           "Content-Type": "image/jpeg", // Spotify expects a raw image in base64
-//         },
-//         body: base64Data, // The raw base64 string without any JSON wrapping
-//       });
+  return (
+    <div className="profile-container flex flex-col md:flex-row p-6 space-y-6 md:space-y-0 md:space-x-8 w-full text-white bg-gray-900 rounded-lg shadow-lg">
+      {/* Profile Image Section */}
+      <div className="relative">
+        <Image
+          src={uploadedImage || myProfile?.images[0].url || "/placeholder.jpg"}
+          width={150}
+          height={150}
+          alt={myProfile?.display_name || "User name"}
+          priority
+          className="rounded-full object-cover shadow-lg"
+        />
+      </div>
 
-//       if (response.ok) {
-//         console.log("Playlist cover image updated successfully");
-//       } else if (response.status === 401) {
-//         console.error("Unauthorized. Check token.");
-//       } else {
-//         console.error("Failed to upload image:", response.statusText);
-//       }
-//     } catch (error) {
-//       console.error("Error uploading playlist cover image:", error);
-//     }
-//   };
+      {/* Profile Info Section */}
+      <div className="flex flex-col space-y-4 flex-grow">
+        {/* Display Name */}
+        <h1 className="text-5xl font-bold">
+          {myProfile?.display_name || "Your Display Name"}
+        </h1>
 
-//   return <div className="cover flex flex-col md:flex-row p-4 space-x-4 w-full ">
-//   <div
-//     className="relative group "
-//     onMouseEnter={() => setIsHovered(true)}
-//     onMouseLeave={() => setIsHovered(false)}
-//   >
-//     <Image
-//       src={uploadedImage || playlist.images[0]?.url || "/placeholder.jpg"}
-//       width={300}
-//       height={300}
-//       alt={playlist?.name || "Playlist cover image"}
-//       priority
-//       className="w-full max-w-[300px] h-auto md:max-w-[150px] md:w-auto md:h-auto transition-opacity duration-300"
-//     />
-//     {isOwner && isHovered && (
-//       <input
-//         type="file"
-//         accept="image/*"
-//         onChange={handleImageUpload}
-//         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-//         title="Upload new cover image"
-//       />
-//     )}
-//   </div>
-//   <div className="flex flex-col space-y-3 mt-4 md:mt-0 flex-grow">
-//       <div className="input-container flex justify-between">
-//         <Input
-//           type="text"
-//           placeholder="Your Library Name"
-//           value={inputValue}
-//           onChange={handleInputChange}
-//           onBlur={() => {
-//             setNameEditing(false);
-//             updatePlaylistDetails();
-//           }}
-//         />
-//       </div>
+        {/* Profile Details */}
+        <div className="grid grid-cols-2 gap-1">
+          <div className="info-item flex items-center space-x-2">
+            <span className="font-semibold">Followers:</span>
+            <span>{myProfile?.followers.total}</span>
+          </div>
+          <div className="info-item flex items-center space-x-2">
+            <span className="font-semibold">Email:</span>
+            <span>{myProfile?.email}</span>
+          </div>
+          <div className="info-item flex items-center space-x-2">
+            <span className="font-semibold">Subscription:</span>
+            <span>{myProfile?.product}</span>
+          </div>
 
-//   </div>
+          <div className="info-item flex items-center space-x-2">
+            <span className="font-semibold">Total Playlists:</span>
+            <span>{playlistsCount}</span>
+          </div>
+          <div className="info-item flex items-center space-x-2">
+            <span className="font-semibold">Total Following Artists:</span>
+            <span>{followingArtistsCount}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-// </div>;
-// };
-
-// export default ProfileComponent;
+export default ProfileComponent;

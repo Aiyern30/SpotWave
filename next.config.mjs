@@ -7,6 +7,7 @@ const nextConfig = {
       `i2o.scdn.co`,
       'mosaic.scdn.co',
       'i.scdn.co',
+      'platform-lookaside.fbsbx.com',
       'image-cdn-ak.spotifycdn.com',
       'thisis-images.scdn.co',
       'seeded-session-images.scdn.co',

@@ -24,9 +24,9 @@ interface SpotifyPlayerEvent {
 
 export default function Home() {
   const CLIENT_ID = "5bf8d69f8aaf4727a4677c0ad2fef6ec";
-  const REDIRECT_URI =
-    process.env.NEXT_PUBLIC_REDIRECT_URI || "http://localhost:3000";
-  // const REDIRECT_URI = "http://localhost:3000";
+  // const REDIRECT_URI =
+  //   process.env.NEXT_PUBLIC_REDIRECT_URI || "http://localhost:3000";
+  const REDIRECT_URI = "http://localhost:3000";
 
   const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
   const RESPONSE_TYPE = "token";
