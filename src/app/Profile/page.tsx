@@ -5,6 +5,8 @@ import React, { useState } from "react";
 import Sidebar from "../Sidebar";
 import ProfileComponent from "./Profile";
 import PublicLibrary from "./PublicLibrary";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
+import FollowingArtists from "./FollowingArtists";
 
 const Profile = () => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
@@ -22,8 +24,22 @@ const Profile = () => {
       >
         <div className="p-4 space-y-4 ">
           <Header />
+
           <ProfileComponent />
-          <PublicLibrary />
+          <Tabs defaultValue="My Library" className="w-full ">
+            <TabsList className="my-5">
+              <TabsTrigger value="My Library">My Library</TabsTrigger>
+              <TabsTrigger value="Following Artists">
+                Following Artists
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="My Library">
+              <PublicLibrary />
+            </TabsContent>
+            <TabsContent value="Following Artists">
+              <FollowingArtists />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>
