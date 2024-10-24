@@ -14,14 +14,16 @@ import { PlaylistProps, User, UserProfile } from "@/lib/types";
 import { useEffect, useState } from "react";
 import { formatDuration } from "../formDuration";
 import Settings from "../Settings";
+import SearchSongs from "../SearchSongs";
 
 interface Playlist {
   playlist: PlaylistProps;
   user: UserProfile;
   id: User;
+  refetch: () => void;
 }
 
-export default function UserHeader({ playlist, user, id }: Playlist) {
+export default function UserHeader({ playlist, user, id, refetch }: Playlist) {
   const router = useRouter();
   const [isOwner, setIsOwner] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -33,7 +35,7 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
     playlist.description || ""
   );
   const [token, setToken] = useState<string>("");
-  const [loading, setLoading] = useState(true); // Loading state
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -48,10 +50,9 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
     if (playlist.owner.id === id?.id) {
       setIsOwner(true);
     }
-    setLoading(false); // Set loading to false when playlist and user are ready
+    setLoading(false);
   }, [playlist, id]);
 
-  // Update playlist details (name, description)
   const updatePlaylistDetails = async () => {
     if (!id || !playlist.id || !token) return;
 
@@ -60,7 +61,7 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
     const body = {
       name: inputValue,
       description: descriptionValue,
-      public: false, // or true, depending on your requirement
+      public: false,
     };
 
     try {
@@ -189,7 +190,10 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
         >
           <Image
             src={
-              uploadedImage || playlist.images[0]?.url || "/default-artist.png"
+              uploadedImage ||
+              (playlist?.images?.length
+                ? playlist.images[0].url
+                : "/default-artist.png")
             }
             width={300}
             height={300}
@@ -207,6 +211,7 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
             />
           )}
         </div>
+
         <div className="flex flex-col space-y-3 mt-4 md:mt-0 flex-grow">
           {isOwner && nameEditing ? (
             <div className="input-container flex justify-between">
@@ -284,8 +289,9 @@ export default function UserHeader({ playlist, user, id }: Playlist) {
             </div>
           </div>
         </div>
-        <div className="text-center mt-5 sm:mt-0">
+        <div className="text-center mt-5 sm:mt-0 flex-row sm:flex-col">
           <Settings playlistID={playlist.id} />
+          <SearchSongs playlistID={playlist.id} refetch={refetch} />
         </div>
       </div>
     </div>

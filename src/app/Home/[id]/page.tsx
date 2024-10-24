@@ -233,30 +233,25 @@ const PlaylistPage = () => {
     }
   };
 
+  const fetchMyPlaylists = async () => {
+    try {
+      const response = await fetch("https://api.spotify.com/v1/me/playlists", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+
+      const myPlaylists = data.items.filter(
+        (playlist: { owner: { id: string } }) => playlist.owner.id === myID?.id
+      );
+
+      setPlaylists(myPlaylists);
+    } catch (error) {
+      console.error("Error fetching playlists:", error);
+    }
+  };
   useEffect(() => {
-    const fetchMyPlaylists = async () => {
-      try {
-        const response = await fetch(
-          "https://api.spotify.com/v1/me/playlists",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const data = await response.json();
-
-        const myPlaylists = data.items.filter(
-          (playlist: { owner: { id: string } }) =>
-            playlist.owner.id === myID?.id
-        );
-
-        setPlaylists(myPlaylists);
-      } catch (error) {
-        console.error("Error fetching playlists:", error);
-      }
-    };
-
     const getPlaylists = async () => {
       await fetchMyPlaylists();
     };
@@ -381,6 +376,7 @@ const PlaylistPage = () => {
                     playlist={playlist}
                     user={user as UserProfile}
                     id={myID as User}
+                    refetch={fetchMyPlaylists}
                   />
 
                   <div className="flex justify-end space-x-3 items-center">
