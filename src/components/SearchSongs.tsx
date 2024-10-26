@@ -23,7 +23,7 @@ import { Artist, Track } from "@/lib/types";
 
 interface SearchSongsProps {
   playlistID: string;
-  refetch: () => void;
+  refetch: (playlistID: string) => void;
 }
 
 export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
@@ -108,7 +108,8 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
       }
 
       console.log("Track added to playlist successfully!");
-      refetch();
+      refetch(playlistID);
+      console.log("refetch");
     } catch (error) {
       console.error("Error adding track to playlist:", error);
     }
@@ -178,7 +179,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                           <DropdownMenuItem
                             onClick={() => handleAddTrackToPlaylist(track.uri)}
                           >
-                            Add "{track.name}"
+                            Add {track.name}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

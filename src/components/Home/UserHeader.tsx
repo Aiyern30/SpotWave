@@ -20,7 +20,7 @@ interface Playlist {
   playlist: PlaylistProps;
   user: UserProfile;
   id: User;
-  refetch: () => void;
+  refetch: (playlistID: string) => void;
 }
 
 export default function UserHeader({ playlist, user, id, refetch }: Playlist) {
