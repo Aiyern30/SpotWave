@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui";
 import { useRouter } from "next/navigation";
+import { IoMdAdd } from "react-icons/io"; // Import the icon
 
 type PlaylistsProps = {
   id: string;
@@ -25,6 +26,8 @@ type PlaylistsProps = {
 
 const Page = () => {
   const [token, setToken] = useState<string>("");
+  const [userId, setUserId] = useState<string>("");
+  console.log("userId", userId);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [playlists, setPlaylists] = useState<PlaylistsProps[]>([]);
   const router = useRouter();
@@ -33,12 +36,73 @@ const Page = () => {
     router.push(`/Home/${id}?name=${encodeURIComponent(name)}`);
   };
 
+  const fetchUserProfile = useCallback(async () => {
+    if (!token) {
+      console.error("No token available");
+      return;
+    }
+
+    try {
+      const response = await fetch("https://api.spotify.com/v1/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch user profile");
+      }
+
+      const data = await response.json();
+
+      console.log("User profile:", data);
+      setUserId(data.id);
+      console.log("User ID:", data.id);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  }, [token]);
+
+  const handleCreatePlaylist = async () => {
+    console.log("trigger");
+    console.log("userId", userId);
+    const playlistName = "My New Playlist";
+    if (!playlistName || !userId) return;
+
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/users/${userId}/playlists`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: playlistName,
+            description: "New playlist created with the app.",
+            public: true,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to create playlist");
+      }
+
+      fetchSpotifyPlaylists();
+    } catch (error) {
+      console.error("Error creating playlist:", error);
+    }
+  };
+
   useEffect(() => {
     const storedToken = localStorage.getItem("Token");
     if (storedToken) {
       setToken(storedToken);
+      fetchUserProfile();
     }
-  }, []);
+  }, [fetchUserProfile]);
 
   const fetchSpotifyPlaylists = useCallback(async () => {
     try {
@@ -47,6 +111,11 @@ const Page = () => {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch playlists");
+      }
+
       const data = await response.json();
 
       const formattedPlaylists = data.items.map((playlist: any) => ({
@@ -84,6 +153,19 @@ const Page = () => {
         <div className="p-4 space-y-4 ">
           <Header />
           <div className="flex flex-wrap gap-8">
+            <Card
+              className="group w-36 cursor-pointer text-white"
+              onClick={handleCreatePlaylist}
+            >
+              <CardHeader>
+                <Avatar className="w-36 h-36 relative p-1">
+                  <AvatarFallback className="rounded-xl">
+                    <IoMdAdd size={36} className="text-green-500" />
+                  </AvatarFallback>
+                </Avatar>
+              </CardHeader>
+            </Card>
+
             {memoizedPlaylists.map((data) => (
               <Card
                 key={data.id}
@@ -93,7 +175,9 @@ const Page = () => {
                 <CardHeader>
                   <Avatar className="w-36 h-36 relative p-1">
                     <AvatarImage src={data.image} className="rounded-xl" />
-                    <AvatarFallback>Image Unavailable</AvatarFallback>
+                    <AvatarFallback className="text-center text-black">
+                      New Playlists
+                    </AvatarFallback>
                   </Avatar>
                 </CardHeader>
                 <CardTitle>{data.title}</CardTitle>

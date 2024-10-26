@@ -121,7 +121,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
         <SheetTrigger>
           <IoMdAdd size={45} />
         </SheetTrigger>
-        <SheetContent className="w-[80vw] max-w-[90%]">
+        <SheetContent className="">
           <SheetHeader>
             <SheetTitle>Search for Songs</SheetTitle>
             <SheetDescription>
@@ -133,13 +133,19 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
           <div className="my-4 flex items justify-center">
             <Input
               type="text"
-              placeholder="Search for a song..."
+              placeholder="Search for a song"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSearch();
+                }
+              }}
               className="w-full p-2 border border-gray-300 rounded-md"
             />
             <Button
               onClick={handleSearch}
+              variant={"default"}
               className=" text-white py-2 px-4 rounded-md"
               disabled={isLoading}
             >
