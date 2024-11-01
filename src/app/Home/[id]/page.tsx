@@ -65,6 +65,7 @@ import {
 } from "@/lib/types";
 import UserHeader from "@/components/Home/UserHeader";
 import { fetchUserProfile } from "@/utils/fetchProfile";
+import { AddSongsToTrack } from "@/utils/AddSongsToTrack";
 
 const itemsPerPage = 10;
 
@@ -168,33 +169,41 @@ const PlaylistPage = () => {
     }
   }, [token]);
 
-  const [selectedLibraryID, setSelectedLibraryID] = useState<string>("");
-
-  const AddPlaylist = async (playlistId: string, songId: string) => {
-    const requestUrl = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`;
-
-    try {
-      const response = await fetch(requestUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          uris: [`spotify:track:${songId}`],
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Track added to playlist:", data);
-      } else {
-        console.error("Error adding track:", response.statusText);
-      }
-    } catch (error) {
-      console.error("Error adding track:", error);
+  const handleAddSongsToTrack = async (
+    id: string,
+    selectedLibraryID: string
+  ) => {
+    const response = await AddSongsToTrack(id, selectedLibraryID, token);
+    if (response) {
+      console.log("dddddd");
     }
   };
+
+  // const AddPlaylist = async (playlistId: string, songId: string) => {
+  //   const requestUrl = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`;
+
+  //   try {
+  //     const response = await fetch(requestUrl, {
+  //       method: "POST",
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         uris: [`spotify:track:${songId}`],
+  //       }),
+  //     });
+
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       console.log("Track added to playlist:", data);
+  //     } else {
+  //       console.error("Error adding track:", response.statusText);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error adding track:", error);
+  //   }
+  // };
 
   const removePlaylist = async (playlistID: string, trackID: string) => {
     try {
@@ -541,12 +550,8 @@ const PlaylistPage = () => {
                                           <DropdownMenuItem>
                                             <Select
                                               onValueChange={(selectedID) => {
-                                                setSelectedLibraryID(
-                                                  selectedID
-                                                );
-
-                                                AddPlaylist(
-                                                  selectedLibraryID,
+                                                handleAddSongsToTrack(
+                                                  selectedID,
                                                   item.track.id
                                                 );
                                               }}
