@@ -36,6 +36,8 @@ import {
 } from "./ui";
 import { PlaylistProps } from "@/lib/types";
 import { useRouter } from "next/navigation";
+import { fetchUserProfile } from "@/utils/fetchProfile";
+import { CreatePlaylist } from "@/utils/createPlaylist";
 
 interface SettingsProps {
   playlistID: string;
@@ -56,6 +58,7 @@ export default function Settings({ playlistID }: SettingsProps) {
   >("380");
   const [showEmbedCode, setShowEmbedCode] = useState(false);
   const [generatedEmbedCode, setGeneratedEmbedCode] = useState<string>("");
+  const [userID, setUserID] = useState<string>("");
 
   useEffect(() => {
     const storedToken = localStorage.getItem("Token");
@@ -63,6 +66,19 @@ export default function Settings({ playlistID }: SettingsProps) {
       setToken(storedToken);
     }
   }, []);
+
+  const handleCreatePlaylist = async () => {
+    const playlistResponse = await CreatePlaylist(userID, token);
+    if (playlistResponse) {
+      const playlistID = playlistResponse.id;
+      const playlistName = playlistResponse.name;
+      router.push(
+        `/Home/${playlistID}?name=${encodeURIComponent(playlistName)}`
+      );
+    } else {
+      console.log("Playlist creation failed.");
+    }
+  };
 
   const fetchPlaylistDetails = useCallback(async () => {
     try {
@@ -157,6 +173,15 @@ export default function Settings({ playlistID }: SettingsProps) {
   useEffect(() => {
     if (token) {
       fetchPlaylistDetails();
+
+      const fetchAndSetUserID = async () => {
+        const userId = await fetchUserProfile(token);
+        if (userId) {
+          setUserID(userId);
+        }
+      };
+
+      fetchAndSetUserID();
     }
   }, [token, fetchPlaylistDetails]);
 
@@ -175,7 +200,7 @@ export default function Settings({ playlistID }: SettingsProps) {
           <DropdownMenuItem>
             <FiPlusCircle className="mr-2" /> Add to profile
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => router.push("/CreatePlaylist")}>
+          <DropdownMenuItem onClick={handleCreatePlaylist}>
             <FiPlusCircle className="mr-2" /> Create playlists
           </DropdownMenuItem>
           <DropdownMenuItem onClick={copyInviteLink}>
