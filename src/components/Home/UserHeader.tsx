@@ -19,7 +19,7 @@ import SearchSongs from "../SearchSongs";
 interface Playlist {
   playlist: PlaylistProps;
   user: UserProfile;
-  id: User;
+  id: string;
   refetch: (playlistID: string) => void;
 }
 
@@ -47,7 +47,7 @@ export default function UserHeader({ playlist, user, id, refetch }: Playlist) {
   }, []);
 
   useEffect(() => {
-    if (playlist.owner.id === id?.id) {
+    if (playlist.owner.id === id) {
       setIsOwner(true);
     }
     setLoading(false);

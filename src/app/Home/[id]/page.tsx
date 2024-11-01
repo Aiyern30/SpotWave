@@ -64,6 +64,7 @@ import {
   UserProfile,
 } from "@/lib/types";
 import UserHeader from "@/components/Home/UserHeader";
+import { fetchUserProfile } from "@/utils/fetchProfile";
 
 const itemsPerPage = 10;
 
@@ -75,7 +76,6 @@ const PlaylistPage = () => {
   const [playlist, setPlaylist] = useState<PlaylistProps | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [token, setToken] = useState<string>("");
-  const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
   const [hoveredArtist, setHoveredArtist] = useState<string | null>(null);
@@ -86,7 +86,6 @@ const PlaylistPage = () => {
   const [inputPage, setInputPage] = useState<string>("");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [lyrics, setLyrics] = useState<String | null>(null);
-  const [dropMenuOpen, setDropMenuOpen] = useState<boolean>(false);
 
   const handleArtistClick = (artistId: string, name: string) => {
     router.push(`/Artists/${artistId}?name=${encodeURIComponent(name)}`);
@@ -159,25 +158,14 @@ const PlaylistPage = () => {
 
   const [playlists, setPlaylists] = useState<PlaylistProps[]>([]);
 
-  const [myID, setMyID] = useState<User | null>(null);
+  const [myID, setMyID] = useState<string>("");
 
-  useEffect(() => {
-    const fetchCurrentUserId = async () => {
-      try {
-        const response = await fetch("https://api.spotify.com/v1/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const userData = await response.json();
-        setMyID(userData);
-        return userData.id;
-      } catch (error) {
-        console.error("Error fetching user ID:", error);
-        return null;
-      }
-    };
-    fetchCurrentUserId();
+  const fetchMyID = useCallback(async () => {
+    const profileDetails = await fetchUserProfile(token);
+    const userId = profileDetails?.id;
+    if (userId) {
+      setMyID(userId);
+    }
   }, [token]);
 
   const [selectedLibraryID, setSelectedLibraryID] = useState<string>("");
@@ -247,8 +235,7 @@ const PlaylistPage = () => {
         const data = await response.json();
 
         const myPlaylists = data.items.filter(
-          (playlist: { owner: { id: string } }) =>
-            playlist.owner.id === myID?.id
+          (playlist: { owner: { id: string } }) => playlist.owner.id === myID
         );
 
         setPlaylists(myPlaylists);
@@ -282,26 +269,6 @@ const PlaylistPage = () => {
     }
   };
 
-  const fetchUserProfile = useCallback(
-    async (userId: string) => {
-      try {
-        const response = await fetch(
-          `https://api.spotify.com/v1/users/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const data = await response.json();
-        setUser(data);
-      } catch (error) {
-        console.error("Error fetching user details:", error);
-      }
-    },
-    [token]
-  );
-
   const fetchPlaylistDetails = useCallback(
     async (playlistId: string) => {
       try {
@@ -330,7 +297,7 @@ const PlaylistPage = () => {
           });
 
           if (data.owner?.id) {
-            fetchUserProfile(data.owner.id);
+            fetchMyID();
           }
         } else {
           console.warn("Invalid playlist data:", data);
@@ -339,7 +306,7 @@ const PlaylistPage = () => {
         console.error("Error fetching playlist details:", error);
       }
     },
-    [token, fetchUserProfile]
+    [token, fetchMyID]
   );
 
   useEffect(() => {
@@ -380,7 +347,7 @@ const PlaylistPage = () => {
                   <UserHeader
                     playlist={playlist}
                     user={user as UserProfile}
-                    id={myID as User}
+                    id={myID}
                     refetch={(id) => fetchPlaylistDetails(id)}
                   />
 
@@ -626,7 +593,7 @@ const PlaylistPage = () => {
                                         </DropdownMenuSubContent>
                                       </DropdownMenuPortal>
                                     </DropdownMenuSub>
-                                    {item.added_by.id === myID?.id && (
+                                    {item.added_by.id === myID && (
                                       <DropdownMenuItem
                                         onClick={() => {
                                           removePlaylist(id, item.track.id);
