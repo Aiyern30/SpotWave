@@ -38,6 +38,8 @@ import { PlaylistProps } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { fetchUserProfile } from "@/utils/fetchProfile";
 import { CreatePlaylist } from "@/utils/createPlaylist";
+import { deletePlaylist } from "@/utils/deletePlaylist";
+import { fetchPlaylistDetails } from "@/utils/fetchPlaylist";
 
 interface SettingsProps {
   playlistID: string;
@@ -80,54 +82,20 @@ export default function Settings({ playlistID }: SettingsProps) {
     }
   };
 
-  const fetchPlaylistDetails = useCallback(async () => {
-    try {
-      const response = await fetch(
-        `https://api.spotify.com/v1/playlists/${playlistID}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(
-          "Failed to fetch playlist details:",
-          response.statusText,
-          errorText
-        );
-        return;
-      }
-
-      const data = await response.json();
-      console.log("Fetched playlist details:", data);
-      setCurrentPlaylist(data);
-    } catch (error) {
-      console.error("Error occurred while fetching playlist details:", error);
+  const handleFetchPlaylistDetails = async () => {
+    const fetchPlaylist = await fetchPlaylistDetails(playlistID, token);
+    if (fetchPlaylist) {
+      setCurrentPlaylist(fetchPlaylist);
     }
-  }, [token, playlistID]);
+  };
 
-  const deletePlaylist = async () => {
-    const response = await fetch(
-      `https://api.spotify.com/v1/playlists/${playlistID}/followers`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (response.ok) {
+  const handleDeletePlaylist = async () => {
+    const confirmDelete = await deletePlaylist(playlistID, token);
+    if (confirmDelete) {
       router.push("/Home");
-      console.log("Playlist deleted successfully");
-    } else {
-      console.error("Failed to delete playlist:", response.statusText);
+      setIsDeleteDialogOpen(false);
+      setIsDropdownOpen(false);
     }
-    setIsDeleteDialogOpen(false);
-    setIsDropdownOpen(false);
   };
 
   const copyPlaylistLink = () => {
@@ -137,7 +105,7 @@ export default function Settings({ playlistID }: SettingsProps) {
       .then(() => {
         toast.success("Playlist link copied to clipboard!");
       })
-      .catch((err) => {
+      .catch(() => {
         toast.error("Failed to copy playlist link.");
       });
   };
@@ -148,7 +116,7 @@ export default function Settings({ playlistID }: SettingsProps) {
       .then(() => {
         toast.success("Embed code copied to clipboard!");
       })
-      .catch((err) => {
+      .catch(() => {
         toast.error("Failed to copy embed code.");
       });
   };
@@ -172,7 +140,7 @@ export default function Settings({ playlistID }: SettingsProps) {
 
   useEffect(() => {
     if (token) {
-      fetchPlaylistDetails();
+      handleFetchPlaylistDetails();
 
       const fetchAndSetUserID = async () => {
         const userId = await fetchUserProfile(token);
@@ -183,7 +151,7 @@ export default function Settings({ playlistID }: SettingsProps) {
 
       fetchAndSetUserID();
     }
-  }, [token, fetchPlaylistDetails]);
+  }, [token, handleFetchPlaylistDetails]);
 
   useEffect(() => {
     generateEmbedCode();
@@ -253,7 +221,7 @@ export default function Settings({ playlistID }: SettingsProps) {
             </Button>
             <Button
               type="submit"
-              onClick={deletePlaylist}
+              onClick={handleDeletePlaylist}
               variant={"destructive"}
             >
               Confirm
