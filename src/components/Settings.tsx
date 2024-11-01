@@ -82,12 +82,12 @@ export default function Settings({ playlistID }: SettingsProps) {
     }
   };
 
-  const handleFetchPlaylistDetails = async () => {
+  const handleFetchPlaylistDetails = useCallback(async () => {
     const fetchPlaylist = await fetchPlaylistDetails(playlistID, token);
     if (fetchPlaylist) {
       setCurrentPlaylist(fetchPlaylist);
     }
-  };
+  }, [token, playlistID]);
 
   const handleDeletePlaylist = async () => {
     const confirmDelete = await deletePlaylist(playlistID, token);
@@ -143,7 +143,8 @@ export default function Settings({ playlistID }: SettingsProps) {
       handleFetchPlaylistDetails();
 
       const fetchAndSetUserID = async () => {
-        const userId = await fetchUserProfile(token);
+        const data = await fetchUserProfile(token);
+        const userId = data?.id;
         if (userId) {
           setUserID(userId);
         }

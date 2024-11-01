@@ -1,3 +1,5 @@
+import { Artist } from "@/lib/types";
+
 export const fetchUserProfile = async (token: string) => {
   if (!token) {
     console.error("No token available");
@@ -15,9 +17,9 @@ export const fetchUserProfile = async (token: string) => {
       throw new Error("Failed to fetch user profile");
     }
 
-    const data = await response.json();
+    const data: Artist = await response.json();
 
-    return data.id;
+    return data;
   } catch (error) {
     console.error("Error fetching user profile:", error);
   }
