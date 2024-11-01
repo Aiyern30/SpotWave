@@ -64,6 +64,8 @@ import {
   UserProfile,
 } from "@/lib/types";
 import UserHeader from "@/components/Home/UserHeader";
+import { fetchUserProfile } from "@/utils/fetchProfile";
+import { AddSongsToTrack } from "@/utils/AddSongsToTrack";
 
 const itemsPerPage = 10;
 
@@ -75,7 +77,6 @@ const PlaylistPage = () => {
   const [playlist, setPlaylist] = useState<PlaylistProps | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [token, setToken] = useState<string>("");
-  const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
   const [hoveredArtist, setHoveredArtist] = useState<string | null>(null);
@@ -86,7 +87,6 @@ const PlaylistPage = () => {
   const [inputPage, setInputPage] = useState<string>("");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [lyrics, setLyrics] = useState<String | null>(null);
-  const [dropMenuOpen, setDropMenuOpen] = useState<boolean>(false);
 
   const handleArtistClick = (artistId: string, name: string) => {
     router.push(`/Artists/${artistId}?name=${encodeURIComponent(name)}`);
@@ -159,54 +159,51 @@ const PlaylistPage = () => {
 
   const [playlists, setPlaylists] = useState<PlaylistProps[]>([]);
 
-  const [myID, setMyID] = useState<User | null>(null);
+  const [myID, setMyID] = useState<string>("");
 
-  useEffect(() => {
-    const fetchCurrentUserId = async () => {
-      try {
-        const response = await fetch("https://api.spotify.com/v1/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const userData = await response.json();
-        setMyID(userData);
-        return userData.id;
-      } catch (error) {
-        console.error("Error fetching user ID:", error);
-        return null;
-      }
-    };
-    fetchCurrentUserId();
+  const fetchMyID = useCallback(async () => {
+    const profileDetails = await fetchUserProfile(token);
+    const userId = profileDetails?.id;
+    if (userId) {
+      setMyID(userId);
+    }
   }, [token]);
 
-  const [selectedLibraryID, setSelectedLibraryID] = useState<string>("");
-
-  const AddPlaylist = async (playlistId: string, songId: string) => {
-    const requestUrl = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`;
-
-    try {
-      const response = await fetch(requestUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          uris: [`spotify:track:${songId}`],
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Track added to playlist:", data);
-      } else {
-        console.error("Error adding track:", response.statusText);
-      }
-    } catch (error) {
-      console.error("Error adding track:", error);
+  const handleAddSongsToTrack = async (
+    id: string,
+    selectedLibraryID: string
+  ) => {
+    const response = await AddSongsToTrack(id, selectedLibraryID, token);
+    if (response) {
+      console.log("dddddd");
     }
   };
+
+  // const AddPlaylist = async (playlistId: string, songId: string) => {
+  //   const requestUrl = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`;
+
+  //   try {
+  //     const response = await fetch(requestUrl, {
+  //       method: "POST",
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         uris: [`spotify:track:${songId}`],
+  //       }),
+  //     });
+
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       console.log("Track added to playlist:", data);
+  //     } else {
+  //       console.error("Error adding track:", response.statusText);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error adding track:", error);
+  //   }
+  // };
 
   const removePlaylist = async (playlistID: string, trackID: string) => {
     try {
@@ -247,8 +244,7 @@ const PlaylistPage = () => {
         const data = await response.json();
 
         const myPlaylists = data.items.filter(
-          (playlist: { owner: { id: string } }) =>
-            playlist.owner.id === myID?.id
+          (playlist: { owner: { id: string } }) => playlist.owner.id === myID
         );
 
         setPlaylists(myPlaylists);
@@ -282,26 +278,6 @@ const PlaylistPage = () => {
     }
   };
 
-  const fetchUserProfile = useCallback(
-    async (userId: string) => {
-      try {
-        const response = await fetch(
-          `https://api.spotify.com/v1/users/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const data = await response.json();
-        setUser(data);
-      } catch (error) {
-        console.error("Error fetching user details:", error);
-      }
-    },
-    [token]
-  );
-
   const fetchPlaylistDetails = useCallback(
     async (playlistId: string) => {
       try {
@@ -330,7 +306,7 @@ const PlaylistPage = () => {
           });
 
           if (data.owner?.id) {
-            fetchUserProfile(data.owner.id);
+            fetchMyID();
           }
         } else {
           console.warn("Invalid playlist data:", data);
@@ -339,7 +315,7 @@ const PlaylistPage = () => {
         console.error("Error fetching playlist details:", error);
       }
     },
-    [token, fetchUserProfile]
+    [token, fetchMyID]
   );
 
   useEffect(() => {
@@ -380,7 +356,7 @@ const PlaylistPage = () => {
                   <UserHeader
                     playlist={playlist}
                     user={user as UserProfile}
-                    id={myID as User}
+                    id={myID}
                     refetch={(id) => fetchPlaylistDetails(id)}
                   />
 
@@ -574,12 +550,8 @@ const PlaylistPage = () => {
                                           <DropdownMenuItem>
                                             <Select
                                               onValueChange={(selectedID) => {
-                                                setSelectedLibraryID(
-                                                  selectedID
-                                                );
-
-                                                AddPlaylist(
-                                                  selectedLibraryID,
+                                                handleAddSongsToTrack(
+                                                  selectedID,
                                                   item.track.id
                                                 );
                                               }}
@@ -626,7 +598,7 @@ const PlaylistPage = () => {
                                         </DropdownMenuSubContent>
                                       </DropdownMenuPortal>
                                     </DropdownMenuSub>
-                                    {item.added_by.id === myID?.id && (
+                                    {item.added_by.id === myID && (
                                       <DropdownMenuItem
                                         onClick={() => {
                                           removePlaylist(id, item.track.id);
