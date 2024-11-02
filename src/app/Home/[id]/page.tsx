@@ -65,8 +65,9 @@ import {
 } from "@/lib/types";
 import UserHeader from "@/components/Home/UserHeader";
 import { fetchUserProfile } from "@/utils/fetchProfile";
-import { AddSongsToTrack } from "@/utils/AddSongsToTrack";
+import { AddSongsToTrack } from "@/utils/Tracks/AddSongsToTrack";
 import { useToast } from "@/hooks/use-toast";
+import { removePlaylist } from "@/utils/Tracks/removeSongsFromTrack";
 
 const itemsPerPage = 10;
 
@@ -176,68 +177,45 @@ const PlaylistPage = () => {
     id: string,
     selectedLibraryID: string
   ) => {
-    const response = await AddSongsToTrack(id, selectedLibraryID, token);
-    if (response) {
+    const { success, message } = await AddSongsToTrack(
+      id,
+      selectedLibraryID,
+      token
+    );
+    if (success) {
       toast({
-        title: "Uh oh! Something went wrong.",
-        description: "There was a problem with your request.",
+        title: "Success!",
+        description: "Track added successfully.",
       });
     } else {
       toast({
-        title: "Uh oh! Something went wrong.",
-        description: "There was a problem with your request.",
+        title: "Error",
+        description: message,
       });
     }
   };
 
-  // const AddPlaylist = async (playlistId: string, songId: string) => {
-  //   const requestUrl = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`;
+  const handleRemoveSongsFromTrack = async (
+    playlistID: string,
+    trackID: string
+  ) => {
+    const { success, message } = await removePlaylist(
+      playlistID,
+      trackID,
+      token
+    );
+    if (success) {
+      fetchPlaylistDetails(id);
 
-  //   try {
-  //     const response = await fetch(requestUrl, {
-  //       method: "POST",
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({
-  //         uris: [`spotify:track:${songId}`],
-  //       }),
-  //     });
-
-  //     if (response.ok) {
-  //       const data = await response.json();
-  //       console.log("Track added to playlist:", data);
-  //     } else {
-  //       console.error("Error adding track:", response.statusText);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error adding track:", error);
-  //   }
-  // };
-
-  const removePlaylist = async (playlistID: string, trackID: string) => {
-    try {
-      const requestUrl = `https://api.spotify.com/v1/playlists/${playlistID}/tracks`;
-
-      const response = await fetch(requestUrl, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          tracks: [{ uri: `spotify:track:${trackID}` }],
-        }),
+      toast({
+        title: "Success!",
+        description: message,
       });
-      if (response.ok) {
-        fetchPlaylistDetails(id);
-        console.log("Track removed from playlist.");
-      } else {
-        console.error("Error remove track:", response.statusText);
-      }
-    } catch (error) {
-      console.error("Error removing track:", error);
+    } else {
+      toast({
+        title: "Error",
+        description: message,
+      });
     }
   };
 
@@ -612,7 +590,10 @@ const PlaylistPage = () => {
                                     {item.added_by.id === myID && (
                                       <DropdownMenuItem
                                         onClick={() => {
-                                          removePlaylist(id, item.track.id);
+                                          handleRemoveSongsFromTrack(
+                                            id,
+                                            item.track.id
+                                          );
                                         }}
                                       >
                                         <>

@@ -2,7 +2,7 @@ export const AddSongsToTrack = async (
   playlistId: string,
   songId: string,
   token: string
-): Promise<boolean> => {
+): Promise<{ success: boolean; message: string }> => {
   const requestUrl = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`;
 
   try {
@@ -20,13 +20,19 @@ export const AddSongsToTrack = async (
     if (response.ok) {
       const data = await response.json();
       console.log("Track added to playlist:", data);
-      return true; // Indicate success
+      return { success: true, message: "Track added successfully" };
     } else {
-      console.error("Error adding track:", response.statusText);
-      return false; // Indicate failure
+      const errorData = await response.json();
+      const errorMessage = errorData.error?.message || response.statusText;
+      console.error("Error adding track:", errorMessage);
+      return { success: false, message: errorMessage };
     }
   } catch (error) {
-    console.error("Error adding track:", error);
-    return false; // Indicate failure in case of error
+    let errorMessage = "An unknown error occurred.";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    console.error("Error adding track:", errorMessage);
+    return { success: false, message: errorMessage };
   }
 };
