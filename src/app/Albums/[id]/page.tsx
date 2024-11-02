@@ -117,6 +117,7 @@ const ArtistProfilePage = () => {
     fetchAndSetAlbum();
   }, [id, token]);
 
+
   const playPreview = (url: string | null) => {
     if (audio) {
       audio.pause();
