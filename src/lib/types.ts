@@ -17,6 +17,24 @@ export interface Artist {
   image: string;
 }
 
+export interface RecentTracksProps {
+  played_at: string;
+  track: {
+    album: {
+      album_type: string;
+      artists: {
+        name: string;
+        id: string;
+        type: string;
+      };
+      release_date: string;
+      images: Image[];
+    };
+    name: string;
+    duration_ms: string;
+  };
+}
+
 export interface Album {
   album_type: string;
   total_tracks: number;
