@@ -4,6 +4,7 @@ import "./globals.css";
 import Script from "next/script";
 import AuthProvider from "./AuthProvider";
 import { Toaster } from "@/components/ui/Toaster";
+import InQueueWindow from "@/components/InQueueWindow";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,6 +30,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <Toaster />
+          <InQueueWindow />
         </AuthProvider>
       </body>
     </html>
