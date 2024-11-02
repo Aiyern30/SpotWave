@@ -66,10 +66,13 @@ import {
 import UserHeader from "@/components/Home/UserHeader";
 import { fetchUserProfile } from "@/utils/fetchProfile";
 import { AddSongsToTrack } from "@/utils/AddSongsToTrack";
+import { useToast } from "@/hooks/use-toast";
 
 const itemsPerPage = 10;
 
 const PlaylistPage = () => {
+  const { toast } = useToast();
+
   const params = useParams();
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -175,7 +178,15 @@ const PlaylistPage = () => {
   ) => {
     const response = await AddSongsToTrack(id, selectedLibraryID, token);
     if (response) {
-      console.log("dddddd");
+      toast({
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem with your request.",
+      });
+    } else {
+      toast({
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem with your request.",
+      });
     }
   };
 
