@@ -9,6 +9,27 @@
     "lint": "next lint",
     "cz": "cz"
   },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-customizable"
+    },
+    "cz-customizable": {
+      "types": [
+        {
+          "value": "feat",
+          "name": "feat:     A new feature"
+        },
+        {
+          "value": "fix",
+          "name": "fix:      A bug fix"
+        },
+        {
+          "value": "revert",
+          "name": "revert:   Revert to a commit"
+        }
+      ]
+    }
+  },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
@@ -46,12 +67,14 @@
     "vaul": "^0.9.1"
   },
   "devDependencies": {
+    "@types/js-cookie": "^3.0.6",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/three": "^0.168.0",
     "commitizen": "^4.3.1",
     "cz-conventional-changelog": "^3.3.0",
+    "cz-customizable": "^7.2.1",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
     "postcss": "^8",
