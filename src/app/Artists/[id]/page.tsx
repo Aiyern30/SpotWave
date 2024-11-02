@@ -79,7 +79,6 @@ const ArtistProfilePage = () => {
   const [artistProfile, setArtistProfile] =
     useState<ArtistProfilePageProps | null>(null);
   const [topTracks, setTopTracks] = useState<TopTrack[]>([]);
-  console.log("topTracks", topTracks);
   const [albums, setAlbums] = useState<Albums[]>([]);
   const [artistDetails, setArtistDetails] = useState<AboutProps | null>(null);
   const pathname = usePathname();

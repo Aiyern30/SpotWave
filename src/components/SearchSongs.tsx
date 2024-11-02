@@ -107,9 +107,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
         return;
       }
 
-      console.log("Track added to playlist successfully!");
       refetch(playlistID);
-      console.log("refetch");
     } catch (error) {
       console.error("Error adding track to playlist:", error);
     }

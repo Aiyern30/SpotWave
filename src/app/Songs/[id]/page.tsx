@@ -7,11 +7,6 @@ import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardFooter,
   Skeleton,
   Button,
   Sheet,
@@ -42,9 +37,7 @@ const SongPage = () => {
         `https://api.lyrics.ovh/v1/${artist}/${title}`
       );
       const data = await response.json();
-      console.log("data", data);
 
-      // Check if the response contains an error or if the lyrics are empty
       if (data.lyrics && data.lyrics.trim()) {
         setLyrics(data.lyrics);
       } else {

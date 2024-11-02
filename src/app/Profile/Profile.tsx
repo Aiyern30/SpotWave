@@ -1,10 +1,9 @@
-// Profile.tsx
 import React, { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { User, PlaylistProps } from "@/lib/types"; // Ensure PlaylistProps is imported
+import { User, PlaylistProps } from "@/lib/types";
 import { fetchUserProfile } from "@/utils/fetchProfile";
 import { fetchFollowedArtists } from "@/utils/Artist/fetchFollowedArtists";
-import { fetchSpotifyPlaylists } from "@/utils/fetchAllPlaylist"; // Import the new fetch function
+import { fetchSpotifyPlaylists } from "@/utils/fetchAllPlaylist";
 
 const ProfileComponent = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -33,11 +32,9 @@ const ProfileComponent = () => {
     const profileData = await fetchUserProfile(token);
     if (profileData) {
       setMyProfile(profileData);
-      console.log("Profile data fetched:", profileData);
     }
   }, [token]);
 
-  // Fetch user's playlists using the utility function
   const fetchMyPlaylists = useCallback(async () => {
     if (!token) {
       console.error("Token not available");
@@ -46,8 +43,7 @@ const ProfileComponent = () => {
 
     const playlistsData = await fetchSpotifyPlaylists(token);
     if (playlistsData) {
-      setPlaylistsCount(playlistsData.length); // Set the total number of playlists
-      console.log("Playlists fetched:", playlistsData);
+      setPlaylistsCount(playlistsData.length);
     }
   }, [token]);
 

@@ -39,7 +39,6 @@ const PublicLibrary = () => {
     const profileData = await fetchUserProfile(token);
     if (profileData) {
       setMyProfile(profileData);
-      console.log("Profile data fetched:", profileData);
     }
   }, [token]);
 
@@ -57,7 +56,6 @@ const PublicLibrary = () => {
           (playlist: PlaylistProps) => playlist.owner.id === myProfile?.id
         );
         setPublicPlaylists(myPlaylists);
-        console.log("My playlists fetched:", myPlaylists);
       }
     } catch (error) {
       console.error("Error fetching public playlists:", error);

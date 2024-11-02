@@ -8,7 +8,7 @@ import {
   Input,
   Textarea,
   Skeleton,
-} from "../ui"; // Ensure Skeleton is imported
+} from "../ui";
 import { useRouter } from "next/navigation";
 import { PlaylistProps, User, UserProfile } from "@/lib/types";
 import { useEffect, useState } from "react";
@@ -84,7 +84,6 @@ export default function UserHeader({ playlist, user, id, refetch }: Playlist) {
     }
   };
 
-  // Upload image to Spotify
   const uploadPlaylistImage = async (base64Data: string) => {
     const imageUrl = `https://api.spotify.com/v1/playlists/${playlist.id}/images`;
 
@@ -92,10 +91,10 @@ export default function UserHeader({ playlist, user, id, refetch }: Playlist) {
       const response = await fetch(imageUrl, {
         method: "PUT",
         headers: {
-          Authorization: `Bearer ${token}`, // Ensure token is correct
-          "Content-Type": "image/jpeg", // Spotify expects a raw image in base64
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "image/jpeg",
         },
-        body: base64Data, // The raw base64 string without any JSON wrapping
+        body: base64Data,
       });
 
       if (response.ok) {
