@@ -219,7 +219,7 @@ const Page = () => {
                             {artist.image[0]["#text"] && (
                               <Avatar className="w-36 h-36 relative p-1">
                                 <AvatarImage src={imageUrl} alt={artist.name} />
-                                <AvatarFallback>
+                                <AvatarFallback className="text-black">
                                   {artist.name[0]}
                                 </AvatarFallback>
                               </Avatar>
@@ -253,7 +253,9 @@ const Page = () => {
                     <CardHeader>
                       <Avatar className="w-36 h-36 relative p-1">
                         <AvatarImage src={imageUrl} alt={artist.name} />
-                        <AvatarFallback>{artist.name[0]}</AvatarFallback>
+                        <AvatarFallback className="text-black">
+                          {artist.name[0]}
+                        </AvatarFallback>
                       </Avatar>
                       <CardTitle>{artist.name}</CardTitle>
                     </CardHeader>

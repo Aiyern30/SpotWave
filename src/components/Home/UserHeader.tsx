@@ -263,7 +263,9 @@ export default function UserHeader({ playlist, user, id, refetch }: Playlist) {
                   src={user?.images[0]?.url}
                   className="rounded-full"
                 />
-                <AvatarFallback>{playlist?.owner?.display_name}</AvatarFallback>
+                <AvatarFallback className="text-black">
+                  {playlist?.owner?.display_name}
+                </AvatarFallback>
               </Avatar>
             </div>
             <div

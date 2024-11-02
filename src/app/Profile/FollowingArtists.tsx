@@ -76,7 +76,9 @@ const FollowingArtists = () => {
                 <CardHeader>
                   <Avatar className="w-36 h-36 relative p-1">
                     <AvatarImage src={artist.image} className="rounded-xl" />
-                    <AvatarFallback>{artist.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className="text-black">
+                      {artist.name.charAt(0)}
+                    </AvatarFallback>
                   </Avatar>
                 </CardHeader>
                 <CardTitle>{artist.name}</CardTitle>

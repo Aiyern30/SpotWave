@@ -117,7 +117,6 @@ const ArtistProfilePage = () => {
     fetchAndSetAlbum();
   }, [id, token]);
 
-
   const playPreview = (url: string | null) => {
     if (audio) {
       audio.pause();
@@ -161,7 +160,9 @@ const ArtistProfilePage = () => {
                   src={album.images[0]?.url || "/default-artist.png"}
                   className="w-48 h-48 rounded-full object-cover"
                 />
-                <AvatarFallback>{album.name}</AvatarFallback>
+                <AvatarFallback className="text-black">
+                  {album.name}
+                </AvatarFallback>
               </Avatar>
 
               <p className="text-lg">Release Date: {album.release_date}</p>

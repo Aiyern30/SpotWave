@@ -159,7 +159,9 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                     <div className="flex items-center justify-between">
                       <Avatar className="mr-4">
                         <AvatarImage src={track.album.images[2]?.url || ""} />
-                        <AvatarFallback>Album</AvatarFallback>
+                        <AvatarFallback className="text-black">
+                          Album
+                        </AvatarFallback>
                       </Avatar>
 
                       <div className="flex-1">

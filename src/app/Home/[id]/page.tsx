@@ -595,7 +595,7 @@ const PlaylistPage = () => {
                                   src={data.track.album.images[0].url}
                                   className="rounded-xl"
                                 />
-                                <AvatarFallback>
+                                <AvatarFallback className="text-black">
                                   {data.track.name}
                                 </AvatarFallback>
 

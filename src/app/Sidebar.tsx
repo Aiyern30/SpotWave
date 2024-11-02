@@ -5,9 +5,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { AiOutlineRollback } from "react-icons/ai";
 import {
-  BiHomeSmile,
   BiSolidMusic,
-  BiUserCircle,
   BiSolidAlbum,
   BiSolidCompass,
   BiLogOut,
@@ -26,6 +24,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/Alert-dialog";
+import { IoIosHome } from "react-icons/io";
+import { FaUserCircle } from "react-icons/fa";
 
 const Sidebar = ({
   isOpen,
@@ -284,12 +284,12 @@ const Sidebar = ({
 export default Sidebar;
 
 const items = [
-  { title: "Home", Icon: BiHomeSmile, href: "/Home" },
+  { title: "Home", Icon: IoIosHome, href: "/Home" },
   { title: "Explore", Icon: BiSolidCompass, href: "/Explore" },
   // { title: 'Albums', Icon: BiSolidAlbum, href: '/Albums' },
   { title: "Artists", Icon: RiUserVoiceFill, href: "/Artists" },
   { title: "Songs", Icon: BiSolidMusic, href: "/Songs" },
-  { title: "Profile", Icon: BiUserCircle, href: "/Profile" },
+  { title: "Profile", Icon: FaUserCircle, href: "/Profile" },
 ];
 
 const framerSidebarPanel = {
