@@ -7,17 +7,19 @@ import {
   Avatar,
   AvatarImage,
   AvatarFallback,
-  Skeleton, // Import Skeleton for loading state
+  Skeleton,
 } from "@/components/ui";
 import { PlaylistProps, User } from "@/lib/types";
 import { useRouter } from "next/navigation";
+import { fetchUserProfile } from "@/utils/fetchProfile"; // Import the fetchUserProfile function
+import { fetchSpotifyPlaylists } from "@/utils/fetchAllPlaylist"; // Import the fetchSpotifyPlaylists function
 
 const PublicLibrary = () => {
   const router = useRouter();
   const [publicPlaylists, setPublicPlaylists] = useState<PlaylistProps[]>([]);
   const [token, setToken] = useState<string>("");
   const [myProfile, setMyProfile] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true); // Loading state
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedToken = localStorage.getItem("Token");
@@ -34,65 +36,34 @@ const PublicLibrary = () => {
       return;
     }
 
-    try {
-      const response = await fetch("https://api.spotify.com/v1/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        console.error("Failed to fetch profile:", response.statusText);
-        return;
-      }
-
-      const data = await response.json();
-      setMyProfile(data);
-      console.log("Profile data fetched:", data);
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
+    const profileData = await fetchUserProfile(token);
+    if (profileData) {
+      setMyProfile(profileData);
+      console.log("Profile data fetched:", profileData);
     }
   }, [token]);
 
-  useEffect(() => {
-    const fetchPublicPlaylists = async () => {
-      if (!token) {
-        console.error("Token not available");
-        return;
-      }
+  const fetchPublicPlaylists = useCallback(async () => {
+    if (!token) {
+      console.error("Token not available");
+      return;
+    }
 
-      try {
-        setLoading(true); // Set loading to true when starting to fetch
-        const response = await fetch(
-          "https://api.spotify.com/v1/me/playlists",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          console.error("Failed to fetch playlists:", response.statusText);
-          return;
-        }
-
-        const data = await response.json();
-
-        const myPlaylists = data.items.filter(
+    try {
+      setLoading(true);
+      const playlistsData = await fetchSpotifyPlaylists(token);
+      if (playlistsData) {
+        const myPlaylists = playlistsData.filter(
           (playlist: PlaylistProps) => playlist.owner.id === myProfile?.id
         );
-
         setPublicPlaylists(myPlaylists);
         console.log("My playlists fetched:", myPlaylists);
-      } catch (error) {
-        console.error("Error fetching public playlists:", error);
-      } finally {
-        setLoading(false); // Set loading to false when done
       }
-    };
-
-    fetchPublicPlaylists();
+    } catch (error) {
+      console.error("Error fetching public playlists:", error);
+    } finally {
+      setLoading(false);
+    }
   }, [token, myProfile]);
 
   const truncateText = (text: string, maxLength: number) => {
@@ -109,6 +80,12 @@ const PublicLibrary = () => {
     }
   }, [token, fetchMyProfile]);
 
+  useEffect(() => {
+    if (token && myProfile) {
+      fetchPublicPlaylists();
+    }
+  }, [token, myProfile, fetchPublicPlaylists]);
+
   return (
     <div className="flex flex-wrap gap-8">
       {loading
@@ -123,10 +100,10 @@ const PublicLibrary = () => {
                 </Avatar>
               </CardHeader>
               <CardTitle>
-                <Skeleton className="h-5 w-32  mx-auto" />
+                <Skeleton className="h-5 w-32 mx-auto" />
               </CardTitle>
               <CardFooter className="text-sm">
-                <Skeleton className="h-4 w-28  mx-auto" />
+                <Skeleton className="h-4 w-28 mx-auto" />
               </CardFooter>
             </Card>
           ))

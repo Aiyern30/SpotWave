@@ -3,7 +3,7 @@
 import Sidebar from "@/app/Sidebar";
 import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
 import {
@@ -30,39 +30,9 @@ import Header from "@/components/Header";
 import Image from "next/image";
 import { GiDuration } from "react-icons/gi";
 import { formatSongDuration } from "@/utils/function";
+import { fetchAlbumDetails } from "@/utils/fetchAlbumDetails";
+import { Album } from "@/lib/types";
 
-interface Image {
-  url: string;
-}
-
-interface Albums {
-  id: string;
-  name: string;
-  images: Image[];
-  release_date: string;
-  album_type: string;
-  total_tracks: number;
-  tracks: {
-    items: {
-      id: string;
-      name: string;
-      duration_ms: number;
-      preview_url: string | null;
-      uri: string;
-      album: {
-        images: Image[];
-      };
-      artists: {
-        id: string;
-        name: string;
-      }[];
-    }[];
-  };
-}
-
-interface displayUIProps {
-  displayUI: "Table" | "Grid";
-}
 const itemsPerPage = 10;
 
 const ArtistProfilePage = () => {
@@ -76,7 +46,7 @@ const ArtistProfilePage = () => {
   const name = searchParams.get("name");
   const [token, setToken] = useState<string>("");
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
-  const [album, setAlbum] = useState<Albums | null>(null);
+  const [album, setAlbum] = useState<Album | null>(null);
   const [displayUI, setDisplayUI] = useState<"Table" | "Grid">("Table");
   const [currentPage, setCurrentPage] = useState(1);
   const [inputPage, setInputPage] = useState<string>("");
@@ -133,38 +103,20 @@ const ArtistProfilePage = () => {
       // Optionally show an error message for invalid page numbers
     }
   };
-  const fetchAlbumDetails = async (id: string) => {
-    const token = localStorage.getItem("Token");
-    if (!token) return null;
-
-    try {
-      const response = await fetch(`https://api.spotify.com/v1/albums/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        console.error("Failed to fetch album details:", response.statusText);
-        return null;
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error fetching album details:", error);
-      return null;
-    }
-  };
 
   useEffect(() => {
-    if (id) {
-      const fetchData = async () => {
-        const albumData = await fetchAlbumDetails(id);
-        setAlbum(albumData);
-      };
+    const fetchAndSetAlbum = async () => {
+      if (id && token) {
+        const albumData = await fetchAlbumDetails(id, token);
+        if (albumData) {
+          setAlbum(albumData);
+        }
+      }
+    };
 
-      fetchData();
-    }
-  }, [id]);
+    fetchAndSetAlbum();
+  }, [id, token]);
+
 
   const playPreview = (url: string | null) => {
     if (audio) {

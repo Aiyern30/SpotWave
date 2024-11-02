@@ -1,6 +1,10 @@
+// Profile.tsx
 import React, { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { User } from "@/lib/types";
+import { User, PlaylistProps } from "@/lib/types"; // Ensure PlaylistProps is imported
+import { fetchUserProfile } from "@/utils/fetchProfile";
+import { fetchFollowedArtists } from "@/utils/Artist/fetchFollowedArtists";
+import { fetchSpotifyPlaylists } from "@/utils/fetchAllPlaylist"; // Import the new fetch function
 
 const ProfileComponent = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
@@ -20,88 +24,42 @@ const ProfileComponent = () => {
     }
   }, []);
 
-  // Fetch user profile
   const fetchMyProfile = useCallback(async () => {
     if (!token) {
       console.error("Token not available");
       return;
     }
 
-    try {
-      const response = await fetch("https://api.spotify.com/v1/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        console.error("Failed to fetch profile:", response.statusText);
-        return;
-      }
-
-      const data = await response.json();
-      setMyProfile(data);
-      console.log("Profile data fetched:", data);
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
+    const profileData = await fetchUserProfile(token);
+    if (profileData) {
+      setMyProfile(profileData);
+      console.log("Profile data fetched:", profileData);
     }
   }, [token]);
 
-  // Fetch user's playlists
+  // Fetch user's playlists using the utility function
   const fetchMyPlaylists = useCallback(async () => {
     if (!token) {
       console.error("Token not available");
       return;
     }
 
-    try {
-      const response = await fetch("https://api.spotify.com/v1/me/playlists", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        console.error("Failed to fetch playlists:", response.statusText);
-        return;
-      }
-
-      const data = await response.json();
-      setPlaylistsCount(data.total); // Get the total number of playlists
-      console.log("Playlists fetched:", data);
-    } catch (error) {
-      console.error("Error fetching playlists:", error);
+    const playlistsData = await fetchSpotifyPlaylists(token);
+    if (playlistsData) {
+      setPlaylistsCount(playlistsData.length); // Set the total number of playlists
+      console.log("Playlists fetched:", playlistsData);
     }
   }, [token]);
 
-  // Fetch user's followed artists
   const fetchFollowingArtists = useCallback(async () => {
     if (!token) {
       console.error("Token not available");
       return;
     }
 
-    try {
-      const response = await fetch(
-        "https://api.spotify.com/v1/me/following?type=artist",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        console.error("Failed to fetch followed artists:", response.statusText);
-        return;
-      }
-
-      const data = await response.json();
-      setFollowingArtistsCount(data.artists.total); // Get the total number of followed artists
-      console.log("Following artists fetched:", data);
-    } catch (error) {
-      console.error("Error fetching followed artists:", error);
-    }
+    const artistsData = await fetchFollowedArtists(token);
+    setFollowingArtistsCount(artistsData.length);
+    console.log("Following artists fetched:", artistsData);
   }, [token]);
 
   useEffect(() => {
@@ -117,7 +75,7 @@ const ProfileComponent = () => {
       <div className="flex justify-center md:justify-start">
         <Image
           src={
-            uploadedImage || myProfile?.images[0].url || "/default-artist.png"
+            uploadedImage || myProfile?.images[0]?.url || "/default-artist.png"
           }
           width={150}
           height={150}

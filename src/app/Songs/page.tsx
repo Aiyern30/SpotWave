@@ -14,9 +14,7 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableCaption,
   TableHeader,
-  TableHead,
   TableRow,
 } from "@/components/ui";
 import {
@@ -27,19 +25,22 @@ import {
   SelectItem,
 } from "@/components/ui";
 import { useRouter } from "next/navigation";
+
+import {
+  TrackDataLASTFM,
+  TopTracksResponseLASTFM,
+  DisplayUIProps,
+} from "@/lib/types";
+import { searchTrackOnSpotify } from "@/utils/Songs/searchTrackOnSpotify";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
-import {
-  DisplayUIProps,
-  TopTracksResponseLASTFM,
-  TrackDataLASTFM,
-} from "@/lib/types";
 
 const Page = () => {
   const [tracks, setTracks] = useState<TrackDataLASTFM[]>([]);
   const [numTracks, setNumTracks] = useState<number>(10);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [displayUI, setDisplayUI] = useState<DisplayUIProps | string>("Table");
+
   const router = useRouter();
 
   const LASTFM_API_KEY = process.env.NEXT_PUBLIC_LASTFM_API_KEY;
@@ -51,20 +52,19 @@ const Page = () => {
           track.name,
           track.artist.name
         );
-        if (spotifyData) {
-          return {
-            ...track,
-            id: spotifyData.id,
-            image: spotifyData.imageUrl
-              ? [{ "#text": spotifyData.imageUrl, size: "large" }]
-              : track.image,
-            artist: {
-              ...track.artist,
-              id: spotifyData.artistId, // Add artistId here
-            },
-          };
-        }
-        return track;
+        return spotifyData
+          ? {
+              ...track,
+              id: spotifyData.id,
+              image: spotifyData.imageUrl
+                ? [{ "#text": spotifyData.imageUrl, size: "large" }]
+                : track.image,
+              artist: {
+                ...track.artist,
+                id: spotifyData.artistId,
+              },
+            }
+          : track;
       })
     );
     return updatedTracks;
@@ -91,59 +91,12 @@ const Page = () => {
     [fetchSpotifyData]
   );
 
-  const searchTrackOnSpotify = async (
-    trackName: string,
-    artistName: string
-  ): Promise<{ id: string; imageUrl: string; artistId: string } | null> => {
-    const token = localStorage.getItem("Token");
-
-    if (!token) {
-      console.error("Spotify API token not found");
-      return null;
-    }
-
-    try {
-      const response = await fetch(
-        `https://api.spotify.com/v1/search?q=${encodeURIComponent(
-          trackName
-        )} ${encodeURIComponent(artistName)}&type=track`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-      if (data.tracks && data.tracks.items.length > 0) {
-        const track = data.tracks.items[0];
-        return {
-          id: track.id,
-          imageUrl: track.album.images[0]?.url || null,
-          artistId: track.artists[0]?.id || null, // Fetch the artist ID
-        };
-      }
-    } catch (error) {
-      console.error(
-        `Error fetching track data from Spotify for ${trackName} by ${artistName}:`,
-        error
-      );
-    }
-    return null;
-  };
-
   useEffect(() => {
-    if (LASTFM_API_KEY === undefined) {
-      return;
-    }
+    if (LASTFM_API_KEY === undefined) return;
     fetchTopTracks(LASTFM_API_KEY, numTracks);
   }, [LASTFM_API_KEY, numTracks, fetchTopTracks]);
 
   const memoizedTracks = useMemo(() => tracks, [tracks]);
-
-  const handleClick = (id: string, name: string) => {
-    router.push(`/Songs/${id}?name=${encodeURIComponent(name)}`);
-  };
 
   const handleSelectChange = (value: string) => {
     setNumTracks(parseInt(value));
@@ -157,7 +110,7 @@ const Page = () => {
       />
       <div
         className={`flex-1 transition-all ml-16 duration-300 ${
-          sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
+          sidebarOpen ? "lg:ml-64" : "lg:ml-16"
         }`}
       >
         <div className="p-4 space-y-4">
@@ -168,11 +121,11 @@ const Page = () => {
                 <SelectValue placeholder="Select number of tracks" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="10">Top 10</SelectItem>
-                <SelectItem value="20">Top 20</SelectItem>
-                <SelectItem value="30">Top 30</SelectItem>
-                <SelectItem value="40">Top 40</SelectItem>
-                <SelectItem value="50">Top 50</SelectItem>
+                {[10, 20, 30, 40, 50].map((value) => (
+                  <SelectItem key={value} value={value.toString()}>
+                    Top {value}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <div className="flex items-center space-x-2">
@@ -195,63 +148,53 @@ const Page = () => {
           {displayUI === "Table" && (
             <div className="overflow-x-auto">
               <Table>
-                <TableCaption>A list of top tracks.</TableCaption>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>#</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead className="hidden md:table-cell">
-                      Playcount
-                    </TableHead>
+                    <TableCell>#</TableCell>
+                    <TableCell>Name</TableCell>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {memoizedTracks.map((track, index) => {
-                    const imageUrl = track.image[0]["#text"];
-
-                    return (
-                      <TableRow
-                        key={track.id || index}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/Songs/${track.id}?name=${track.name}`);
-                        }}
-                      >
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-3">
-                            {track.image[0]["#text"] && (
-                              <Avatar className="w-36 h-36 relative p-1">
-                                <AvatarImage src={imageUrl} alt={track.name} />
-                                <AvatarFallback>{track.name[0]}</AvatarFallback>
-                              </Avatar>
-                            )}
-                            <div className="flex flex-col space-y-3">
-                              <div className="text-xl">{track.name}</div>
-                              <div
-                                className="hover:underline cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-
-                                  router.push(
-                                    `/Artists/${track.artist.id}?name=${track.artist.name}`
-                                  );
-                                }}
-                              >
-                                {track.artist.name}
-                              </div>
-                              <div className="text-xs">
-                                Monthly Listeners: {track.listeners}
-                              </div>
+                  {memoizedTracks.map((track, index) => (
+                    <TableRow
+                      key={track.id || index}
+                      onClick={() =>
+                        router.push(`/Songs/${track.id}?name=${track.name}`)
+                      }
+                    >
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          {track.image[0]["#text"] && (
+                            <Avatar className="w-36 h-36 relative p-1">
+                              <AvatarImage
+                                src={track.image[0]["#text"]}
+                                alt={track.name}
+                              />
+                              <AvatarFallback>{track.name[0]}</AvatarFallback>
+                            </Avatar>
+                          )}
+                          <div className="flex flex-col space-y-1">
+                            <div className="text-xl">{track.name}</div>
+                            <div
+                              className="hover:underline cursor-pointer text-blue-600"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(
+                                  `/Artists/${track.artist.id}?name=${track.artist.name}`
+                                );
+                              }}
+                            >
+                              {track.artist.name}
+                            </div>
+                            <div className="text-xs">
+                              Monthly Listeners: {track.listeners}
                             </div>
                           </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {track.playcount}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>
@@ -264,38 +207,20 @@ const Page = () => {
                 return (
                   <Card
                     key={track.id || index}
-                    className="group w-60 cursor-pointer text-white"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      router.push(`/Songs/${track.id}?name=${track.name}`);
-                    }}
+                    className="group w-36 cursor-pointer text-white"
+                    onClick={() =>
+                      router.push(`/Songs/${track.id}?name=${track.name}`)
+                    }
                   >
                     <CardHeader>
-                      <Avatar className="w-36 h-36 relative p-1 mx-auto">
+                      <Avatar className="w-36 h-36 relative p-1">
                         <AvatarImage src={imageUrl} alt={track.name} />
                         <AvatarFallback>{track.name[0]}</AvatarFallback>
                       </Avatar>
-                      <CardTitle className="text-xl">{track.name}</CardTitle>
+                      <CardTitle>{track.name}</CardTitle>
                     </CardHeader>
-                    <CardFooter className="text-sm space-y-1 p-2 flex flex-col">
-                      <div
-                        className="text-xs hover:underline cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-
-                          router.push(
-                            `/Artists/${track.artist.id}?name=${track.artist.name}`
-                          );
-                        }}
-                      >
-                        {track.artist.name}
-                      </div>
-                      <div className="text-xs">
-                        <strong>Playcount:</strong> {track.playcount}
-                      </div>
-                      <div className="text-xs">
-                        <strong>Monthly Listeners:</strong> {track.listeners}
-                      </div>
+                    <CardFooter className="text-sm">
+                      Monthly Listeners: {track.listeners}
                     </CardFooter>
                   </Card>
                 );

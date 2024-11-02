@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import ErrorPage from "@/app/not-found";
 import Sidebar from "@/app/Sidebar";
 import Header from "@/components/Header";
 import {
@@ -19,34 +18,17 @@ import {
   CardTitle,
 } from "@/components/ui";
 import { useRouter } from "next/navigation";
-import { Artist, Image } from "@/lib/types";
-
-interface RecentTracksProps {
-  played_at: string;
-  track: {
-    album: {
-      album_type: string;
-      artists: {
-        name: string;
-        id: string;
-        type: string;
-      };
-      release_date: string;
-      images: Image[];
-    };
-    name: string;
-    duration_ms: string;
-  };
-}
+import { Artist, RecentTracksProps } from "@/lib/types";
+import { fetchFollowedArtists } from "@/utils/Artist/fetchFollowedArtists";
+import { fetchFavoriteArtists } from "@/utils/Artist/fetchFavoriteArtists";
+import { fetchRecentlyPlayed } from "@/utils/Artist/fetchRecentlyPlayed";
 
 const Page = () => {
   const [token, setToken] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [followedArtists, setFollowedArtists] = useState<Artist[]>([]);
   const [favoriteArtists, setFavoriteArtists] = useState<Artist[]>([]);
-  console.log("favoriteArtists", favoriteArtists);
   const [recentTracks, setRecentTracks] = useState<RecentTracksProps[]>([]);
-
   const router = useRouter();
 
   useEffect(() => {
@@ -57,92 +39,24 @@ const Page = () => {
   }, []);
 
   useEffect(() => {
-    const fetchFollowedArtists = async () => {
-      if (token) {
-        try {
-          const response = await fetch(
-            "https://api.spotify.com/v1/me/following?type=artist",
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          const data = await response.json();
+    const fetchData = async () => {
+      if (!token) return;
 
-          if (response.ok) {
-            const artistData = data.artists.items.map((artist: any) => ({
-              id: artist.id,
-              image: artist.images[0]?.url || "",
-              name: artist.name,
-              genres: artist.genres,
-            }));
-            setFollowedArtists(artistData);
-          } else {
-            console.error("Error fetching followed artists:", data);
-          }
-        } catch (error) {
-          console.error("Error fetching followed artists:", error);
-        }
+      try {
+        const [followed, favorite, recent] = await Promise.all([
+          fetchFollowedArtists(token),
+          fetchFavoriteArtists(token),
+          fetchRecentlyPlayed(token),
+        ]);
+        setFollowedArtists(followed);
+        setFavoriteArtists(favorite);
+        setRecentTracks(recent);
+      } catch (error) {
+        console.error(error);
       }
     };
 
-    const fetchFavoriteArtists = async () => {
-      if (token) {
-        try {
-          const response = await fetch(
-            "https://api.spotify.com/v1/me/top/artists",
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          const data = await response.json();
-
-          if (response.ok) {
-            const artistData = data.items.map((artist: any) => ({
-              id: artist.id,
-              image: artist.images[0]?.url || "",
-              name: artist.name,
-              genres: artist.genres,
-            }));
-            setFavoriteArtists(artistData);
-          } else {
-            console.error("Error fetching favorite artists:", data);
-          }
-        } catch (error) {
-          console.error("Error fetching favorite artists:", error);
-        }
-      }
-    };
-    const fetchRecentlyPlayed = async () => {
-      if (token) {
-        try {
-          const response = await fetch(
-            "https://api.spotify.com/v1/me/player/recently-played?limit=10",
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          const data = await response.json();
-
-          if (response.ok) {
-            setRecentTracks(data.items);
-          } else {
-            console.error("Error fetching recently played tracks:", data);
-          }
-        } catch (error) {
-          console.error("Error fetching recently played tracks:", error);
-        }
-      }
-    };
-
-    fetchFollowedArtists();
-    fetchFavoriteArtists();
-    fetchRecentlyPlayed();
+    fetchData();
   }, [token]);
 
   const memoizedFollowedArtists = useMemo(
@@ -164,7 +78,7 @@ const Page = () => {
             onClose={() => setSidebarOpen((prev) => !prev)}
           />
           <div
-            className={`flex-1  transition-all ml-16 duration-300 ${
+            className={`flex-1 transition-all ml-16 duration-300 ${
               sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
             }`}
           >
@@ -175,11 +89,12 @@ const Page = () => {
                 className="w-full"
                 defaultValue={["item-1", "item-2", "item-3"]}
               >
+                {/* Followed Artists */}
                 <AccordionItem value="item-1">
                   <AccordionTrigger>
-                    <div> Your Followed Artists</div>
+                    <div>Your Followed Artists</div>
                   </AccordionTrigger>
-                  <AccordionContent className="text-white">
+                  <AccordionContent className="text-white p-4">
                     <div className="flex flex-wrap gap-8">
                       {memoizedFollowedArtists.map((artist) => (
                         <Card
@@ -211,9 +126,13 @@ const Page = () => {
                     </div>
                   </AccordionContent>
                 </AccordionItem>
+
+                {/* Favorite Artists */}
                 <AccordionItem value="item-2">
-                  <AccordionTrigger>Your Favorite Artists</AccordionTrigger>
-                  <AccordionContent className="text-white">
+                  <AccordionTrigger>
+                    <div>Your Favorite Artists</div>
+                  </AccordionTrigger>
+                  <AccordionContent className="text-white p-4">
                     <div className="flex flex-wrap gap-8">
                       {memoizedFavoriteArtists.map((artist) => (
                         <Card
@@ -245,13 +164,17 @@ const Page = () => {
                     </div>
                   </AccordionContent>
                 </AccordionItem>
+
+                {/* Recently Played Tracks */}
                 <AccordionItem value="item-3">
-                  <AccordionTrigger>Your Recently Listening</AccordionTrigger>
-                  <AccordionContent className="text-white">
+                  <AccordionTrigger>
+                    <div>Your Recently Listening</div>
+                  </AccordionTrigger>
+                  <AccordionContent className="text-white p-4">
                     <div className="flex flex-wrap gap-8">
                       {memoizedRecentTracks.map((tracks, index) => (
                         <Card
-                          key={`${tracks.track.album.artists.id}-${index}`}
+                          key={`${index}`}
                           className="group w-36 cursor-pointer"
                         >
                           <CardHeader>
@@ -266,7 +189,9 @@ const Page = () => {
                             </Avatar>
                           </CardHeader>
                           <CardTitle>{tracks.track.name}</CardTitle>
-                          <CardContent>{tracks.track.name}</CardContent>
+                          <CardContent>
+                            {tracks.track.album.artists.name}
+                          </CardContent>
                           <CardFooter>
                             {tracks.track.album.release_date}
                           </CardFooter>
