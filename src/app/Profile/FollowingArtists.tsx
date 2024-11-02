@@ -1,3 +1,4 @@
+// FollowingArtists.tsx
 import {
   Avatar,
   AvatarFallback,
@@ -11,6 +12,7 @@ import {
 import { Artist } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
+import { fetchFollowedArtists } from "@/utils/Artist/fetchFollowedArtists";
 
 const FollowingArtists = () => {
   const router = useRouter();
@@ -26,38 +28,15 @@ const FollowingArtists = () => {
   }, []);
 
   useEffect(() => {
-    const fetchFollowedArtists = async () => {
+    const fetchArtists = async () => {
       if (token) {
-        try {
-          const response = await fetch(
-            "https://api.spotify.com/v1/me/following?type=artist",
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          const data = await response.json();
-
-          if (response.ok) {
-            const artistData = data.artists.items.map((artist: any) => ({
-              id: artist.id,
-              image: artist.images[0]?.url || "",
-              name: artist.name,
-              genres: artist.genres,
-            }));
-            setFollowedArtists(artistData);
-          } else {
-            console.error("Error fetching followed artists:", data);
-          }
-        } catch (error) {
-          console.error("Error fetching followed artists:", error);
-        } finally {
-          setLoading(false);
-        }
+        setLoading(true);
+        const artists = await fetchFollowedArtists(token);
+        setFollowedArtists(artists);
+        setLoading(false);
       }
     };
-    fetchFollowedArtists();
+    fetchArtists();
   }, [token]);
 
   const memoizedFollowedArtists = useMemo(
@@ -75,10 +54,10 @@ const FollowingArtists = () => {
                   <Skeleton className="w-36 h-36 rounded-xl" />
                 </CardHeader>
                 <CardTitle>
-                  <Skeleton className="h-5 w-32  mx-auto" />
+                  <Skeleton className="h-5 w-32 mx-auto" />
                 </CardTitle>
                 <CardContent>
-                  <Skeleton className="h-4 w-28  mx-auto" />
+                  <Skeleton className="h-4 w-28 mx-auto" />
                 </CardContent>
               </Card>
             ))
