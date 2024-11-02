@@ -24,14 +24,14 @@ interface SpotifyPlayerEvent {
 
 export default function Home() {
   const CLIENT_ID = "5bf8d69f8aaf4727a4677c0ad2fef6ec";
+  const REDIRECT_URI = "http://localhost:3000";
   // const REDIRECT_URI =
   //   process.env.NEXT_PUBLIC_REDIRECT_URI || "http://localhost:3000";
-  const REDIRECT_URI = "http://localhost:3000";
 
   const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
   const RESPONSE_TYPE = "token";
 
-  const [token, setToken] = useState<string>("");
+  const [token, setToken] = useState<string>(""); // This state can be initialized with a token
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
 
@@ -42,7 +42,6 @@ export default function Home() {
           Authorization: `Bearer ${token}`,
         },
       });
-
       return response.status !== 401;
     } catch (error) {
       console.error("Error validating token:", error);
@@ -62,7 +61,6 @@ export default function Home() {
 
         player.addListener("ready", ({ device_id }: SpotifyPlayerEvent) => {
           console.log("Ready with Device ID", device_id);
-          // You can start playback here if you want
         });
 
         player.addListener("not_ready", ({ device_id }: SpotifyPlayerEvent) => {
@@ -93,30 +91,32 @@ export default function Home() {
   // Check for token in URL after redirect from Spotify
   useEffect(() => {
     const hash = window.location.hash;
-    let token = window.localStorage.getItem("Token") || "";
+    let storedToken = window.localStorage.getItem("Token") || "";
 
-    if (!token && hash) {
+    // Only handle the case when the URL has a hash (redirect from Spotify)
+    if (!storedToken && hash) {
       const tokenFragment = hash
         .substring(1)
         .split("&")
         .find((elem) => elem.startsWith("access_token"));
 
       if (tokenFragment) {
-        token = tokenFragment.split("=")[1];
-        setToken(token);
-        window.localStorage.setItem("Token", token);
+        storedToken = tokenFragment.split("=")[1];
+        window.localStorage.setItem("Token", storedToken);
         window.location.hash = "";
+        setToken(storedToken);
         router.push("/Home");
       }
-    } else if (token) {
+    } else if (storedToken) {
       setLoading(true);
-      validateToken(token).then((isValid) => {
+      validateToken(storedToken).then((isValid) => {
         if (isValid) {
-          setToken(token);
+          setToken(storedToken);
           router.push("/Home");
         } else {
           window.localStorage.removeItem("Token");
           setToken("");
+          router.push("/401"); // Ensure we go to /401 if the token is invalid
         }
         setLoading(false);
       });
@@ -148,38 +148,33 @@ export default function Home() {
   return (
     <div className="flex justify-center items-center h-screen">
       {!token ? (
-        <>
-          <Card className="bg-white min-w-sm max-w-md w-full text-center hover:bg-white p-5 relative">
-            <CardHeader>
-              <CardTitle className="text-3xl">SpotWave</CardTitle>
-              <CardDescription>
-                Log in to access your Spotify account
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center">
-              {/* <Button onClick={handleLogin}>Login to Spotify</Button> */}
-              <Lottie
-                onClick={handleLogin}
-                animationData={Spotify}
-                className="w-24 h-24 cursor-pointer mx-auto hover:bg-black hover:rounded-full"
-              />
-            </CardContent>
+        <Card className="bg-white min-w-sm max-w-md w-full text-center hover:bg-white p-5 relative">
+          <CardHeader>
+            <CardTitle className="text-3xl">SpotWave</CardTitle>
+            <CardDescription>
+              Log in to access your Spotify account
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
             <Lottie
-              animationData={PeopleGuitar}
-              className="w-24 h-24 absolute -top-20 right-0"
+              onClick={handleLogin}
+              animationData={Spotify}
+              className="w-24 h-24 cursor-pointer mx-auto hover:bg-black hover:rounded-full"
             />
-          </Card>
-        </>
+          </CardContent>
+          <Lottie
+            animationData={PeopleGuitar}
+            className="w-24 h-24 absolute -top-20 right-0"
+          />
+        </Card>
       ) : (
-        <>
-          <div className="flex flex-col justify-center items-center text-white">
-            <Lottie animationData={Spotify} className="w-96 h-96" />
-            <TypingAnimation
-              className="text-4xl font-bold"
-              text="Redirecting..."
-            />
-          </div>
-        </>
+        <div className="flex flex-col justify-center items-center text-white">
+          <Lottie animationData={Spotify} className="w-96 h-96" />
+          <TypingAnimation
+            className="text-4xl font-bold"
+            text="Redirecting..."
+          />
+        </div>
       )}
     </div>
   );

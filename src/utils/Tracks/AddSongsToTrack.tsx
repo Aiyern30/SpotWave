@@ -19,7 +19,6 @@ export const AddSongsToTrack = async (
 
     if (response.ok) {
       const data = await response.json();
-      console.log("Track added to playlist:", data);
       return { success: true, message: "Track added successfully" };
     } else {
       const errorData = await response.json();

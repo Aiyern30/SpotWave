@@ -25,7 +25,6 @@ export const fetchPlaylistDetails = async (
     }
 
     const data: PlaylistProps = await response.json();
-    console.log("Fetched playlist details:", data);
     return data;
   } catch (error) {
     console.error("Error occurred while fetching playlist details:", error);
