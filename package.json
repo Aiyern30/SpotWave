@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "cz": "cz"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.0",
@@ -49,6 +50,8 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/three": "^0.168.0",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
     "postcss": "^8",
