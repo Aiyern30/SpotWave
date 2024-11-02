@@ -1,4 +1,8 @@
-export const fetchSpotifyPlaylists = async (token: string) => {
+import { PlaylistProps } from "@/lib/types";
+
+export const fetchSpotifyPlaylists = async (
+  token: string
+): Promise<PlaylistProps[] | undefined> => {
   try {
     const response = await fetch("https://api.spotify.com/v1/me/playlists", {
       headers: {
@@ -12,7 +16,7 @@ export const fetchSpotifyPlaylists = async (token: string) => {
 
     const data = await response.json();
 
-    return data;
+    return data.items as PlaylistProps[];
   } catch (error) {
     console.error("Error fetching playlists:", error);
   }

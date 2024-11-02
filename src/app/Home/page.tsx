@@ -47,7 +47,7 @@ const Page = () => {
   const handleFetchAllProfilePlaylist = useCallback(async () => {
     const data = await fetchSpotifyPlaylists(token);
     if (data) {
-      const formattedPlaylists = data.items.map((playlist: any) => ({
+      const formattedPlaylists = data.map((playlist: any) => ({
         id: playlist.id,
         image: playlist.images?.[0]?.url || "",
         title: playlist.name || "",
