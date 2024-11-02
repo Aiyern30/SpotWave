@@ -36,6 +36,22 @@ export interface Album {
   type: string;
   uri: string;
   artists: Artist[];
+  tracks: {
+    items: {
+      id: string;
+      name: string;
+      duration_ms: number;
+      preview_url: string | null;
+      uri: string;
+      album: {
+        images: Image[];
+      };
+      artists: {
+        id: string;
+        name: string;
+      }[];
+    }[];
+  };
 }
 
 export interface Track {
