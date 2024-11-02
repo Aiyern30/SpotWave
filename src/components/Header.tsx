@@ -13,6 +13,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "./ui";
+import { formatSongDuration } from "@/utils/function";
 
 interface Artist {
   id: string;
@@ -323,7 +324,7 @@ const HeaderContent = () => {
                                     .join(", ")}
                                 </p>
                                 <p className="text-gray-400">
-                                  {formatDuration(track.duration_ms)}
+                                  {formatSongDuration(track.duration_ms)}
                                 </p>
                               </div>
                             </div>
@@ -370,7 +371,7 @@ const HeaderContent = () => {
                                     .join(", ")}
                                 </p>
                                 <p className="text-gray-400">
-                                  {formatDuration(track.duration_ms)}
+                                  {formatSongDuration(track.duration_ms)}
                                 </p>
                               </div>
                             </div>
@@ -395,11 +396,5 @@ const Header = () => (
     <HeaderContent />
   </Suspense>
 );
-
-const formatDuration = (durationMs: number) => {
-  const minutes = Math.floor(durationMs / 60000);
-  const seconds = ((durationMs % 60000) / 1000).toFixed(0);
-  return `${minutes}:${parseInt(seconds, 10) < 10 ? "0" : ""}${seconds}`;
-};
 
 export default Header;

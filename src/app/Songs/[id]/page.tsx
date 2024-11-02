@@ -195,16 +195,4 @@ const SongPage = () => {
   );
 };
 
-const formatDuration = (durationMs: number | undefined) => {
-  if (durationMs === undefined || durationMs === 0) return "00:00";
-
-  const minutes = Math.floor(durationMs / 60000);
-  const seconds = Math.floor((durationMs % 60000) / 1000);
-
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
-    2,
-    "0"
-  )}`;
-};
-
 export default SongPage;

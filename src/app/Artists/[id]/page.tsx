@@ -14,6 +14,7 @@ import {
   Skeleton,
 } from "@/components/ui";
 import Header from "@/components/Header";
+import { formatSongDuration } from "@/utils/function";
 
 interface Image {
   url: string;
@@ -271,18 +272,6 @@ const ArtistProfilePage = () => {
     }
   };
 
-  const formatDuration = (durationMs: number | undefined) => {
-    if (durationMs === undefined) return "00:00";
-
-    const minutes = Math.floor(durationMs / 60000);
-    const seconds = Math.floor((durationMs % 60000) / 1000);
-
-    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
-      2,
-      "0"
-    )}`;
-  };
-
   const playPreview = (url: string | null) => {
     if (audio) {
       audio.pause();
@@ -403,7 +392,7 @@ const ArtistProfilePage = () => {
                       >
                         {track.album.name}
                       </div>
-                      <div>{formatDuration(track.duration_ms)}</div>
+                      <div>{formatSongDuration(track.duration_ms)}</div>
                     </CardFooter>
                   </Card>
                 ))}

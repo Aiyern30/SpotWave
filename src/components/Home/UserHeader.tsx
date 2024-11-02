@@ -12,9 +12,9 @@ import {
 import { useRouter } from "next/navigation";
 import { PlaylistProps, User, UserProfile } from "@/lib/types";
 import { useEffect, useState } from "react";
-import { formatDuration } from "../formDuration";
 import Settings from "../Settings";
 import SearchSongs from "../SearchSongs";
+import { formatDuration } from "@/utils/function";
 
 interface Playlist {
   playlist: PlaylistProps;
