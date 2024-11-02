@@ -29,6 +29,7 @@ import {
 import Header from "@/components/Header";
 import Image from "next/image";
 import { GiDuration } from "react-icons/gi";
+import { formatSongDuration } from "@/utils/function";
 
 interface Image {
   url: string;
@@ -164,18 +165,6 @@ const ArtistProfilePage = () => {
       fetchData();
     }
   }, [id]);
-
-  const formatDuration = (durationMs: number | undefined) => {
-    if (durationMs === undefined) return "00:00";
-
-    const minutes = Math.floor(durationMs / 60000);
-    const seconds = Math.floor((durationMs % 60000) / 1000);
-
-    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
-      2,
-      "0"
-    )}`;
-  };
 
   const playPreview = (url: string | null) => {
     if (audio) {
@@ -363,7 +352,7 @@ const ArtistProfilePage = () => {
                           </TableCell>
 
                           <TableCell className="hidden md:table-cell text-right">
-                            {formatDuration(item.duration_ms)}
+                            {formatSongDuration(item.duration_ms)}
                           </TableCell>
                         </TableRow>
                       ))}

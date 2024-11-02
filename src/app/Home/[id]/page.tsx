@@ -68,6 +68,7 @@ import { fetchUserProfile } from "@/utils/fetchProfile";
 import { AddSongsToTrack } from "@/utils/Tracks/AddSongsToTrack";
 import { useToast } from "@/hooks/use-toast";
 import { removePlaylist } from "@/utils/Tracks/removeSongsFromTrack";
+import { formatSongDuration } from "@/utils/function";
 
 const itemsPerPage = 10;
 
@@ -313,18 +314,6 @@ const PlaylistPage = () => {
     }
   }, [token, id, fetchPlaylistDetails]);
 
-  const formatDuration = (durationMs: number | undefined) => {
-    if (durationMs === undefined) return "00:00";
-
-    const minutes = Math.floor(durationMs / 60000);
-    const seconds = Math.floor((durationMs % 60000) / 1000);
-
-    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
-      2,
-      "0"
-    )}`;
-  };
-
   return (
     <div className="flex h-screen">
       {token && (
@@ -511,7 +500,7 @@ const PlaylistPage = () => {
                                 </Sheet>
                               </TableCell>
                               <TableCell className="hidden md:table-cell text-right">
-                                {formatDuration(item.track?.duration_ms)}
+                                {formatSongDuration(item.track?.duration_ms)}
                               </TableCell>
                               <TableCell className=" ">
                                 <DropdownMenu>
@@ -675,7 +664,7 @@ const PlaylistPage = () => {
                               </div>
                             </CardFooter>
                             <CardFooter className="text-sm flex space-x-3">
-                              {formatDuration(data.track?.duration_ms)}
+                              {formatSongDuration(data.track?.duration_ms)}
                             </CardFooter>
                           </Card>
                         ))}
