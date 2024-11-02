@@ -70,6 +70,7 @@ import { useToast } from "@/hooks/use-toast";
 import { removePlaylist } from "@/utils/Tracks/removeSongsFromTrack";
 import { formatSongDuration } from "@/utils/function";
 import { fetchSpotifyPlaylists } from "@/utils/fetchAllPlaylist";
+import { fetchPlaylistDetails } from "@/utils/fetchPlaylist";
 
 const itemsPerPage = 10;
 
@@ -207,7 +208,7 @@ const PlaylistPage = () => {
       token
     );
     if (success) {
-      fetchPlaylistDetails(id);
+      handleFetchPlaylistDetails(id);
 
       toast({
         title: "Success!",
@@ -252,20 +253,12 @@ const PlaylistPage = () => {
     }
   };
 
-  const fetchPlaylistDetails = useCallback(
-    async (playlistId: string) => {
-      try {
-        const response = await fetch(
-          `https://api.spotify.com/v1/playlists/${playlistId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const data = await response.json();
+  const handleFetchPlaylistDetails = useCallback(
+    async (playlistID: string) => {
+      const data = await fetchPlaylistDetails(playlistID, token);
 
-        if (data && data.tracks && Array.isArray(data.tracks.items)) {
+      if (data) {
+        if (data.tracks && Array.isArray(data.tracks.items)) {
           const validTracks = data.tracks.items.filter(
             (track: { track: { name: any; duration_ms: any } }) =>
               track.track && track.track.name && track.track.duration_ms
@@ -285,18 +278,16 @@ const PlaylistPage = () => {
         } else {
           console.warn("Invalid playlist data:", data);
         }
-      } catch (error) {
-        console.error("Error fetching playlist details:", error);
       }
     },
-    [token, fetchMyID]
+    [token, fetchMyID, setPlaylist]
   );
 
   useEffect(() => {
     if (token && id) {
-      fetchPlaylistDetails(id);
+      handleFetchPlaylistDetails(id);
     }
-  }, [token, id, fetchPlaylistDetails]);
+  }, [token, id, handleFetchPlaylistDetails]);
 
   return (
     <div className="flex h-screen">
@@ -319,7 +310,7 @@ const PlaylistPage = () => {
                     playlist={playlist}
                     user={user as UserProfile}
                     id={myID}
-                    refetch={(id) => fetchPlaylistDetails(id)}
+                    refetch={(id) => handleFetchPlaylistDetails(id)}
                   />
 
                   <div className="flex justify-end space-x-3 items-center">
