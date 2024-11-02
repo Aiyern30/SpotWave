@@ -69,6 +69,7 @@ import { AddSongsToTrack } from "@/utils/Tracks/AddSongsToTrack";
 import { useToast } from "@/hooks/use-toast";
 import { removePlaylist } from "@/utils/Tracks/removeSongsFromTrack";
 import { formatSongDuration } from "@/utils/function";
+import { fetchSpotifyPlaylists } from "@/utils/fetchAllPlaylist";
 
 const itemsPerPage = 10;
 
@@ -219,35 +220,18 @@ const PlaylistPage = () => {
       });
     }
   };
-
   useEffect(() => {
-    const fetchMyPlaylists = async () => {
-      try {
-        const response = await fetch(
-          "https://api.spotify.com/v1/me/playlists",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const data = await response.json();
-
-        const myPlaylists = data.items.filter(
+    const handleFetchSpotifyPlaylists = async () => {
+      const profileDetails = await fetchSpotifyPlaylists(token);
+      if (profileDetails) {
+        const myPlaylists = profileDetails.filter(
           (playlist: { owner: { id: string } }) => playlist.owner.id === myID
         );
 
         setPlaylists(myPlaylists);
-      } catch (error) {
-        console.error("Error fetching playlists:", error);
       }
     };
-
-    const getPlaylists = async () => {
-      await fetchMyPlaylists();
-    };
-
-    getPlaylists();
+    handleFetchSpotifyPlaylists();
   }, [token, myID]);
 
   const fetchLyrics = async (artist: string, title: string) => {
