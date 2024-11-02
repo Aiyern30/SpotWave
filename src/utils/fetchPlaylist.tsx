@@ -1,7 +1,9 @@
+import { PlaylistProps } from "@/lib/types";
+
 export const fetchPlaylistDetails = async (
   playlistID: string,
   token: string
-) => {
+): Promise<PlaylistProps | null> => {
   try {
     const response = await fetch(
       `https://api.spotify.com/v1/playlists/${playlistID}`,
@@ -22,9 +24,11 @@ export const fetchPlaylistDetails = async (
       return null;
     }
 
-    const data = await response.json();
+    const data: PlaylistProps = await response.json();
     console.log("Fetched playlist details:", data);
+    return data;
   } catch (error) {
     console.error("Error occurred while fetching playlist details:", error);
+    return null;
   }
 };
