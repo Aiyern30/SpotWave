@@ -103,7 +103,7 @@ const Page = () => {
             >
               <CardHeader>
                 <Avatar className="w-36 h-36 relative p-1">
-                  <AvatarFallback className="rounded-xl">
+                  <AvatarFallback className="rounded-xl text-black">
                     <IoMdAdd size={36} className="text-green-500" />
                   </AvatarFallback>
                 </Avatar>

@@ -122,7 +122,9 @@ const SongPage = () => {
                   src={track.album?.images[0]?.url || "/default-artist.png"}
                   className="w-48 h-48 rounded-full object-cover"
                 />
-                <AvatarFallback>{track.name}</AvatarFallback>
+                <AvatarFallback className="text-black">
+                  {track.name}
+                </AvatarFallback>
               </Avatar>
               <h1 className="text-4xl font-bold">{track.name}</h1>
               <div className="text-xl">

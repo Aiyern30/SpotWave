@@ -314,7 +314,9 @@ const ArtistProfilePage = () => {
                   src={artistProfile.images[0]?.url || "/default-artist.png"}
                   className="w-48 h-48 rounded-full object-cover"
                 />
-                <AvatarFallback>{artistProfile.name}</AvatarFallback>
+                <AvatarFallback className="text-black">
+                  {artistProfile.name}
+                </AvatarFallback>
               </Avatar>
               <p className="text-lg">
                 Followers: {artistProfile.followers.total}
@@ -342,7 +344,9 @@ const ArtistProfilePage = () => {
                           }
                           className="rounded-xl object-cover"
                         />
-                        <AvatarFallback>{track.name}</AvatarFallback>
+                        <AvatarFallback className="text-black">
+                          {track.name}
+                        </AvatarFallback>
 
                         {track.preview_url && (
                           <div
@@ -414,7 +418,9 @@ const ArtistProfilePage = () => {
                           src={album.images[0]?.url || "/default-artist.png"}
                           className="rounded-xl object-cover"
                         />
-                        <AvatarFallback>{album.name}</AvatarFallback>
+                        <AvatarFallback className="text-black">
+                          {album.name}
+                        </AvatarFallback>
                       </Avatar>
                     </CardHeader>
                     <CardTitle>{album.name}</CardTitle>
@@ -475,7 +481,9 @@ const ArtistProfilePage = () => {
                             src={similarArtist.image || "/default-artist.png"}
                             className="rounded-full object-cover w-32 h-32"
                           />
-                          <AvatarFallback>{similarArtist.name}</AvatarFallback>
+                          <AvatarFallback className="text-black">
+                            {similarArtist.name}
+                          </AvatarFallback>
                         </Avatar>
                         <div className="text-center mt-2">
                           {similarArtist.name}

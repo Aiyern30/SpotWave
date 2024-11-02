@@ -117,7 +117,9 @@ const PublicLibrary = () => {
                     src={data.images[0]?.url}
                     className="rounded-xl"
                   />
-                  <AvatarFallback>Image Unavailable</AvatarFallback>
+                  <AvatarFallback className="text-black">
+                    Image Unavailable
+                  </AvatarFallback>
                 </Avatar>
               </CardHeader>
               <CardTitle>{data.name}</CardTitle>

@@ -283,7 +283,7 @@ const HeaderContent = () => {
                                 }
                                 alt={result.artist.name}
                               />
-                              <AvatarFallback>
+                              <AvatarFallback className="text-black">
                                 {result.artist.name}
                               </AvatarFallback>
                             </Avatar>
@@ -312,7 +312,9 @@ const HeaderContent = () => {
                                   }
                                   alt={track.name}
                                 />
-                                <AvatarFallback>{track.name}</AvatarFallback>
+                                <AvatarFallback className="text-black">
+                                  {track.name}
+                                </AvatarFallback>
                               </Avatar>
                               <div className="flex flex-col">
                                 <p className="font-semibold text-black">
@@ -359,7 +361,9 @@ const HeaderContent = () => {
                                   }
                                   alt={track.name}
                                 />
-                                <AvatarFallback>{track.name}</AvatarFallback>
+                                <AvatarFallback className="text-black">
+                                  {track.name}
+                                </AvatarFallback>
                               </Avatar>
                               <div className="flex flex-col">
                                 <p className="font-semibold text-black">

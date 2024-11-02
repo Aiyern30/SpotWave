@@ -114,7 +114,7 @@ const Page = () => {
                                 src={artist.image}
                                 className="rounded-xl"
                               />
-                              <AvatarFallback>
+                              <AvatarFallback className="text-black">
                                 {artist.name.charAt(0)}
                               </AvatarFallback>
                             </Avatar>
@@ -152,7 +152,7 @@ const Page = () => {
                                 src={artist.image}
                                 className="rounded-xl"
                               />
-                              <AvatarFallback>
+                              <AvatarFallback className="text-black">
                                 {artist.name.charAt(0)}
                               </AvatarFallback>
                             </Avatar>
@@ -183,7 +183,7 @@ const Page = () => {
                                 src={tracks.track.album.images[0].url}
                                 className="rounded-xl"
                               />
-                              <AvatarFallback>
+                              <AvatarFallback className="text-black">
                                 {tracks.track.name.charAt(0)}
                               </AvatarFallback>
                             </Avatar>

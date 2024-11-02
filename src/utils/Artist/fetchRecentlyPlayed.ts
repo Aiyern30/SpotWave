@@ -5,7 +5,7 @@ export const fetchRecentlyPlayed = async (
 ): Promise<RecentTracksProps[]> => {
   try {
     const response = await fetch(
-      "https://api.spotify.com/v1/me/player/recently-played?limit=10",
+      "https://api.spotify.com/v1/me/player/recently-played?limit=50",
       {
         headers: {
           Authorization: `Bearer ${token}`,

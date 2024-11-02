@@ -171,7 +171,9 @@ const Page = () => {
                                 src={track.image[0]["#text"]}
                                 alt={track.name}
                               />
-                              <AvatarFallback>{track.name[0]}</AvatarFallback>
+                              <AvatarFallback className="text-black">
+                                {track.name[0]}
+                              </AvatarFallback>
                             </Avatar>
                           )}
                           <div className="flex flex-col space-y-1">
@@ -215,7 +217,9 @@ const Page = () => {
                     <CardHeader>
                       <Avatar className="w-36 h-36 relative p-1">
                         <AvatarImage src={imageUrl} alt={track.name} />
-                        <AvatarFallback>{track.name[0]}</AvatarFallback>
+                        <AvatarFallback className="text-black">
+                          {track.name[0]}
+                        </AvatarFallback>
                       </Avatar>
                       <CardTitle>{track.name}</CardTitle>
                     </CardHeader>
