@@ -4,6 +4,10 @@ import { Artist } from "@/lib/types";
 export const fetchFollowedArtists = async (
   token: string
 ): Promise<Artist[]> => {
+  if (!token) {
+    console.error("Error: No token provided");
+    return [];
+  }
   try {
     const response = await fetch(
       "https://api.spotify.com/v1/me/following?type=artist",
