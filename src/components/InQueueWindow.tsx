@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react"; // Import useCallback
+import React, { useState, useEffect, useCallback } from "react";
 import { FiChevronUp, FiChevronDown } from "react-icons/fi";
 import {
   Avatar,
@@ -11,19 +11,20 @@ import {
   TabsList,
   TabsTrigger,
 } from "./ui";
-import { Artist } from "@/lib/types";
+import { Artist, RecentTracksProps } from "@/lib/types"; // Import the RecentTracksProps type
+import { fetchRecentlyPlayed } from "@/utils/Artist/fetchRecentlyPlayed";
 
 const InQueueWindow = () => {
-  const [isOpen, setIsOpen] = useState(false); // State to track if the window is open
+  const [isOpen, setIsOpen] = useState(false);
   const [queue, setQueue] = useState<any[]>([]);
-  const [currentTrack, setCurrentTrack] = useState<any>(null); // State for the current track
+  const [currentTrack, setCurrentTrack] = useState<any>(null);
+  const [recentTracks, setRecentTracks] = useState<RecentTracksProps[]>([]); // Use RecentTracksProps
 
   const getToken = () => {
-    return localStorage.getItem("Token"); // Get the access token from localStorage
+    return localStorage.getItem("Token");
   };
 
   const fetchQueue = useCallback(async () => {
-    // Wrap in useCallback
     const accessToken = getToken();
     if (!accessToken) {
       console.error("No access token found.");
@@ -42,10 +43,9 @@ const InQueueWindow = () => {
     } else {
       console.error("Failed to fetch queue", response);
     }
-  }, []); // No dependencies, fetchQueue won't change
+  }, []);
 
   const fetchCurrentTrack = useCallback(async () => {
-    // Wrap in useCallback
     const accessToken = getToken();
     if (!accessToken) {
       console.error("No access token found.");
@@ -78,14 +78,26 @@ const InQueueWindow = () => {
     } else {
       console.error("Failed to fetch current track", response);
     }
-  }, []); // No dependencies, fetchCurrentTrack won't change
+  }, []);
+
+  const handleFetchRecentlyPlayed = useCallback(async () => {
+    const accessToken = getToken();
+    if (!accessToken) {
+      console.error("No access token found.");
+      return;
+    }
+
+    const tracks = await fetchRecentlyPlayed(accessToken);
+    setRecentTracks(tracks); // Set the recently played tracks in state
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
       fetchCurrentTrack();
       fetchQueue();
+      handleFetchRecentlyPlayed(); // Fetch recently played when the window is opened
     }
-  }, [isOpen, fetchCurrentTrack, fetchQueue]); // Now includes the functions
+  }, [isOpen, fetchCurrentTrack, fetchQueue, handleFetchRecentlyPlayed]);
 
   return (
     <div
@@ -93,7 +105,7 @@ const InQueueWindow = () => {
         isOpen ? "w-[500px] h-[500px]" : "w-[50px] h-[50px]"
       } bg-white shadow-lg rounded-md flex items-center justify-center`}
       style={{
-        transition: "width 0.3s ease, height 0.3s ease", // Smooth transition for open/close
+        transition: "width 0.3s ease, height 0.3s ease",
       }}
     >
       {isOpen ? (
@@ -116,8 +128,8 @@ const InQueueWindow = () => {
               </TabsList>
               <TabsContent
                 value="Queue"
-                className="overflow-y-auto h-[calc(100%-40px)]" // Updated height calculation
-                style={{ maxHeight: "calc(100% - 40px)" }} // Ensure the height allows for scrolling
+                className="overflow-y-auto h-[calc(100%-40px)]"
+                style={{ maxHeight: "calc(100% - 40px)" }}
               >
                 {currentTrack && (
                   <>
@@ -146,7 +158,7 @@ const InQueueWindow = () => {
                     </div>
                   </>
                 )}
-                <h1>Next from: Your Library</h1> {/* Change made here */}
+                <h1>Next from: Your Library</h1>
                 <div>
                   {queue.map((track) => (
                     <div key={track.id} className="flex items-center mt-2">
@@ -171,8 +183,32 @@ const InQueueWindow = () => {
               <TabsContent
                 value="Recently played"
                 className="overflow-y-auto h-[calc(100%-40px)]"
+                style={{ maxHeight: "calc(100% - 40px)" }}
               >
-                Change your Recently played here.
+                {recentTracks.length > 0 ? (
+                  recentTracks.map((track, index) => (
+                    <div key={index} className="flex items-center mt-2">
+                      <Avatar className="mr-4">
+                        <AvatarImage
+                          src={track.track.album.images[2]?.url || ""}
+                        />
+                        <AvatarFallback className="text-black">
+                          Album
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="font-bold">{track.track.name}</div>
+                        <div>
+                          {track.track.album.artists.map(
+                            (artist) => artist.name
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div>No recently played tracks available.</div>
+                )}
               </TabsContent>
             </Tabs>
           </div>
