@@ -27,6 +27,7 @@ import Header from "@/components/Header";
 import { formatSongDuration } from "@/utils/function";
 import { useToast } from "@/hooks/use-toast";
 import { followArtist } from "@/utils/Artist/followArtist";
+import { unfollowArtist } from "@/utils/Artist/unfollowArtist";
 
 interface Image {
   url: string;
@@ -114,34 +115,14 @@ const ArtistProfilePage = () => {
     });
   };
 
-  const unfollowArtist = async (artistID: string) => {
-    try {
-      const response = await fetch(
-        "https://api.spotify.com/v1/me/following?type=artist&ids=" + artistID,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            ids: [artistID],
-          }),
-        }
-      );
-      if (!response.ok) {
-        toast({
-          title: "Unsuccess!",
-          description: "Failed to unfollow artist.",
-        });
-        console.error("Failed to unfollow artist:", response.statusText);
-        return;
-      }
+  const handleUnfollowArtist = async (artistID: string) => {
+    const response = await unfollowArtist(artistID, token);
+    if (response) {
+      const { success, message } = response;
       toast({
-        title: "Success!",
-        description: "Artist unfollowed.",
+        title: success ? "Success!" : "Unsuccess!",
+        description: message,
       });
-    } catch (error) {
-      console.error("Error unfollowing artist:", error);
     }
   };
 
@@ -393,7 +374,7 @@ const ArtistProfilePage = () => {
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => {
-                        unfollowArtist(artistProfile.id);
+                        handleUnfollowArtist(artistProfile.id);
                       }}
                     >
                       Continue
