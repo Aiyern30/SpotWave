@@ -1,7 +1,7 @@
 "use client";
 import ReactPlayer from "react-player";
 
-import Sidebar from "@/app/Sidebar";
+import Sidebar from "@/components/Sidebar";
 import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";

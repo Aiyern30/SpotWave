@@ -3,7 +3,7 @@ import { LuLayoutGrid } from "react-icons/lu";
 import { PiTable } from "react-icons/pi";
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Sidebar from "@/app/Sidebar";
+import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Image from "next/image";
 import { FaRegCopy, FaRegShareSquare } from "react-icons/fa";

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { truncateText } from "@/components/truncateText";
-import Sidebar from "@/app/Sidebar";
+import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import {
   Avatar,

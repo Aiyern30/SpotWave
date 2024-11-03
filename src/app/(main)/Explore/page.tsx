@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import Sidebar from "@/app/Sidebar";
+import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import {
   Accordion,

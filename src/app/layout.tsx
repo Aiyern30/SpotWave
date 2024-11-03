@@ -30,7 +30,6 @@ export default function RootLayout({
         <AuthProvider>
           {children}
           <Toaster />
-          <InQueueWindow />
         </AuthProvider>
       </body>
     </html>
