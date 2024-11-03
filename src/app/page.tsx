@@ -126,18 +126,25 @@ export default function Home() {
   // Handle the login process
   const handleLogin = () => {
     const scopes = [
-      "user-read-private",
-      "user-read-email",
-      "streaming",
-      "user-top-read",
-      "user-follow-read",
-      "playlist-read-private",
-      "user-library-read",
-      "user-library-modify",
-      "user-read-recently-played",
-      "playlist-modify-public",
-      "playlist-modify-private",
+      "ugc-image-upload",
+      "user-read-playback-state",
+      "user-modify-playback-state",
+      "user-read-currently-playing",
       "app-remote-control",
+      "streaming",
+      "playlist-read-private",
+      "playlist-read-collaborative",
+      "playlist-modify-private",
+      "playlist-modify-public",
+      "user-follow-modify",
+      "user-follow-read",
+      "user-read-playback-position",
+      "user-top-read",
+      "user-read-recently-played",
+      "user-library-modify",
+      "user-library-read",
+      "user-read-email",
+      "user-read-private",
     ].join(" ");
 
     window.location.href = `${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(
