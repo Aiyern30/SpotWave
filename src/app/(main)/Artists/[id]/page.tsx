@@ -28,6 +28,8 @@ import { formatSongDuration } from "@/utils/function";
 import { useToast } from "@/hooks/use-toast";
 import { followArtist } from "@/utils/Artist/followArtist";
 import { unfollowArtist } from "@/utils/Artist/unfollowArtist";
+import { fetchFollowedArtists } from "@/utils/Artist/fetchFollowedArtists";
+import { Artist } from "@/lib/types";
 
 interface Image {
   url: string;
@@ -94,6 +96,7 @@ const ArtistProfilePage = () => {
   const [topTracks, setTopTracks] = useState<TopTrack[]>([]);
   const [albums, setAlbums] = useState<Albums[]>([]);
   const [artistDetails, setArtistDetails] = useState<AboutProps | null>(null);
+  const [followedArtists, setFollowedArtists] = useState<Artist[]>([]);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -104,24 +107,44 @@ const ArtistProfilePage = () => {
   const [token, setToken] = useState<string>("");
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const { toast } = useToast();
+  const [isFollowing, setIsFollowing] = useState(false);
+
+  useEffect(() => {
+    if (artistProfile?.id && followedArtists.length > 0) {
+      setIsFollowing(
+        followedArtists.some((artist) => artist.id === artistProfile.id)
+      );
+    }
+  }, [artistProfile, followedArtists]);
 
   const handleFollowArtist = async (artistID: string) => {
     const result = await followArtist(artistID, token);
-
-    const { success, message } = result;
-    toast({
-      title: success ? "Success!" : "Unsuccess!",
-      description: message,
-    });
+    if (result.success) {
+      toast({
+        title: "Success!",
+        description: result.message,
+      });
+      setIsFollowing(true);
+    } else {
+      toast({
+        title: "Unsuccess!",
+        description: result.message,
+      });
+    }
   };
 
   const handleUnfollowArtist = async (artistID: string) => {
-    const response = await unfollowArtist(artistID, token);
-    if (response) {
-      const { success, message } = response;
+    const result = await unfollowArtist(artistID, token);
+    if (result.success) {
       toast({
-        title: success ? "Success!" : "Unsuccess!",
-        description: message,
+        title: "Success!",
+        description: result.message,
+      });
+      setIsFollowing(false);
+    } else {
+      toast({
+        title: "Unsuccess!",
+        description: result.message,
       });
     }
   };
@@ -173,22 +196,24 @@ const ArtistProfilePage = () => {
   }, []);
 
   useEffect(() => {
-    if (id && name) {
+    if (id && name && token) {
       const fetchData = async () => {
         const profile = await fetchArtistProfile(id);
         const tracks = await fetchArtistTopTracks(id);
         const artistAlbums = await fetchArtistAlbums(id);
         const details = await fetchArtistDetails(name);
+        const followedArtists = await fetchFollowedArtists(token);
 
         setArtistProfile(profile);
         setTopTracks(tracks);
         setAlbums(artistAlbums);
         setArtistDetails(details);
+        setFollowedArtists(followedArtists);
       };
 
       fetchData();
     }
-  }, [id, name, fetchArtistDetails]);
+  }, [id, name, token, fetchArtistDetails]);
 
   const fetchArtistProfile = async (id: string) => {
     const token = localStorage.getItem("Token");
@@ -353,35 +378,44 @@ const ArtistProfilePage = () => {
                   {artistProfile.name}
                 </AvatarFallback>
               </Avatar>
-              <Button onClick={() => handleFollowArtist(artistProfile.id)}>
-                Follow
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger>
-                  <Button>Following</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      Are you absolutely sure?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently
-                      unfollow this artist
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => {
-                        handleUnfollowArtist(artistProfile.id);
-                      }}
-                    >
-                      Continue
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              {isFollowing ? (
+                <AlertDialog>
+                  <AlertDialogTrigger>
+                    <Button>Following</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Are you absolutely sure?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently
+                        unfollow this artist.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => {
+                          handleUnfollowArtist(artistProfile.id);
+                          setIsFollowing(false);
+                        }}
+                      >
+                        Continue
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              ) : (
+                <Button
+                  onClick={() => {
+                    handleFollowArtist(artistProfile.id);
+                    setIsFollowing(true);
+                  }}
+                >
+                  Follow
+                </Button>
+              )}
 
               <p className="text-lg">
                 Followers: {artistProfile.followers.total}
