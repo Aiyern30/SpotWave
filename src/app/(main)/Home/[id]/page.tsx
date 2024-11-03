@@ -6,7 +6,12 @@ import { useParams, useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Image from "next/image";
-import { FaRegCopy, FaRegShareSquare } from "react-icons/fa";
+import {
+  FaPauseCircle,
+  FaPlayCircle,
+  FaRegCopy,
+  FaRegShareSquare,
+} from "react-icons/fa";
 import { MdDeleteOutline } from "react-icons/md";
 
 import {
@@ -71,6 +76,7 @@ import { removePlaylist } from "@/utils/Tracks/removeSongsFromTrack";
 import { formatSongDuration } from "@/utils/function";
 import { fetchSpotifyPlaylists } from "@/utils/fetchAllPlaylist";
 import { fetchPlaylistDetails } from "@/utils/fetchPlaylist";
+import { togglePreview } from "@/utils/audioUtils";
 
 const itemsPerPage = 10;
 
@@ -142,17 +148,15 @@ const PlaylistPage = () => {
     if (page >= 1 && page <= totalPages) {
       handlePageChange(page);
     } else {
-      // Optionally show an error message for invalid page numbers
     }
   };
 
-  const playPreview = (url: string) => {
-    if (audio) {
-      audio.pause();
-    }
-    const newAudio = new Audio(url);
-    setAudio(newAudio);
-    newAudio.play();
+  const [currentlyPlayingUrl, setCurrentlyPlayingUrl] = useState<string | null>(
+    null
+  );
+
+  const handlePlay = (url: string) => {
+    togglePreview(url, setCurrentlyPlayingUrl);
   };
 
   useEffect(() => {
@@ -367,17 +371,16 @@ const PlaylistPage = () => {
                                 {hoveredIndex === index ? (
                                   <div
                                     onClick={() =>
-                                      playPreview(item.track.preview_url)
+                                      handlePlay(item.track.preview_url)
                                     }
                                     className="flex items-center justify-center border rounded-full w-8 h-8 bg-play mx-auto"
                                   >
-                                    <Image
-                                      src={"/play-button.png"}
-                                      width={16}
-                                      height={16}
-                                      alt="Play"
-                                      className="hover:opacity-"
-                                    />
+                                    {currentlyPlayingUrl ===
+                                    item.track.preview_url ? (
+                                      <FaPauseCircle size={32} />
+                                    ) : (
+                                      <FaPlayCircle size={32} />
+                                    )}
                                   </div>
                                 ) : (
                                   <div>{startIndex + index + 1}</div>
@@ -601,16 +604,16 @@ const PlaylistPage = () => {
 
                                 <div
                                   onClick={() =>
-                                    playPreview(data.track.preview_url)
+                                    handlePlay(data.track.preview_url)
                                   }
                                   className="absolute bottom-2 right-2 flex items-center justify-center border rounded-full w-8 h-8 bg-play opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                                 >
-                                  <Image
-                                    src="/play-button.png"
-                                    width={16}
-                                    height={16}
-                                    alt="Play"
-                                  />
+                                  {currentlyPlayingUrl ===
+                                  data.track.preview_url ? (
+                                    <FaPauseCircle size={32} color="white" />
+                                  ) : (
+                                    <FaPlayCircle size={32} color="white" />
+                                  )}
                                 </div>
                               </Avatar>
                             </CardHeader>
