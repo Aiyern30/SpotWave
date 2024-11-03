@@ -12,9 +12,21 @@ import {
   CardContent,
   CardFooter,
   Skeleton,
+  Button,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui";
 import Header from "@/components/Header";
 import { formatSongDuration } from "@/utils/function";
+import { useToast } from "@/hooks/use-toast";
+import { followArtist } from "@/utils/Artist/followArtist";
 
 interface Image {
   url: string;
@@ -90,6 +102,48 @@ const ArtistProfilePage = () => {
   const name = searchParams.get("name");
   const [token, setToken] = useState<string>("");
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+  const { toast } = useToast();
+
+  const handleFollowArtist = async (artistID: string) => {
+    const result = await followArtist(artistID, token);
+
+    const { success, message } = result;
+    toast({
+      title: success ? "Success!" : "Unsuccess!",
+      description: message,
+    });
+  };
+
+  const unfollowArtist = async (artistID: string) => {
+    try {
+      const response = await fetch(
+        "https://api.spotify.com/v1/me/following?type=artist&ids=" + artistID,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            ids: [artistID],
+          }),
+        }
+      );
+      if (!response.ok) {
+        toast({
+          title: "Unsuccess!",
+          description: "Failed to unfollow artist.",
+        });
+        console.error("Failed to unfollow artist:", response.statusText);
+        return;
+      }
+      toast({
+        title: "Success!",
+        description: "Artist unfollowed.",
+      });
+    } catch (error) {
+      console.error("Error unfollowing artist:", error);
+    }
+  };
 
   const fetchArtistDetails = useCallback(async (artistName: string) => {
     const apiKey = process.env.NEXT_PUBLIC_LASTFM_API_KEY;
@@ -318,6 +372,36 @@ const ArtistProfilePage = () => {
                   {artistProfile.name}
                 </AvatarFallback>
               </Avatar>
+              <Button onClick={() => handleFollowArtist(artistProfile.id)}>
+                Follow
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger>
+                  <Button>Following</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Are you absolutely sure?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently
+                      unfollow this artist
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        unfollowArtist(artistProfile.id);
+                      }}
+                    >
+                      Continue
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
               <p className="text-lg">
                 Followers: {artistProfile.followers.total}
               </p>

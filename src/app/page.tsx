@@ -30,7 +30,7 @@ export default function Home() {
   const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
   const RESPONSE_TYPE = "token";
 
-  const [token, setToken] = useState<string>(""); // This state can be initialized with a token
+  const [token, setToken] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
 
