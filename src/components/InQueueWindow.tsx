@@ -102,7 +102,9 @@ const InQueueWindow = () => {
   return (
     <div
       className={`fixed bottom-4 right-4 ${
-        isOpen ? "w-[500px] h-[500px]" : "w-[50px] h-[50px]"
+        isOpen
+          ? "w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] md:w-[500px] md:h-[500px] "
+          : "w-[50px] h-[50px]"
       } bg-white shadow-lg rounded-md flex items-center justify-center`}
       style={{
         transition: "width 0.3s ease, height 0.3s ease",
