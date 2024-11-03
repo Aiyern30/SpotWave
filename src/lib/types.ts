@@ -26,7 +26,7 @@ export interface RecentTracksProps {
         name: string;
         id: string;
         type: string;
-      };
+      }[];
       release_date: string;
       images: Image[];
     };

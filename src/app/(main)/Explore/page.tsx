@@ -190,7 +190,9 @@ const Page = () => {
                           </CardHeader>
                           <CardTitle>{tracks.track.name}</CardTitle>
                           <CardContent>
-                            {tracks.track.album.artists.name}
+                            {tracks.track.album.artists.map(
+                              (artist) => artist.name
+                            )}
                           </CardContent>
                           <CardFooter>
                             {tracks.track.album.release_date}
