@@ -155,6 +155,8 @@ const PlaylistPage = () => {
     null
   );
 
+  console.log("currentlyPlayingUrl", currentlyPlayingUrl);
+
   const handlePlay = (url: string) => {
     togglePreview(url, setCurrentlyPlayingUrl);
   };
@@ -230,7 +232,7 @@ const PlaylistPage = () => {
       const profileDetails = await fetchSpotifyPlaylists(token);
       if (profileDetails) {
         const myPlaylists = profileDetails.filter(
-          (playlist: { owner: { id: string } }) => playlist.owner.id === myID
+          (playlist: { owner: { id: string } }) => playlist?.owner.id === myID
         );
 
         setPlaylists(myPlaylists);

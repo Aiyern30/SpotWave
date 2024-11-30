@@ -48,10 +48,10 @@ const Page = () => {
     const data = await fetchSpotifyPlaylists(token);
     if (data) {
       const formattedPlaylists = data.map((playlist: any) => ({
-        id: playlist.id,
-        image: playlist.images?.[0]?.url || "",
-        title: playlist.name || "",
-        description: playlist.description || "",
+        id: playlist?.id,
+        image: playlist?.images?.[0]?.url || "",
+        title: playlist?.name || "",
+        description: playlist?.description || "",
       }));
 
       setPlaylists(formattedPlaylists);
