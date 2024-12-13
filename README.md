@@ -1,4 +1,5 @@
 # Spotwave
+- Live preview link [Spotwave](https://spot-wave.vercel.app/)
 
 SpotWave allows you to search for and listen to Spotify songs with a preview and lyrics. You can also view the top tracks and artists in global rank and come with their all details such as bio, images, albums, and tracks
 ## Table of Contents
