@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Spotwave
 
-## Getting Started
+SpotWave allows you to search for and listen to Spotify songs with a preview and lyrics. You can also view the top tracks and artists in global rank and come with their all details such as bio, images, albums, and tracks
+## Table of Contents
+- [Installation](#installation)
+- [Usage](#usage)
+- [Content](#content)
+- [Contributing](#contributing)
 
-First, run the development server:
+## Installation
+
+To install this project locally, run:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/Aiyern30/SpotWave
+cd SpotWave
+npm install
 ```
+## Usage
+After installation, run the development server:
+```npm run dev```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Content
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Tools I Use:
+- Spotify
+- NextJS
+- Tailwind CSS
+- Framer Motion
+- React
+- Vercel
+- TypeScript
+- Shadcn UI
+- Lottie React
+- Axios
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+## About SpotWave
+Spotwave is a music streaming platform that integrates with the Spotify library, offering users the ability to log in with their Spotify account (premium subscription required). The system provides access to a variety of Spotify features, including:
 
-## Learn More
+- Library & Playlist Management: Users can view and manage their created library, albums, songs, and playlists, as well as follow their favorite artists and tracks.
+- Lyrics: Users can view lyrics for their favorite songs directly within the platform.
+- Listening History: Users can check their listening history to track previously played songs.
+- op Artists & Songs: Access the top 100 global artists and songs, showcasing the most popular music worldwide.
+- Profile Page: In the profile section, users can manage their library, follow artists, and interact with playlists by adding or removing them.
+- Playlist Sharing: Users can share their playlists via direct links or embed them on other platforms.
+  
+Spotwave aims to enhance the Spotify experience with features that focus on user engagement and personalized music exploration.
 
-To learn more about Next.js, take a look at the following resources:
+## Contributing
+If you'd like to contribute, follow these steps:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+1. Fork the repository.
+2. Create a new branch.
+3. Make your changes.
+4. Open a pull request.
