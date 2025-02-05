@@ -16,8 +16,6 @@ import {
 import EventsInfo from "@/components/Events/EventsInfo";
 import { fetchEventById } from "@/utils/Events/fetchEventByID";
 
-const DEFAULT_LOCATION = { latitude: 40.7128, longitude: -74.006 }; // New York (Example)
-
 const SkeletonEventCard = () => (
   <div>
     <Skeleton className="w-full h-48 rounded-t-xl" />
@@ -84,6 +82,11 @@ const EventsPage = () => {
     setSelectedEventId(eventId);
   };
 
+  const handleCloseDialog = () => {
+    setSelectedEventId(null);
+    setSelectedEvent(null);
+  };
+
   return (
     <div className="flex h-screen">
       <Sidebar
@@ -146,10 +149,7 @@ const EventsPage = () => {
 
         {/* Dialog for Event Details */}
         {selectedEvent && (
-          <EventsInfo
-            event={selectedEvent}
-            onClose={() => setSelectedEvent(null)}
-          />
+          <EventsInfo event={selectedEvent} onClose={handleCloseDialog} />
         )}
       </div>
     </div>
