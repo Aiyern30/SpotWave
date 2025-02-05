@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
-import { Event } from "@/lib/events";
+import { EventData } from "@/lib/events";
 import { fetchEvents } from "@/utils/Events/fetchEvent";
 import {
   Avatar,
@@ -27,7 +27,7 @@ const SkeletonEventCard = () => (
 );
 
 const EventsPage = () => {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<EventData[]>([]);
   console.log("events", events);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");

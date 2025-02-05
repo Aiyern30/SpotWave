@@ -1,37 +1,49 @@
-export interface Venue {
-    name: string;
-    city: {
-      name: string;
-    };
-    state?: {
-      name: string;
-      stateCode: string;
-    };
-    country: {
-      name: string;
-      countryCode: string;
-    };
-    address?: {
-      line1: string;
-    };
-    location: {
-      latitude: string;
-      longitude: string;
-    };
-    url?: string;
-    postalCode?: string;
-    timezone?: string;
-  }
-  
-  export interface EventImage {
+export interface EventData {
+  name: string;
+  type: string;
+  id: string;
+  test: boolean;
+  url: string;
+  locale: string;
+  description?: string;
+  images: {
+    ratio: string;
     url: string;
     width: number;
     height: number;
-    ratio: string;
     fallback: boolean;
-  }
-  
-  export interface EventClassification {
+  }[];
+  sales: {
+    public: {
+      startDateTime: string;
+      startTBD: boolean;
+      startTBA: boolean;
+      endDateTime?: string;
+    };
+  };
+  dates: {
+    start: {
+      localDate: string;
+      localTime: string;
+      dateTime: string;
+      dateTBD: boolean;
+      dateTBA: boolean;
+      timeTBA: boolean;
+      noSpecificTime: boolean;
+    };
+    end?: {
+      localDate?: string;
+      localTime?: string;
+      dateTime?: string;
+      approximate?: boolean;
+      noSpecificTime?: boolean;
+    };
+    timezone?: string;
+    status?: {
+      code: string;
+    };
+  };
+  classifications?: {
     primary: boolean;
     segment: {
       id: string;
@@ -48,86 +60,73 @@ export interface Venue {
       name: string;
       levelType: string;
     };
-    type?: {
-      id: string;
-      name: string;
-      levelType: string;
-    };
-    subType?: {
-      id: string;
-      name: string;
-      levelType: string;
-    };
-  }
-  
-  export interface EventDates {
-    start: {
-      localDate: string;
-      localTime: string;
-      dateTime: string;
-      dateTBD: boolean;
-      dateTBA: boolean;
-      timeTBA: boolean;
-      noSpecificTime: boolean;
-    };
-    timezone: string;
-    status: {
-      code: string;
-    };
-    spanMultipleDays: boolean;
-  }
-  
-  export interface PriceRange {
+  }[];
+  promoter?: {
+    id: string;
+    name: string;
+    description: string;
+  };
+  priceRanges?: {
     type: string;
     currency: string;
     min: number;
     max: number;
-  }
-  
-  export interface TicketLimit {
+  }[];
+  accessibility?: {
+    id: string;
+  };
+  ticketLimit?: {
     info: string;
     id: string;
-  }
-  
-  export interface Event {
+  };
+  ageRestrictions?: {
+    legalAgeEnforced: boolean;
     id: string;
-    name: string;
-    type: string;
-    url: string;
-    locale: string;
-    images: EventImage[];
-    distance: number;
-    units: string;
-    sales: {
-      public: {
-        startDateTime: string;
-        startTBD: boolean;
-        startTBA: boolean;
-        endDateTime: string;
+  };
+  ticketing?: {
+    safeTix: {
+      enabled: boolean;
+    };
+    allInclusivePricing: {
+      enabled: boolean;
+    };
+    id: string;
+  };
+  _embedded?: {
+    venues?: {
+      name: string;
+      type: string;
+      id: string;
+      test: boolean;
+      url: string;
+      locale: string;
+      postalCode?: string;
+      timezone?: string;
+      city?: {
+        name: string;
       };
-    };
-    dates: EventDates;
-    classifications: EventClassification[];
-    promoter: {
-      id: string;
-      name: string;
-      description: string;
-    };
-    promoters: {
-      id: string;
-      name: string;
-      description: string;
+      state?: {
+        name: string;
+        stateCode: string;
+      };
+      country?: {
+        name: string;
+        countryCode: string;
+      };
+      address?: {
+        line1: string;
+      };
+      location?: {
+        longitude: string;
+        latitude: string;
+      };
     }[];
-    info?: string;
-    pleaseNote?: string;
-    priceRanges?: PriceRange[];
-    ticketLimit?: TicketLimit;
-    ageRestrictions?: {
-      legalAgeEnforced: boolean;
-      id: string;
-    };
-    _embedded: {
-      venues: Venue[];
-    };
-  }
-  
+  };
+  place?: {
+    city: { name: string };
+    country: { name: string; countryCode: string };
+    address: { line1: string };
+    location: { longitude: string; latitude: string };
+    state: { name: string; stateCode: string };
+  };
+}
