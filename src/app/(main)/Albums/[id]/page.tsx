@@ -138,7 +138,7 @@ const ArtistProfilePage = () => {
   }, []);
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen ">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen((prev) => !prev)}
@@ -188,7 +188,7 @@ const ArtistProfilePage = () => {
               </div>
 
               {displayUI === "Table" ? (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto w-full container">
                   <Table>
                     <TableCaption>
                       A list of tracks in the playlist.
@@ -222,7 +222,11 @@ const ArtistProfilePage = () => {
                           <TableCell className="relative text-center">
                             {hoveredIndex === index ? (
                               <div
-                                onClick={() => playPreview(item.preview_url)}
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  playPreview(item.preview_url);
+                                }}
                                 className="flex items-center justify-center border rounded-full w-8 h-8 bg-play mx-auto"
                               >
                                 <Image
@@ -285,7 +289,7 @@ const ArtistProfilePage = () => {
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="hidden md:table-cell">
+                          <TableCell className="hidden md:table-cell text-center">
                             <a
                               href={`https://open.spotify.com/track/${item.uri
                                 .split(":")
@@ -313,7 +317,7 @@ const ArtistProfilePage = () => {
                   </Table>
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-8">
+                <div className="flex flex-wrap gap-8 container">
                   {paginatedItems.map((item, index) => (
                     <Card
                       key={index}

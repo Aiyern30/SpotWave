@@ -336,7 +336,7 @@ const PlaylistPage = () => {
                     />
                   </div>
                   {displayUI === "Table" && (
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto container">
                       {paginatedItems.length === 0 ? (
                         <NoTracks onExplore={() => router.push("/Explore")} />
                       ) : (
@@ -408,7 +408,7 @@ const PlaylistPage = () => {
                       {paginatedItems.length === 0 ? (
                         <NoTracks onExplore={() => router.push("/Explore")} />
                       ) : (
-                        <div className="flex flex-wrap gap-8">
+                        <div className="flex flex-wrap gap-8 container">
                           {paginatedItems.map((data, index) => (
                             <Card
                               key={index}
