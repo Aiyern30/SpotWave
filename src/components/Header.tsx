@@ -201,12 +201,8 @@ const HeaderContent = () => {
   ) => {
     if (type === "song") {
       router.push(`/Songs/${id}?name=${encodeURIComponent(name)}`);
-      console.log("Song clicked");
     } else if (type === "artist") {
       router.push(`/Artists/${id}?name=${encodeURIComponent(name)}`);
-      console.log("Artist clicked");
-    } else {
-      console.error("Invalid type:", type);
     }
     setSearchTerm("");
     setSearchResults([]);
