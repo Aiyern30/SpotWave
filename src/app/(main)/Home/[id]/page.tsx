@@ -77,6 +77,7 @@ import { formatSongDuration } from "@/utils/function";
 import { fetchSpotifyPlaylists } from "@/utils/fetchAllPlaylist";
 import { fetchPlaylistDetails } from "@/utils/fetchPlaylist";
 import { togglePreview } from "@/utils/audioUtils";
+import NoTracks from "@/components/NoTracks";
 
 const itemsPerPage = 10;
 
@@ -337,9 +338,7 @@ const PlaylistPage = () => {
                   {displayUI === "Table" && (
                     <div className="overflow-x-auto">
                       {paginatedItems.length === 0 ? (
-                        <div className="flex items-center justify-center min-h-[24rem] text-gray-400">
-                          No tracks found in the playlist.
-                        </div>
+                        <NoTracks onExplore={() => router.push("/Explore")} />
                       ) : (
                         <Table>
                           <TableCaption>
@@ -406,67 +405,73 @@ const PlaylistPage = () => {
 
                   {displayUI === "Grid" && (
                     <>
-                      <div className="flex flex-wrap gap-8">
-                        {paginatedItems.map((data, index) => (
-                          <Card
-                            key={index}
-                            className="group w-36 cursor-pointer text-white relative"
-                          >
-                            <CardHeader>
-                              <Avatar className="w-36 h-36 relative p-1">
-                                <AvatarImage
-                                  src={data.track.album.images[0].url}
-                                  className="rounded-xl"
-                                />
-                                <AvatarFallback className="text-black">
-                                  {data.track.name}
-                                </AvatarFallback>
+                      {paginatedItems.length === 0 ? (
+                        <NoTracks onExplore={() => router.push("/Explore")} />
+                      ) : (
+                        <div className="flex flex-wrap gap-8">
+                          {paginatedItems.map((data, index) => (
+                            <Card
+                              key={index}
+                              className="group w-36 cursor-pointer text-white relative"
+                            >
+                              <CardHeader>
+                                <Avatar className="w-36 h-36 relative p-1">
+                                  <AvatarImage
+                                    src={data.track.album.images[0].url}
+                                    className="rounded-xl"
+                                  />
+                                  <AvatarFallback className="text-black">
+                                    {data.track.name}
+                                  </AvatarFallback>
 
+                                  <div
+                                    onClick={() =>
+                                      handlePlay(data.track.preview_url)
+                                    }
+                                    className="absolute bottom-2 right-2 flex items-center justify-center border rounded-full w-8 h-8 bg-play opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                  >
+                                    {currentlyPlayingUrl ===
+                                    data.track.preview_url ? (
+                                      <FaPauseCircle size={32} color="white" />
+                                    ) : (
+                                      <FaPlayCircle size={32} color="white" />
+                                    )}
+                                  </div>
+                                </Avatar>
+                              </CardHeader>
+                              <CardTitle>{data.track.name}</CardTitle>
+                              <CardContent className="text-sm flex space-x-3">
+                                {data.track.album.artists.map((artist) => (
+                                  <div
+                                    key={artist.id}
+                                    onClick={() =>
+                                      router.push(`/Artists/${artist.id}`)
+                                    }
+                                    className="cursor-pointer hover:underline"
+                                  >
+                                    {artist.name}
+                                  </div>
+                                ))}
+                              </CardContent>
+                              <CardFooter className="text-sm space-x-3">
                                 <div
+                                  className="hover:underline"
                                   onClick={() =>
-                                    handlePlay(data.track.preview_url)
+                                    router.push(
+                                      `/Albums/${data.track.album.id}`
+                                    )
                                   }
-                                  className="absolute bottom-2 right-2 flex items-center justify-center border rounded-full w-8 h-8 bg-play opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                                 >
-                                  {currentlyPlayingUrl ===
-                                  data.track.preview_url ? (
-                                    <FaPauseCircle size={32} color="white" />
-                                  ) : (
-                                    <FaPlayCircle size={32} color="white" />
-                                  )}
+                                  {data.track.album.name}
                                 </div>
-                              </Avatar>
-                            </CardHeader>
-                            <CardTitle>{data.track.name}</CardTitle>
-                            <CardContent className="text-sm flex space-x-3">
-                              {data.track.album.artists.map((artist) => (
-                                <div
-                                  key={artist.id}
-                                  onClick={() =>
-                                    router.push(`/Artists/${artist.id}`)
-                                  }
-                                  className="cursor-pointer hover:underline"
-                                >
-                                  {artist.name}
-                                </div>
-                              ))}
-                            </CardContent>
-                            <CardFooter className="text-sm space-x-3">
-                              <div
-                                className="hover:underline"
-                                onClick={() =>
-                                  router.push(`/Albums/${data.track.album.id}`)
-                                }
-                              >
-                                {data.track.album.name}
-                              </div>
-                            </CardFooter>
-                            <CardFooter className="text-sm flex space-x-3">
-                              {formatSongDuration(data.track?.duration_ms)}
-                            </CardFooter>
-                          </Card>
-                        ))}
-                      </div>
+                              </CardFooter>
+                              <CardFooter className="text-sm flex space-x-3">
+                                {formatSongDuration(data.track?.duration_ms)}
+                              </CardFooter>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
                     </>
                   )}
 
