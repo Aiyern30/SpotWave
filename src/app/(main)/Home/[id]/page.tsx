@@ -92,7 +92,6 @@ const PlaylistPage = () => {
   const [token, setToken] = useState<string>("");
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
-  const [hoveredArtist, setHoveredArtist] = useState<string | null>(null);
   const router = useRouter();
 
   const [displayUI, setDisplayUI] = useState<DisplayUIProps | string>("Table");
@@ -407,35 +406,21 @@ const PlaylistPage = () => {
                                     </div>
                                     <div className="text-sm text-secondary-background">
                                       {item.track?.artists.map(
-                                        (artist: any) => (
+                                        (artist: any, artistIndex: number) => (
                                           <span
-                                            key={artist.id}
+                                            key={artist.id + artistIndex}
                                             onClick={() =>
                                               handleArtistClick(
                                                 artist.id,
                                                 artist.name
                                               )
                                             }
-                                            onMouseEnter={() =>
-                                              setHoveredArtist(artist.id)
-                                            }
-                                            onMouseLeave={() =>
-                                              setHoveredArtist(null)
-                                            }
-                                            className={`cursor-pointer ${
-                                              hoveredArtist === artist.id
-                                                ? "underline"
-                                                : ""
-                                            } ${
-                                              artist.id ? "hover:underline" : ""
-                                            }`}
+                                            className="cursor-pointer hover:underline"
                                           >
                                             {artist.name}
                                             {item.track?.artists.length > 1 &&
-                                            artist !==
-                                              item.track.artists[
-                                                item.track.artists.length - 1
-                                              ]
+                                            artistIndex !==
+                                              item.track.artists.length - 1
                                               ? ", "
                                               : ""}
                                           </span>
