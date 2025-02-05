@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Event } from "@/lib/events";
+import { EventData } from "@/lib/events";
 
 const TICKETMASTER_API_KEY = process.env.NEXT_PUBLIC_TICKETMASTER_API_KEY;
 
@@ -9,7 +9,7 @@ const TICKETMASTER_API_KEY = process.env.NEXT_PUBLIC_TICKETMASTER_API_KEY;
  * @param long Longitude of the location.
  * @returns Array of events or an error message.
  */
-export const fetchEvents = async (lat: number, long: number): Promise<{ events: Event[]; error?: string }> => {
+export const fetchEvents = async (lat: number, long: number): Promise<{ events: EventData[]; error?: string }> => {
   try {
     const url = `https://app.ticketmaster.com/discovery/v2/events.json?latlong=${lat},${long}&apikey=${TICKETMASTER_API_KEY}`;
     console.log("Fetching:", url);

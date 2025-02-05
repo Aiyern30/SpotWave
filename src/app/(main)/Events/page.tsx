@@ -13,6 +13,10 @@ import {
   CardTitle,
   Skeleton,
 } from "@/components/ui";
+import EventsInfo from "@/components/Events/EventsInfo";
+import { fetchEventById } from "@/utils/Events/fethcEventByID";
+
+const DEFAULT_LOCATION = { latitude: 40.7128, longitude: -74.006 }; // New York (Example)
 
 const SkeletonEventCard = () => (
   <div>
@@ -28,32 +32,59 @@ const SkeletonEventCard = () => (
 
 const EventsPage = () => {
   const [events, setEvents] = useState<EventData[]>([]);
-  console.log("events", events);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   useEffect(() => {
+    const fetchEventData = async (latitude: number, longitude: number) => {
+      setLoading(true);
+      const { events, error } = await fetchEvents(latitude, longitude);
+      if (error) setError(error);
+      setEvents(events);
+      setLoading(false);
+    };
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          setLoading(true);
-          const { events, error } = await fetchEvents(latitude, longitude);
-          if (error) setError(error);
-          setEvents(events);
-          setLoading(false);
+        (position) => {
+          fetchEventData(position.coords.latitude, position.coords.longitude);
         },
         () => {
-          setError("Geolocation is disabled or not available.");
-          setLoading(false);
+          setError(
+            "Geolocation denied. Showing events for a default location."
+          );
+          fetchEventData(40.7128, -74.006);
         }
       );
     } else {
-      setError("Geolocation is not supported by this browser.");
-      setLoading(false);
+      setError(
+        "Geolocation not supported. Showing events for a default location."
+      );
+      fetchEventData(40.7128, -74.006);
     }
   }, []);
+
+  // Fetch event details once when the event is selected
+  useEffect(() => {
+    if (selectedEventId) {
+      const fetchEventDetails = async () => {
+        setLoading(true);
+        const { event, error } = await fetchEventById(selectedEventId);
+        if (error) setError(error);
+        setSelectedEvent(event);
+        setLoading(false);
+      };
+      fetchEventDetails();
+    }
+  }, [selectedEventId]);
+
+  const handleEventSelect = (eventId: string) => {
+    console.log("Event ID selected:", eventId); // Log the event ID
+    setSelectedEventId(eventId);
+  };
 
   return (
     <div className="flex h-screen">
@@ -82,7 +113,7 @@ const EventsPage = () => {
               <Card
                 key={event.id}
                 className="bg-white group w-full cursor-pointer hover:shadow-lg hover:bg-white"
-                onClick={() => window.open(event.url, "_blank")}
+                onClick={() => handleEventSelect(event.id)}
               >
                 <CardHeader className="p-0">
                   <Avatar className="w-full h-48 relative">
@@ -113,6 +144,14 @@ const EventsPage = () => {
           </div>
         ) : (
           !loading && <p>No events found near you.</p>
+        )}
+
+        {/* Dialog for Event Details */}
+        {selectedEvent && (
+          <EventsInfo
+            event={selectedEvent}
+            onClose={() => setSelectedEvent(null)}
+          />
         )}
       </div>
     </div>
