@@ -14,7 +14,9 @@ const nextConfig = {
       'daily-mix.scdn.co',
       'newjams-images.scdn.co',
       'pickasso.spotifycdn.com',
-      'image-cdn-fa.spotifycdn.com'
+      'image-cdn-fa.spotifycdn.com',
+      "s1.ticketm.net",
+      "images.universe.com",
     ],
   },
 };

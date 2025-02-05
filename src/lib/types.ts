@@ -242,3 +242,7 @@ export interface ArtistsResponseLASTFM {
     artist: GlobalArtistPropsLASTFM[];
   };
 }
+
+
+
+

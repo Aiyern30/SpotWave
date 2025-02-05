@@ -75,3 +75,29 @@
   color: white;
   font-family: sans-serif;
 }
+
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px; /* Set width for vertical scrollbar */
+  height: 8px; /* Set height for horizontal scrollbar */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #808080; /* Gray color for the scrollbar thumb */
+  border-radius: 10px; /* Circle border-radius */
+  transition: background-color 0.3s ease; /* Smooth hover transition */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #d3d3d3; /* Light gray on hover */
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Light background for the track */
+  border-radius: 10px; /* Optional: round corners for the track */
+}
+
+::-webkit-scrollbar-button {
+  display: none; /* Hide up/down buttons */
+}

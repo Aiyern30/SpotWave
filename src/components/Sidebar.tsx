@@ -11,7 +11,7 @@ import {
   BiLogOut,
 } from "react-icons/bi";
 import { RiUserVoiceFill } from "react-icons/ri";
-
+import { IoTicket } from "react-icons/io5";
 import { GiHamburgerMenu } from "react-icons/gi";
 import {
   AlertDialog,
@@ -290,6 +290,7 @@ const items = [
   { title: "Artists", Icon: RiUserVoiceFill, href: "/Artists" },
   { title: "Songs", Icon: BiSolidMusic, href: "/Songs" },
   { title: "Profile", Icon: FaUserCircle, href: "/Profile" },
+  { title: "Events", Icon: IoTicket, href: "/Events" },
 ];
 
 const framerSidebarPanel = {
