@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import { EventData } from "@/lib/events";
 import { fetchEvents } from "@/utils/Events/fetchEvent";
@@ -11,29 +12,14 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-  Skeleton,
 } from "@/components/ui";
 import EventsInfo from "@/components/Events/EventsInfo";
-import { fetchEventById } from "@/utils/Events/fetchEventByID";
-
-const SkeletonEventCard = () => (
-  <div>
-    <Skeleton className="w-full h-48 rounded-t-xl" />
-    <CardTitle className="text-lg font-semibold p-3">
-      <Skeleton className="h-5 w-3/4" />
-    </CardTitle>
-    <CardFooter className="text-sm text-gray-500 p-3">
-      <Skeleton className="h-4 w-1/2" />
-    </CardFooter>
-  </div>
-);
 
 const EventsPage = () => {
   const [events, setEvents] = useState<EventData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-  const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -65,26 +51,8 @@ const EventsPage = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (selectedEventId) {
-      const fetchEventDetails = async () => {
-        setLoading(true);
-        const { event, error } = await fetchEventById(selectedEventId);
-        if (error) setError(error);
-        setSelectedEvent(event);
-        setLoading(false);
-      };
-      fetchEventDetails();
-    }
-  }, [selectedEventId]);
-
   const handleEventSelect = (eventId: string) => {
-    setSelectedEventId(eventId);
-  };
-
-  const handleCloseDialog = () => {
-    setSelectedEventId(null);
-    setSelectedEvent(null);
+    setSelectedEventId(eventId); // Trigger dialog opening
   };
 
   return (
@@ -100,8 +68,12 @@ const EventsPage = () => {
       >
         {loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+            {/* Skeleton Loader for Events */}
             {[...Array(9)].map((_, index) => (
-              <SkeletonEventCard key={index} />
+              <div
+                key={index}
+                className="w-full h-48 rounded-t-xl bg-gray-300"
+              />
             ))}
           </div>
         )}
@@ -148,8 +120,11 @@ const EventsPage = () => {
         )}
 
         {/* Dialog for Event Details */}
-        {selectedEvent && (
-          <EventsInfo event={selectedEvent} onClose={handleCloseDialog} />
+        {selectedEventId && (
+          <EventsInfo
+            eventId={selectedEventId}
+            onClose={() => setSelectedEventId(null)}
+          />
         )}
       </div>
     </div>
