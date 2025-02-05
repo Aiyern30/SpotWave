@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import {
+  Button,
   Dialog,
   DialogClose,
   DialogContent,
@@ -11,6 +12,8 @@ import {
 } from "../ui";
 import { EventData } from "@/lib/events";
 import { fetchEventById } from "@/utils/Events/fetchEventByID";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 interface EventsInfoProps {
   eventId: string;
@@ -27,10 +30,10 @@ const SkeletonEventDetails = () => (
 );
 
 const EventsInfo: React.FC<EventsInfoProps> = ({ eventId, onClose }) => {
+  const router = useRouter();
   const [event, setEvent] = useState<EventData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
-  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
 
   // Fetch event details when the component mounts
   useEffect(() => {
@@ -40,54 +43,123 @@ const EventsInfo: React.FC<EventsInfoProps> = ({ eventId, onClose }) => {
       if (error) setError(error);
       setEvent(event);
       setLoading(false);
-
-      // Open dialog once data is fetched
-      setIsDialogOpen(true);
     };
 
     fetchEventDetails();
   }, [eventId]);
 
+  // Helper function to format dates
+  const formatDate = (dateTime: string) => {
+    const date = new Date(dateTime);
+    return date.toLocaleString();
+  };
+
   return (
-    <Dialog open={isDialogOpen} onOpenChange={onClose}>
-      <DialogContent>
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="p-6">
         <DialogHeader>
-          <DialogTitle>{loading ? "Loading..." : event?.name}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-3xl md:text-4xl">
+            {loading ? "Loading..." : event?.name}
+          </DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm">
             {loading ? "Please wait..." : event?.description}
           </DialogDescription>
         </DialogHeader>
-        <div>
+        <div className="h-[80vh] overflow-y-auto p-4">
           {loading ? (
             <SkeletonEventDetails />
           ) : (
             <>
-              <p>
-                <strong>Start Date:</strong> {event?.dates?.start?.localDate}{" "}
-                {event?.dates?.start?.localTime}
-              </p>
-              <p>
-                <strong>Venue:</strong> {event?._embedded?.venues?.[0]?.name}
-              </p>
-              <p>
-                <strong>Location:</strong>{" "}
-                {event?._embedded?.venues?.[0]?.city?.name},{" "}
-                {event?._embedded?.venues?.[0]?.country?.name}
-              </p>
-              <p>
-                <strong>Price:</strong> {event?.priceRanges?.[0]?.currency}{" "}
-                {event?.priceRanges?.[0]?.min} - {event?.priceRanges?.[0]?.max}
-              </p>
-              <p>
-                <strong>More Info:</strong>{" "}
-                <a href={event?.url} target="_blank" rel="noopener noreferrer">
-                  Event Link
-                </a>
-              </p>
+              {/* Event Images */}
+              <div className="mb-6">
+                {event?.images[0].url && (
+                  <Image
+                    key={event?.images[0].url}
+                    src={event?.images[0].url}
+                    alt={event?.name}
+                    width={1000}
+                    height={300}
+                    className="w-full h-[300px] object-cover rounded-xl mb-4"
+                  />
+                )}
+              </div>
+
+              {/* Event Dates */}
+              <div className="mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold mb-2">
+                  Event Dates
+                </h2>
+                <p className="text-xs sm:text-sm">
+                  <strong>Event Start:</strong>{" "}
+                  {formatDate(event?.dates.start.dateTime || "")}
+                </p>
+                {event?.dates.end?.dateTime && (
+                  <p className="text-xs sm:text-sm">
+                    <strong>Event End:</strong>{" "}
+                    {formatDate(event?.dates.end.dateTime)}
+                  </p>
+                )}
+              </div>
+
+              {/* Price Range */}
+              <div className="mb-6">
+                <h2 className="text-lg sm:text-xl font-semibold mb-2">
+                  Ticket Pricing
+                </h2>
+                {event?.priceRanges?.map((priceRange, index) => (
+                  <p key={index} className="text-xs sm:text-sm">
+                    <strong>
+                      {priceRange.currency} {priceRange.min} - {priceRange.max}
+                    </strong>
+                  </p>
+                ))}
+              </div>
+
+              {/* Ticket Limit */}
+              {event?.ticketLimit && (
+                <div className="mb-6">
+                  <h2 className="text-lg sm:text-xl font-semibold mb-2">
+                    Ticket Limit
+                  </h2>
+                  <p className="text-xs sm:text-sm">
+                    {event?.ticketLimit.info}
+                  </p>
+                </div>
+              )}
+
+              {/* Venue Information */}
+              {event?._embedded?.venues?.[0] && (
+                <div className="mb-6">
+                  <h2 className="text-lg sm:text-xl font-semibold mb-2">
+                    Venue Information
+                  </h2>
+                  <p className="text-xs sm:text-sm">
+                    <strong>Venue Name:</strong>{" "}
+                    {event?._embedded?.venues[0]?.name}
+                  </p>
+                  <p className="text-xs sm:text-sm">
+                    <strong>Location:</strong>{" "}
+                    {event?._embedded?.venues[0]?.city?.name},{" "}
+                    {event?._embedded?.venues[0]?.country?.name}
+                  </p>
+                  <p className="text-xs sm:text-sm">
+                    <strong>Address:</strong>{" "}
+                    {event?._embedded?.venues[0]?.address?.line1}
+                  </p>
+                </div>
+              )}
             </>
           )}
+          {event?.url && (
+            <Button
+              onClick={() => router.push(event?.url || "")}
+              variant={"secondary"}
+              className="w-full"
+            >
+              More Info: Event Link
+            </Button>
+          )}
         </div>
-        <DialogClose onClick={onClose}>Close</DialogClose>
       </DialogContent>
     </Dialog>
   );
