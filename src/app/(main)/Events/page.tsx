@@ -4,6 +4,15 @@ import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { Event } from "@/lib/types";
 import { fetchEvents } from "@/utils/Events/fetchEvent";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+  Card,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui";
 
 const EventsPage = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -46,50 +55,40 @@ const EventsPage = () => {
       >
         {loading && <p>Loading...</p>}
         {error && <p className="text-red-500">{error}</p>}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
           {events.length > 0 ? (
             events.map((event) => (
-              <div key={event.id} className="border p-4 rounded shadow-md">
-                <h2 className="text-xl font-semibold">{event.name}</h2>
+              <Card
+                key={event.id}
+                className="bg-white group w-full cursor-pointer hover:shadow-lg hover:bg-white"
+                onClick={() => window.open(event.url, "_blank")}
+              >
+                <CardHeader className="p-0">
+                  <Avatar className="w-full h-48 relative">
+                    {event.images?.length > 0 ? (
+                      <AvatarImage
+                        src={event.images[0].url}
+                        className="rounded-t-xl w-full h-48 object-cover"
+                      />
+                    ) : (
+                      <AvatarFallback className="rounded-xl text-black">
+                        No Image
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                </CardHeader>
 
-                {event._embedded?.venues?.[0] ? (
-                  <p className="text-gray-600">
-                    {event._embedded.venues[0].name},{" "}
-                    {typeof event._embedded.venues[0].city === "string"
-                      ? event._embedded.venues[0].city
-                      : "City not available"}
-                  </p>
-                ) : (
-                  <p className="text-gray-600">
-                    Venue information not available
-                  </p>
-                )}
+                <CardTitle className="text-lg font-semibold p-3">
+                  {event.name}
+                </CardTitle>
 
-                <p className="text-sm text-gray-500">
+                <CardFooter className="text-sm text-gray-500 p-3">
                   {event.dates?.start?.localDate}{" "}
-                  {event.dates?.start?.localTime}
-                </p>
-
-                {/* Safely display event images */}
-                {event.images?.length > 0 && (
-                  <Image
-                    src={event.images[0].url}
-                    alt={event.name}
-                    width={300}
-                    height={300}
-                    className="mt-2 w-full h-40 object-cover rounded"
-                  />
-                )}
-
-                <a
-                  href={event.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-2 inline-block text-blue-500 hover:underline"
-                >
-                  View Details
-                </a>
-              </div>
+                  {event.dates?.start?.localTime} -{" "}
+                  {event._embedded?.venues?.[0]?.name || "Venue Unknown"}
+                </CardFooter>
+              </Card>
             ))
           ) : (
             <p>No events found near you.</p>
