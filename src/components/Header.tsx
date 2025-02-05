@@ -37,6 +37,7 @@ type SearchResult =
 const HeaderContent = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  console.log("searchResults", searchResults);
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -200,8 +201,12 @@ const HeaderContent = () => {
   ) => {
     if (type === "song") {
       router.push(`/Songs/${id}?name=${encodeURIComponent(name)}`);
+      console.log("Song clicked");
     } else if (type === "artist") {
       router.push(`/Artists/${id}?name=${encodeURIComponent(name)}`);
+      console.log("Artist clicked");
+    } else {
+      console.error("Invalid type:", type);
     }
     setSearchTerm("");
     setSearchResults([]);
@@ -266,13 +271,14 @@ const HeaderContent = () => {
                       <React.Fragment key={result.artist.id}>
                         <li
                           className="p-2 border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
-                          onClick={() =>
+                          onMouseDown={(e) => {
+                            e.stopPropagation();
                             handleResultClick(
                               result.artist.id,
                               "artist",
                               result.artist.name
-                            )
-                          }
+                            );
+                          }}
                         >
                           <div className="flex items-center space-x-3">
                             <Avatar className="w-36 h-36 relative p-1">
@@ -299,9 +305,10 @@ const HeaderContent = () => {
                           <li
                             key={track.id}
                             className="p-2 border-b border-gray-200 hover:bg-gray-100 cursor-pointer"
-                            onClick={() =>
-                              handleResultClick(track.id, "song", track.name)
-                            }
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              handleResultClick(track.id, "song", track.name);
+                            }}
                           >
                             <div className="flex items-center space-x-3">
                               <Avatar className="w-20 h-20 relative p-1">

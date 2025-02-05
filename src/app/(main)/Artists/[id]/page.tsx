@@ -24,13 +24,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui";
 import Header from "@/components/Header";
-import { formatSongDuration } from "@/utils/function";
+import { formatSongDuration, transform } from "@/utils/function";
 import { useToast } from "@/hooks/use-toast";
 import { followArtist } from "@/utils/Artist/followArtist";
 import { unfollowArtist } from "@/utils/Artist/unfollowArtist";
 import { fetchFollowedArtists } from "@/utils/Artist/fetchFollowedArtists";
 import { Artist } from "@/lib/types";
-
+import parse from "html-react-parser";
+import DOMPurify from "dompurify";
 interface Image {
   url: string;
 }
@@ -116,6 +117,8 @@ const ArtistProfilePage = () => {
       );
     }
   }, [artistProfile, followedArtists]);
+
+  const sanitizedBio = DOMPurify.sanitize(artistDetails?.bio?.content || "");
 
   const handleFollowArtist = async (artistID: string) => {
     const result = await followArtist(artistID, token);
@@ -555,7 +558,7 @@ const ArtistProfilePage = () => {
                 <>
                   <h2 className="text-3xl font-bold mt-8 ">About</h2>
                   <p className="text-justify px-4 md:px-0 text-sm md:max-w-5xl max-w-xs">
-                    {artistDetails?.bio.content}
+                    {parse(sanitizedBio, { replace: transform })}
                   </p>
                 </>
               )}

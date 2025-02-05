@@ -23,3 +23,10 @@ export const formatLyrics = (lyrics: string | null) => {
   if (!lyrics) return null;
   return lyrics.split("\n").map((line, index) => <p key={index}>{line}</p>);
 };
+
+export const transform = (node: any) => {
+  if (node.type === "tag" && node.name === "a") {
+    node.attribs.class = "text-blue-500 underline hover:text-blue-700";
+  }
+  return node;
+};
