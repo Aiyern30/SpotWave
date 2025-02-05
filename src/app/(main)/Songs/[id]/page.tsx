@@ -163,7 +163,11 @@ const SongPage = () => {
                 <SheetContent>
                   <SheetHeader>
                     <SheetTitle>Lyrics</SheetTitle>
-                    <SheetDescription>{lyrics}</SheetDescription>
+                    <SheetDescription className="h-[90vh] overflow-auto">
+                      {lyrics?.split("\n").map((line, index) => (
+                        <p key={index}>{line}</p>
+                      ))}
+                    </SheetDescription>
                   </SheetHeader>
                 </SheetContent>
               </Sheet>
