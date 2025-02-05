@@ -13,7 +13,8 @@ const nextConfig = {
       'seeded-session-images.scdn.co',
       'daily-mix.scdn.co',
       'newjams-images.scdn.co',
-      'pickasso.spotifycdn.com'
+      'pickasso.spotifycdn.com',
+      'image-cdn-fa.spotifycdn.com'
     ],
   },
 };

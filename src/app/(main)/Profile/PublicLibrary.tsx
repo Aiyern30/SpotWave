@@ -113,13 +113,16 @@ const PublicLibrary = () => {
             >
               <CardHeader>
                 <Avatar className="w-36 h-36 relative p-1">
-                  <AvatarImage
-                    src={data.images[0]?.url}
-                    className="rounded-xl"
-                  />
-                  <AvatarFallback className="text-black">
-                    Image Unavailable
-                  </AvatarFallback>
+                  {data.images?.length > 0 ? (
+                    <AvatarImage
+                      src={data.images[0].url}
+                      className="rounded-xl"
+                    />
+                  ) : (
+                    <AvatarFallback className="text-black">
+                      Image Unavailable
+                    </AvatarFallback>
+                  )}
                 </Avatar>
               </CardHeader>
               <CardTitle>{data.name}</CardTitle>

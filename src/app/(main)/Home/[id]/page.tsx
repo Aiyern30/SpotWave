@@ -92,7 +92,6 @@ const PlaylistPage = () => {
   const [token, setToken] = useState<string>("");
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
-  const [hoveredArtist, setHoveredArtist] = useState<string | null>(null);
   const router = useRouter();
 
   const [displayUI, setDisplayUI] = useState<DisplayUIProps | string>("Table");
@@ -337,252 +336,71 @@ const PlaylistPage = () => {
                   </div>
                   {displayUI === "Table" && (
                     <div className="overflow-x-auto">
-                      <Table>
-                        <TableCaption>
-                          A list of tracks in the playlist.
-                        </TableCaption>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[50px] text-center">
-                              #
-                            </TableHead>
-                            <TableHead>Title</TableHead>
-                            <TableHead className="hidden md:table-cell">
-                              Album
-                            </TableHead>
-                            <TableHead className="hidden md:table-cell ">
-                              Lyrics
-                            </TableHead>
-                            <TableHead className="hidden md:table-cell text-right">
-                              <GiDuration className="float-right" />
-                            </TableHead>
-                            <TableHead className="hidden md:table-cell text-center w-12">
-                              Action
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {paginatedItems.map((item, index) => (
-                            <TableRow
-                              key={index}
-                              onMouseEnter={() => setHoveredIndex(index)}
-                              onMouseLeave={() => setHoveredIndex(null)}
-                              className="relative group"
-                            >
-                              <TableCell className="relative text-center">
-                                {hoveredIndex === index ? (
-                                  <div
-                                    onClick={() =>
-                                      handlePlay(item.track.preview_url)
-                                    }
-                                    className="flex items-center justify-center border rounded-full w-8 h-8 bg-play mx-auto"
-                                  >
-                                    {currentlyPlayingUrl ===
-                                    item.track.preview_url ? (
-                                      <FaPauseCircle size={32} />
-                                    ) : (
-                                      <FaPlayCircle size={32} />
-                                    )}
-                                  </div>
-                                ) : (
-                                  <div>{startIndex + index + 1}</div>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center space-x-3">
-                                  {item?.track?.album.images?.[0]?.url && (
-                                    <Image
-                                      src={item?.track.album.images?.[0]?.url}
-                                      width={50}
-                                      height={50}
-                                      alt={
-                                        item.track.name || "Track cover image"
-                                      }
-                                      className="rounded"
-                                    />
-                                  )}
-                                  <div>
-                                    <div className="font-medium">
-                                      {item?.track?.name}
-                                    </div>
-                                    <div className="text-sm text-secondary-background">
-                                      {item.track?.artists.map(
-                                        (artist: any) => (
-                                          <span
-                                            key={artist.id}
-                                            onClick={() =>
-                                              handleArtistClick(
-                                                artist.id,
-                                                artist.name
-                                              )
-                                            }
-                                            onMouseEnter={() =>
-                                              setHoveredArtist(artist.id)
-                                            }
-                                            onMouseLeave={() =>
-                                              setHoveredArtist(null)
-                                            }
-                                            className={`cursor-pointer ${
-                                              hoveredArtist === artist.id
-                                                ? "underline"
-                                                : ""
-                                            } ${
-                                              artist.id ? "hover:underline" : ""
-                                            }`}
-                                          >
-                                            {artist.name}
-                                            {item.track?.artists.length > 1 &&
-                                            artist !==
-                                              item.track.artists[
-                                                item.track.artists.length - 1
-                                              ]
-                                              ? ", "
-                                              : ""}
-                                          </span>
-                                        )
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell
-                                className="hidden md:table-cell hover:underline cursor-pointer"
-                                onClick={() =>
-                                  router.push(
-                                    `/Albums/${item.track.album.id}?name=${item.track.album.name}`
-                                  )
-                                }
-                              >
-                                {item.track.name}
-                              </TableCell>
-                              <TableCell>
-                                <Sheet>
-                                  <SheetTrigger>
-                                    <Button
-                                      onClick={() =>
-                                        fetchLyrics(
-                                          item.track.artists[0].name,
-                                          item.track.album.name
-                                        )
-                                      }
-                                    >
-                                      View
-                                    </Button>
-                                  </SheetTrigger>
-                                  <SheetContent>
-                                    <SheetHeader>
-                                      <SheetTitle>Lyrics</SheetTitle>
-                                      <SheetDescription>
-                                        {lyrics}
-                                      </SheetDescription>
-                                    </SheetHeader>
-                                  </SheetContent>
-                                </Sheet>
-                              </TableCell>
-                              <TableCell className="hidden md:table-cell text-right">
-                                {formatSongDuration(item.track?.duration_ms)}
-                              </TableCell>
-                              <TableCell className=" ">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon">
-                                      <IoMdMore className="w-8 h-8" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent className="w-56">
-                                    <DropdownMenuLabel>
-                                      Actions
-                                    </DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuSub>
-                                      <DropdownMenuSubTrigger>
-                                        <UserPlus className="mr-2 h-4 w-4" />
-                                        <span>Add to playlists</span>
-                                      </DropdownMenuSubTrigger>
-                                      <DropdownMenuPortal>
-                                        <DropdownMenuSubContent>
-                                          <DropdownMenuItem>
-                                            <PlusCircle className="mr-2 h-4 w-4" />
-                                            <span>New Playlist</span>
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem>
-                                            <Select
-                                              onValueChange={(selectedID) => {
-                                                handleAddSongsToTrack(
-                                                  selectedID,
-                                                  item.track.id
-                                                );
-                                              }}
-                                            >
-                                              <SelectTrigger className="w-full text-black">
-                                                <SelectValue placeholder="Your Library" />
-                                              </SelectTrigger>
-                                              <SelectContent>
-                                                {playlists?.map(
-                                                  (myList: PlaylistProps) => (
-                                                    <SelectItem
-                                                      key={myList.id}
-                                                      value={myList.id}
-                                                    >
-                                                      {myList.name}
-                                                    </SelectItem>
-                                                  )
-                                                )}
-                                              </SelectContent>
-                                            </Select>
-                                          </DropdownMenuItem>
-                                        </DropdownMenuSubContent>
-                                      </DropdownMenuPortal>
-                                    </DropdownMenuSub>
-                                    <DropdownMenuItem>
-                                      <PlusCircle className="mr-2 h-4 w-4" />
-                                      <span>Saved to your Liked Songs</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSub>
-                                      <DropdownMenuSubTrigger>
-                                        <FaRegShareSquare className="mr-2 h-4 w-4" />
-                                        <span>Share</span>
-                                      </DropdownMenuSubTrigger>
-                                      <DropdownMenuPortal>
-                                        <DropdownMenuSubContent>
-                                          <DropdownMenuItem>
-                                            <FaRegCopy className="mr-2 h-4 w-4" />
-                                            <span>Copy Song Link</span>
-                                          </DropdownMenuItem>
-                                          <DropdownMenuItem>
-                                            <FaRegCopy className="mr-2 h-4 w-4" />
-                                            <span>Get Embed Link</span>
-                                          </DropdownMenuItem>
-                                        </DropdownMenuSubContent>
-                                      </DropdownMenuPortal>
-                                    </DropdownMenuSub>
-                                    {item.added_by.id === myID && (
-                                      <DropdownMenuItem
-                                        onClick={() => {
-                                          handleRemoveSongsFromTrack(
-                                            id,
-                                            item.track.id
-                                          );
-                                        }}
-                                      >
-                                        <>
-                                          <MdDeleteOutline
-                                            className="mr-2 h-4 w-4"
-                                            color="red"
-                                          />
-                                          <span className="text-red-500">
-                                            Remove from your library
-                                          </span>
-                                        </>
-                                      </DropdownMenuItem>
-                                    )}
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </TableCell>
+                      {paginatedItems.length === 0 ? (
+                        <div className="flex items-center justify-center min-h-[24rem] text-gray-400">
+                          No tracks found in the playlist.
+                        </div>
+                      ) : (
+                        <Table>
+                          <TableCaption>
+                            A list of tracks in the playlist.
+                          </TableCaption>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-[50px] text-center">
+                                #
+                              </TableHead>
+                              <TableHead>Title</TableHead>
+                              <TableHead className="hidden md:table-cell">
+                                Album
+                              </TableHead>
+                              <TableHead className="hidden md:table-cell ">
+                                Lyrics
+                              </TableHead>
+                              <TableHead className="hidden md:table-cell text-right">
+                                <GiDuration className="float-right" />
+                              </TableHead>
+                              <TableHead className="hidden md:table-cell text-center w-12">
+                                Action
+                              </TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {paginatedItems.map((item, index) => (
+                              <TableRow key={index} className="relative group">
+                                <TableCell className="relative text-center">
+                                  {index + 1}
+                                </TableCell>
+                                <TableCell>{item.track.name}</TableCell>
+                                <TableCell className="hidden md:table-cell">
+                                  {item.track.album.name}
+                                </TableCell>
+                                <TableCell className="hidden md:table-cell">
+                                  <Sheet>
+                                    <SheetTrigger>
+                                      <Button>View</Button>
+                                    </SheetTrigger>
+                                    <SheetContent>
+                                      <SheetHeader>
+                                        <SheetTitle>Lyrics</SheetTitle>
+                                        <SheetDescription>
+                                          {lyrics}
+                                        </SheetDescription>
+                                      </SheetHeader>
+                                    </SheetContent>
+                                  </Sheet>
+                                </TableCell>
+                                <TableCell className="hidden md:table-cell text-right">
+                                  {formatSongDuration(item.track?.duration_ms)}
+                                </TableCell>
+                                <TableCell>
+                                  <Button>Action</Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      )}
                     </div>
                   )}
 
