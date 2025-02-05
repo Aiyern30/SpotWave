@@ -24,7 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui";
 import Header from "@/components/Header";
-import { formatSongDuration } from "@/utils/function";
+import { formatSongDuration, transform } from "@/utils/function";
 import { useToast } from "@/hooks/use-toast";
 import { followArtist } from "@/utils/Artist/followArtist";
 import { unfollowArtist } from "@/utils/Artist/unfollowArtist";
@@ -558,7 +558,7 @@ const ArtistProfilePage = () => {
                 <>
                   <h2 className="text-3xl font-bold mt-8 ">About</h2>
                   <p className="text-justify px-4 md:px-0 text-sm md:max-w-5xl max-w-xs">
-                    {parse(sanitizedBio)}
+                    {parse(sanitizedBio, { replace: transform })}
                   </p>
                 </>
               )}
