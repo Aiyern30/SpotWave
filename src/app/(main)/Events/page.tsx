@@ -28,6 +28,7 @@ const SkeletonEventCard = () => (
 
 const EventsPage = () => {
   const [events, setEvents] = useState<Event[]>([]);
+  console.log("events", events);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
