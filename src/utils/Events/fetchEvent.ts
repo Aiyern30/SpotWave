@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Event } from "@/lib/types";
+import { Event } from "@/lib/events";
 
 const TICKETMASTER_API_KEY = process.env.NEXT_PUBLIC_TICKETMASTER_API_KEY;
 

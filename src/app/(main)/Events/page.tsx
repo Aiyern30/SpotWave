@@ -1,8 +1,7 @@
 "use client";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
-import { Event } from "@/lib/types";
+import { Event } from "@/lib/events";
 import { fetchEvents } from "@/utils/Events/fetchEvent";
 import {
   Avatar,
@@ -12,7 +11,20 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  Skeleton,
 } from "@/components/ui";
+
+const SkeletonEventCard = () => (
+  <div>
+    <Skeleton className="w-full h-48 rounded-t-xl" />
+    <CardTitle className="text-lg font-semibold p-3">
+      <Skeleton className="h-5 w-3/4" />
+    </CardTitle>
+    <CardFooter className="text-sm text-gray-500 p-3">
+      <Skeleton className="h-4 w-1/2" />
+    </CardFooter>
+  </div>
+);
 
 const EventsPage = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -53,12 +65,19 @@ const EventsPage = () => {
           sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
         }`}
       >
-        {loading && <p>Loading...</p>}
+        {loading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+            {[...Array(9)].map((_, index) => (
+              <SkeletonEventCard key={index} />
+            ))}
+          </div>
+        )}
+
         {error && <p className="text-red-500">{error}</p>}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-          {events.length > 0 ? (
-            events.map((event) => (
+        {!loading && events.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+            {events.map((event) => (
               <Card
                 key={event.id}
                 className="bg-white group w-full cursor-pointer hover:shadow-lg hover:bg-white"
@@ -89,11 +108,11 @@ const EventsPage = () => {
                   {event._embedded?.venues?.[0]?.name || "Venue Unknown"}
                 </CardFooter>
               </Card>
-            ))
-          ) : (
-            <p>No events found near you.</p>
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          !loading && <p>No events found near you.</p>
+        )}
       </div>
     </div>
   );
