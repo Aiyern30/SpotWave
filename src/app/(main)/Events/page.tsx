@@ -14,7 +14,7 @@ import {
   Skeleton,
 } from "@/components/ui";
 import EventsInfo from "@/components/Events/EventsInfo";
-import { fetchEventById } from "@/utils/Events/fethcEventByID";
+import { fetchEventById } from "@/utils/Events/fetchEventByID";
 
 const DEFAULT_LOCATION = { latitude: 40.7128, longitude: -74.006 }; // New York (Example)
 
