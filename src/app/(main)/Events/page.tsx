@@ -1,41 +1,9 @@
 "use client";
 import Image from "next/image";
-import { useEffect, useState, useCallback } from "react";
-import axios from "axios";
+import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
-
-interface Venue {
-  name: string;
-  city: string;
-  country: string;
-  location: {
-    latitude: number;
-    longitude: number;
-  };
-}
-
-interface EventImage {
-  url: string;
-  width: number;
-  height: number;
-  alt: string;
-}
-
-interface Event {
-  id: string;
-  name: string;
-  _embedded: {
-    venues: Venue[];
-  };
-  dates: {
-    start: {
-      localDate: string;
-      localTime: string;
-    };
-  };
-  images: EventImage[];
-  url: string;
-}
+import { Event } from "@/lib/types";
+import { fetchEvents } from "@/utils/Events/fetchEvent";
 
 const EventsPage = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -43,37 +11,16 @@ const EventsPage = () => {
   const [error, setError] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
-  const TICKETMASTER_API_KEY = process.env.NEXT_PUBLIC_TICKETMASTER_API_KEY;
-
-  const fetchEvents = useCallback(
-    async (lat: number, long: number) => {
-      try {
-        const url = `https://app.ticketmaster.com/discovery/v2/events.json?latlong=${lat},${long}&apikey=${TICKETMASTER_API_KEY}`;
-        console.log("Fetching:", url);
-
-        const response = await axios.get(url);
-
-        if (response.data._embedded?.events) {
-          setEvents(response.data._embedded.events);
-        } else {
-          throw new Error("No events found.");
-        }
-      } catch (err: any) {
-        console.error("Error fetching events:", err);
-        setError(err.message || "Failed to fetch events.");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [TICKETMASTER_API_KEY]
-  );
-
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const { latitude, longitude } = position.coords;
-          fetchEvents(latitude, longitude);
+          setLoading(true);
+          const { events, error } = await fetchEvents(latitude, longitude);
+          if (error) setError(error);
+          setEvents(events);
+          setLoading(false);
         },
         () => {
           setError("Geolocation is disabled or not available.");
@@ -84,7 +31,7 @@ const EventsPage = () => {
       setError("Geolocation is not supported by this browser.");
       setLoading(false);
     }
-  }, [fetchEvents]);
+  }, []);
 
   return (
     <div className="flex h-screen">
