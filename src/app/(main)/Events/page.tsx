@@ -67,7 +67,6 @@ const EventsPage = () => {
     }
   }, []);
 
-  // Fetch event details once when the event is selected
   useEffect(() => {
     if (selectedEventId) {
       const fetchEventDetails = async () => {
@@ -82,7 +81,6 @@ const EventsPage = () => {
   }, [selectedEventId]);
 
   const handleEventSelect = (eventId: string) => {
-    console.log("Event ID selected:", eventId); // Log the event ID
     setSelectedEventId(eventId);
   };
 
