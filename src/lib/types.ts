@@ -229,7 +229,7 @@ export interface TopTracksResponseLASTFM {
 
 export interface GlobalArtistPropsLASTFM {
   name: string;
-  playcount: string;
+  playcount: number;
   listeners: string;
   mbid: string;
   url: string;

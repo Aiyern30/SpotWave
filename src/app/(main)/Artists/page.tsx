@@ -34,6 +34,7 @@ import {
   DisplayUIProps,
   GlobalArtistPropsLASTFM,
 } from "@/lib/types";
+import { NumberTicker } from "@/components/magicui/NumberTicker";
 
 const Page = () => {
   const [artists, setArtists] = useState<GlobalArtistPropsLASTFM[]>([]);
@@ -230,7 +231,10 @@ const Page = () => {
                           </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
-                          {artist.playcount}
+                          <NumberTicker
+                            value={artist.playcount}
+                            className="text-white"
+                          />
                         </TableCell>
                       </TableRow>
                     );
