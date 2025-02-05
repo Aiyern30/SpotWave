@@ -211,8 +211,8 @@ export interface ImageLASTFM {
 
 export interface TrackDataLASTFM {
   name: string;
-  playcount: string;
-  listeners: string;
+  playcount: number;
+  listeners: number;
   artist: {
     name: string;
     id: string;
@@ -230,7 +230,7 @@ export interface TopTracksResponseLASTFM {
 export interface GlobalArtistPropsLASTFM {
   name: string;
   playcount: number;
-  listeners: string;
+  listeners: number;
   mbid: string;
   url: string;
   image: ImageLASTFM[];

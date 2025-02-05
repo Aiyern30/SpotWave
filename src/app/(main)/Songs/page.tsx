@@ -34,6 +34,7 @@ import {
 import { searchTrackOnSpotify } from "@/utils/Songs/searchTrackOnSpotify";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
+import { NumberTicker } from "@/components/magicui/NumberTicker";
 
 const Page = () => {
   const [tracks, setTracks] = useState<TrackDataLASTFM[]>([]);
@@ -190,7 +191,11 @@ const Page = () => {
                               {track.artist.name}
                             </div>
                             <div className="text-xs">
-                              Monthly Listeners: {track.listeners}
+                              Monthly Listeners:{" "}
+                              <NumberTicker
+                                value={track.listeners}
+                                className="text-white"
+                              />
                             </div>
                           </div>
                         </div>
