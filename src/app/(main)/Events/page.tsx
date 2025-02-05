@@ -12,6 +12,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  Skeleton,
 } from "@/components/ui";
 import EventsInfo from "@/components/Events/EventsInfo";
 
@@ -54,7 +55,17 @@ const EventsPage = () => {
   const handleEventSelect = (eventId: string) => {
     setSelectedEventId(eventId); // Trigger dialog opening
   };
-
+  const SkeletonEventCard = () => (
+    <div>
+      <Skeleton className="w-full h-48 rounded-t-xl" />
+      <CardTitle className="text-lg font-semibold p-3">
+        <Skeleton className="h-5 w-3/4" />
+      </CardTitle>
+      <CardFooter className="text-sm text-gray-500 p-3">
+        <Skeleton className="h-4 w-1/2" />
+      </CardFooter>
+    </div>
+  );
   return (
     <div className="flex h-screen">
       <Sidebar
@@ -70,10 +81,7 @@ const EventsPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
             {/* Skeleton Loader for Events */}
             {[...Array(9)].map((_, index) => (
-              <div
-                key={index}
-                className="w-full h-48 rounded-t-xl bg-gray-300"
-              />
+              <SkeletonEventCard key={index} />
             ))}
           </div>
         )}
