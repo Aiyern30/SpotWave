@@ -18,6 +18,7 @@ import {
 } from "@/components/ui";
 import Header from "@/components/Header";
 import { Track } from "@/lib/types";
+import { formatLyrics } from "@/utils/function";
 
 const SongPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
@@ -27,7 +28,7 @@ const SongPage = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [lyrics, setLyrics] = useState<String | null>(null);
+  const [lyrics, setLyrics] = useState<string | null>(null);
   console.log("lyrics", lyrics);
   const id = pathname.split("/").pop() || "";
 
@@ -164,9 +165,7 @@ const SongPage = () => {
                   <SheetHeader>
                     <SheetTitle>Lyrics</SheetTitle>
                     <SheetDescription className="h-[90vh] overflow-auto">
-                      {lyrics?.split("\n").map((line, index) => (
-                        <p key={index}>{line}</p>
-                      ))}
+                      {formatLyrics(lyrics)}
                     </SheetDescription>
                   </SheetHeader>
                 </SheetContent>

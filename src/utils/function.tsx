@@ -18,3 +18,8 @@ export const formatSongDuration = (durationMs: number | undefined) => {
     "0"
   )}`;
 };
+
+export const formatLyrics = (lyrics: string | null) => {
+  if (!lyrics) return null;
+  return lyrics.split("\n").map((line, index) => <p key={index}>{line}</p>);
+};
