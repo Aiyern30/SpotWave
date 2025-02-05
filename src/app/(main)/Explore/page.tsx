@@ -16,6 +16,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  Button, // Add Button for Expand/Collapse
 } from "@/components/ui";
 import { useRouter } from "next/navigation";
 import { Artist, RecentTracksProps } from "@/lib/types";
@@ -30,6 +31,13 @@ const Page = () => {
   const [favoriteArtists, setFavoriteArtists] = useState<Artist[]>([]);
   const [recentTracks, setRecentTracks] = useState<RecentTracksProps[]>([]);
   const router = useRouter();
+
+  // Track which accordion items are open
+  const [openAccordions, setOpenAccordions] = useState<string[]>([
+    "item-1",
+    "item-2",
+    "item-3",
+  ]);
 
   useEffect(() => {
     const storedToken = localStorage.getItem("Token");
@@ -69,6 +77,18 @@ const Page = () => {
   );
   const memoizedRecentTracks = useMemo(() => recentTracks, [recentTracks]);
 
+  // Check if all accordions are open
+  const allOpen = openAccordions.length === 3;
+
+  // Toggle Expand/Collapse All
+  const handleToggleAll = () => {
+    if (allOpen) {
+      setOpenAccordions([]); // Close all
+    } else {
+      setOpenAccordions(["item-1", "item-2", "item-3"]); // Open all
+    }
+  };
+
   return (
     <div className="flex h-screen">
       {token && (
@@ -84,16 +104,22 @@ const Page = () => {
           >
             <div className="p-4 space-y-4">
               <Header />
+
+              <div className="flex justify-end mb-4">
+                <Button onClick={handleToggleAll}>
+                  {allOpen ? "Collapse All" : "Expand All"}
+                </Button>
+              </div>
+
               <Accordion
                 type="multiple"
-                className="w-full"
-                defaultValue={["item-1", "item-2", "item-3"]}
+                className="w-full space-y-3"
+                value={openAccordions}
+                onValueChange={setOpenAccordions}
               >
                 {/* Followed Artists */}
                 <AccordionItem value="item-1">
-                  <AccordionTrigger>
-                    <div>Your Followed Artists</div>
-                  </AccordionTrigger>
+                  <AccordionTrigger>Your Followed Artists</AccordionTrigger>
                   <AccordionContent className="text-white p-4">
                     <div className="flex flex-wrap gap-8">
                       {memoizedFollowedArtists.map((artist) => (
@@ -129,9 +155,7 @@ const Page = () => {
 
                 {/* Favorite Artists */}
                 <AccordionItem value="item-2">
-                  <AccordionTrigger>
-                    <div>Your Favorite Artists</div>
-                  </AccordionTrigger>
+                  <AccordionTrigger>Your Favorite Artists</AccordionTrigger>
                   <AccordionContent className="text-white p-4">
                     <div className="flex flex-wrap gap-8">
                       {memoizedFavoriteArtists.map((artist) => (
@@ -167,9 +191,7 @@ const Page = () => {
 
                 {/* Recently Played Tracks */}
                 <AccordionItem value="item-3">
-                  <AccordionTrigger>
-                    <div>Your Recently Listening</div>
-                  </AccordionTrigger>
+                  <AccordionTrigger>Your Recently Listening</AccordionTrigger>
                   <AccordionContent className="text-white p-4">
                     <div className="flex flex-wrap gap-8">
                       {memoizedRecentTracks.map((tracks, index) => (
