@@ -26,6 +26,7 @@ import PredictHQEventData from "@/lib/predictHqEvent";
 import GoogleMaps from "@/components/Events/GoogleMap";
 import { styles } from "@/lib/mapStyles";
 import { formatDate, formatDuration } from "@/utils/function";
+import NoEventsFound from "@/components/NoEventsFound";
 
 const EventsPage = () => {
   const [ticketMasterEvents, setTicketMasterEvents] = useState<EventData[]>([]);
@@ -96,7 +97,7 @@ const EventsPage = () => {
           sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
         }`}
       >
-        <div className="p-6 pb-0">
+        <div className="p-6">
           <Select
             value={selectedSource}
             onValueChange={(value) => setSelectedSource(value as EventType)} // ✅ Fix
@@ -112,7 +113,7 @@ const EventsPage = () => {
         </div>
 
         {loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 pt-0">
             {[...Array(9)].map((_, index) => (
               <SkeletonEventCard key={index} />
             ))}
@@ -228,9 +229,10 @@ const EventsPage = () => {
               </Card>
             ))}
           </div>
-        ) : (
-          !loading && <p>No events found.</p>
-        )}
+        ) : (!loading && ticketMasterEvents.length === 0) ||
+          predictHQEvents.length === 0 ? (
+          <NoEventsFound onRetry={() => setSelectedSource("TICKETMASTER")} />
+        ) : null}
 
         {/* Dialog for Event Details */}
         {selectedEventId && (
