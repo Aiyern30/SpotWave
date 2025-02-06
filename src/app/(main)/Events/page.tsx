@@ -176,6 +176,7 @@ const EventsPage = () => {
                       <GoogleMaps
                         lat={event.geo.geometry.coordinates[1]}
                         lon={event.geo.geometry.coordinates[0]}
+                        address={event.geo.address.formatted_address}
                         mapStyle={styles["hybrid"]}
                       />
                     </div>
