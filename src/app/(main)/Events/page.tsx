@@ -95,6 +95,21 @@ const EventsPage = () => {
           sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
         }`}
       >
+        <div className="p-6 pb-0">
+          <Select
+            value={selectedSource}
+            onValueChange={(value) => setSelectedSource(value)}
+          >
+            <SelectTrigger className="p-2 w-[200px]">
+              <SelectValue placeholder="Select Event Source" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ticketmaster">TicketMaster</SelectItem>
+              <SelectItem value="predicthq">PredictHQ</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
             {[...Array(9)].map((_, index) => (
@@ -108,53 +123,39 @@ const EventsPage = () => {
         {!loading &&
         selectedSource === "ticketmaster" &&
         ticketMasterEvents.length > 0 ? (
-          <div className=" p-6">
-            <Select
-              value={selectedSource}
-              onValueChange={(value) => setSelectedSource(value)}
-            >
-              <SelectTrigger className="p-2 mb-4 w-[200px]">
-                <SelectValue placeholder="Select Event Source" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ticketmaster">TicketMaster</SelectItem>
-                <SelectItem value="predicthq">PredictHQ</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {ticketMasterEvents.map((event) => (
-                <Card
-                  key={event.id}
-                  className="bg-white group w-full cursor-pointer hover:shadow-lg hover:bg-white"
-                  onClick={() => handleEventSelect(event.id)}
-                >
-                  <CardHeader className="p-0">
-                    <Avatar className="w-full h-48 relative">
-                      {event.images?.length > 0 ? (
-                        <AvatarImage
-                          src={event.images[0].url}
-                          className="rounded-t-xl w-full h-48 object-cover"
-                        />
-                      ) : (
-                        <AvatarFallback className="rounded-xl text-black">
-                          No Image
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                  </CardHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+            {ticketMasterEvents.map((event) => (
+              <Card
+                key={event.id}
+                className="bg-white group w-full cursor-pointer hover:shadow-lg hover:bg-white"
+                onClick={() => handleEventSelect(event.id)}
+              >
+                <CardHeader className="p-0">
+                  <Avatar className="w-full h-48 relative">
+                    {event.images?.length > 0 ? (
+                      <AvatarImage
+                        src={event.images[0].url}
+                        className="rounded-t-xl w-full h-48 object-cover"
+                      />
+                    ) : (
+                      <AvatarFallback className="rounded-xl text-black">
+                        No Image
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                </CardHeader>
 
-                  <CardTitle className="text-lg font-semibold p-3">
-                    {event.name}
-                  </CardTitle>
+                <CardTitle className="text-lg font-semibold p-3">
+                  {event.name}
+                </CardTitle>
 
-                  <CardFooter className="text-sm text-gray-500 p-3">
-                    {event.dates?.start?.localDate}{" "}
-                    {event.dates?.start?.localTime} -{" "}
-                    {event._embedded?.venues?.[0]?.name || "Venue Unknown"}
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
+                <CardFooter className="text-sm text-gray-500 p-3">
+                  {event.dates?.start?.localDate}{" "}
+                  {event.dates?.start?.localTime} -{" "}
+                  {event._embedded?.venues?.[0]?.name || "Venue Unknown"}
+                </CardFooter>
+              </Card>
+            ))}
           </div>
         ) : selectedSource === "predicthq" &&
           !loading &&
@@ -168,7 +169,10 @@ const EventsPage = () => {
               >
                 <CardHeader className="p-0">
                   {event?.geo?.geometry?.coordinates?.length > 0 ? (
-                    <div className="w-full h-48">
+                    <div
+                      className="w-full h-48"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <GoogleMaps
                         lat={event.geo.geometry.coordinates[1]}
                         lon={event.geo.geometry.coordinates[0]}
