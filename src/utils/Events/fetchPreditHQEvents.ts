@@ -24,3 +24,4 @@ export const fetchMusicEvents = async (): Promise<any> => {
     return [];
   }
 };
+
