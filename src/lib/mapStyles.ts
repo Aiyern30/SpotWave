@@ -1,5 +1,71 @@
 export const styles: Record<string, google.maps.MapTypeStyle[]> = {
     default: [],
+    hybrid:[
+      {
+        featureType: "all",
+        elementType: "labels.text.fill",
+        stylers: [
+          {
+            visibility: "on",
+            color: "#ffffff", // You can adjust the color if needed
+          },
+        ],
+      },
+      {
+        featureType: "administrative",
+        elementType: "labels",
+        stylers: [
+          {
+            visibility: "off", // Keep city labels visible
+          },
+        ],
+      },
+      {
+        featureType: "poi",
+        elementType: "geometry",
+        stylers: [
+          {
+            visibility: "off", // Hide Points of Interest like malls, etc.
+          },
+        ],
+      },
+      {
+        featureType: "poi.business",
+        elementType: "geometry",
+        stylers: [
+          {
+            visibility: "off", // Hide business points like malls
+          },
+        ],
+      },
+      {
+        featureType: "landscape",
+        elementType: "geometry",
+        stylers: [
+          {
+            visibility: "off", // Hide landscape features
+          },
+        ],
+      },
+      {
+        featureType: "road",
+        elementType: "geometry",
+        stylers: [
+          {
+            visibility: "off", // Hide roads (if you don't want them)
+          },
+        ],
+      },
+      {
+        featureType: "water",
+        elementType: "geometry",
+        stylers: [
+          {
+            visibility: "off", // Hide water bodies if not needed
+          },
+        ],
+      },
+    ],
     silver: [
       {
         featureType: "administrative",

@@ -18,6 +18,7 @@ import EventsInfo from "@/components/Events/EventsInfo";
 import { fetchMusicEvents } from "@/utils/Events/fetchPreditHQEvents";
 import PredictHQEventData from "@/lib/predictHqEvent";
 import GoogleMaps from "@/components/Events/GoogleMap";
+import { styles } from "@/lib/mapStyles";
 
 const EventsPage = () => {
   const [ticketMasterEvents, setTicketMasterEvents] = useState<EventData[]>([]);
@@ -158,7 +159,7 @@ const EventsPage = () => {
                       <GoogleMaps
                         lat={event.geo.geometry.coordinates[1]} // Latitude from event data
                         lon={event.geo.geometry.coordinates[0]} // Longitude from event data
-                        mapStyle={[]} // Optional: pass any map style you want
+                        mapStyle={styles["hybrid"]} // Optional: pass any map style you want
                       />
                     </div>
                   ) : (

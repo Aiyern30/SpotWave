@@ -54,27 +54,25 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({ lat, lon, mapStyle }) => {
       infoWindowRef.current.close();
     }
 
-    // The contentString now contains inline styles for the buttons
     const contentString = `
-    <div style="max-width: 300px; padding: 10px;" id="google-maps">
-      <div style="margin-top: 12px;">
-        <button
-          id="open-in-google-maps"
-          style="width: 100%; padding: 8px; font-size: 14px; background-color: #F99D22; color: white; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
-        >
-          Open in Google Maps
-        </button>
-        <button
-          id="copy-coordinates"
-          style="width: 100%; padding: 8px; font-size: 14px; background-color: #F99D22; color: white; border: none; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
-        >
-          Copy Coordinates
-        </button>
+      <div style="max-width: 300px; padding: 10px;" id="google-maps">
+        <div style="margin-top: 12px;">
+          <button
+            id="open-in-google-maps"
+            style="width: 100%; padding: 8px; font-size: 14px; background-color: #F99D22; color: white; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+          >
+            Open in Google Maps
+          </button>
+          <button
+            id="copy-coordinates"
+            style="width: 100%; padding: 8px; font-size: 14px; background-color: #F99D22; color: white; border: none; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+          >
+            Copy Coordinates
+          </button>
+        </div>
       </div>
-    </div>
-  `;
+    `;
 
-    // Set the marker position
     const position = {
       lat: Number(latitude),
       lng: Number(longitude),
@@ -95,16 +93,13 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({ lat, lon, mapStyle }) => {
       infoWindow.open(mapRef.current);
       infoWindow.setPosition(position);
 
-      // Save reference to the InfoWindow
       infoWindowRef.current = infoWindow;
     }
 
-    // Add event listeners to the InfoWindow content
     setTimeout(() => {
       const openInGoogleMaps = document.getElementById("open-in-google-maps");
       const copyCoordinates = document.getElementById("copy-coordinates");
 
-      // Event listener for "Open in Google Maps"
       if (openInGoogleMaps) {
         openInGoogleMaps.addEventListener("click", () => {
           const googleMapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
@@ -112,7 +107,6 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({ lat, lon, mapStyle }) => {
         });
       }
 
-      // Event listener for "Copy Coordinates"
       if (copyCoordinates) {
         copyCoordinates.addEventListener("click", () => {
           navigator.clipboard
@@ -199,7 +193,7 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({ lat, lon, mapStyle }) => {
         fullscreenControl: true,
         disableDefaultUI: false,
         mapTypeId: "hybrid",
-        styles: mapStyle,
+        styles: mapStyle, // Here is the key update
       }}
     >
       <MarkerF position={center} onClick={(e) => handleMarkerClick(lat, lon)} />
