@@ -151,18 +151,18 @@ const EventsPage = () => {
                 onClick={() => handleEventSelect(event.id)}
               >
                 <CardHeader className="p-0">
-                  <Avatar className="w-full h-48 relative">
-                    {event?.geo?.geometry?.coordinates?.length > 0 ? (
-                      <AvatarImage
-                        src={`https://maps.googleapis.com/maps/api/staticmap?center=${event.geo.geometry.coordinates[1]},${event.geo.geometry.coordinates[0]}&zoom=13&size=600x300&maptype=roadmap`}
-                        className="rounded-t-xl w-full h-48 object-cover"
-                      />
-                    ) : (
-                      <AvatarFallback className="rounded-xl text-black">
-                        No Image
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
+                  {/* Replace Avatar with GoogleMaps component */}
+                  {event?.geo?.geometry?.coordinates?.length > 0 ? (
+                    <div className="w-full h-48">
+                      {/* <GoogleMaps
+                        lat={event.geo.geometry.coordinates[1]}  // Latitude from event data
+                        lon={event.geo.geometry.coordinates[0]}  // Longitude from event data
+                        mapStyle={[]}  // Optional: pass any map style you want
+                      /> */}
+                    </div>
+                  ) : (
+                    <div>No Map Available</div>
+                  )}
                 </CardHeader>
 
                 <CardTitle className="text-lg font-semibold p-3">
