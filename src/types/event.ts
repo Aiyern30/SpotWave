@@ -1,0 +1,1 @@
+type EventType = "TICKETMASTER" | "PREDICTHQ"

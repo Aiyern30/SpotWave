@@ -16,7 +16,8 @@ import { useRouter } from "next/navigation";
 
 interface EventsInfoProps {
   eventId: string;
-  onClose: () => void; // Close callback
+  source: EventType;
+  onClose: () => void;
 }
 
 const SkeletonEventDetails = () => (
@@ -55,7 +56,11 @@ const SkeletonEventDetails = () => (
     </div>
   </div>
 );
-const EventsInfo: React.FC<EventsInfoProps> = ({ eventId, onClose }) => {
+const EventsInfo: React.FC<EventsInfoProps> = ({
+  eventId,
+  onClose,
+  source,
+}) => {
   const router = useRouter();
   const [event, setEvent] = useState<EventData | null>(null);
   console.log(event);
@@ -105,93 +110,97 @@ const EventsInfo: React.FC<EventsInfoProps> = ({ eventId, onClose }) => {
               <SkeletonEventDetails />
             ) : (
               <>
-                {/* Event Images */}
-                <div className="mb-6">
-                  {event?.images && event.images.length > 0 && (
-                    <Image
-                      key={getLargestImage(event.images)?.url}
-                      src={getLargestImage(event.images)?.url || ""}
-                      alt={event?.name}
-                      width={1000}
-                      height={300}
-                      className="w-full h-[300px] object-cover rounded-xl mb-4"
-                    />
-                  )}
-                </div>
+                {source === "TICKETMASTER" && (
+                  <>
+                    {/* Event Images */}
+                    <div className="mb-6">
+                      {event?.images && event.images.length > 0 && (
+                        <Image
+                          key={getLargestImage(event.images)?.url}
+                          src={getLargestImage(event.images)?.url || ""}
+                          alt={event?.name}
+                          width={1000}
+                          height={300}
+                          className="w-full h-[300px] object-cover rounded-xl mb-4"
+                        />
+                      )}
+                    </div>
 
-                {event?.description && (
-                  <div className="mb-6">
-                    <p className="text-sm">{event?.description}</p>
-                  </div>
-                )}
+                    {event?.description && (
+                      <div className="mb-6">
+                        <p className="text-sm">{event?.description}</p>
+                      </div>
+                    )}
 
-                {/* Event Dates */}
-                <div className="mb-6">
-                  <h2 className="text-lg sm:text-xl font-semibold mb-2">
-                    Event Dates
-                  </h2>
-                  <p className="text-xs sm:text-sm">
-                    <strong>Event Start:</strong>{" "}
-                    {formatDate(event?.dates.start.dateTime || "")}
-                  </p>
-                  {event?.dates.end?.dateTime && (
-                    <p className="text-xs sm:text-sm">
-                      <strong>Event End:</strong>{" "}
-                      {formatDate(event?.dates.end.dateTime)}
-                    </p>
-                  )}
-                </div>
-
-                {/* Price Range */}
-                {event?.priceRanges?.[0]?.min &&
-                  event?.priceRanges?.[0]?.max && (
+                    {/* Event Dates */}
                     <div className="mb-6">
                       <h2 className="text-lg sm:text-xl font-semibold mb-2">
-                        Ticket Pricing
+                        Event Dates
                       </h2>
-                      {event?.priceRanges?.map((priceRange, index) => (
-                        <p key={index} className="text-xs sm:text-sm">
-                          <strong>
-                            {priceRange.currency} {priceRange.min} -{" "}
-                            {priceRange.max}
-                          </strong>
+                      <p className="text-xs sm:text-sm">
+                        <strong>Event Start:</strong>{" "}
+                        {formatDate(event?.dates.start.dateTime || "")}
+                      </p>
+                      {event?.dates.end?.dateTime && (
+                        <p className="text-xs sm:text-sm">
+                          <strong>Event End:</strong>{" "}
+                          {formatDate(event?.dates.end.dateTime)}
                         </p>
-                      ))}
+                      )}
                     </div>
-                  )}
 
-                {/* Ticket Limit */}
-                {event?.ticketLimit && (
-                  <div className="mb-6">
-                    <h2 className="text-lg sm:text-xl font-semibold mb-2">
-                      Ticket Limit
-                    </h2>
-                    <p className="text-xs sm:text-sm">
-                      {event?.ticketLimit.info}
-                    </p>
-                  </div>
-                )}
+                    {/* Price Range */}
+                    {event?.priceRanges?.[0]?.min &&
+                      event?.priceRanges?.[0]?.max && (
+                        <div className="mb-6">
+                          <h2 className="text-lg sm:text-xl font-semibold mb-2">
+                            Ticket Pricing
+                          </h2>
+                          {event?.priceRanges?.map((priceRange, index) => (
+                            <p key={index} className="text-xs sm:text-sm">
+                              <strong>
+                                {priceRange.currency} {priceRange.min} -{" "}
+                                {priceRange.max}
+                              </strong>
+                            </p>
+                          ))}
+                        </div>
+                      )}
 
-                {/* Venue Information */}
-                {event?._embedded?.venues?.[0] && (
-                  <div className="mb-6">
-                    <h2 className="text-lg sm:text-xl font-semibold mb-2">
-                      Venue Information
-                    </h2>
-                    <p className="text-xs sm:text-sm">
-                      <strong>Venue Name:</strong>{" "}
-                      {event?._embedded?.venues[0]?.name}
-                    </p>
-                    <p className="text-xs sm:text-sm">
-                      <strong>Location:</strong>{" "}
-                      {event?._embedded?.venues[0]?.city?.name},{" "}
-                      {event?._embedded?.venues[0]?.country?.name}
-                    </p>
-                    <p className="text-xs sm:text-sm">
-                      <strong>Address:</strong>{" "}
-                      {event?._embedded?.venues[0]?.address?.line1}
-                    </p>
-                  </div>
+                    {/* Ticket Limit */}
+                    {event?.ticketLimit && (
+                      <div className="mb-6">
+                        <h2 className="text-lg sm:text-xl font-semibold mb-2">
+                          Ticket Limit
+                        </h2>
+                        <p className="text-xs sm:text-sm">
+                          {event?.ticketLimit.info}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Venue Information */}
+                    {event?._embedded?.venues?.[0] && (
+                      <div className="mb-6">
+                        <h2 className="text-lg sm:text-xl font-semibold mb-2">
+                          Venue Information
+                        </h2>
+                        <p className="text-xs sm:text-sm">
+                          <strong>Venue Name:</strong>{" "}
+                          {event?._embedded?.venues[0]?.name}
+                        </p>
+                        <p className="text-xs sm:text-sm">
+                          <strong>Location:</strong>{" "}
+                          {event?._embedded?.venues[0]?.city?.name},{" "}
+                          {event?._embedded?.venues[0]?.country?.name}
+                        </p>
+                        <p className="text-xs sm:text-sm">
+                          <strong>Address:</strong>{" "}
+                          {event?._embedded?.venues[0]?.address?.line1}
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             )}
