@@ -193,7 +193,7 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({ lat, lon, mapStyle }) => {
         fullscreenControl: true,
         disableDefaultUI: false,
         mapTypeId: "hybrid",
-        styles: mapStyle, // Here is the key update
+        styles: mapStyle,
       }}
     >
       <MarkerF position={center} onClick={(e) => handleMarkerClick(lat, lon)} />

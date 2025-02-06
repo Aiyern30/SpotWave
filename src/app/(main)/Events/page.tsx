@@ -12,6 +12,11 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Skeleton,
 } from "@/components/ui";
 import EventsInfo from "@/components/Events/EventsInfo";
@@ -19,12 +24,15 @@ import { fetchMusicEvents } from "@/utils/Events/fetchPreditHQEvents";
 import PredictHQEventData from "@/lib/predictHqEvent";
 import GoogleMaps from "@/components/Events/GoogleMap";
 import { styles } from "@/lib/mapStyles";
+import { formatDate } from "@/utils/function";
 
 const EventsPage = () => {
   const [ticketMasterEvents, setTicketMasterEvents] = useState<EventData[]>([]);
   const [predictHQEvents, setPredictHQEvents] = useState<PredictHQEventData[]>(
     []
   );
+
+  console.log("predictHQEvents", predictHQEvents);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
@@ -86,15 +94,6 @@ const EventsPage = () => {
           sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
         }`}
       >
-        <select
-          value={selectedSource}
-          onChange={(e) => setSelectedSource(e.target.value)}
-          className="p-2 mb-4"
-        >
-          <option value="ticketmaster">TicketMaster</option>
-          <option value="predicthq">PredictHQ</option>
-        </select>
-
         {loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
             {[...Array(9)].map((_, index) => (
@@ -108,39 +107,53 @@ const EventsPage = () => {
         {!loading &&
         selectedSource === "ticketmaster" &&
         ticketMasterEvents.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-            {ticketMasterEvents.map((event) => (
-              <Card
-                key={event.id}
-                className="bg-white group w-full cursor-pointer hover:shadow-lg hover:bg-white"
-                onClick={() => handleEventSelect(event.id)}
-              >
-                <CardHeader className="p-0">
-                  <Avatar className="w-full h-48 relative">
-                    {event.images?.length > 0 ? (
-                      <AvatarImage
-                        src={event.images[0].url}
-                        className="rounded-t-xl w-full h-48 object-cover"
-                      />
-                    ) : (
-                      <AvatarFallback className="rounded-xl text-black">
-                        No Image
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                </CardHeader>
+          <div className=" p-6">
+            <Select
+              value={selectedSource}
+              onValueChange={(value) => setSelectedSource(value)}
+            >
+              <SelectTrigger className="p-2 mb-4 w-[200px]">
+                <SelectValue placeholder="Select Event Source" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ticketmaster">TicketMaster</SelectItem>
+                <SelectItem value="predicthq">PredictHQ</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {ticketMasterEvents.map((event) => (
+                <Card
+                  key={event.id}
+                  className="bg-white group w-full cursor-pointer hover:shadow-lg hover:bg-white"
+                  onClick={() => handleEventSelect(event.id)}
+                >
+                  <CardHeader className="p-0">
+                    <Avatar className="w-full h-48 relative">
+                      {event.images?.length > 0 ? (
+                        <AvatarImage
+                          src={event.images[0].url}
+                          className="rounded-t-xl w-full h-48 object-cover"
+                        />
+                      ) : (
+                        <AvatarFallback className="rounded-xl text-black">
+                          No Image
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                  </CardHeader>
 
-                <CardTitle className="text-lg font-semibold p-3">
-                  {event.name}
-                </CardTitle>
+                  <CardTitle className="text-lg font-semibold p-3">
+                    {event.name}
+                  </CardTitle>
 
-                <CardFooter className="text-sm text-gray-500 p-3">
-                  {event.dates?.start?.localDate}{" "}
-                  {event.dates?.start?.localTime} -{" "}
-                  {event._embedded?.venues?.[0]?.name || "Venue Unknown"}
-                </CardFooter>
-              </Card>
-            ))}
+                  <CardFooter className="text-sm text-gray-500 p-3">
+                    {event.dates?.start?.localDate}{" "}
+                    {event.dates?.start?.localTime} -{" "}
+                    {event._embedded?.venues?.[0]?.name || "Venue Unknown"}
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
           </div>
         ) : selectedSource === "predicthq" &&
           !loading &&
@@ -153,13 +166,12 @@ const EventsPage = () => {
                 onClick={() => handleEventSelect(event.id)}
               >
                 <CardHeader className="p-0">
-                  {/* Replace Avatar with GoogleMaps component */}
                   {event?.geo?.geometry?.coordinates?.length > 0 ? (
                     <div className="w-full h-48">
                       <GoogleMaps
-                        lat={event.geo.geometry.coordinates[1]} // Latitude from event data
-                        lon={event.geo.geometry.coordinates[0]} // Longitude from event data
-                        mapStyle={styles["hybrid"]} // Optional: pass any map style you want
+                        lat={event.geo.geometry.coordinates[1]}
+                        lon={event.geo.geometry.coordinates[0]}
+                        mapStyle={styles["hybrid"]}
                       />
                     </div>
                   ) : (
@@ -172,7 +184,8 @@ const EventsPage = () => {
                 </CardTitle>
 
                 <CardFooter className="text-sm text-gray-500 p-3">
-                  {event.start_local} - {event.state || "Venue Unknown"}
+                  {formatDate(event.start_local)} -{" "}
+                  {event.state || "Venue Unknown"}
                 </CardFooter>
               </Card>
             ))}
