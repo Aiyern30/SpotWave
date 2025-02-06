@@ -12,9 +12,15 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Skeleton,
 } from "@/components/ui";
 import EventsInfo from "@/components/Events/EventsInfo";
+import { fetchMusicEvents } from "@/utils/Events/fetchPreditHQEvents";
 
 const EventsPage = () => {
   const [events, setEvents] = useState<EventData[]>([]);
@@ -22,35 +28,55 @@ const EventsPage = () => {
   const [error, setError] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [source, setSource] = useState<string>("predicthq");
 
   useEffect(() => {
-    const fetchEventData = async (latitude: number, longitude: number) => {
+    const fetchData = async () => {
       setLoading(true);
-      const { events, error } = await fetchEvents(latitude, longitude);
-      if (error) setError(error);
-      setEvents(events);
-      setLoading(false);
-    };
+      let result;
+      if (source === "predicthq") {
+        result = await fetchMusicEvents();
+      } else {
+        const fetchEventData = async (latitude: number, longitude: number) => {
+          setLoading(true);
+          const { events, error } = await fetchEvents(latitude, longitude);
+          if (error) setError(error);
+          setEvents(events);
+          setLoading(false);
+        };
 
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          fetchEventData(position.coords.latitude, position.coords.longitude);
-        },
-        () => {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              fetchEventData(
+                position.coords.latitude,
+                position.coords.longitude
+              );
+            },
+            () => {
+              setError(
+                "Geolocation denied. Showing events for a default location."
+              );
+              fetchEventData(40.7128, -74.006);
+            }
+          );
+        } else {
           setError(
-            "Geolocation denied. Showing events for a default location."
+            "Geolocation not supported. Showing events for a default location."
           );
           fetchEventData(40.7128, -74.006);
         }
-      );
-    } else {
-      setError(
-        "Geolocation not supported. Showing events for a default location."
-      );
-      fetchEventData(40.7128, -74.006);
-    }
-  }, []);
+      }
+
+      if (result.error) setError(result.error);
+      setEvents(result.events);
+      setLoading(false);
+    };
+
+    fetchData();
+  }, [source]);
+
+  useEffect(() => {}, []);
 
   const handleEventSelect = (eventId: string) => {
     setSelectedEventId(eventId); // Trigger dialog opening
@@ -87,7 +113,15 @@ const EventsPage = () => {
         )}
 
         {error && <p className="text-red-500">{error}</p>}
-
+        <Select onValueChange={setSource} defaultValue="predicthq">
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Select Source" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="predicthq">PredictHQ</SelectItem>
+            <SelectItem value="TicketMaster">TicketMaster</SelectItem>
+          </SelectContent>
+        </Select>
         {!loading && events.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
             {events.map((event) => (

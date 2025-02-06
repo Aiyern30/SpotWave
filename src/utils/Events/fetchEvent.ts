@@ -17,7 +17,11 @@ export const fetchEvents = async (lat: number, long: number): Promise<{ events: 
     const response = await axios.get(url);
 
     if (response.data._embedded?.events) {
-      return { events: response.data._embedded.events };
+      const filteredEvents = response.data._embedded.events.filter((event: EventData) =>
+        event.classifications?.some((classification) => classification.segment?.name === "Music")
+      );
+
+      return { events: filteredEvents };
     } else {
       return { events: [], error: "No events found." };
     }
