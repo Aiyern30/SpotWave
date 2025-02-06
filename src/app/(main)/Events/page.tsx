@@ -107,7 +107,7 @@ const EventsPage = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="TICKETMASTER">TicketMaster</SelectItem>
-              <SelectItem value="predicthq">PredictHQ</SelectItem>
+              <SelectItem value="PREDICTHQ">PredictHQ</SelectItem>
             </SelectContent>
           </Select>
         </div>
