@@ -9,6 +9,7 @@ import {
   AvatarFallback,
   AvatarImage,
   Card,
+  CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -24,7 +25,7 @@ import { fetchMusicEvents } from "@/utils/Events/fetchPreditHQEvents";
 import PredictHQEventData from "@/lib/predictHqEvent";
 import GoogleMaps from "@/components/Events/GoogleMap";
 import { styles } from "@/lib/mapStyles";
-import { formatDate } from "@/utils/function";
+import { formatDate, formatDuration } from "@/utils/function";
 
 const EventsPage = () => {
   const [ticketMasterEvents, setTicketMasterEvents] = useState<EventData[]>([]);
@@ -182,9 +183,41 @@ const EventsPage = () => {
                 <CardTitle className="text-lg font-semibold p-3">
                   {event.title}
                 </CardTitle>
+                <CardContent className="text-xs p-3 flex flex-col space-y-3">
+                  <div>{event.geo.address.formatted_address}</div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <div className="text-xl text-left font-bold">
+                        {event.predicted_event_spend}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Predicted spend
+                      </div>
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="text-xl text-right font-bold">
+                        {event.phq_attendance}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Predicted attendance
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
                 <CardFooter className="text-sm text-gray-500 p-3">
-                  {formatDate(event.start_local, true)} -{" "}
-                  {formatDate(event.end_local, true)}
+                  {event.start_local
+                    ? formatDate(event.start_local, true)
+                    : event.start
+                    ? formatDate(event.start, true)
+                    : null}{" "}
+                  -{" "}
+                  {event.predicted_end_local
+                    ? formatDate(event.predicted_end_local, true)
+                    : event.predicted_end
+                    ? formatDate(event.predicted_end, true)
+                    : event.end
+                    ? formatDate(event.end, true)
+                    : null}
                 </CardFooter>
               </Card>
             ))}
