@@ -9,21 +9,31 @@ import {
   AvatarFallback,
   AvatarImage,
   Card,
+  CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Skeleton,
 } from "@/components/ui";
 import EventsInfo from "@/components/Events/EventsInfo";
 import { fetchMusicEvents } from "@/utils/Events/fetchPreditHQEvents";
 import PredictHQEventData from "@/lib/predictHqEvent";
 import GoogleMaps from "@/components/Events/GoogleMap";
+import { styles } from "@/lib/mapStyles";
+import { formatDate, formatDuration } from "@/utils/function";
 
 const EventsPage = () => {
   const [ticketMasterEvents, setTicketMasterEvents] = useState<EventData[]>([]);
   const [predictHQEvents, setPredictHQEvents] = useState<PredictHQEventData[]>(
     []
   );
+
+  console.log("predictHQEvents", predictHQEvents);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
@@ -85,14 +95,20 @@ const EventsPage = () => {
           sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
         }`}
       >
-        <select
-          value={selectedSource}
-          onChange={(e) => setSelectedSource(e.target.value)}
-          className="p-2 mb-4"
-        >
-          <option value="ticketmaster">TicketMaster</option>
-          <option value="predicthq">PredictHQ</option>
-        </select>
+        <div className="p-6 pb-0">
+          <Select
+            value={selectedSource}
+            onValueChange={(value) => setSelectedSource(value)}
+          >
+            <SelectTrigger className="p-2 w-[200px]">
+              <SelectValue placeholder="Select Event Source" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ticketmaster">TicketMaster</SelectItem>
+              <SelectItem value="predicthq">PredictHQ</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
         {loading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
@@ -152,13 +168,16 @@ const EventsPage = () => {
                 onClick={() => handleEventSelect(event.id)}
               >
                 <CardHeader className="p-0">
-                  {/* Replace Avatar with GoogleMaps component */}
                   {event?.geo?.geometry?.coordinates?.length > 0 ? (
-                    <div className="w-full h-48">
+                    <div
+                      className="w-full h-48"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <GoogleMaps
-                        lat={event.geo.geometry.coordinates[1]} // Latitude from event data
-                        lon={event.geo.geometry.coordinates[0]} // Longitude from event data
-                        mapStyle={[]} // Optional: pass any map style you want
+                        lat={event.geo.geometry.coordinates[1]}
+                        lon={event.geo.geometry.coordinates[0]}
+                        address={event.geo.address.formatted_address}
+                        mapStyle={styles["hybrid"]}
                       />
                     </div>
                   ) : (
@@ -169,9 +188,41 @@ const EventsPage = () => {
                 <CardTitle className="text-lg font-semibold p-3">
                   {event.title}
                 </CardTitle>
-
+                <CardContent className="text-xs p-3 flex flex-col space-y-3">
+                  <div>{event.geo.address.formatted_address}</div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <div className="text-xl text-left font-bold">
+                        {event.predicted_event_spend}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Predicted spend
+                      </div>
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="text-xl text-right font-bold">
+                        {event.phq_attendance}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Predicted attendance
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
                 <CardFooter className="text-sm text-gray-500 p-3">
-                  {event.start_local} - {event.state || "Venue Unknown"}
+                  {event.start_local
+                    ? formatDate(event.start_local, true)
+                    : event.start
+                    ? formatDate(event.start, true)
+                    : null}{" "}
+                  -{" "}
+                  {event.predicted_end_local
+                    ? formatDate(event.predicted_end_local, true)
+                    : event.predicted_end
+                    ? formatDate(event.predicted_end, true)
+                    : event.end
+                    ? formatDate(event.end, true)
+                    : null}
                 </CardFooter>
               </Card>
             ))}
