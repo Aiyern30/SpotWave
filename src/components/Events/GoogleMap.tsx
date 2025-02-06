@@ -21,13 +21,13 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({ lat, lon, mapStyle }) => {
 
   const mapContainerStyle = {
     width: "100%",
-    height: "100vh",
+    height: "100%",
   };
   const router = useRouter();
   const { toast } = useToast();
 
   const [center, setCenter] = useState({ lat, lng: lon });
-  const [zoom, setZoom] = useState(8);
+  const [zoom, setZoom] = useState(12);
   const [mapKey, setMapKey] = useState(Date.now());
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -56,24 +56,23 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({ lat, lon, mapStyle }) => {
 
     // The contentString now contains inline styles for the buttons
     const contentString = `
-  <div style="max-width: 300px; padding: 10px;" id="google-maps">
-
-    <div style="margin-top: 12px;">
-      <button
-        id="open-in-google-maps"
-        style="width: 100%; padding: 8px; font-size: 14px; background-color: #F99D22; color: white; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
-      >
-        Open in Google Maps
-      </button>
-      <button
-        id="copy-coordinates"
-        style="width: 100%; padding: 8px; font-size: 14px; background-color: #F99D22; color: white; border: none; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
-      >
-        Copy Coordinates
-      </button>
+    <div style="max-width: 300px; padding: 10px;" id="google-maps">
+      <div style="margin-top: 12px;">
+        <button
+          id="open-in-google-maps"
+          style="width: 100%; padding: 8px; font-size: 14px; background-color: #F99D22; color: white; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+        >
+          Open in Google Maps
+        </button>
+        <button
+          id="copy-coordinates"
+          style="width: 100%; padding: 8px; font-size: 14px; background-color: #F99D22; color: white; border: none; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+        >
+          Copy Coordinates
+        </button>
+      </div>
     </div>
-  </div>
-`;
+  `;
 
     // Set the marker position
     const position = {
@@ -82,7 +81,7 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({ lat, lon, mapStyle }) => {
     };
 
     setCenter(position);
-    setZoom(8);
+    setZoom(12);
 
     if (mapRef.current) {
       const infoWindow = new google.maps.InfoWindow({
@@ -102,7 +101,6 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({ lat, lon, mapStyle }) => {
 
     // Add event listeners to the InfoWindow content
     setTimeout(() => {
-      const navigateLink = document.getElementById("navigate-link");
       const openInGoogleMaps = document.getElementById("open-in-google-maps");
       const copyCoordinates = document.getElementById("copy-coordinates");
 
@@ -140,8 +138,7 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({ lat, lon, mapStyle }) => {
 
   const resetView = () => {
     setCenter({ lat: 4.196544207089243, lng: 102.23060571379374 });
-
-    setZoom(8);
+    setZoom(12);
   };
 
   if (loadError) {
@@ -195,11 +192,13 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({ lat, lon, mapStyle }) => {
       center={center}
       zoom={zoom}
       onUnmount={onMapUnmount}
-      // onLoad={onload}
       options={{
         streetViewControl: false,
+        zoomControl: false,
+        mapTypeControl: false,
+        fullscreenControl: true,
         disableDefaultUI: false,
-        mapTypeId: "roadmap",
+        mapTypeId: "hybrid",
         styles: mapStyle,
       }}
     >
