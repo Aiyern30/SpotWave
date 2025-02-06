@@ -27,20 +27,14 @@ const SkeletonEventDetails = () => (
     <Skeleton className="w-3/4 h-6 mb-4" />
     <Skeleton className="w-1/2 h-4 mb-4" />
     <Skeleton className="w-2/3 h-4 mb-6" />
-
-    {/* Event Dates */}
     <div className="mb-6">
       <Skeleton className="w-2/3 h-6 mb-2" />
       <Skeleton className="w-1/2 h-4" />
     </div>
-
-    {/* Ticket Pricing */}
     <div className="mb-6">
       <Skeleton className="w-2/3 h-6 mb-2" />
       <Skeleton className="w-1/2 h-4" />
     </div>
-
-    {/* Venue Information */}
     <div className="mb-6">
       <Skeleton className="w-2/3 h-6 mb-2" />
       <Skeleton className="w-1/2 h-4 mb-2" />
@@ -56,13 +50,13 @@ const EventsInfo: React.FC<EventsInfoProps> = ({
   eventId,
   onClose,
   source,
-  predictHQEventData, // New prop for PredictHQ data
+  predictHQEventData,
 }) => {
   const router = useRouter();
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
-  console.log("eventId", eventId);
+
   useEffect(() => {
     const fetchEventDetails = async () => {
       setLoading(true);
@@ -73,7 +67,6 @@ const EventsInfo: React.FC<EventsInfoProps> = ({
           eventData = await fetchTicketmasterEventById(eventId);
         }
 
-        console.log(`Fetched ${source} event data:`, eventData);
         setEvent(eventData);
       } catch (err) {
         console.error(`Error fetching event from ${source}:`, err);
@@ -84,14 +77,13 @@ const EventsInfo: React.FC<EventsInfoProps> = ({
     };
 
     if (source === "TICKETMASTER") {
-      fetchEventDetails(); // Only fetch for Ticketmaster
+      fetchEventDetails();
     } else if (source === "PREDICTHQ" && predictHQEventData) {
-      setEvent(predictHQEventData); // Use the passed PredictHQ event data
+      setEvent(predictHQEventData);
       setLoading(false);
     }
   }, [eventId, source, predictHQEventData]);
 
-  // Helper function to format dates
   const formatDate = (dateTime: string) => {
     const date = new Date(dateTime);
     return date.toLocaleString();
@@ -113,11 +105,14 @@ const EventsInfo: React.FC<EventsInfoProps> = ({
           <DialogTitle className="text-3xl md:text-4xl">
             {loading
               ? "Loading..."
-              : event?.name || event?.title || "No Event Found"}
+              : event?.event?.name ||
+                event?.event?.title ||
+                event?.title ||
+                "No Event Found"}
           </DialogTitle>
         </DialogHeader>
         <div className="relative">
-          <div className="h-[80vh] overflow-y-auto p-4">
+          <div className="h-[50vh] sm:h-[80vh] overflow-y-auto p-4">
             {loading ? (
               <SkeletonEventDetails />
             ) : event ? (
@@ -125,19 +120,27 @@ const EventsInfo: React.FC<EventsInfoProps> = ({
                 {/* Ticketmaster Data */}
                 {source === "TICKETMASTER" && (
                   <>
-                    {event?.images && event.images.length > 0 && (
-                      <Image
-                        key={getLargestImage(event.images)?.url}
-                        src={getLargestImage(event.images)?.url || ""}
-                        alt={event?.name}
-                        width={1000}
-                        height={300}
-                        className="w-full h-[300px] object-cover rounded-xl mb-4"
-                      />
-                    )}
+                    {/* Event Images */}
+                    <div className="mb-6">
+                      {event?.event?.images &&
+                        event?.event?.images.length > 0 && (
+                          <Image
+                            key={getLargestImage(event?.event?.images)?.url}
+                            src={
+                              getLargestImage(event?.event?.images)?.url || ""
+                            }
+                            alt={event?.event?.name}
+                            width={1000}
+                            height={300}
+                            className="w-full h-[300px] object-cover rounded-xl mb-4"
+                          />
+                        )}
+                    </div>
 
-                    {event?.description && (
-                      <p className="text-sm mb-6">{event.description}</p>
+                    {event?.event?.description && (
+                      <div className="mb-6">
+                        <p className="text-sm">{event?.event?.description}</p>
+                      </div>
                     )}
 
                     {/* Event Dates */}
@@ -146,16 +149,68 @@ const EventsInfo: React.FC<EventsInfoProps> = ({
                         Event Dates
                       </h2>
                       <p className="text-xs sm:text-sm">
-                        <strong>Start:</strong>{" "}
-                        {formatDate(event?.dates?.start?.dateTime || "")}
+                        <strong>Event Start:</strong>{" "}
+                        {formatDate(event?.event?.dates.start.dateTime || "")}
                       </p>
-                      {event?.dates?.end?.dateTime && (
+                      {event?.event?.dates.end?.dateTime && (
                         <p className="text-xs sm:text-sm">
-                          <strong>End:</strong>{" "}
-                          {formatDate(event.dates.end.dateTime)}
+                          <strong>Event End:</strong>{" "}
+                          {formatDate(event?.event?.dates.end.dateTime)}
                         </p>
                       )}
                     </div>
+
+                    {/* Price Range */}
+                    {/* {event?.event?.priceRanges?.[0]?.min &&
+                    event?.event?.priceRanges?.[0]?.max && (
+                      <div className="mb-6">
+                        <h2 className="text-lg sm:text-xl font-semibold mb-2">
+                          Ticket Pricing
+                        </h2>
+                        {event?.event?.priceRanges?.map((priceRange, index) => (
+                          <p key={index} className="text-xs sm:text-sm">
+                            <strong>
+                              {priceRange.currency} {priceRange.min} -{" "}
+                              {priceRange.max}
+                            </strong>
+                          </p>
+                        ))}
+                      </div>
+                    )} */}
+
+                    {/* Ticket Limit */}
+                    {event?.event?.ticketLimit && (
+                      <div className="mb-6">
+                        <h2 className="text-lg sm:text-xl font-semibold mb-2">
+                          Ticket Limit
+                        </h2>
+                        <p className="text-xs sm:text-sm">
+                          {event?.event?.ticketLimit.info}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Venue Information */}
+                    {event?.event?._embedded?.venues?.[0] && (
+                      <div className="mb-6">
+                        <h2 className="text-lg sm:text-xl font-semibold mb-2">
+                          Venue Information
+                        </h2>
+                        <p className="text-xs sm:text-sm">
+                          <strong>Venue Name:</strong>{" "}
+                          {event?.event?._embedded?.venues[0]?.name}
+                        </p>
+                        <p className="text-xs sm:text-sm">
+                          <strong>Location:</strong>{" "}
+                          {event?.event?._embedded?.venues[0]?.city?.name},{" "}
+                          {event?.event?._embedded?.venues[0]?.country?.name}
+                        </p>
+                        <p className="text-xs sm:text-sm">
+                          <strong>Address:</strong>{" "}
+                          {event?.event?._embedded?.venues[0]?.address?.line1}
+                        </p>
+                      </div>
+                    )}
                   </>
                 )}
 
@@ -205,6 +260,17 @@ const EventsInfo: React.FC<EventsInfoProps> = ({
           </div>
 
           {event?.url && (
+            <div className="absolute -bottom-1 w-full">
+              <Button
+                onClick={() => router.push(event?.url || "")}
+                variant={"secondary"}
+                className="w-full"
+              >
+                More Info: Event Link
+              </Button>
+            </div>
+          )}
+          {event?.event?.url && (
             <div className="absolute -bottom-1 w-full">
               <Button
                 onClick={() => router.push(event?.url || "")}
