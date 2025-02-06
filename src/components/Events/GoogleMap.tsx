@@ -85,7 +85,7 @@ const GoogleMaps: React.FC<GoogleMapsProps> = ({
 
       infoWindow.addListener("closeclick", () => resetView());
       infoWindow.setPosition(position);
-      infoWindow.open(mapRef.current); // Ensure the InfoWindow is opened on the correct map
+      infoWindow.open(mapRef.current);
 
       infoWindowRef.current = infoWindow;
     }

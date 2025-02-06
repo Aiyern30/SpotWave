@@ -38,12 +38,13 @@ const EventsPage = () => {
   const [error, setError] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-  const [selectedSource, setSelectedSource] = useState<string>("ticketmaster");
+  const [selectedSource, setSelectedSource] =
+    useState<EventType>("TICKETMASTER");
 
   const fetchEventData = useCallback(async () => {
     setLoading(true);
     try {
-      if (selectedSource === "ticketmaster") {
+      if (selectedSource === "TICKETMASTER") {
         const lat = 3.1350522;
         const long = 101.7293243;
         const { events: ticketMasterEvents, error: ticketMasterError } =
@@ -53,7 +54,7 @@ const EventsPage = () => {
         } else {
           setTicketMasterEvents(ticketMasterEvents);
         }
-      } else if (selectedSource === "predicthq") {
+      } else if (selectedSource === "PREDICTHQ") {
         const predictHQEvents = await fetchMusicEvents();
         console.log("Fetched PredictHQ Events:", predictHQEvents);
         setPredictHQEvents(predictHQEvents);
@@ -98,13 +99,13 @@ const EventsPage = () => {
         <div className="p-6 pb-0">
           <Select
             value={selectedSource}
-            onValueChange={(value) => setSelectedSource(value)}
+            onValueChange={(value) => setSelectedSource(value as EventType)} // ✅ Fix
           >
             <SelectTrigger className="p-2 w-[200px]">
               <SelectValue placeholder="Select Event Source" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ticketmaster">TicketMaster</SelectItem>
+              <SelectItem value="TICKETMASTER">TicketMaster</SelectItem>
               <SelectItem value="predicthq">PredictHQ</SelectItem>
             </SelectContent>
           </Select>
@@ -121,7 +122,7 @@ const EventsPage = () => {
         {error && <p className="text-red-500">{error}</p>}
 
         {!loading &&
-        selectedSource === "ticketmaster" &&
+        selectedSource === "TICKETMASTER" &&
         ticketMasterEvents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
             {ticketMasterEvents.map((event) => (
@@ -157,7 +158,7 @@ const EventsPage = () => {
               </Card>
             ))}
           </div>
-        ) : selectedSource === "predicthq" &&
+        ) : selectedSource === "PREDICTHQ" &&
           !loading &&
           predictHQEvents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
@@ -235,6 +236,7 @@ const EventsPage = () => {
         {selectedEventId && (
           <EventsInfo
             eventId={selectedEventId}
+            source={selectedSource}
             onClose={() => setSelectedEventId(null)}
           />
         )}
