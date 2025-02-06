@@ -182,10 +182,9 @@ const EventsPage = () => {
                 <CardTitle className="text-lg font-semibold p-3">
                   {event.title}
                 </CardTitle>
-
                 <CardFooter className="text-sm text-gray-500 p-3">
-                  {formatDate(event.start_local)} -{" "}
-                  {event.state || "Venue Unknown"}
+                  {formatDate(event.start_local, true)} -{" "}
+                  {formatDate(event.end_local, true)}
                 </CardFooter>
               </Card>
             ))}
