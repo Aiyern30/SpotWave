@@ -39,9 +39,11 @@ const EventsPage = () => {
   const [error, setError] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [selectedEventData, setSelectedEventData] =
+    useState<PredictHQEventData | null>(null);
   const [selectedSource, setSelectedSource] =
     useState<EventType>("TICKETMASTER");
-
+  console.log("selectedSource", selectedSource);
   const fetchEventData = useCallback(async () => {
     setLoading(true);
     try {
@@ -74,6 +76,17 @@ const EventsPage = () => {
     setSelectedEventId(eventId);
   };
 
+  const handlePredictEventSelect = (event: PredictHQEventData) => {
+    setSelectedEventData(event);
+  };
+  useEffect(() => {
+    if (selectedSource === "TICKETMASTER") {
+      setSelectedEventData(null);
+    } else if (selectedSource === "PREDICTHQ") {
+      setSelectedEventId(null);
+    }
+  }, [selectedSource]);
+
   const SkeletonEventCard = () => (
     <div>
       <Skeleton className="w-full h-48 rounded-t-xl" />
@@ -100,7 +113,7 @@ const EventsPage = () => {
         <div className="p-6">
           <Select
             value={selectedSource}
-            onValueChange={(value) => setSelectedSource(value as EventType)} // ✅ Fix
+            onValueChange={(value) => setSelectedSource(value as EventType)}
           >
             <SelectTrigger className="p-2 w-[200px]">
               <SelectValue placeholder="Select Event Source" />
@@ -167,7 +180,7 @@ const EventsPage = () => {
               <Card
                 key={event.id}
                 className="bg-white group w-full cursor-pointer hover:shadow-lg hover:bg-white"
-                onClick={() => handleEventSelect(event.id)}
+                onClick={() => handlePredictEventSelect(event)}
               >
                 <CardHeader className="p-0">
                   {event?.geo?.geometry?.coordinates?.length > 0 ? (
@@ -235,14 +248,19 @@ const EventsPage = () => {
         ) : null}
 
         {/* Dialog for Event Details */}
-        {selectedEventId && (
+        {selectedEventId ? (
           <EventsInfo
             eventId={selectedEventId}
             source={selectedSource}
             onClose={() => setSelectedEventId(null)}
-            predictHQEventData={predictHQEvents[0]}
           />
-        )}
+        ) : selectedEventData ? (
+          <EventsInfo
+            source={selectedSource}
+            predictHQEventData={selectedEventData}
+            onClose={() => setSelectedEventData(null)}
+          />
+        ) : null}
       </div>
     </div>
   );

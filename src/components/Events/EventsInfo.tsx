@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 import PredictHQEventData from "@/lib/predictHqEvent";
 
 interface EventsInfoProps {
-  eventId: string;
+  eventId?: string;
   source: EventType;
   onClose: () => void;
   predictHQEventData?: PredictHQEventData;
@@ -62,14 +62,14 @@ const EventsInfo: React.FC<EventsInfoProps> = ({
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
-
+  console.log("eventId", eventId);
   useEffect(() => {
     const fetchEventDetails = async () => {
       setLoading(true);
       let eventData = null;
 
       try {
-        if (source === "TICKETMASTER") {
+        if (source === "TICKETMASTER" && eventId) {
           eventData = await fetchTicketmasterEventById(eventId);
         }
 
