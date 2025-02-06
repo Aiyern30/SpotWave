@@ -240,6 +240,7 @@ const EventsPage = () => {
             eventId={selectedEventId}
             source={selectedSource}
             onClose={() => setSelectedEventId(null)}
+            predictHQEventData={predictHQEvents[0]}
           />
         )}
       </div>

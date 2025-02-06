@@ -9,15 +9,16 @@ import {
   DialogTitle,
   Skeleton,
 } from "../ui";
-import { EventData } from "@/lib/events";
-import { fetchEventById } from "@/utils/Events/fetchEventByID";
+import { fetchEventById as fetchTicketmasterEventById } from "@/utils/Events/fetchEventByID";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import PredictHQEventData from "@/lib/predictHqEvent";
 
 interface EventsInfoProps {
   eventId: string;
   source: EventType;
   onClose: () => void;
+  predictHQEventData?: PredictHQEventData;
 }
 
 const SkeletonEventDetails = () => (
@@ -39,12 +40,6 @@ const SkeletonEventDetails = () => (
       <Skeleton className="w-1/2 h-4" />
     </div>
 
-    {/* Ticket Limit */}
-    <div className="mb-6">
-      <Skeleton className="w-2/3 h-6 mb-2" />
-      <Skeleton className="w-1/2 h-4" />
-    </div>
-
     {/* Venue Information */}
     <div className="mb-6">
       <Skeleton className="w-2/3 h-6 mb-2" />
@@ -56,29 +51,45 @@ const SkeletonEventDetails = () => (
     </div>
   </div>
 );
+
 const EventsInfo: React.FC<EventsInfoProps> = ({
   eventId,
   onClose,
   source,
+  predictHQEventData, // New prop for PredictHQ data
 }) => {
   const router = useRouter();
-  const [event, setEvent] = useState<EventData | null>(null);
-  console.log(event);
+  const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
 
-  // Fetch event details when the component mounts
   useEffect(() => {
     const fetchEventDetails = async () => {
       setLoading(true);
-      const { event, error } = await fetchEventById(eventId);
-      if (error) setError(error);
-      setEvent(event);
+      let eventData = null;
+
+      try {
+        if (source === "TICKETMASTER") {
+          eventData = await fetchTicketmasterEventById(eventId);
+        }
+
+        console.log(`Fetched ${source} event data:`, eventData);
+        setEvent(eventData);
+      } catch (err) {
+        console.error(`Error fetching event from ${source}:`, err);
+        setError("Failed to load event details.");
+      }
+
       setLoading(false);
     };
 
-    fetchEventDetails();
-  }, [eventId]);
+    if (source === "TICKETMASTER") {
+      fetchEventDetails(); // Only fetch for Ticketmaster
+    } else if (source === "PREDICTHQ" && predictHQEventData) {
+      setEvent(predictHQEventData); // Use the passed PredictHQ event data
+      setLoading(false);
+    }
+  }, [eventId, source, predictHQEventData]);
 
   // Helper function to format dates
   const formatDate = (dateTime: string) => {
@@ -90,7 +101,6 @@ const EventsInfo: React.FC<EventsInfoProps> = ({
     images: { width: number; height: number; url: string }[]
   ) => {
     if (images.length === 0) return null;
-
     return images.reduce((largest, current) =>
       current.width > largest.width ? current : largest
     );
@@ -101,35 +111,33 @@ const EventsInfo: React.FC<EventsInfoProps> = ({
       <DialogContent className="p-6">
         <DialogHeader>
           <DialogTitle className="text-3xl md:text-4xl">
-            {loading ? "Loading..." : event?.name}
+            {loading
+              ? "Loading..."
+              : event?.name || event?.title || "No Event Found"}
           </DialogTitle>
         </DialogHeader>
         <div className="relative">
           <div className="h-[80vh] overflow-y-auto p-4">
             {loading ? (
               <SkeletonEventDetails />
-            ) : (
+            ) : event ? (
               <>
+                {/* Ticketmaster Data */}
                 {source === "TICKETMASTER" && (
                   <>
-                    {/* Event Images */}
-                    <div className="mb-6">
-                      {event?.images && event.images.length > 0 && (
-                        <Image
-                          key={getLargestImage(event.images)?.url}
-                          src={getLargestImage(event.images)?.url || ""}
-                          alt={event?.name}
-                          width={1000}
-                          height={300}
-                          className="w-full h-[300px] object-cover rounded-xl mb-4"
-                        />
-                      )}
-                    </div>
+                    {event?.images && event.images.length > 0 && (
+                      <Image
+                        key={getLargestImage(event.images)?.url}
+                        src={getLargestImage(event.images)?.url || ""}
+                        alt={event?.name}
+                        width={1000}
+                        height={300}
+                        className="w-full h-[300px] object-cover rounded-xl mb-4"
+                      />
+                    )}
 
                     {event?.description && (
-                      <div className="mb-6">
-                        <p className="text-sm">{event?.description}</p>
-                      </div>
+                      <p className="text-sm mb-6">{event.description}</p>
                     )}
 
                     {/* Event Dates */}
@@ -138,73 +146,64 @@ const EventsInfo: React.FC<EventsInfoProps> = ({
                         Event Dates
                       </h2>
                       <p className="text-xs sm:text-sm">
-                        <strong>Event Start:</strong>{" "}
-                        {formatDate(event?.dates.start.dateTime || "")}
+                        <strong>Start:</strong>{" "}
+                        {formatDate(event?.dates?.start?.dateTime || "")}
                       </p>
-                      {event?.dates.end?.dateTime && (
+                      {event?.dates?.end?.dateTime && (
                         <p className="text-xs sm:text-sm">
-                          <strong>Event End:</strong>{" "}
-                          {formatDate(event?.dates.end.dateTime)}
+                          <strong>End:</strong>{" "}
+                          {formatDate(event.dates.end.dateTime)}
                         </p>
                       )}
                     </div>
+                  </>
+                )}
 
-                    {/* Price Range */}
-                    {event?.priceRanges?.[0]?.min &&
-                      event?.priceRanges?.[0]?.max && (
-                        <div className="mb-6">
-                          <h2 className="text-lg sm:text-xl font-semibold mb-2">
-                            Ticket Pricing
-                          </h2>
-                          {event?.priceRanges?.map((priceRange, index) => (
-                            <p key={index} className="text-xs sm:text-sm">
-                              <strong>
-                                {priceRange.currency} {priceRange.min} -{" "}
-                                {priceRange.max}
-                              </strong>
-                            </p>
-                          ))}
-                        </div>
-                      )}
+                {/* PredictHQ Data */}
+                {source === "PREDICTHQ" && (
+                  <>
+                    <h2 className="text-lg sm:text-xl font-semibold mb-2">
+                      {event?.title}
+                    </h2>
 
-                    {/* Ticket Limit */}
-                    {event?.ticketLimit && (
-                      <div className="mb-6">
-                        <h2 className="text-lg sm:text-xl font-semibold mb-2">
-                          Ticket Limit
-                        </h2>
-                        <p className="text-xs sm:text-sm">
-                          {event?.ticketLimit.info}
-                        </p>
-                      </div>
+                    {event?.description && (
+                      <p className="text-sm mb-6">{event.description}</p>
                     )}
 
-                    {/* Venue Information */}
-                    {event?._embedded?.venues?.[0] && (
+                    {/* Event Start Time */}
+                    <div className="mb-6">
+                      <h2 className="text-lg sm:text-xl font-semibold mb-2">
+                        Event Dates
+                      </h2>
+                      <p className="text-xs sm:text-sm">
+                        <strong>Start:</strong> {formatDate(event?.start)}
+                      </p>
+                    </div>
+
+                    {/* Venue Details */}
+                    {event?.venue && (
                       <div className="mb-6">
                         <h2 className="text-lg sm:text-xl font-semibold mb-2">
                           Venue Information
                         </h2>
                         <p className="text-xs sm:text-sm">
-                          <strong>Venue Name:</strong>{" "}
-                          {event?._embedded?.venues[0]?.name}
+                          <strong>Venue:</strong> {event?.venue.name}
                         </p>
                         <p className="text-xs sm:text-sm">
-                          <strong>Location:</strong>{" "}
-                          {event?._embedded?.venues[0]?.city?.name},{" "}
-                          {event?._embedded?.venues[0]?.country?.name}
-                        </p>
-                        <p className="text-xs sm:text-sm">
-                          <strong>Address:</strong>{" "}
-                          {event?._embedded?.venues[0]?.address?.line1}
+                          <strong>Location:</strong> {event?.venue.location}
                         </p>
                       </div>
                     )}
                   </>
                 )}
               </>
+            ) : (
+              <p className="text-center text-gray-500">
+                No event details available.
+              </p>
             )}
           </div>
+
           {event?.url && (
             <div className="absolute -bottom-1 w-full">
               <Button
