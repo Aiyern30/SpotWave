@@ -17,6 +17,7 @@ import {
 import EventsInfo from "@/components/Events/EventsInfo";
 import { fetchMusicEvents } from "@/utils/Events/fetchPreditHQEvents";
 import PredictHQEventData from "@/lib/predictHqEvent";
+import GoogleMaps from "@/components/Events/GoogleMap";
 
 const EventsPage = () => {
   const [ticketMasterEvents, setTicketMasterEvents] = useState<EventData[]>([]);
@@ -154,11 +155,11 @@ const EventsPage = () => {
                   {/* Replace Avatar with GoogleMaps component */}
                   {event?.geo?.geometry?.coordinates?.length > 0 ? (
                     <div className="w-full h-48">
-                      {/* <GoogleMaps
-                        lat={event.geo.geometry.coordinates[1]}  // Latitude from event data
-                        lon={event.geo.geometry.coordinates[0]}  // Longitude from event data
-                        mapStyle={[]}  // Optional: pass any map style you want
-                      /> */}
+                      <GoogleMaps
+                        lat={event.geo.geometry.coordinates[1]} // Latitude from event data
+                        lon={event.geo.geometry.coordinates[0]} // Longitude from event data
+                        mapStyle={[]} // Optional: pass any map style you want
+                      />
                     </div>
                   ) : (
                     <div>No Map Available</div>
