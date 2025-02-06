@@ -1,4 +1,7 @@
+"use client";
+
 import React from "react";
+import { usePathname } from "next/navigation";
 import InQueueWindow from "@/components/InQueueWindow";
 
 export default function MainLayout({
@@ -6,10 +9,12 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+
   return (
     <>
       {children}
-      <InQueueWindow />
+      {pathname !== "/Events" && <InQueueWindow />}
     </>
   );
 }
