@@ -428,7 +428,7 @@ const ArtistProfilePage = () => {
               </p>
 
               <h2 className="text-3xl font-bold mt-8">Top Tracks</h2>
-              <div className="flex flex-wrap gap-8">
+              <div className="flex flex-wrap gap-2 sm:gap-8">
                 {topTracks.map((track) => (
                   <Card
                     key={track.id}
@@ -504,7 +504,7 @@ const ArtistProfilePage = () => {
               </div>
 
               <h2 className="text-3xl font-bold mt-8">Albums</h2>
-              <div className="flex flex-wrap gap-8">
+              <div className="flex flex-wrap gap-2 sm:gap-8">
                 {albums.map((album) => (
                   <Card
                     key={album.id}
@@ -609,7 +609,7 @@ const ArtistProfilePage = () => {
                 </div>
 
                 <h2 className="text-3xl font-bold mt-8">Top Tracks</h2>
-                <div className="flex flex-wrap gap-8">
+                <div className="flex flex-wrap gap-2 sm:gap-8">
                   {Array(4)
                     .fill(0)
                     .map((_, index) => (
@@ -625,7 +625,7 @@ const ArtistProfilePage = () => {
                 </div>
 
                 <h2 className="text-3xl font-bold mt-8">Albums</h2>
-                <div className="flex flex-wrap gap-8">
+                <div className="flex flex-wrap gap-2 sm:gap-8">
                   {Array(4)
                     .fill(0)
                     .map((_, index) => (

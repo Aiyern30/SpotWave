@@ -85,7 +85,7 @@ const PublicLibrary = () => {
   }, [token, myProfile, fetchPublicPlaylists]);
 
   return (
-    <div className="flex flex-wrap gap-8">
+    <div className="flex flex-wrap gap-2 sm:gap-8">
       {loading
         ? Array.from({ length: 10 }).map((_, index) => (
             <Card

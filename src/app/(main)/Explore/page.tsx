@@ -121,7 +121,7 @@ const Page = () => {
                 <AccordionItem value="item-1">
                   <AccordionTrigger>Your Followed Artists</AccordionTrigger>
                   <AccordionContent className="text-white p-4">
-                    <div className="flex flex-wrap gap-8">
+                    <div className="flex flex-wrap gap-2 sm:gap-8">
                       {memoizedFollowedArtists.map((artist) => (
                         <Card
                           key={artist.id}
@@ -157,7 +157,7 @@ const Page = () => {
                 <AccordionItem value="item-2">
                   <AccordionTrigger>Your Favorite Artists</AccordionTrigger>
                   <AccordionContent className="text-white p-4">
-                    <div className="flex flex-wrap gap-8">
+                    <div className="flex flex-wrap gap-2 sm:gap-8">
                       {memoizedFavoriteArtists.map((artist) => (
                         <Card
                           key={artist.id}
@@ -193,7 +193,7 @@ const Page = () => {
                 <AccordionItem value="item-3">
                   <AccordionTrigger>Your Recently Listening</AccordionTrigger>
                   <AccordionContent className="text-white p-4">
-                    <div className="flex flex-wrap gap-8">
+                    <div className="flex flex-wrap gap-2 sm:gap-8">
                       {memoizedRecentTracks.map((tracks, index) => (
                         <Card
                           key={`${index}`}

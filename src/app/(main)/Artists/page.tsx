@@ -244,7 +244,7 @@ const Page = () => {
             </div>
           )}
           {displayUI === "Grid" && (
-            <div className="flex flex-wrap gap-8">
+            <div className="flex flex-wrap gap-2 sm:gap-8">
               {memoizedArtists.map((artist, index) => {
                 const imageUrl = artist.image[0]["#text"];
 

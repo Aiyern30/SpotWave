@@ -96,7 +96,7 @@ const Page = () => {
       >
         <div className="p-4 space-y-4 ">
           <Header />
-          <div className="flex flex-wrap gap-8">
+          <div className="flex flex-wrap gap-2 sm:gap-8">
             <Card
               className="group w-36 cursor-pointer text-white"
               onClick={handleCreatePlaylist}

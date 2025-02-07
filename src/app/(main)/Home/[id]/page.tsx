@@ -408,7 +408,7 @@ const PlaylistPage = () => {
                       {paginatedItems.length === 0 ? (
                         <NoTracks onExplore={() => router.push("/Explore")} />
                       ) : (
-                        <div className="flex flex-wrap gap-8 container">
+                        <div className="flex flex-wrap gap-2 sm:gap-8 container">
                           {paginatedItems.map((data, index) => (
                             <Card
                               key={index}

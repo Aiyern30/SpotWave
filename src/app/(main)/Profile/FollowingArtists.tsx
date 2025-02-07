@@ -46,7 +46,7 @@ const FollowingArtists = () => {
 
   return (
     <div>
-      <div className="flex flex-wrap gap-8 text-white">
+      <div className="flex flex-wrap gap-2 sm:gap-8 text-white">
         {loading
           ? Array.from({ length: 10 }).map((_, index) => (
               <Card key={index} className="group w-36 cursor-pointer space-y-2">
