@@ -277,7 +277,7 @@ const HeaderContent = () => {
                           }}
                         >
                           <div className="flex items-center space-x-3">
-                            <Avatar className="w-36 h-36 relative p-1">
+                            <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
                               <AvatarImage
                                 src={
                                   result.artist.images[0]?.url ||

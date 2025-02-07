@@ -428,7 +428,7 @@ const ArtistProfilePage = () => {
               </p>
 
               <h2 className="text-3xl font-bold mt-8">Top Tracks</h2>
-              <div className="flex flex-wrap gap-2 sm:gap-8">
+              <div className="grid grid-cols-2 mx-auto sm:flex sm:flex-wrap gap-2 sm:gap-8 sm:gap-8">
                 {topTracks.map((track) => (
                   <Card
                     key={track.id}
@@ -439,7 +439,7 @@ const ArtistProfilePage = () => {
                     }}
                   >
                     <CardHeader>
-                      <Avatar className="w-36 h-36 relative p-1">
+                      <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
                         <AvatarImage
                           src={
                             track.album.images[0]?.url || "/default-artist.png"
@@ -504,7 +504,7 @@ const ArtistProfilePage = () => {
               </div>
 
               <h2 className="text-3xl font-bold mt-8">Albums</h2>
-              <div className="flex flex-wrap gap-2 sm:gap-8">
+              <div className="grid grid-cols-2 mx-auto sm:flex sm:flex-wrap gap-2 sm:gap-8 sm:gap-8">
                 {albums.map((album) => (
                   <Card
                     key={album.id}
@@ -515,7 +515,7 @@ const ArtistProfilePage = () => {
                     }}
                   >
                     <CardHeader>
-                      <Avatar className="w-36 h-36 relative p-1">
+                      <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
                         <AvatarImage
                           src={album.images[0]?.url || "/default-artist.png"}
                           className="rounded-xl object-cover"
@@ -609,7 +609,7 @@ const ArtistProfilePage = () => {
                 </div>
 
                 <h2 className="text-3xl font-bold mt-8">Top Tracks</h2>
-                <div className="flex flex-wrap gap-2 sm:gap-8">
+                <div className="grid grid-cols-2 mx-auto sm:flex sm:flex-wrap gap-2 sm:gap-8 sm:gap-8">
                   {Array(4)
                     .fill(0)
                     .map((_, index) => (
@@ -625,7 +625,7 @@ const ArtistProfilePage = () => {
                 </div>
 
                 <h2 className="text-3xl font-bold mt-8">Albums</h2>
-                <div className="flex flex-wrap gap-2 sm:gap-8">
+                <div className="grid grid-cols-2 mx-auto sm:flex sm:flex-wrap gap-2 sm:gap-8 sm:gap-8">
                   {Array(4)
                     .fill(0)
                     .map((_, index) => (

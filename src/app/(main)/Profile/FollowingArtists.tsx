@@ -46,7 +46,7 @@ const FollowingArtists = () => {
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2 sm:gap-8 text-white">
+      <div className="grid grid-cols-2 mx-auto sm:flex sm:flex-wrap gap-2 sm:gap-8 sm:gap-8 text-white">
         {loading
           ? Array.from({ length: 10 }).map((_, index) => (
               <Card key={index} className="group w-36 cursor-pointer space-y-2">
@@ -74,7 +74,7 @@ const FollowingArtists = () => {
                 }
               >
                 <CardHeader>
-                  <Avatar className="w-36 h-36 relative p-1">
+                  <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
                     <AvatarImage src={artist.image} className="rounded-xl" />
                     <AvatarFallback className="text-black">
                       {artist.name.charAt(0)}

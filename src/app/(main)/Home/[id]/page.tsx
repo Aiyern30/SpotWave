@@ -408,14 +408,14 @@ const PlaylistPage = () => {
                       {paginatedItems.length === 0 ? (
                         <NoTracks onExplore={() => router.push("/Explore")} />
                       ) : (
-                        <div className="flex flex-wrap gap-2 sm:gap-8 container">
+                        <div className="grid grid-cols-2 mx-auto sm:flex sm:flex-wrap gap-2 sm:gap-8 sm:gap-8 container">
                           {paginatedItems.map((data, index) => (
                             <Card
                               key={index}
                               className="group w-36 cursor-pointer text-white relative"
                             >
                               <CardHeader>
-                                <Avatar className="w-36 h-36 relative p-1">
+                                <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
                                   <AvatarImage
                                     src={data.track.album.images[0].url}
                                     className="rounded-xl"

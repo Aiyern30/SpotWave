@@ -167,7 +167,7 @@ const Page = () => {
                       <TableCell>
                         <div className="flex items-center space-x-3">
                           {track.image[0]["#text"] && (
-                            <Avatar className="w-36 h-36 relative p-1">
+                            <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
                               <AvatarImage
                                 src={track.image[0]["#text"]}
                                 alt={track.name}
@@ -207,7 +207,7 @@ const Page = () => {
             </div>
           )}
           {displayUI === "Grid" && (
-            <div className="flex flex-wrap gap-2 sm:gap-8">
+            <div className="grid grid-cols-2 mx-auto sm:flex sm:flex-wrap gap-2 sm:gap-8 sm:gap-8">
               {memoizedTracks.map((track, index) => {
                 const imageUrl = track.image[0]["#text"];
 
@@ -220,7 +220,7 @@ const Page = () => {
                     }
                   >
                     <CardHeader>
-                      <Avatar className="w-36 h-36 relative p-1">
+                      <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
                         <AvatarImage src={imageUrl} alt={track.name} />
                         <AvatarFallback className="text-black">
                           {track.name[0]}
