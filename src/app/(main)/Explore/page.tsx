@@ -138,6 +138,7 @@ const Page = () => {
                             <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
                               <AvatarImage
                                 src={artist.image}
+                                alt="artist"
                                 className="rounded-xl"
                               />
                               <AvatarFallback className="text-black">
@@ -175,6 +176,7 @@ const Page = () => {
                               <AvatarImage
                                 src={artist.image}
                                 className="rounded-xl"
+                                alt="artist"
                               />
                               <AvatarFallback className="text-black">
                                 {artist.name.charAt(0)}
@@ -201,6 +203,7 @@ const Page = () => {
                               <AvatarImage
                                 src={tracks.track.album.images[0].url}
                                 className="rounded-xl"
+                                alt="track"
                               />
                               <AvatarFallback className="text-black">
                                 {tracks.track.name.charAt(0)}

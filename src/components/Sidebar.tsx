@@ -289,8 +289,8 @@ const items = [
   // { title: 'Albums', Icon: BiSolidAlbum, href: '/Albums' },
   { title: "Artists", Icon: RiUserVoiceFill, href: "/Artists" },
   { title: "Songs", Icon: BiSolidMusic, href: "/Songs" },
-  { title: "Profile", Icon: FaUserCircle, href: "/Profile" },
   { title: "Events", Icon: IoTicket, href: "/Events" },
+  { title: "Profile", Icon: FaUserCircle, href: "/Profile" },
 ];
 
 const framerSidebarPanel = {
