@@ -121,7 +121,7 @@ const Page = () => {
                 <AccordionItem value="item-1">
                   <AccordionTrigger>Your Followed Artists</AccordionTrigger>
                   <AccordionContent className="text-white p-4">
-                    <div className="flex flex-wrap gap-8">
+                    <div className="grid grid-cols-2 mx-auto sm:flex sm:flex-wrap gap-2 sm:gap-8">
                       {memoizedFollowedArtists.map((artist) => (
                         <Card
                           key={artist.id}
@@ -135,9 +135,10 @@ const Page = () => {
                           }
                         >
                           <CardHeader>
-                            <Avatar className="w-36 h-36 relative p-1">
+                            <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
                               <AvatarImage
                                 src={artist.image}
+                                alt="artist"
                                 className="rounded-xl"
                               />
                               <AvatarFallback className="text-black">
@@ -157,7 +158,7 @@ const Page = () => {
                 <AccordionItem value="item-2">
                   <AccordionTrigger>Your Favorite Artists</AccordionTrigger>
                   <AccordionContent className="text-white p-4">
-                    <div className="flex flex-wrap gap-8">
+                    <div className="grid grid-cols-2 mx-auto sm:flex sm:flex-wrap gap-2 sm:gap-8">
                       {memoizedFavoriteArtists.map((artist) => (
                         <Card
                           key={artist.id}
@@ -171,10 +172,11 @@ const Page = () => {
                           }
                         >
                           <CardHeader>
-                            <Avatar className="w-36 h-36 relative p-1">
+                            <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
                               <AvatarImage
                                 src={artist.image}
                                 className="rounded-xl"
+                                alt="artist"
                               />
                               <AvatarFallback className="text-black">
                                 {artist.name.charAt(0)}
@@ -193,17 +195,15 @@ const Page = () => {
                 <AccordionItem value="item-3">
                   <AccordionTrigger>Your Recently Listening</AccordionTrigger>
                   <AccordionContent className="text-white p-4">
-                    <div className="flex flex-wrap gap-8">
+                    <div className="grid grid-cols-2 mx-auto sm:flex sm:flex-wrap gap-2 sm:gap-8">
                       {memoizedRecentTracks.map((tracks, index) => (
-                        <Card
-                          key={`${index}`}
-                          className="group w-36 cursor-pointer"
-                        >
+                        <Card key={`${index}`} className="group cursor-pointer">
                           <CardHeader>
-                            <Avatar className="w-36 h-36 relative p-1">
+                            <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
                               <AvatarImage
                                 src={tracks.track.album.images[0].url}
                                 className="rounded-xl"
+                                alt="track"
                               />
                               <AvatarFallback className="text-black">
                                 {tracks.track.name.charAt(0)}

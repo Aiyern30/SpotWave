@@ -317,7 +317,7 @@ const ArtistProfilePage = () => {
                   </Table>
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-8 container">
+                <div className="grid grid-cols-2 mx-auto sm:flex sm:flex-wrap gap-2 sm:gap-8 sm:gap-8 container">
                   {paginatedItems.map((item, index) => (
                     <Card
                       key={index}
