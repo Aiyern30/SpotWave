@@ -24,3 +24,4 @@ export * from "./Textarea";
 export * from "./Tabs";
 export * from "./Toast";
 export * from "./Toaster";
+export * from "./Tooltip";
