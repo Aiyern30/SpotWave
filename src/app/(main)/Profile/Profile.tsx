@@ -86,7 +86,7 @@ const ProfileComponent = () => {
           {myProfile?.display_name || "Your Display Name"}
         </h1>
 
-        <div className="grid grid-cols-2 gap-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
           <div className="info-item flex items-center space-x-2">
             <span className="font-semibold">Followers:</span>
             <span>{myProfile?.followers.total}</span>

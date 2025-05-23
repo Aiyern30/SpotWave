@@ -85,7 +85,7 @@ const PublicLibrary = () => {
   }, [token, myProfile, fetchPublicPlaylists]);
 
   return (
-    <div className="flex flex-wrap gap-8">
+    <div className="grid grid-cols-2 mx-auto sm:flex sm:flex-wrap gap-2 sm:gap-8 sm:gap-8">
       {loading
         ? Array.from({ length: 10 }).map((_, index) => (
             <Card
@@ -93,7 +93,7 @@ const PublicLibrary = () => {
               className="group w-36 cursor-pointer text-white space-y-2"
             >
               <CardHeader>
-                <Avatar className="w-36 h-36 relative p-1">
+                <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
                   <Skeleton className="w-36 h-36 rounded-xl" />
                 </Avatar>
               </CardHeader>
@@ -112,7 +112,7 @@ const PublicLibrary = () => {
               onClick={() => handleClick(data.id, data.name)}
             >
               <CardHeader>
-                <Avatar className="w-36 h-36 relative p-1">
+                <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
                   {data.images?.length > 0 ? (
                     <AvatarImage
                       src={data.images[0].url}

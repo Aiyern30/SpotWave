@@ -218,7 +218,7 @@ const Page = () => {
                         <TableCell>
                           <div className="flex items-center space-x-3">
                             {artist.image[0]["#text"] && (
-                              <Avatar className="w-36 h-36 relative p-1">
+                              <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
                                 <AvatarImage src={imageUrl} alt={artist.name} />
                                 <AvatarFallback className="text-black">
                                   {artist.name[0]}
@@ -244,7 +244,7 @@ const Page = () => {
             </div>
           )}
           {displayUI === "Grid" && (
-            <div className="flex flex-wrap gap-8">
+            <div className="grid grid-cols-2 mx-auto sm:flex sm:flex-wrap gap-2 sm:gap-8 sm:gap-8">
               {memoizedArtists.map((artist, index) => {
                 const imageUrl = artist.image[0]["#text"];
 
@@ -255,7 +255,7 @@ const Page = () => {
                     onClick={() => handleClick(artist.id, artist.name)}
                   >
                     <CardHeader>
-                      <Avatar className="w-36 h-36 relative p-1">
+                      <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
                         <AvatarImage src={imageUrl} alt={artist.name} />
                         <AvatarFallback className="text-black">
                           {artist.name[0]}
