@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { truncateText } from "@/components/truncateText";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import {
@@ -9,12 +8,21 @@ import {
   AvatarFallback,
   AvatarImage,
   Card,
-  CardFooter,
+  CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/";
+import { Button } from "@/components/ui/";
+import { Skeleton } from "@/components/ui/";
 import { useRouter } from "next/navigation";
 import { IoMdAdd } from "react-icons/io";
+import { Play, Music, MoreHorizontal } from "lucide-react";
 import { fetchUserProfile } from "@/utils/fetchProfile";
 import { CreatePlaylist } from "@/utils/createPlaylist";
 import { fetchSpotifyPlaylists } from "@/utils/fetchAllPlaylist";
@@ -31,6 +39,8 @@ const Page = () => {
   const [userID, setUserID] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [playlists, setPlaylists] = useState<PlaylistsProps[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [creating, setCreating] = useState<boolean>(false);
   const router = useRouter();
 
   const handleClick = (id: string, name: string) => {
@@ -45,6 +55,7 @@ const Page = () => {
   }, [token]);
 
   const handleFetchAllProfilePlaylist = useCallback(async () => {
+    setLoading(true);
     const data = await fetchSpotifyPlaylists(token);
     if (data) {
       const formattedPlaylists = data.map((playlist: any) => ({
@@ -56,15 +67,18 @@ const Page = () => {
 
       setPlaylists(formattedPlaylists);
     }
+    setLoading(false);
   }, [token]);
 
   const handleCreatePlaylist = async () => {
+    setCreating(true);
     const playlistResponse = await CreatePlaylist(userID, token);
     if (playlistResponse) {
-      handleFetchAllProfilePlaylist();
+      await handleFetchAllProfilePlaylist();
     } else {
       console.log("Playlist creation failed.");
     }
+    setCreating(false);
   };
 
   useEffect(() => {
@@ -83,8 +97,120 @@ const Page = () => {
 
   const memoizedPlaylists = useMemo(() => playlists, [playlists]);
 
+  const PlaylistCard = ({ playlist }: { playlist: PlaylistsProps }) => (
+    <TooltipProvider>
+      <Card
+        className="group relative w-44 h-64 cursor-pointer bg-zinc-900/50 hover:bg-zinc-800/70 border-zinc-800 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-green-500/10"
+        onClick={() => handleClick(playlist.id, playlist.title)}
+      >
+        <CardHeader className="p-4 pb-2">
+          <div className="relative">
+            <Avatar className="w-36 h-36 rounded-lg shadow-lg">
+              <AvatarImage
+                src={playlist.image || "/placeholder.svg"}
+                className="rounded-lg object-cover"
+                alt={playlist.title}
+              />
+              <AvatarFallback className="rounded-lg bg-zinc-700 text-zinc-300">
+                <Music className="h-8 w-8" />
+              </AvatarFallback>
+            </Avatar>
+
+            {/* Play button overlay */}
+            <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+              <Button
+                size="icon"
+                className="h-12 w-12 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-lg hover:scale-110 transition-all duration-200"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Handle play action
+                }}
+              >
+                <Play className="h-5 w-5 ml-0.5" fill="currentColor" />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-4 pt-2 space-y-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <CardTitle className="text-white text-sm font-semibold line-clamp-1 hover:text-green-400 transition-colors">
+                {playlist.title}
+              </CardTitle>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs">
+              <p>{playlist.title}</p>
+            </TooltipContent>
+          </Tooltip>
+
+          {playlist.description && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <p className="text-zinc-400 text-xs line-clamp-2 leading-relaxed">
+                  {playlist.description}
+                </p>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                <p>{playlist.description}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </CardContent>
+
+        {/* More options button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 text-zinc-400 hover:text-white"
+          onClick={(e) => {
+            e.stopPropagation();
+            // Handle more options
+          }}
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </Card>
+    </TooltipProvider>
+  );
+
+  const CreatePlaylistCard = () => (
+    <Card
+      className="group relative w-44 h-64 cursor-pointer bg-zinc-900/30 hover:bg-zinc-800/50 border-zinc-700 border-dashed transition-all duration-300 hover:scale-105 flex flex-col items-center justify-center"
+      onClick={handleCreatePlaylist}
+    >
+      <div className="flex flex-col items-center justify-center space-y-3">
+        <div className="w-16 h-16 rounded-full bg-zinc-700 group-hover:bg-green-500/20 flex items-center justify-center transition-all duration-300">
+          {creating ? (
+            <div className="animate-spin rounded-full h-6 w-6 border-2 border-green-500 border-t-transparent" />
+          ) : (
+            <IoMdAdd
+              size={24}
+              className="text-green-500 group-hover:scale-110 transition-transform"
+            />
+          )}
+        </div>
+        <p className="text-zinc-400 group-hover:text-white text-sm font-medium transition-colors">
+          {creating ? "Creating..." : "Create Playlist"}
+        </p>
+      </div>
+    </Card>
+  );
+
+  const LoadingSkeleton = () => (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+      {[...Array(12)].map((_, i) => (
+        <div key={i} className="space-y-3">
+          <Skeleton className="w-44 h-44 rounded-lg bg-zinc-800" />
+          <Skeleton className="h-4 w-32 bg-zinc-800" />
+          <Skeleton className="h-3 w-28 bg-zinc-800" />
+        </div>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-black">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen((prev) => !prev)}
@@ -94,42 +220,52 @@ const Page = () => {
           sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
         }`}
       >
-        <div className="p-4 space-y-4 ">
+        <div className="p-6 space-y-6">
           <Header />
-          <div className="grid grid-cols-2 mx-auto sm:flex sm:flex-wrap gap-2 sm:gap-8">
-            <Card
-              className="group w-36 cursor-pointer text-white "
-              onClick={handleCreatePlaylist}
-            >
-              <CardHeader>
-                <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
-                  <AvatarFallback className="rounded-xl text-black">
-                    <IoMdAdd size={36} className="text-green-500" />
-                  </AvatarFallback>
-                </Avatar>
-              </CardHeader>
-            </Card>
 
-            {memoizedPlaylists.map((data) => (
-              <Card
-                key={data.id}
-                className="group w-36 cursor-pointer text-white"
-                onClick={() => handleClick(data.id, data.title)}
-              >
-                <CardHeader>
-                  <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
-                    <AvatarImage src={data.image} className="rounded-xl" />
-                    <AvatarFallback className="text-center text-black">
-                      New Playlists
-                    </AvatarFallback>
-                  </Avatar>
-                </CardHeader>
-                <CardTitle>{data.title}</CardTitle>
-                <CardFooter className="text-sm">
-                  {truncateText(data.description, 100)}
-                </CardFooter>
-              </Card>
-            ))}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-white">Your Playlists</h1>
+              <p className="text-zinc-400 text-sm">
+                {memoizedPlaylists.length} playlist
+                {memoizedPlaylists.length !== 1 ? "s" : ""}
+              </p>
+            </div>
+
+            {loading ? (
+              <LoadingSkeleton />
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                <CreatePlaylistCard />
+                {memoizedPlaylists.map((playlist) => (
+                  <PlaylistCard key={playlist.id} playlist={playlist} />
+                ))}
+              </div>
+            )}
+
+            {!loading && memoizedPlaylists.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                <div className="w-24 h-24 rounded-full bg-zinc-800 flex items-center justify-center">
+                  <Music className="h-12 w-12 text-zinc-600" />
+                </div>
+                <div className="text-center space-y-2">
+                  <h3 className="text-xl font-semibold text-white">
+                    No playlists yet
+                  </h3>
+                  <p className="text-zinc-400 max-w-md">
+                    Create your first playlist to start organizing your favorite
+                    music
+                  </p>
+                </div>
+                <Button
+                  onClick={handleCreatePlaylist}
+                  className="bg-green-500 hover:bg-green-600 text-black font-semibold"
+                  disabled={creating}
+                >
+                  {creating ? "Creating..." : "Create Your First Playlist"}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
