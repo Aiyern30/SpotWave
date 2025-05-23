@@ -1,26 +1,14 @@
+/* eslint-disable react/no-unescaped-entities */
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui";
+import { Music, Play, Headphones, Volume2, Disc } from "lucide-react";
+import { Button } from "@/components/ui/";
 
 // Import Lottie dynamically only on the client-side
 const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
-
-import Spotify from "@/Spotify.json";
-import PeopleGuitar from "@/PeopleGuitar.json";
-import TypingAnimation from "@/components/magicui/Typing-animation";
-
-interface SpotifyPlayerEvent {
-  device_id: string;
-}
 
 export default function Home() {
   const CLIENT_ID = "5bf8d69f8aaf4727a4677c0ad2fef6ec";
@@ -58,13 +46,16 @@ export default function Home() {
           },
         });
 
-        player.addListener("ready", ({ device_id }: SpotifyPlayerEvent) => {
+        player.addListener("ready", ({ device_id }: { device_id: string }) => {
           console.log("Ready with Device ID", device_id);
         });
 
-        player.addListener("not_ready", ({ device_id }: SpotifyPlayerEvent) => {
-          console.log("Device ID has gone offline", device_id);
-        });
+        player.addListener(
+          "not_ready",
+          ({ device_id }: { device_id: string }) => {
+            console.log("Device ID has gone offline", device_id);
+          }
+        );
 
         player.connect();
       }
@@ -151,37 +142,68 @@ export default function Home() {
     )}&response_type=${RESPONSE_TYPE}&scope=${encodeURIComponent(scopes)}`;
   };
 
-  return (
-    <div className="flex justify-center items-center h-screen">
-      {!token ? (
-        <Card className="bg-white min-w-sm max-w-md w-full text-center hover:bg-white p-5 relative">
-          <CardHeader>
-            <CardTitle className="text-3xl">SpotWave</CardTitle>
-            <CardDescription>
-              Log in to access your Spotify account
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Lottie
-              onClick={handleLogin}
-              animationData={Spotify}
-              className="w-24 h-24 cursor-pointer mx-auto hover:bg-black hover:rounded-full"
-            />
-          </CardContent>
-          <Lottie
-            animationData={PeopleGuitar}
-            className="w-24 h-24 absolute -top-20 right-0"
-          />
-        </Card>
-      ) : (
-        <div className="flex flex-col justify-center items-center text-white">
-          <Lottie animationData={Spotify} className="w-96 h-96" />
-          <TypingAnimation
-            className="text-4xl font-bold"
-            text="Redirecting..."
-          />
+  if (token) {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-b from-green-900 to-black text-white">
+        <div className="animate-spin mb-8">
+          <Disc className="h-16 w-16" />
         </div>
-      )}
+        <h2 className="text-3xl font-bold mb-2">Connecting to Spotify</h2>
+        <p className="text-green-400">Redirecting to your music...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-black to-green-900 flex flex-col items-center justify-center p-4">
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 opacity-10">
+          <Music className="h-32 w-32 text-white" />
+        </div>
+        <div className="absolute top-2/3 right-1/4 opacity-10">
+          <Headphones className="h-24 w-24 text-white" />
+        </div>
+        <div className="absolute bottom-1/4 left-1/3 opacity-10">
+          <Volume2 className="h-20 w-20 text-white" />
+        </div>
+      </div>
+
+      <div className="max-w-md w-full backdrop-blur-sm bg-black/30 rounded-xl p-8 shadow-2xl border border-green-500/20 relative z-10">
+        <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-green-500 rounded-full p-4 shadow-lg">
+          <Music className="h-8 w-8 text-black" />
+        </div>
+
+        <div className="text-center mt-6 mb-8">
+          <h1 className="text-4xl font-bold text-white mb-2">SpotWave</h1>
+          <p className="text-green-400">Your music, amplified.</p>
+        </div>
+
+        <div className="space-y-6">
+          <div className="bg-black/40 rounded-lg p-4 text-white/80">
+            <p>
+              Connect with Spotify to access your playlists, discover new music,
+              and enjoy a seamless listening experience.
+            </p>
+          </div>
+
+          <Button
+            onClick={handleLogin}
+            className="w-full py-6 bg-green-500 hover:bg-green-600 text-black font-bold text-lg flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105"
+          >
+            <Play className="h-5 w-5" />
+            Connect with Spotify
+          </Button>
+
+          <div className="text-center text-xs text-white/60">
+            By connecting, you agree to Spotify's Terms of Service and Privacy
+            Policy
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-8 text-white/80 text-sm">
+        © {new Date().getFullYear()} SpotWave. All rights reserved.
+      </div>
     </div>
   );
 }
