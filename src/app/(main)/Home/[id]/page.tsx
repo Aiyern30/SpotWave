@@ -13,7 +13,6 @@ import {
   Skeleton,
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -29,10 +28,13 @@ import {
   Button,
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuItem,
 } from "@/components/ui";
 import {
   Tooltip,
@@ -41,7 +43,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/";
 import { GiDuration } from "react-icons/gi";
-import { Play, MoreHorizontal } from "lucide-react";
+import {
+  Play,
+  MoreHorizontal,
+  Music,
+  FileText,
+  ExternalLink,
+  Heart,
+  Plus,
+} from "lucide-react";
 import type { DisplayUIProps, PlaylistProps, UserProfile } from "@/lib/types";
 import UserHeader from "@/components/Home/UserHeader";
 import { fetchUserProfile } from "@/utils/fetchProfile";
@@ -76,6 +86,8 @@ const PlaylistPage = () => {
   const [inputPage, setInputPage] = useState<string>("");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [lyrics, setLyrics] = useState<string | null>(null);
+  const [loadingLyrics, setLoadingLyrics] = useState<boolean>(false);
+  const [selectedTrack, setSelectedTrack] = useState<any>(null);
 
   const handleArtistClick = (artistId: string, name: string) => {
     router.push(`/Artists/${artistId}?name=${encodeURIComponent(name)}`);
@@ -225,20 +237,25 @@ const PlaylistPage = () => {
   }, [token, myID]);
 
   const fetchLyrics = async (artist: string, title: string) => {
+    setLoadingLyrics(true);
     try {
       const response = await fetch(
-        `https://api.lyrics.ovh/v1/${artist}/${title}`
+        `https://api.lyrics.ovh/v1/${encodeURIComponent(
+          artist
+        )}/${encodeURIComponent(title)}`
       );
       const data = await response.json();
 
       if (data.lyrics && data.lyrics.trim()) {
         setLyrics(data.lyrics);
       } else {
-        setLyrics("Lyrics not found");
+        setLyrics("Lyrics not found for this track.");
       }
     } catch (error) {
       console.error("Error fetching lyrics:", error);
-      setLyrics("Lyrics not found");
+      setLyrics("Unable to fetch lyrics at this time.");
+    } finally {
+      setLoadingLyrics(false);
     }
   };
 
@@ -409,7 +426,7 @@ const PlaylistPage = () => {
   );
 
   return (
-    <div className="flex h-screen bg-black">
+    <div className="flex min-h-screen bg-black">
       {token && (
         <>
           <Sidebar
@@ -457,65 +474,281 @@ const PlaylistPage = () => {
                       {paginatedItems.length === 0 ? (
                         <NoTracks onExplore={() => router.push("/Explore")} />
                       ) : (
-                        <Table>
-                          <TableCaption>
-                            A list of tracks in the playlist.
-                          </TableCaption>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="w-[50px] text-center">
-                                #
-                              </TableHead>
-                              <TableHead>Title</TableHead>
-                              <TableHead className="hidden md:table-cell">
-                                Album
-                              </TableHead>
-                              <TableHead className="hidden md:table-cell ">
-                                Lyrics
-                              </TableHead>
-                              <TableHead className="hidden md:table-cell text-right">
-                                <GiDuration className="float-right" />
-                              </TableHead>
-                              <TableHead className="hidden md:table-cell text-center w-12">
-                                Action
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {paginatedItems.map((item, index) => (
-                              <TableRow key={index} className="relative group">
-                                <TableCell className="relative text-center">
-                                  {index + 1}
-                                </TableCell>
-                                <TableCell>{item.track.name}</TableCell>
-                                <TableCell className="hidden md:table-cell">
-                                  {item.track.album.name}
-                                </TableCell>
-                                <TableCell className="hidden md:table-cell">
-                                  <Sheet>
-                                    <SheetTrigger>
-                                      <Button>View</Button>
-                                    </SheetTrigger>
-                                    <SheetContent>
-                                      <SheetHeader>
-                                        <SheetTitle>Lyrics</SheetTitle>
-                                        <SheetDescription>
-                                          {lyrics}
-                                        </SheetDescription>
-                                      </SheetHeader>
-                                    </SheetContent>
-                                  </Sheet>
-                                </TableCell>
-                                <TableCell className="hidden md:table-cell text-right">
-                                  {formatSongDuration(item.track?.duration_ms)}
-                                </TableCell>
-                                <TableCell>
-                                  <Button>Action</Button>
-                                </TableCell>
+                        <div className="bg-zinc-900/30 rounded-lg border border-zinc-800/50">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
+                                <TableHead className="w-[60px] text-center text-zinc-400 font-medium">
+                                  #
+                                </TableHead>
+                                <TableHead className="text-zinc-400 font-medium">
+                                  Title
+                                </TableHead>
+                                <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
+                                  Album
+                                </TableHead>
+                                <TableHead className="hidden lg:table-cell text-zinc-400 font-medium">
+                                  Artist
+                                </TableHead>
+                                <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
+                                  Lyrics
+                                </TableHead>
+                                <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium">
+                                  <div className="flex items-center justify-end">
+                                    <GiDuration className="mr-2" />
+                                    Duration
+                                  </div>
+                                </TableHead>
+                                <TableHead className="w-[100px] text-center text-zinc-400 font-medium">
+                                  Actions
+                                </TableHead>
                               </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
+                            </TableHeader>
+                            <TableBody>
+                              {paginatedItems.map((item, index) => (
+                                <TableRow
+                                  key={`${item.track.id}-${index}`}
+                                  className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors group"
+                                  onMouseEnter={() => setHoveredIndex(index)}
+                                  onMouseLeave={() => setHoveredIndex(null)}
+                                >
+                                  <TableCell className="text-center">
+                                    <div className="flex items-center justify-center">
+                                      {hoveredIndex === index ? (
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-green-500 hover:text-green-400"
+                                          onClick={() =>
+                                            handlePlay(item.track.preview_url)
+                                          }
+                                        >
+                                          {currentlyPlayingUrl ===
+                                          item.track.preview_url ? (
+                                            <FaPauseCircle className="h-4 w-4" />
+                                          ) : (
+                                            <Play
+                                              className="h-4 w-4"
+                                              fill="currentColor"
+                                            />
+                                          )}
+                                        </Button>
+                                      ) : (
+                                        <span className="text-zinc-400 text-sm">
+                                          {startIndex + index + 1}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </TableCell>
+
+                                  <TableCell>
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
+                                        <Image
+                                          src={
+                                            item.track.album.images[0]?.url ||
+                                            "/default-artist.png"
+                                          }
+                                          width={48}
+                                          height={48}
+                                          className="object-cover"
+                                          alt={item.track.name}
+                                        />
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <div className="text-white font-medium truncate hover:text-green-400 transition-colors cursor-pointer">
+                                          {item.track.name}
+                                        </div>
+                                        <div className="text-zinc-400 text-sm truncate">
+                                          {item.track.artists.map(
+                                            (artist: any, idx: number) => (
+                                              <span
+                                                key={artist.id}
+                                                onClick={() =>
+                                                  handleArtistClick(
+                                                    artist.id,
+                                                    artist.name
+                                                  )
+                                                }
+                                                className="hover:underline hover:text-white cursor-pointer"
+                                              >
+                                                {artist.name}
+                                                {idx <
+                                                  item.track.artists.length -
+                                                    1 && ", "}
+                                              </span>
+                                            )
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </TableCell>
+
+                                  <TableCell className="hidden md:table-cell">
+                                    <div
+                                      className="text-zinc-400 hover:text-white hover:underline cursor-pointer truncate"
+                                      onClick={() =>
+                                        router.push(
+                                          `/Albums/${item.track.album.id}`
+                                        )
+                                      }
+                                    >
+                                      {item.track.album.name}
+                                    </div>
+                                  </TableCell>
+
+                                  <TableCell className="hidden lg:table-cell">
+                                    <div className="text-zinc-400 truncate">
+                                      {item.track.artists.map(
+                                        (artist: any, idx: number) => (
+                                          <span
+                                            key={artist.id}
+                                            onClick={() =>
+                                              handleArtistClick(
+                                                artist.id,
+                                                artist.name
+                                              )
+                                            }
+                                            className="hover:underline hover:text-white cursor-pointer"
+                                          >
+                                            {artist.name}
+                                            {idx <
+                                              item.track.artists.length - 1 &&
+                                              ", "}
+                                          </span>
+                                        )
+                                      )}
+                                    </div>
+                                  </TableCell>
+
+                                  <TableCell className="hidden md:table-cell">
+                                    <Sheet>
+                                      <SheetTrigger asChild>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="bg-zinc-800/50 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-all duration-200"
+                                          onClick={() => {
+                                            setSelectedTrack(item.track);
+                                            fetchLyrics(
+                                              item.track.artists[0].name,
+                                              item.track.name
+                                            );
+                                          }}
+                                        >
+                                          <FileText className="h-4 w-4 mr-2" />
+                                          View Lyrics
+                                        </Button>
+                                      </SheetTrigger>
+                                      <SheetContent className="w-[400px] sm:w-[540px] bg-zinc-900 border-zinc-800">
+                                        <SheetHeader className="space-y-4">
+                                          <div className="flex items-center space-x-3">
+                                            <div className="w-16 h-16 rounded-lg overflow-hidden">
+                                              <Image
+                                                src={
+                                                  selectedTrack?.album.images[0]
+                                                    ?.url ||
+                                                  "/default-artist.png"
+                                                }
+                                                width={64}
+                                                height={64}
+                                                className="object-cover"
+                                                alt={
+                                                  selectedTrack?.name || "Track"
+                                                }
+                                              />
+                                            </div>
+                                            <div>
+                                              <SheetTitle className="text-white text-lg font-semibold">
+                                                {selectedTrack?.name}
+                                              </SheetTitle>
+                                              <p className="text-zinc-400 text-sm">
+                                                by{" "}
+                                                {selectedTrack?.artists
+                                                  .map(
+                                                    (artist: any) => artist.name
+                                                  )
+                                                  .join(", ")}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </SheetHeader>
+                                        <div className="mt-6">
+                                          {loadingLyrics ? (
+                                            <div className="flex items-center justify-center py-8">
+                                              <div className="animate-spin rounded-full h-8 w-8 border-2 border-green-500 border-t-transparent"></div>
+                                              <span className="ml-3 text-zinc-400">
+                                                Loading lyrics...
+                                              </span>
+                                            </div>
+                                          ) : (
+                                            <div className="bg-zinc-800/30 rounded-lg p-4 max-h-[60vh] overflow-y-auto">
+                                              <pre className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap font-sans">
+                                                {lyrics ||
+                                                  "No lyrics available for this track."}
+                                              </pre>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </SheetContent>
+                                    </Sheet>
+                                  </TableCell>
+
+                                  <TableCell className="hidden md:table-cell text-right">
+                                    <span className="text-zinc-400 text-sm">
+                                      {formatSongDuration(
+                                        item.track?.duration_ms
+                                      )}
+                                    </span>
+                                  </TableCell>
+
+                                  <TableCell>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-zinc-400 hover:text-white opacity-0 group-hover:opacity-100 transition-all duration-200"
+                                        >
+                                          <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent
+                                        className="bg-zinc-800 border-zinc-700"
+                                        align="end"
+                                      >
+                                        <DropdownMenuItem className="text-zinc-300 hover:text-white hover:bg-zinc-700">
+                                          <Heart className="h-4 w-4 mr-2" />
+                                          Add to Liked Songs
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="text-zinc-300 hover:text-white hover:bg-zinc-700">
+                                          <Plus className="h-4 w-4 mr-2" />
+                                          Add to Playlist
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="text-zinc-300 hover:text-white hover:bg-zinc-700">
+                                          <ExternalLink className="h-4 w-4 mr-2" />
+                                          Open in Spotify
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                          className="text-red-400 hover:text-red-300 hover:bg-zinc-700"
+                                          onClick={() =>
+                                            handleRemoveSongsFromTrack(
+                                              id,
+                                              item.track.id
+                                            )
+                                          }
+                                        >
+                                          <Music className="h-4 w-4 mr-2" />
+                                          Remove from Playlist
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
                       )}
                     </div>
                   )}
@@ -566,7 +799,7 @@ const PlaylistPage = () => {
                               max={totalPages}
                               value={inputPage}
                               onChange={handleInputChange}
-                              className="w-16 p-1 text-black"
+                              className="w-16 p-1 text-black rounded"
                             />
                           </form>
                         </div>
@@ -593,9 +826,7 @@ const PlaylistPage = () => {
                     <Skeleton className="h-4 w-[200px]" />
                   </div>
                   <Skeleton className="h-[125px] w-full rounded-xl" />
-
                   <Skeleton className="h-[125px] w-full rounded-xl" />
-
                   <Skeleton className="h-[125px] w-full rounded-xl" />
                 </div>
               )}
