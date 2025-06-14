@@ -6,6 +6,7 @@ import AuthProvider from "./AuthProvider";
 import { Toaster } from "@/components/ui/Toaster";
 import InQueueWindow from "@/components/InQueueWindow";
 import { PlayerProvider } from "@/contexts/playerContext";
+import { MusicPlayer } from "@/components/MusicPlayer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -32,6 +33,7 @@ export default function RootLayout({
           <AuthProvider>
             {children}
             <Toaster />
+            <MusicPlayer />
           </AuthProvider>
         </PlayerProvider>
       </body>
