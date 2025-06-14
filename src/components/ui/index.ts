@@ -4,6 +4,7 @@ export * from "./Alert";
 export * from "./Avatar";
 export * from "./Breadcrumb";
 export * from "./Button";
+export * from "./Badge";
 export * from "./Card";
 export * from "./Carousel";
 export * from "./ContextMenu";
