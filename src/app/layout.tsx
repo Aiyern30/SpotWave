@@ -5,6 +5,7 @@ import Script from "next/script";
 import AuthProvider from "./AuthProvider";
 import { Toaster } from "@/components/ui/Toaster";
 import InQueueWindow from "@/components/InQueueWindow";
+import { PlayerProvider } from "@/contexts/playerContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,10 +28,12 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} bg-primary-background`}>
-        <AuthProvider>
-          {children}
-          <Toaster />
-        </AuthProvider>
+        <PlayerProvider>
+          <AuthProvider>
+            {children}
+            <Toaster />
+          </AuthProvider>
+        </PlayerProvider>
       </body>
     </html>
   );
