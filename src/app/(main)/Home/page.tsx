@@ -24,6 +24,7 @@ import { Play, Music, MoreHorizontal } from "lucide-react";
 import { fetchUserProfile } from "@/utils/fetchProfile";
 import { CreatePlaylist } from "@/utils/createPlaylist";
 import { fetchSpotifyPlaylists } from "@/utils/fetchAllPlaylist";
+import { usePlayer } from "@/contexts/playerContext";
 
 type PlaylistsProps = {
   id: string;
@@ -41,6 +42,7 @@ const Page = () => {
   const [creating, setCreating] = useState<boolean>(false);
   const [imageError, setImageError] = useState<Record<string, boolean>>({});
   const router = useRouter();
+  const { playTrack } = usePlayer();
 
   const handleClick = (id: string, name: string) => {
     router.push(`/Home/${id}?name=${encodeURIComponent(name)}`);
@@ -78,6 +80,38 @@ const Page = () => {
       console.log("Playlist creation failed.");
     }
     setCreating(false);
+  };
+
+  const handlePlayPlaylist = async (playlistId: string) => {
+    // Fetch first track from playlist and play it
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=1`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.items.length > 0) {
+          const track = data.items[0].track;
+          playTrack({
+            id: track.id,
+            name: track.name,
+            artists: track.artists,
+            album: track.album,
+            duration_ms: track.duration_ms,
+            uri: track.uri,
+            preview_url: track.preview_url,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error playing playlist:", error);
+    }
   };
 
   useEffect(() => {
@@ -141,7 +175,7 @@ const Page = () => {
                 className="h-14 w-14 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-lg hover:scale-110 transition-all duration-200"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Handle play action
+                  handlePlayPlaylist(playlist.id);
                 }}
               >
                 <Play className="h-6 w-6 ml-0.5" fill="currentColor" />
@@ -228,7 +262,7 @@ const Page = () => {
   );
 
   return (
-    <div className="flex min-h-screen bg-black">
+    <div className="flex h-screen bg-black">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen((prev) => !prev)}
@@ -253,7 +287,7 @@ const Page = () => {
             {loading ? (
               <LoadingSkeleton />
             ) : (
-              <div className="grid gap-5 px-1 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 px-1">
                 <CreatePlaylistCard />
                 {memoizedPlaylists.map((playlist) => (
                   <PlaylistCard key={playlist.id} playlist={playlist} />
