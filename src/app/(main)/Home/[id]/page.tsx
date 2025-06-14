@@ -1,23 +1,15 @@
 "use client";
 import { LuLayoutGrid } from "react-icons/lu";
 import { PiTable } from "react-icons/pi";
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import type React from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Image from "next/image";
-import {
-  FaPauseCircle,
-  FaPlayCircle,
-  FaRegCopy,
-  FaRegShareSquare,
-} from "react-icons/fa";
-import { MdDeleteOutline } from "react-icons/md";
+import { FaPauseCircle } from "react-icons/fa";
 
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
   Skeleton,
   Table,
   TableBody,
@@ -31,43 +23,26 @@ import {
   PaginationPrevious,
   PaginationNext,
   Card,
-  CardFooter,
   CardHeader,
   CardTitle,
   CardContent,
   Button,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuPortal,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from "@/components/ui";
-import { GiDuration } from "react-icons/gi";
-import { PlusCircle, UserPlus } from "lucide-react";
-import { IoMdMore } from "react-icons/io";
 import {
-  DisplayUIProps,
-  PlaylistProps,
-  Track,
-  User,
-  UserProfile,
-} from "@/lib/types";
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/";
+import { GiDuration } from "react-icons/gi";
+import { Play, MoreHorizontal } from "lucide-react";
+import type { DisplayUIProps, PlaylistProps, UserProfile } from "@/lib/types";
 import UserHeader from "@/components/Home/UserHeader";
 import { fetchUserProfile } from "@/utils/fetchProfile";
 import { AddSongsToTrack } from "@/utils/Tracks/AddSongsToTrack";
@@ -92,6 +67,7 @@ const PlaylistPage = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [token, setToken] = useState<string>("");
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+  const [imageError, setImageError] = useState<Record<string, boolean>>({});
 
   const router = useRouter();
 
@@ -99,7 +75,7 @@ const PlaylistPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [inputPage, setInputPage] = useState<string>("");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [lyrics, setLyrics] = useState<String | null>(null);
+  const [lyrics, setLyrics] = useState<string | null>(null);
 
   const handleArtistClick = (artistId: string, name: string) => {
     router.push(`/Artists/${artistId}?name=${encodeURIComponent(name)}`);
@@ -144,7 +120,7 @@ const PlaylistPage = () => {
 
   const handleInputSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const page = parseInt(inputPage, 10);
+    const page = Number.parseInt(inputPage, 10);
     if (page >= 1 && page <= totalPages) {
       handlePageChange(page);
     } else {
@@ -159,6 +135,13 @@ const PlaylistPage = () => {
 
   const handlePlay = (url: string) => {
     togglePreview(url, setCurrentlyPlayingUrl);
+  };
+
+  const handleImageError = (trackId: string) => {
+    setImageError((prev) => ({
+      ...prev,
+      [trackId]: true,
+    }));
   };
 
   useEffect(() => {
@@ -295,8 +278,138 @@ const PlaylistPage = () => {
     }
   }, [token, id, handleFetchPlaylistDetails]);
 
+  const TrackCard = ({ track, index }: { track: any; index: number }) => (
+    <TooltipProvider>
+      <Card className="relative w-[200px] h-[320px] cursor-pointer bg-zinc-900/50 hover:bg-zinc-800/70 transition-all duration-300 hover:scale-105 group">
+        <CardHeader className="p-0 pb-0">
+          <div className="relative w-full px-4 pt-4 pb-2">
+            <div className="w-[170px] h-[170px] rounded-lg shadow-lg overflow-hidden">
+              {imageError[track.track.id] ||
+              !track.track.album.images[0]?.url ? (
+                <Image
+                  src="/default-artist.png"
+                  width={170}
+                  height={170}
+                  className="object-cover rounded-lg"
+                  alt={track.track.name}
+                  priority
+                />
+              ) : (
+                <Image
+                  src={
+                    track.track.album.images[0]?.url || "/default-artist.png"
+                  }
+                  width={170}
+                  height={170}
+                  className="object-cover rounded-lg"
+                  alt={track.track.name}
+                  onError={() => handleImageError(track.track.id)}
+                  priority
+                />
+              )}
+            </div>
+
+            {/* Play button overlay */}
+            <div className="absolute bottom-3 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+              <Button
+                size="icon"
+                className="h-14 w-14 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-lg hover:scale-110 transition-all duration-200"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePlay(track.track.preview_url);
+                }}
+              >
+                {currentlyPlayingUrl === track.track.preview_url ? (
+                  <FaPauseCircle className="h-6 w-6" />
+                ) : (
+                  <Play className="h-6 w-6 ml-0.5" fill="currentColor" />
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-4 pt-2 space-y-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <CardTitle className="text-white text-base font-semibold line-clamp-1 hover:text-green-400 transition-colors">
+                {track.track.name}
+              </CardTitle>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-xs">
+              <p>{track.track.name}</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <div className="space-y-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="text-zinc-400 text-sm line-clamp-1 hover:text-zinc-300 transition-colors cursor-pointer">
+                  {track.track.artists.map((artist: any, idx: number) => (
+                    <span
+                      key={artist.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleArtistClick(artist.id, artist.name);
+                      }}
+                      className="hover:underline"
+                    >
+                      {artist.name}
+                      {idx < track.track.artists.length - 1 && ", "}
+                    </span>
+                  ))}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                <p>
+                  {track.track.artists
+                    .map((artist: any) => artist.name)
+                    .join(", ")}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className="text-zinc-500 text-xs line-clamp-1 hover:text-zinc-400 transition-colors cursor-pointer hover:underline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/Albums/${track.track.album.id}`);
+                  }}
+                >
+                  {track.track.album.name}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                <p>{track.track.album.name}</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <div className="text-zinc-500 text-xs">
+              {formatSongDuration(track.track?.duration_ms)}
+            </div>
+          </div>
+        </CardContent>
+
+        {/* More options button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 text-zinc-400 hover:text-white"
+          onClick={(e) => {
+            e.stopPropagation();
+            // Handle more options
+          }}
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </Card>
+    </TooltipProvider>
+  );
+
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-black">
       {token && (
         <>
           <Sidebar
@@ -323,15 +436,19 @@ const PlaylistPage = () => {
                     <PiTable
                       size={35}
                       onClick={() => setDisplayUI("Table")}
-                      className={`${
-                        displayUI === "Table" ? "text-white" : "text-[#707070]"
+                      className={`cursor-pointer transition-colors ${
+                        displayUI === "Table"
+                          ? "text-white"
+                          : "text-[#707070] hover:text-white"
                       }`}
                     />
                     <LuLayoutGrid
                       size={30}
                       onClick={() => setDisplayUI("Grid")}
-                      className={`${
-                        displayUI === "Grid" ? "text-white" : "text-[#707070]"
+                      className={`cursor-pointer transition-colors ${
+                        displayUI === "Grid"
+                          ? "text-white"
+                          : "text-[#707070] hover:text-white"
                       }`}
                     />
                   </div>
@@ -408,67 +525,13 @@ const PlaylistPage = () => {
                       {paginatedItems.length === 0 ? (
                         <NoTracks onExplore={() => router.push("/Explore")} />
                       ) : (
-                        <div className="grid grid-cols-2 mx-auto sm:flex sm:flex-wrap gap-2 sm:gap-8 sm:gap-8 container">
-                          {paginatedItems.map((data, index) => (
-                            <Card
-                              key={index}
-                              className="group w-36 cursor-pointer text-white relative"
-                            >
-                              <CardHeader>
-                                <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
-                                  <AvatarImage
-                                    src={data.track.album.images[0].url}
-                                    className="rounded-xl"
-                                  />
-                                  <AvatarFallback className="text-black">
-                                    {data.track.name}
-                                  </AvatarFallback>
-
-                                  <div
-                                    onClick={() =>
-                                      handlePlay(data.track.preview_url)
-                                    }
-                                    className="absolute bottom-2 right-2 flex items-center justify-center border rounded-full w-8 h-8 bg-play opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                  >
-                                    {currentlyPlayingUrl ===
-                                    data.track.preview_url ? (
-                                      <FaPauseCircle size={32} color="white" />
-                                    ) : (
-                                      <FaPlayCircle size={32} color="white" />
-                                    )}
-                                  </div>
-                                </Avatar>
-                              </CardHeader>
-                              <CardTitle>{data.track.name}</CardTitle>
-                              <CardContent className="text-sm flex space-x-3">
-                                {data.track.album.artists.map((artist) => (
-                                  <div
-                                    key={artist.id}
-                                    onClick={() =>
-                                      router.push(`/Artists/${artist.id}`)
-                                    }
-                                    className="cursor-pointer hover:underline"
-                                  >
-                                    {artist.name}
-                                  </div>
-                                ))}
-                              </CardContent>
-                              <CardFooter className="text-sm space-x-3">
-                                <div
-                                  className="hover:underline"
-                                  onClick={() =>
-                                    router.push(
-                                      `/Albums/${data.track.album.id}`
-                                    )
-                                  }
-                                >
-                                  {data.track.album.name}
-                                </div>
-                              </CardFooter>
-                              <CardFooter className="text-sm flex space-x-3">
-                                {formatSongDuration(data.track?.duration_ms)}
-                              </CardFooter>
-                            </Card>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 px-1">
+                          {paginatedItems.map((track, index) => (
+                            <TrackCard
+                              key={`${track.track.id}-${index}`}
+                              track={track}
+                              index={index}
+                            />
                           ))}
                         </div>
                       )}
