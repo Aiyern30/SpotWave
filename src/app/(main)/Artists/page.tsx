@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import {
@@ -11,6 +11,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  CardContent,
   Table,
   TableBody,
   TableCell,
@@ -18,6 +19,7 @@ import {
   TableHeader,
   TableHead,
   TableRow,
+  Button,
 } from "@/components/ui";
 import {
   Select,
@@ -26,10 +28,17 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/";
 import { useRouter } from "next/navigation";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
-import {
+import { Play, MoreHorizontal } from "lucide-react";
+import type {
   ArtistsResponseLASTFM,
   DisplayUIProps,
   GlobalArtistPropsLASTFM,
@@ -146,11 +155,11 @@ const Page = () => {
   };
 
   const handleSelectChange = (value: string) => {
-    setNumArtists(parseInt(value));
+    setNumArtists(Number.parseInt(value));
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex min-h-screen bg-black">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen((prev) => !prev)}
@@ -163,110 +172,206 @@ const Page = () => {
         <div className="p-4 space-y-4">
           <Header />
           <div className="flex items-center justify-between">
-            <Select onValueChange={handleSelectChange}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Select number of artists" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">Top 10</SelectItem>
-                <SelectItem value="20">Top 20</SelectItem>
-                <SelectItem value="30">Top 30</SelectItem>
-                <SelectItem value="40">Top 40</SelectItem>
-                <SelectItem value="50">Top 50</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-4">
+              <Select onValueChange={handleSelectChange}>
+                <SelectTrigger className="w-48 bg-zinc-800/50 border-zinc-700 text-zinc-300">
+                  <SelectValue placeholder="Select number of artists" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  <SelectItem value="10">Top 10</SelectItem>
+                  <SelectItem value="20">Top 20</SelectItem>
+                  <SelectItem value="30">Top 30</SelectItem>
+                  <SelectItem value="40">Top 40</SelectItem>
+                  <SelectItem value="50">Top 50</SelectItem>
+                </SelectContent>
+              </Select>
+              <h1 className="text-2xl font-bold text-white">Top Artists</h1>
+            </div>
+            <div className="flex items-center space-x-3">
               <PiTable
                 size={35}
                 onClick={() => setDisplayUI("Table")}
-                className={`${
-                  displayUI === "Table" ? "text-white" : "text-[#707070]"
+                className={`cursor-pointer transition-colors ${
+                  displayUI === "Table"
+                    ? "text-white"
+                    : "text-[#707070] hover:text-white"
                 }`}
               />
               <LuLayoutGrid
                 size={30}
                 onClick={() => setDisplayUI("Grid")}
-                className={`${
-                  displayUI === "Grid" ? "text-white" : "text-[#707070]"
+                className={`cursor-pointer transition-colors ${
+                  displayUI === "Grid"
+                    ? "text-white"
+                    : "text-[#707070] hover:text-white"
                 }`}
               />
             </div>
           </div>
-          {displayUI === "Table" && (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableCaption>A list of top artists.</TableCaption>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>#</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead className="hidden md:table-cell">
-                      Playcount
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {memoizedArtists.map((artist, index) => {
-                    const imageUrl = artist.image[0]["#text"];
 
-                    return (
-                      <TableRow
-                        key={artist.id || index}
-                        onClick={() => handleClick(artist.id, artist.name)}
-                      >
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-3">
-                            {artist.image[0]["#text"] && (
-                              <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
-                                <AvatarImage src={imageUrl} alt={artist.name} />
-                                <AvatarFallback className="text-black">
-                                  {artist.name[0]}
-                                </AvatarFallback>
-                              </Avatar>
-                            )}
-                            <div>
-                              <div className="text-xl">{artist.name}</div>
+          {displayUI === "Table" && (
+            <div className="overflow-x-auto container">
+              <div className="bg-zinc-900/30 rounded-lg border border-zinc-800/50">
+                <Table>
+                  <TableCaption className="text-zinc-400">
+                    A list of top artists from Last.fm
+                  </TableCaption>
+                  <TableHeader>
+                    <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
+                      <TableHead className="w-[60px] text-center text-zinc-400 font-medium">
+                        #
+                      </TableHead>
+                      <TableHead className="text-zinc-400 font-medium">
+                        Artist
+                      </TableHead>
+                      <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium">
+                        Playcount
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {memoizedArtists.map((artist, index) => {
+                      const imageUrl = artist.image[0]["#text"];
+
+                      return (
+                        <TableRow
+                          key={artist.id || index}
+                          onClick={() => handleClick(artist.id, artist.name)}
+                          className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
+                        >
+                          <TableCell className="text-center">
+                            <span className="text-zinc-400 text-sm">
+                              {index + 1}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-3">
+                              <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                                <Avatar className="w-12 h-12">
+                                  <AvatarImage
+                                    src={imageUrl || "/placeholder.svg"}
+                                    alt={artist.name}
+                                    className="object-cover"
+                                  />
+                                  <AvatarFallback className="bg-zinc-700 text-white">
+                                    {artist.name[0]}
+                                  </AvatarFallback>
+                                </Avatar>
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-white font-medium truncate hover:text-green-400 transition-colors">
+                                  {artist.name}
+                                </div>
+                                <div className="text-zinc-400 text-sm">
+                                  Artist
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <NumberTicker
-                            value={artist.playcount}
-                            className="text-white"
-                          />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-right">
+                            <NumberTicker
+                              value={artist.playcount}
+                              className="text-zinc-400 text-sm"
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
+
           {displayUI === "Grid" && (
-            <div className="grid grid-cols-2 mx-auto sm:flex sm:flex-wrap gap-2 sm:gap-8 sm:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 px-1">
               {memoizedArtists.map((artist, index) => {
                 const imageUrl = artist.image[0]["#text"];
 
                 return (
-                  <Card
-                    key={artist.id || index}
-                    className="group w-36 cursor-pointer text-white"
-                    onClick={() => handleClick(artist.id, artist.name)}
-                  >
-                    <CardHeader>
-                      <Avatar className="w-32 h-32 sm:w-36 sm:h-36 relative p-1">
-                        <AvatarImage src={imageUrl} alt={artist.name} />
-                        <AvatarFallback className="text-black">
-                          {artist.name[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <CardTitle>{artist.name}</CardTitle>
-                    </CardHeader>
-                    <CardFooter className="text-sm">
-                      {artist.playcount}
-                    </CardFooter>
-                  </Card>
+                  <TooltipProvider key={artist.id || index}>
+                    <Card
+                      className="relative w-[200px] h-[300px] cursor-pointer bg-zinc-900/50 hover:bg-zinc-800/70 transition-all duration-300 hover:scale-105 group"
+                      onClick={() => handleClick(artist.id, artist.name)}
+                    >
+                      <CardHeader className="p-0 pb-0">
+                        <div className="relative w-full px-4 pt-4 pb-2">
+                          <Avatar className="w-[170px] h-[170px] rounded-full shadow-lg">
+                            <AvatarImage
+                              src={imageUrl || "/placeholder.svg"}
+                              alt={artist.name}
+                              className="rounded-full object-cover"
+                            />
+                            <AvatarFallback className="bg-zinc-700 text-white text-2xl rounded-full">
+                              {artist.name[0]}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          {/* Play button overlay */}
+                          <div className="absolute bottom-3 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                            <Button
+                              size="icon"
+                              className="h-14 w-14 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-lg hover:scale-110 transition-all duration-200"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Handle play artist's top tracks
+                              }}
+                            >
+                              <Play
+                                className="h-6 w-6 ml-0.5"
+                                fill="currentColor"
+                              />
+                            </Button>
+                          </div>
+
+                          {/* Rank badge */}
+                          <div className="absolute top-2 left-2 bg-black/70 text-white text-xs font-bold px-2 py-1 rounded-full">
+                            #{index + 1}
+                          </div>
+                        </div>
+                      </CardHeader>
+
+                      <CardContent className="p-4 pt-2 space-y-2">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <CardTitle className="text-white text-base font-semibold line-clamp-1 hover:text-green-400 transition-colors">
+                              {artist.name}
+                            </CardTitle>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p>{artist.name}</p>
+                          </TooltipContent>
+                        </Tooltip>
+
+                        <div className="text-zinc-400 text-sm">
+                          <NumberTicker
+                            value={artist.playcount}
+                            className="text-zinc-400"
+                          />{" "}
+                          plays
+                        </div>
+                      </CardContent>
+
+                      <CardFooter className="p-4 pt-0">
+                        <div className="text-zinc-500 text-xs">
+                          {artist.listeners.toLocaleString()} listeners
+                        </div>
+                      </CardFooter>
+
+                      {/* More options button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 text-zinc-400 hover:text-white"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Handle more options
+                        }}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </Card>
+                  </TooltipProvider>
                 );
               })}
             </div>
