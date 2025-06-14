@@ -15,7 +15,7 @@ import {
   Repeat,
   MoreHorizontal,
 } from "lucide-react";
-import { usePlayer } from "@/contexts/playerContext";
+import { usePlayer } from "@/contexts/PlayerContext";
 
 const formatTime = (ms: number) => {
   const seconds = Math.floor(ms / 1000);

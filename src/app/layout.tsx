@@ -5,7 +5,7 @@ import Script from "next/script";
 import AuthProvider from "./AuthProvider";
 import { Toaster } from "@/components/ui/Toaster";
 import InQueueWindow from "@/components/InQueueWindow";
-import { PlayerProvider } from "@/contexts/playerContext";
+import { PlayerProvider } from "@/contexts/PlayerContext";
 import { MusicPlayer } from "@/components/MusicPlayer";
 
 const inter = Inter({ subsets: ["latin"] });
