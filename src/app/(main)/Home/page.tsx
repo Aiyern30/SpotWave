@@ -24,7 +24,7 @@ import { Play, Music, MoreHorizontal } from "lucide-react";
 import { fetchUserProfile } from "@/utils/fetchProfile";
 import { CreatePlaylist } from "@/utils/createPlaylist";
 import { fetchSpotifyPlaylists } from "@/utils/fetchAllPlaylist";
-import { usePlayer } from "@/contexts/playerContext";
+import { usePlayer } from "@/contexts/PlayerContext";
 
 type PlaylistsProps = {
   id: string;
@@ -42,7 +42,7 @@ const Page = () => {
   const [creating, setCreating] = useState<boolean>(false);
   const [imageError, setImageError] = useState<Record<string, boolean>>({});
   const router = useRouter();
-  const { playTrack } = usePlayer();
+  const { playPlaylist } = usePlayer();
 
   const handleClick = (id: string, name: string) => {
     router.push(`/Home/${id}?name=${encodeURIComponent(name)}`);
@@ -83,32 +83,10 @@ const Page = () => {
   };
 
   const handlePlayPlaylist = async (playlistId: string) => {
-    // Fetch first track from playlist and play it
     try {
-      const response = await fetch(
-        `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=1`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.items.length > 0) {
-          const track = data.items[0].track;
-          playTrack({
-            id: track.id,
-            name: track.name,
-            artists: track.artists,
-            album: track.album,
-            duration_ms: track.duration_ms,
-            uri: track.uri,
-            preview_url: track.preview_url,
-          });
-        }
-      }
+      // Play the entire playlist using Spotify URI
+      const playlistUri = `spotify:playlist:${playlistId}`;
+      playPlaylist(playlistUri);
     } catch (error) {
       console.error("Error playing playlist:", error);
     }
