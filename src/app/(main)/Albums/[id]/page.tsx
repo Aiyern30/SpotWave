@@ -35,7 +35,7 @@ import { Album } from "@/lib/types";
 
 const itemsPerPage = 10;
 
-const ArtistProfilePage = () => {
+const AlbumsIDPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -458,4 +458,4 @@ const ArtistProfilePage = () => {
   );
 };
 
-export default ArtistProfilePage;
+export default AlbumsIDPage;
