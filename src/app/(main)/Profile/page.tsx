@@ -1,7 +1,7 @@
 "use client";
 
 import Header from "@/components/Header";
-import React, { useState } from "react";
+import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import ProfileComponent from "./Profile";
 import PublicLibrary from "./PublicLibrary";
@@ -12,7 +12,7 @@ const Profile = () => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
   return (
-    <div className="flex h-screen">
+    <div className="flex min-h-screen bg-black">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen((prev) => !prev)}
@@ -22,21 +22,31 @@ const Profile = () => {
           sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
         }`}
       >
-        <div className="p-4 space-y-4 ">
+        <div className="p-4 space-y-6">
           <Header />
-
           <ProfileComponent />
-          <Tabs defaultValue="My Library" className="w-full ">
-            <TabsList className="my-5">
-              <TabsTrigger value="My Library">My Library</TabsTrigger>
-              <TabsTrigger value="Following Artists">
+
+          <Tabs defaultValue="My Library" className="w-full">
+            <TabsList className="bg-zinc-900/50 border border-zinc-800/50 p-1 rounded-lg">
+              <TabsTrigger
+                value="My Library"
+                className="data-[state=active]:bg-green-500 data-[state=active]:text-black text-zinc-400 hover:text-white transition-colors px-6 py-2 rounded-md font-medium"
+              >
+                My Library
+              </TabsTrigger>
+              <TabsTrigger
+                value="Following Artists"
+                className="data-[state=active]:bg-green-500 data-[state=active]:text-black text-zinc-400 hover:text-white transition-colors px-6 py-2 rounded-md font-medium"
+              >
                 Following Artists
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="My Library">
+
+            <TabsContent value="My Library" className="mt-6">
               <PublicLibrary />
             </TabsContent>
-            <TabsContent value="Following Artists">
+
+            <TabsContent value="Following Artists" className="mt-6">
               <FollowingArtists />
             </TabsContent>
           </Tabs>
