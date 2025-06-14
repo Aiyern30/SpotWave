@@ -78,6 +78,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [player, setPlayer] = useState<any>(null);
   const [token, setToken] = useState<string>("");
   const playerRef = useRef<any>(null);
+  const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize Spotify Web Playback SDK
   useEffect(() => {
@@ -97,7 +98,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           getOAuthToken: (cb: (token: string) => void) => {
             cb(token);
           },
-          volume: volume,
+          volume: 0.5, // Use fixed initial volume instead of state volume
         });
 
         // Ready
@@ -199,6 +200,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
     // Cleanup function
     return () => {
+      if (volumeTimeoutRef.current) {
+        clearTimeout(volumeTimeoutRef.current);
+      }
       if (
         playerRef.current &&
         typeof playerRef.current.disconnect === "function"
@@ -206,7 +210,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         playerRef.current.disconnect();
       }
     };
-  }, [token, volume]);
+  }, [token]); // Removed volume from dependency array since we use fixed initial volume
 
   // Position tracking
   useEffect(() => {
@@ -214,11 +218,16 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const interval = setInterval(() => {
       if (player && typeof player.getCurrentState === "function") {
-        player.getCurrentState().then((state: any) => {
-          if (state) {
-            setPosition(state.position);
-          }
-        });
+        player
+          .getCurrentState()
+          .then((state: any) => {
+            if (state) {
+              setPosition(state.position);
+            }
+          })
+          .catch((error: any) => {
+            console.error("Error getting current state:", error);
+          });
       }
     }, 1000);
 
@@ -343,14 +352,26 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const setVolume = useCallback(
     (newVolume: number) => {
-      setVolumeState(newVolume);
-      if (player && typeof player.setVolume === "function") {
-        player.setVolume(newVolume).catch((error: any) => {
-          console.error("Error setting volume:", error);
-        });
+      // Clamp volume between 0 and 1
+      const clampedVolume = Math.max(0, Math.min(1, newVolume));
+      setVolumeState(clampedVolume);
+
+      // Debounce volume changes to prevent too many API calls
+      if (volumeTimeoutRef.current) {
+        clearTimeout(volumeTimeoutRef.current);
       }
+
+      volumeTimeoutRef.current = setTimeout(() => {
+        if (player && typeof player.setVolume === "function" && isReady) {
+          player.setVolume(clampedVolume).catch((error: any) => {
+            console.error("Error setting volume:", error);
+            // If setting volume fails, revert to previous volume
+            setVolumeState((prevVolume) => prevVolume);
+          });
+        }
+      }, 100); // 100ms debounce
     },
-    [player]
+    [player, isReady]
   );
 
   const addToQueue = useCallback((track: Track) => {

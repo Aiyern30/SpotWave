@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
+import { usePlayer } from "@/contexts/PlayerContext";
 import { Button, Slider } from "@/components/ui";
 import {
   Play,
@@ -15,7 +16,6 @@ import {
   Repeat,
   MoreHorizontal,
 } from "lucide-react";
-import { usePlayer } from "@/contexts/PlayerContext";
 
 const formatTime = (ms: number) => {
   const seconds = Math.floor(ms / 1000);
@@ -32,7 +32,6 @@ export const MusicPlayer = () => {
     position,
     duration,
     volume,
-    playTrack,
     pauseTrack,
     resumeTrack,
     nextTrack,
@@ -45,42 +44,70 @@ export const MusicPlayer = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [previousVolume, setPreviousVolume] = useState(volume);
   const [isVisible, setIsVisible] = useState(false);
+  const [localVolume, setLocalVolume] = useState(volume);
 
+  // Show player when there's a current track
   useEffect(() => {
     setIsVisible(!!currentTrack);
   }, [currentTrack]);
 
-  const handlePlayPause = () => {
+  // Sync local volume with context volume
+  useEffect(() => {
+    setLocalVolume(volume);
+  }, [volume]);
+
+  const handlePlayPause = useCallback(() => {
     if (isPlaying) {
       pauseTrack();
     } else {
       resumeTrack();
     }
-  };
+  }, [isPlaying, pauseTrack, resumeTrack]);
 
-  const handleVolumeChange = (newVolume: number[]) => {
-    const vol = newVolume[0];
-    setVolume(vol);
-    if (vol > 0 && isMuted) {
-      setIsMuted(false);
-    }
-  };
+  const handleVolumeChange = useCallback(
+    (newVolume: number[]) => {
+      const vol = newVolume[0];
+      setLocalVolume(vol);
+      setVolume(vol);
 
-  const handleMute = () => {
+      if (vol > 0 && isMuted) {
+        setIsMuted(false);
+      } else if (vol === 0 && !isMuted) {
+        setIsMuted(true);
+      }
+    },
+    [setVolume, isMuted]
+  );
+
+  const handleMute = useCallback(() => {
     if (isMuted) {
-      setVolume(previousVolume);
+      const volumeToRestore = previousVolume > 0 ? previousVolume : 0.5;
+      setVolume(volumeToRestore);
+      setLocalVolume(volumeToRestore);
       setIsMuted(false);
     } else {
-      setPreviousVolume(volume);
+      setPreviousVolume(localVolume);
       setVolume(0);
+      setLocalVolume(0);
       setIsMuted(true);
     }
-  };
+  }, [isMuted, previousVolume, localVolume, setVolume]);
 
-  const handleSeek = (newPosition: number[]) => {
-    const pos = newPosition[0];
-    seekTo(pos);
-  };
+  const handleSeek = useCallback(
+    (newPosition: number[]) => {
+      const pos = newPosition[0];
+      seekTo(pos);
+    },
+    [seekTo]
+  );
+
+  const handleNextTrack = useCallback(() => {
+    nextTrack();
+  }, [nextTrack]);
+
+  const handlePreviousTrack = useCallback(() => {
+    previousTrack();
+  }, [previousTrack]);
 
   if (!isVisible || !currentTrack) {
     return null;
@@ -130,8 +157,9 @@ export const MusicPlayer = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={previousTrack}
+              onClick={handlePreviousTrack}
               className="text-zinc-400 hover:text-white"
+              disabled={!isReady}
             >
               <SkipBack className="h-5 w-5" />
             </Button>
@@ -150,8 +178,9 @@ export const MusicPlayer = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={nextTrack}
+              onClick={handleNextTrack}
               className="text-zinc-400 hover:text-white"
+              disabled={!isReady}
             >
               <SkipForward className="h-5 w-5" />
             </Button>
@@ -175,6 +204,7 @@ export const MusicPlayer = () => {
               step={1000}
               onValueChange={handleSeek}
               className="flex-1"
+              disabled={!isReady || duration === 0}
             />
             <span className="text-xs text-zinc-400 w-10">
               {formatTime(duration)}
@@ -197,19 +227,21 @@ export const MusicPlayer = () => {
               size="icon"
               onClick={handleMute}
               className="text-zinc-400 hover:text-white"
+              disabled={!isReady}
             >
-              {isMuted || volume === 0 ? (
+              {isMuted || localVolume === 0 ? (
                 <VolumeX className="h-4 w-4" />
               ) : (
                 <Volume2 className="h-4 w-4" />
               )}
             </Button>
             <Slider
-              value={[isMuted ? 0 : volume]}
+              value={[localVolume]}
               max={1}
               step={0.01}
               onValueChange={handleVolumeChange}
               className="w-24"
+              disabled={!isReady}
             />
           </div>
         </div>
