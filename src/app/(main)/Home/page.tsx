@@ -24,7 +24,6 @@ import { Play, Music, MoreHorizontal } from "lucide-react";
 import { fetchUserProfile } from "@/utils/fetchProfile";
 import { CreatePlaylist } from "@/utils/createPlaylist";
 import { fetchSpotifyPlaylists } from "@/utils/fetchAllPlaylist";
-import { useWideScreen } from "@/hooks/use-widescreen";
 
 type PlaylistsProps = {
   id: string;
@@ -34,8 +33,6 @@ type PlaylistsProps = {
 };
 
 const Page = () => {
-  const isWideScreen = useWideScreen();
-
   const [token, setToken] = useState<string>("");
   const [userID, setUserID] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
@@ -256,13 +253,7 @@ const Page = () => {
             {loading ? (
               <LoadingSkeleton />
             ) : (
-              <div
-                className={`grid gap-5 px-1 ${
-                  isWideScreen
-                    ? "grid-cols-8"
-                    : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
-                }`}
-              >
+              <div className="grid gap-5 px-1 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
                 <CreatePlaylistCard />
                 {memoizedPlaylists.map((playlist) => (
                   <PlaylistCard key={playlist.id} playlist={playlist} />
