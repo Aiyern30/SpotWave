@@ -34,6 +34,7 @@ interface PlayerContextType {
 
   // Player controls
   playTrack: (track: Track) => void;
+  playPlaylist: (playlistUri: string, trackUri?: string) => void;
   pauseTrack: () => void;
   resumeTrack: () => void;
   nextTrack: () => void;
@@ -120,7 +121,14 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
         // Player state changed
         spotifyPlayer.addListener("player_state_changed", (state: any) => {
-          if (!state) return;
+          if (!state) {
+            setCurrentTrack(null);
+            setIsPlaying(false);
+            setIsPaused(true);
+            setPosition(0);
+            setDuration(0);
+            return;
+          }
 
           const track = state.track_window.current_track;
           const isCurrentlyPaused = state.paused;
@@ -140,8 +148,44 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           setDuration(state.duration);
         });
 
+        // Error handling
+        spotifyPlayer.addListener(
+          "initialization_error",
+          ({ message }: { message: string }) => {
+            console.error("Failed to initialize:", message);
+          }
+        );
+
+        spotifyPlayer.addListener(
+          "authentication_error",
+          ({ message }: { message: string }) => {
+            console.error("Failed to authenticate:", message);
+          }
+        );
+
+        spotifyPlayer.addListener(
+          "account_error",
+          ({ message }: { message: string }) => {
+            console.error("Failed to validate Spotify account:", message);
+          }
+        );
+
+        spotifyPlayer.addListener(
+          "playback_error",
+          ({ message }: { message: string }) => {
+            console.error("Failed to perform playback:", message);
+          }
+        );
+
         // Connect to the player
-        spotifyPlayer.connect();
+        spotifyPlayer.connect().then((success: boolean) => {
+          if (success) {
+            console.log("Successfully connected to Spotify!");
+          } else {
+            console.error("Failed to connect to Spotify");
+          }
+        });
+
         setPlayer(spotifyPlayer);
         playerRef.current = spotifyPlayer;
       }
@@ -204,12 +248,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         );
 
         if (!response.ok) {
-          console.error("Failed to play track:", response.statusText);
-          // Fallback to preview if available
-          if (track.preview_url) {
-            console.log("Falling back to preview playback");
-            // You can implement preview playback here if needed
-          }
+          const errorText = await response.text();
+          console.error("Failed to play track:", response.status, errorText);
         }
       } catch (error) {
         console.error("Error playing track:", error);
@@ -218,34 +258,84 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     [deviceId, token]
   );
 
+  const playPlaylist = useCallback(
+    async (playlistUri: string, trackUri?: string) => {
+      if (!deviceId || !token) {
+        console.error("Device not ready or token missing");
+        return;
+      }
+
+      try {
+        const body: any = {
+          context_uri: playlistUri,
+        };
+
+        // If a specific track is provided, start from that track
+        if (trackUri) {
+          body.offset = { uri: trackUri };
+        }
+
+        const response = await fetch(
+          `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
+          {
+            method: "PUT",
+            body: JSON.stringify(body),
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Failed to play playlist:", response.status, errorText);
+        }
+      } catch (error) {
+        console.error("Error playing playlist:", error);
+      }
+    },
+    [deviceId, token]
+  );
+
   const pauseTrack = useCallback(() => {
     if (player && typeof player.pause === "function") {
-      player.pause();
+      player.pause().catch((error: any) => {
+        console.error("Error pausing track:", error);
+      });
     }
   }, [player]);
 
   const resumeTrack = useCallback(() => {
     if (player && typeof player.resume === "function") {
-      player.resume();
+      player.resume().catch((error: any) => {
+        console.error("Error resuming track:", error);
+      });
     }
   }, [player]);
 
   const nextTrack = useCallback(() => {
     if (player && typeof player.nextTrack === "function") {
-      player.nextTrack();
+      player.nextTrack().catch((error: any) => {
+        console.error("Error skipping to next track:", error);
+      });
     }
   }, [player]);
 
   const previousTrack = useCallback(() => {
     if (player && typeof player.previousTrack === "function") {
-      player.previousTrack();
+      player.previousTrack().catch((error: any) => {
+        console.error("Error skipping to previous track:", error);
+      });
     }
   }, [player]);
 
   const seekTo = useCallback(
     (positionMs: number) => {
       if (player && typeof player.seek === "function") {
-        player.seek(positionMs);
+        player.seek(positionMs).catch((error: any) => {
+          console.error("Error seeking:", error);
+        });
       }
     },
     [player]
@@ -255,7 +345,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     (newVolume: number) => {
       setVolumeState(newVolume);
       if (player && typeof player.setVolume === "function") {
-        player.setVolume(newVolume);
+        player.setVolume(newVolume).catch((error: any) => {
+          console.error("Error setting volume:", error);
+        });
       }
     },
     [player]
@@ -277,6 +369,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     duration,
     volume,
     playTrack,
+    playPlaylist,
     pauseTrack,
     resumeTrack,
     nextTrack,
