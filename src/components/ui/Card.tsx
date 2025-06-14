@@ -16,8 +16,7 @@ const Card = React.forwardRef<HTMLDivElement, MotionDivProps>(
         className
       )}
       {...props}
-      whileHover={{ scale: 1.05 }} // Scale up on hover
-      transition={{ ease: "easeInOut", duration: 0.3 }} // Smooth transition
+      transition={{ ease: "easeInOut", duration: 0.3 }}
     />
   )
 );
