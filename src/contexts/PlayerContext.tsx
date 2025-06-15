@@ -282,6 +282,33 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     [isReady, deviceId]
   );
 
+  // Helper function to transfer playback to our device
+  const transferPlayback = useCallback(async () => {
+    if (!deviceId || !token) return;
+
+    try {
+      const response = await fetch("https://api.spotify.com/v1/me/player", {
+        method: "PUT",
+        body: JSON.stringify({
+          device_ids: [deviceId],
+          play: false,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        console.log("Playback transferred to SpotWave Player");
+      } else {
+        console.error("Failed to transfer playback:", response.status);
+      }
+    } catch (error) {
+      console.error("Error transferring playback:", error);
+    }
+  }, [deviceId, token]);
+
   const playTrack = useCallback(
     async (track: Track) => {
       console.log("Attempting to play track:", track.name);
@@ -334,7 +361,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         console.error("Error playing track:", error);
       }
     },
-    [deviceId, token, waitForDevice]
+    [deviceId, token, waitForDevice, transferPlayback]
   );
 
   const playPlaylist = useCallback(
@@ -396,35 +423,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         console.error("Error playing playlist:", error);
       }
     },
-    [deviceId, token, waitForDevice]
+    [deviceId, token, waitForDevice, transferPlayback]
   );
-
-  // Helper function to transfer playback to our device
-  const transferPlayback = useCallback(async () => {
-    if (!deviceId || !token) return;
-
-    try {
-      const response = await fetch("https://api.spotify.com/v1/me/player", {
-        method: "PUT",
-        body: JSON.stringify({
-          device_ids: [deviceId],
-          play: false,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        console.log("Playback transferred to SpotWave Player");
-      } else {
-        console.error("Failed to transfer playback:", response.status);
-      }
-    } catch (error) {
-      console.error("Error transferring playback:", error);
-    }
-  }, [deviceId, token]);
 
   const pauseTrack = useCallback(() => {
     if (player && typeof player.pause === "function") {
