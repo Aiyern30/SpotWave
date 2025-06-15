@@ -19,6 +19,7 @@ export * from "./Sheet";
 export * from "./Slider";
 export * from "./Switch";
 export * from "./ScrollArea";
+export * from "./Separator";
 export * from "./Select";
 export * from "./Table";
 export * from "./Textarea";
