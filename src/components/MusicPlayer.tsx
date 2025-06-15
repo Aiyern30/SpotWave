@@ -12,10 +12,16 @@ import {
   Volume2,
   VolumeX,
   Heart,
+  HeartOff,
   Shuffle,
   Repeat,
   MoreHorizontal,
 } from "lucide-react";
+import {
+  checkUserSavedTracks,
+  saveTracksForUser,
+  removeTracksFromUser,
+} from "@/lib/spotify";
 
 const formatTime = (ms: number) => {
   const seconds = Math.floor(ms / 1000);
@@ -46,23 +52,51 @@ export const MusicPlayer = () => {
   const [previousVolume, setPreviousVolume] = useState(volume);
   const [isVisible, setIsVisible] = useState(false);
   const [localVolume, setLocalVolume] = useState(volume);
+  const [isSaved, setIsSaved] = useState<boolean | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Show player when there's a current track or when connecting
   useEffect(() => {
     setIsVisible(!!currentTrack || isConnecting);
   }, [currentTrack, isConnecting]);
 
-  // Sync local volume with context volume
   useEffect(() => {
     setLocalVolume(volume);
   }, [volume]);
 
-  const handlePlayPause = useCallback(() => {
-    if (isPlaying) {
-      pauseTrack();
-    } else {
-      resumeTrack();
+  useEffect(() => {
+    const checkIfTrackIsSaved = async () => {
+      if (currentTrack?.id) {
+        try {
+          const saved = await checkUserSavedTracks([currentTrack.id]);
+          setIsSaved(saved[0]);
+        } catch (error) {
+          console.error("Failed to check if track is saved:", error);
+        }
+      }
+    };
+    checkIfTrackIsSaved();
+  }, [currentTrack]);
+
+  const handleToggleSave = async () => {
+    if (!currentTrack?.id || isSaving) return;
+
+    setIsSaving(true);
+    try {
+      if (isSaved) {
+        await removeTracksFromUser([currentTrack.id]);
+        setIsSaved(false);
+      } else {
+        await saveTracksForUser([currentTrack.id]);
+        setIsSaved(true);
+      }
+    } catch (error) {
+      console.error("Failed to toggle track save status:", error);
     }
+    setIsSaving(false);
+  };
+
+  const handlePlayPause = useCallback(() => {
+    isPlaying ? pauseTrack() : resumeTrack();
   }, [isPlaying, pauseTrack, resumeTrack]);
 
   const handleVolumeChange = useCallback(
@@ -70,12 +104,8 @@ export const MusicPlayer = () => {
       const vol = newVolume[0];
       setLocalVolume(vol);
       setVolume(vol);
-
-      if (vol > 0 && isMuted) {
-        setIsMuted(false);
-      } else if (vol === 0 && !isMuted) {
-        setIsMuted(true);
-      }
+      if (vol > 0 && isMuted) setIsMuted(false);
+      else if (vol === 0 && !isMuted) setIsMuted(true);
     },
     [setVolume, isMuted]
   );
@@ -96,23 +126,12 @@ export const MusicPlayer = () => {
 
   const handleSeek = useCallback(
     (newPosition: number[]) => {
-      const pos = newPosition[0];
-      seekTo(pos);
+      seekTo(newPosition[0]);
     },
     [seekTo]
   );
 
-  const handleNextTrack = useCallback(() => {
-    nextTrack();
-  }, [nextTrack]);
-
-  const handlePreviousTrack = useCallback(() => {
-    previousTrack();
-  }, [previousTrack]);
-
-  if (!isVisible) {
-    return null;
-  }
+  if (!isVisible) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 px-4 py-3 z-50">
@@ -159,8 +178,14 @@ export const MusicPlayer = () => {
             variant="ghost"
             size="icon"
             className="text-zinc-400 hover:text-white flex-shrink-0"
+            onClick={handleToggleSave}
+            disabled={!currentTrack || isSaving}
           >
-            <Heart className="h-4 w-4" />
+            {isSaved ? (
+              <Heart className="h-4 w-4 fill-red-500 text-red-500" />
+            ) : (
+              <HeartOff className="h-4 w-4" />
+            )}
           </Button>
         </div>
 
@@ -177,7 +202,7 @@ export const MusicPlayer = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={handlePreviousTrack}
+              onClick={previousTrack}
               className="text-zinc-400 hover:text-white"
               disabled={!isReady}
             >
@@ -198,7 +223,7 @@ export const MusicPlayer = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={handleNextTrack}
+              onClick={nextTrack}
               className="text-zinc-400 hover:text-white"
               disabled={!isReady}
             >
@@ -232,7 +257,7 @@ export const MusicPlayer = () => {
           </div>
         </div>
 
-        {/* Volume and Additional Controls */}
+        {/* Volume */}
         <div className="flex items-center space-x-2 flex-1 justify-end">
           <Button
             variant="ghost"
@@ -267,7 +292,7 @@ export const MusicPlayer = () => {
         </div>
       </div>
 
-      {/* Connection Status Overlay */}
+      {/* Status Overlays */}
       {isConnecting && (
         <div className="absolute inset-0 bg-zinc-900/90 flex items-center justify-center">
           <div className="flex items-center space-x-3 text-zinc-300">
@@ -276,7 +301,6 @@ export const MusicPlayer = () => {
           </div>
         </div>
       )}
-
       {!isReady && !isConnecting && (
         <div className="absolute inset-0 bg-zinc-900/80 flex items-center justify-center">
           <div className="text-zinc-400 text-sm">
