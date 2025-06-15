@@ -292,7 +292,7 @@ const PlaylistPage = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-black">
+      <div className="flex min-h-screen bg-black">
         <Sidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen((prev) => !prev)}
@@ -329,7 +329,7 @@ const PlaylistPage = () => {
 
   if (!playlist || !userProfile) {
     return (
-      <div className="flex h-screen bg-black">
+      <div className="flex min-h-screen bg-black">
         <Sidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen((prev) => !prev)}
@@ -362,7 +362,7 @@ const PlaylistPage = () => {
   }
 
   return (
-    <div className="flex h-screen bg-black">
+    <div className="flex min-h-screen bg-black">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen((prev) => !prev)}
