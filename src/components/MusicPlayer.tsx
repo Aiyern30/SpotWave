@@ -39,6 +39,7 @@ export const MusicPlayer = () => {
     seekTo,
     setVolume,
     isReady,
+    isConnecting,
   } = usePlayer();
 
   const [isMuted, setIsMuted] = useState(false);
@@ -46,10 +47,10 @@ export const MusicPlayer = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [localVolume, setLocalVolume] = useState(volume);
 
-  // Show player when there's a current track
+  // Show player when there's a current track or when connecting
   useEffect(() => {
-    setIsVisible(!!currentTrack);
-  }, [currentTrack]);
+    setIsVisible(!!currentTrack || isConnecting);
+  }, [currentTrack, isConnecting]);
 
   // Sync local volume with context volume
   useEffect(() => {
@@ -109,7 +110,7 @@ export const MusicPlayer = () => {
     previousTrack();
   }, [previousTrack]);
 
-  if (!isVisible || !currentTrack) {
+  if (!isVisible) {
     return null;
   }
 
@@ -119,21 +120,40 @@ export const MusicPlayer = () => {
         {/* Track Info */}
         <div className="flex items-center space-x-4 min-w-0 flex-1">
           <div className="w-14 h-14 rounded-md overflow-hidden flex-shrink-0">
-            <Image
-              src={currentTrack.album.images[0]?.url || "/default-artist.png"}
-              width={56}
-              height={56}
-              alt={currentTrack.name}
-              className="object-cover"
-            />
+            {currentTrack ? (
+              <Image
+                src={currentTrack.album.images[0]?.url || "/default-artist.png"}
+                width={56}
+                height={56}
+                alt={currentTrack.name}
+                className="object-cover"
+              />
+            ) : (
+              <div className="w-14 h-14 bg-zinc-800 rounded-md flex items-center justify-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-green-500 border-t-transparent" />
+              </div>
+            )}
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="text-white font-medium truncate text-sm">
-              {currentTrack.name}
-            </h4>
-            <p className="text-zinc-400 text-xs truncate">
-              {currentTrack.artists.map((artist) => artist.name).join(", ")}
-            </p>
+            {currentTrack ? (
+              <>
+                <h4 className="text-white font-medium truncate text-sm">
+                  {currentTrack.name}
+                </h4>
+                <p className="text-zinc-400 text-xs truncate">
+                  {currentTrack.artists.map((artist) => artist.name).join(", ")}
+                </p>
+              </>
+            ) : (
+              <>
+                <h4 className="text-white font-medium text-sm">
+                  Connecting to Spotify...
+                </h4>
+                <p className="text-zinc-400 text-xs">
+                  Please wait while we set up your player
+                </p>
+              </>
+            )}
           </div>
           <Button
             variant="ghost"
@@ -247,9 +267,21 @@ export const MusicPlayer = () => {
         </div>
       </div>
 
-      {!isReady && (
+      {/* Connection Status Overlay */}
+      {isConnecting && (
+        <div className="absolute inset-0 bg-zinc-900/90 flex items-center justify-center">
+          <div className="flex items-center space-x-3 text-zinc-300">
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-green-500 border-t-transparent" />
+            <span className="text-sm">Connecting to Spotify Player...</span>
+          </div>
+        </div>
+      )}
+
+      {!isReady && !isConnecting && (
         <div className="absolute inset-0 bg-zinc-900/80 flex items-center justify-center">
-          <div className="text-zinc-400 text-sm">Connecting to Spotify...</div>
+          <div className="text-zinc-400 text-sm">
+            Player not ready. Please refresh the page.
+          </div>
         </div>
       )}
     </div>

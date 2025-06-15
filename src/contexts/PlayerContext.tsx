@@ -51,6 +51,7 @@ interface PlayerContextType {
   deviceId: string | null;
   isReady: boolean;
   player: any;
+  isConnecting: boolean;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -75,10 +76,12 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [queue, setQueue] = useState<Track[]>([]);
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [player, setPlayer] = useState<any>(null);
   const [token, setToken] = useState<string>("");
   const playerRef = useRef<any>(null);
   const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const initializationAttempted = useRef(false);
 
   // Initialize Spotify Web Playback SDK
   useEffect(() => {
@@ -89,25 +92,31 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || initializationAttempted.current) return;
 
     const initializePlayer = () => {
-      if (window.Spotify) {
+      if (window.Spotify && !initializationAttempted.current) {
+        initializationAttempted.current = true;
+        setIsConnecting(true);
+
+        console.log("Initializing Spotify Player...");
+
         const spotifyPlayer = new window.Spotify.Player({
           name: "SpotWave Player",
           getOAuthToken: (cb: (token: string) => void) => {
             cb(token);
           },
-          volume: 0.5, // Use fixed initial volume instead of state volume
+          volume: 0.5,
         });
 
         // Ready
         spotifyPlayer.addListener(
           "ready",
           ({ device_id }: { device_id: string }) => {
-            console.log("Ready with Device ID", device_id);
+            console.log("Spotify Player Ready with Device ID:", device_id);
             setDeviceId(device_id);
             setIsReady(true);
+            setIsConnecting(false);
           }
         );
 
@@ -115,8 +124,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         spotifyPlayer.addListener(
           "not_ready",
           ({ device_id }: { device_id: string }) => {
-            console.log("Device ID has gone offline", device_id);
+            console.log("Device ID has gone offline:", device_id);
             setIsReady(false);
+            setDeviceId(null);
           }
         );
 
@@ -153,37 +163,45 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         spotifyPlayer.addListener(
           "initialization_error",
           ({ message }: { message: string }) => {
-            console.error("Failed to initialize:", message);
+            console.error("Spotify Player initialization error:", message);
+            setIsConnecting(false);
+            setIsReady(false);
           }
         );
 
         spotifyPlayer.addListener(
           "authentication_error",
           ({ message }: { message: string }) => {
-            console.error("Failed to authenticate:", message);
+            console.error("Spotify Player authentication error:", message);
+            setIsConnecting(false);
+            setIsReady(false);
           }
         );
 
         spotifyPlayer.addListener(
           "account_error",
           ({ message }: { message: string }) => {
-            console.error("Failed to validate Spotify account:", message);
+            console.error("Spotify Player account error:", message);
+            setIsConnecting(false);
+            setIsReady(false);
           }
         );
 
         spotifyPlayer.addListener(
           "playback_error",
           ({ message }: { message: string }) => {
-            console.error("Failed to perform playback:", message);
+            console.error("Spotify Player playback error:", message);
           }
         );
 
         // Connect to the player
         spotifyPlayer.connect().then((success: boolean) => {
           if (success) {
-            console.log("Successfully connected to Spotify!");
+            console.log("Successfully connected to Spotify Player!");
           } else {
-            console.error("Failed to connect to Spotify");
+            console.error("Failed to connect to Spotify Player");
+            setIsConnecting(false);
+            setIsReady(false);
           }
         });
 
@@ -192,6 +210,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     };
 
+    // Wait for Spotify SDK to be ready
     if (window.Spotify) {
       initializePlayer();
     } else {
@@ -203,6 +222,12 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       if (volumeTimeoutRef.current) {
         clearTimeout(volumeTimeoutRef.current);
       }
+    };
+  }, [token]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
       if (
         playerRef.current &&
         typeof playerRef.current.disconnect === "function"
@@ -210,7 +235,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         playerRef.current.disconnect();
       }
     };
-  }, [token]); // Removed volume from dependency array since we use fixed initial volume
+  }, []);
 
   // Position tracking
   useEffect(() => {
@@ -234,14 +259,49 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => clearInterval(interval);
   }, [isPlaying, isPaused, player]);
 
+  // Helper function to wait for device to be ready
+  const waitForDevice = useCallback(
+    async (maxWaitTime = 10000): Promise<boolean> => {
+      if (isReady && deviceId) {
+        return true;
+      }
+
+      return new Promise((resolve) => {
+        const startTime = Date.now();
+        const checkInterval = setInterval(() => {
+          if (isReady && deviceId) {
+            clearInterval(checkInterval);
+            resolve(true);
+          } else if (Date.now() - startTime > maxWaitTime) {
+            clearInterval(checkInterval);
+            resolve(false);
+          }
+        }, 100);
+      });
+    },
+    [isReady, deviceId]
+  );
+
   const playTrack = useCallback(
     async (track: Track) => {
-      if (!deviceId || !token) {
-        console.error("Device not ready or token missing");
+      console.log("Attempting to play track:", track.name);
+
+      if (!token) {
+        console.error("No Spotify token available");
+        return;
+      }
+
+      // Wait for device to be ready
+      const deviceReady = await waitForDevice();
+      if (!deviceReady || !deviceId) {
+        console.error(
+          "Spotify device not ready. Please wait for the player to connect."
+        );
         return;
       }
 
       try {
+        console.log("Playing track on device:", deviceId);
         const response = await fetch(
           `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
           {
@@ -259,22 +319,44 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         if (!response.ok) {
           const errorText = await response.text();
           console.error("Failed to play track:", response.status, errorText);
+
+          // If device is not found, try to transfer playback
+          if (response.status === 404) {
+            console.log("Device not found, attempting to transfer playback...");
+            await transferPlayback();
+            // Retry playing the track
+            setTimeout(() => playTrack(track), 1000);
+          }
+        } else {
+          console.log("Track started successfully");
         }
       } catch (error) {
         console.error("Error playing track:", error);
       }
     },
-    [deviceId, token]
+    [deviceId, token, waitForDevice]
   );
 
   const playPlaylist = useCallback(
     async (playlistUri: string, trackUri?: string) => {
-      if (!deviceId || !token) {
-        console.error("Device not ready or token missing");
+      console.log("Attempting to play playlist:", playlistUri);
+
+      if (!token) {
+        console.error("No Spotify token available");
+        return;
+      }
+
+      // Wait for device to be ready
+      const deviceReady = await waitForDevice();
+      if (!deviceReady || !deviceId) {
+        console.error(
+          "Spotify device not ready. Please wait for the player to connect."
+        );
         return;
       }
 
       try {
+        console.log("Playing playlist on device:", deviceId);
         const body: any = {
           context_uri: playlistUri,
         };
@@ -299,13 +381,50 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         if (!response.ok) {
           const errorText = await response.text();
           console.error("Failed to play playlist:", response.status, errorText);
+
+          // If device is not found, try to transfer playback
+          if (response.status === 404) {
+            console.log("Device not found, attempting to transfer playback...");
+            await transferPlayback();
+            // Retry playing the playlist
+            setTimeout(() => playPlaylist(playlistUri, trackUri), 1000);
+          }
+        } else {
+          console.log("Playlist started successfully");
         }
       } catch (error) {
         console.error("Error playing playlist:", error);
       }
     },
-    [deviceId, token]
+    [deviceId, token, waitForDevice]
   );
+
+  // Helper function to transfer playback to our device
+  const transferPlayback = useCallback(async () => {
+    if (!deviceId || !token) return;
+
+    try {
+      const response = await fetch("https://api.spotify.com/v1/me/player", {
+        method: "PUT",
+        body: JSON.stringify({
+          device_ids: [deviceId],
+          play: false,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        console.log("Playback transferred to SpotWave Player");
+      } else {
+        console.error("Failed to transfer playback:", response.status);
+      }
+    } catch (error) {
+      console.error("Error transferring playback:", error);
+    }
+  }, [deviceId, token]);
 
   const pauseTrack = useCallback(() => {
     if (player && typeof player.pause === "function") {
@@ -403,6 +522,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     deviceId,
     isReady,
     player,
+    isConnecting,
   };
 
   return (
