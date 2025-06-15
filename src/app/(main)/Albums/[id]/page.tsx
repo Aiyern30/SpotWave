@@ -127,13 +127,17 @@ const AlbumsIDPage = () => {
     fetchAndSetAlbum();
   }, [id, token]);
 
-  const playPreview = (url: string | null, trackId: string) => {
+  const playPreview = (url: string | null | undefined, trackId: string) => {
     if (audio) {
       audio.pause();
       setPlayingTrack(null);
     }
-    if (url) {
-      const newAudio = new Audio(url);
+
+    // Handle undefined by converting to null
+    const previewUrl = url ?? null;
+
+    if (previewUrl) {
+      const newAudio = new Audio(previewUrl);
       setAudio(newAudio);
       setPlayingTrack(trackId);
       newAudio.play();
@@ -218,7 +222,7 @@ const AlbumsIDPage = () => {
 
   return (
     <TooltipProvider>
-      <div className="flex min-h-screen bg-black ">
+      <div className="flex h-screen">
         <Sidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen((prev) => !prev)}
@@ -415,9 +419,9 @@ const AlbumsIDPage = () => {
 
                         <TableCell className="text-center hidden md:table-cell">
                           <Button
-                            variant="outline"
                             size="sm"
-                            className="bg-zinc-800/50 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-all duration-200"
+                            variant="outline"
+                            className="border-zinc-700 hover:border-green-500 hover:text-green-500"
                             onClick={(e) => {
                               e.stopPropagation();
                               window.open(
