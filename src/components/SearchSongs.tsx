@@ -49,7 +49,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
   const [addingTracks, setAddingTracks] = useState<Set<string>>(new Set());
   const [playingPreview, setPlayingPreview] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
