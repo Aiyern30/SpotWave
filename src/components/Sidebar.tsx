@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, easeInOut, motion } from "framer-motion";
 import { AiOutlineRollback } from "react-icons/ai";
 import {
   BiSolidMusic,
@@ -297,17 +297,17 @@ const framerSidebarPanel = {
   initial: { x: -300 },
   animate: { x: 0 },
   exit: { x: -300 },
-  transition: { duration: 0.5, ease: "easeInOut" },
+  transition: { duration: 0.5, ease: easeInOut },
 };
 
 const framerIcon = {
   initial: { opacity: 0, scale: 0.5 },
   animate: { opacity: 1, scale: 1 },
-  transition: { delay: 0.2, duration: 0.5, ease: "easeInOut" },
+  transition: { delay: 0.2, duration: 0.5, ease: easeInOut },
 };
 
 const framerText = (idx: number) => ({
   initial: { opacity: 0, x: -20 },
   animate: { opacity: 1, x: 0 },
-  transition: { delay: 0.1 * idx, duration: 0.5, ease: "easeInOut" },
+  transition: { delay: 0.1 * idx, duration: 0.5, ease: easeInOut },
 });
