@@ -13,7 +13,7 @@ const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 export default function Home() {
   const CLIENT_ID = "5bf8d69f8aaf4727a4677c0ad2fef6ec";
   const REDIRECT_URI: string =
-    process.env.NEXT_PUBLIC_REDIRECT_URI || "http://localhost:3000";
+    process.env.NEXT_PUBLIC_REDIRECT_URI || "http://127.0.0.1:3000/callback";
 
   const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
   const RESPONSE_TYPE = "token";
