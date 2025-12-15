@@ -1,7 +1,6 @@
 "use client";
 import Image from "next/image";
 import { useEffect, useState, useCallback, useMemo } from "react";
-import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import {
   Card,
@@ -36,7 +35,6 @@ type PlaylistsProps = {
 const Page = () => {
   const [token, setToken] = useState<string>("");
   const [userID, setUserID] = useState<string>("");
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [playlists, setPlaylists] = useState<PlaylistsProps[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [creating, setCreating] = useState<boolean>(false);
@@ -246,66 +244,54 @@ const Page = () => {
   );
 
   return (
-    <div className="flex min-h-screen bg-black">
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen((prev) => !prev)}
-      />
-      <div
-        className={`flex-1 transition-all ml-16 duration-300 ${
-          sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
-        }`}
-      >
-        <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8">
-          <Header />
+    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8">
+      <Header />
 
-          <div className="space-y-3 sm:space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-1 sm:px-2">
-              <h1 className="text-xl sm:text-3xl font-bold text-white tracking-tight">
-                Your Playlists
-              </h1>
-              <p className="text-zinc-400 text-xs sm:text-sm font-medium">
-                {memoizedPlaylists.length} playlist
-                {memoizedPlaylists.length !== 1 ? "s" : ""}
+      <div className="space-y-3 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-1 sm:px-2">
+          <h1 className="text-xl sm:text-3xl font-bold text-white tracking-tight">
+            Your Playlists
+          </h1>
+          <p className="text-zinc-400 text-xs sm:text-sm font-medium">
+            {memoizedPlaylists.length} playlist
+            {memoizedPlaylists.length !== 1 ? "s" : ""}
+          </p>
+        </div>
+
+        {loading ? (
+          <LoadingSkeleton />
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+            <CreatePlaylistCard />
+            {memoizedPlaylists.map((playlist) => (
+              <PlaylistCard key={playlist.id} playlist={playlist} />
+            ))}
+          </div>
+        )}
+
+        {!loading && memoizedPlaylists.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 sm:py-20 space-y-4 sm:space-y-6 px-4">
+            <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-zinc-800/50 flex items-center justify-center border border-zinc-700">
+              <Music className="h-10 w-10 sm:h-14 sm:w-14 text-zinc-600" />
+            </div>
+            <div className="text-center space-y-2 sm:space-y-3">
+              <h3 className="text-xl sm:text-2xl font-semibold text-white">
+                No playlists yet
+              </h3>
+              <p className="text-zinc-400 max-w-md text-sm sm:text-base px-4">
+                Create your first playlist to start organizing your favorite
+                music
               </p>
             </div>
-
-            {loading ? (
-              <LoadingSkeleton />
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
-                <CreatePlaylistCard />
-                {memoizedPlaylists.map((playlist) => (
-                  <PlaylistCard key={playlist.id} playlist={playlist} />
-                ))}
-              </div>
-            )}
-
-            {!loading && memoizedPlaylists.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-12 sm:py-20 space-y-4 sm:space-y-6 px-4">
-                <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-zinc-800/50 flex items-center justify-center border border-zinc-700">
-                  <Music className="h-10 w-10 sm:h-14 sm:w-14 text-zinc-600" />
-                </div>
-                <div className="text-center space-y-2 sm:space-y-3">
-                  <h3 className="text-xl sm:text-2xl font-semibold text-white">
-                    No playlists yet
-                  </h3>
-                  <p className="text-zinc-400 max-w-md text-sm sm:text-base px-4">
-                    Create your first playlist to start organizing your favorite
-                    music
-                  </p>
-                </div>
-                <Button
-                  onClick={handleCreatePlaylist}
-                  className="bg-green-500 hover:bg-green-600 text-black font-semibold px-5 sm:px-6 py-5 sm:py-6 text-sm sm:text-base mt-2 sm:mt-4"
-                  disabled={creating}
-                >
-                  {creating ? "Creating..." : "Create Your First Playlist"}
-                </Button>
-              </div>
-            )}
+            <Button
+              onClick={handleCreatePlaylist}
+              className="bg-green-500 hover:bg-green-600 text-black font-semibold px-5 sm:px-6 py-5 sm:py-6 text-sm sm:text-base mt-2 sm:mt-4"
+              disabled={creating}
+            >
+              {creating ? "Creating..." : "Create Your First Playlist"}
+            </Button>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
