@@ -11,7 +11,7 @@ import {
   Button,
 } from "@/components/ui";
 import { useRouter } from "next/navigation";
-import { Play, Music, Users, Clock } from "lucide-react";
+import { Music, Users, Clock } from "lucide-react";
 import type { Artist, RecentTracksProps } from "@/lib/types";
 import { fetchFollowedArtists } from "@/utils/Artist/fetchFollowedArtists";
 import { fetchFavoriteArtists } from "@/utils/Artist/fetchFavoriteArtists";
@@ -20,7 +20,6 @@ import { usePlayer } from "@/contexts/PlayerContext";
 
 const Page = () => {
   const [token, setToken] = useState<string>("");
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [followedArtists, setFollowedArtists] = useState<Artist[]>([]);
   const [favoriteArtists, setFavoriteArtists] = useState<Artist[]>([]);
   const [recentTracks, setRecentTracks] = useState<RecentTracksProps[]>([]);
@@ -162,187 +161,170 @@ const Page = () => {
   );
 
   return (
-    <div className="flex min-h-screen bg-black">
-      {token && (
-        <>
-          <div
-            className={`flex-1 transition-all ml-16 duration-300 ${
-              sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
-            }`}
+    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8">
+      <Header />
+
+      <div className="space-y-3 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-1 sm:px-2">
+          <h1 className="text-xl sm:text-3xl font-bold text-white tracking-tight">
+            Explore Your Music
+          </h1>
+          <Button
+            onClick={handleToggleAll}
+            variant="outline"
+            className="bg-zinc-800/50 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white w-fit"
           >
-            <div className="p-4 space-y-4">
-              <Header />
+            {allOpen ? "Collapse All" : "Expand All"}
+          </Button>
+        </div>
 
-              <div className="flex justify-between items-center mb-4">
-                <h1 className="text-2xl font-bold text-white">
-                  Explore Your Music
-                </h1>
-                <Button
-                  onClick={handleToggleAll}
-                  variant="outline"
-                  className="bg-zinc-800/50 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white"
-                >
-                  {allOpen ? "Collapse All" : "Expand All"}
-                </Button>
+        <Accordion
+          type="multiple"
+          className="w-full space-y-3"
+          value={openAccordions}
+          onValueChange={setOpenAccordions}
+        >
+          {/* Followed Artists */}
+          <AccordionItem
+            value="item-1"
+            className="bg-zinc-900/30 rounded-lg border border-zinc-800/50"
+          >
+            <AccordionTrigger className="px-4 text-white hover:text-green-400 transition-colors">
+              <div className="flex items-center space-x-2">
+                <Users className="h-5 w-5" />
+                <span>Your Followed Artists</span>
+                <span className="text-zinc-400 text-sm">
+                  ({memoizedFollowedArtists.length})
+                </span>
               </div>
+            </AccordionTrigger>
+            <AccordionContent className="text-white p-4">
+              {memoizedFollowedArtists.length === 0 ? (
+                <EmptyState
+                  icon={Users}
+                  title="No Followed Artists"
+                  description="Start following artists to see them here. Discover new music and keep track of your favorite artists."
+                />
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+                  {memoizedFollowedArtists.map((artist) => (
+                    <PlaylistCard
+                      key={artist.id}
+                      id={artist.id}
+                      image={artist.image || "/default-artist.png"}
+                      title={artist.name}
+                      description={artist.genres?.join(", ")}
+                      onPlay={handlePlayArtist}
+                      onClick={(id, name) =>
+                        router.push(
+                          `/Artists/${id}?name=${encodeURIComponent(name)}`
+                        )
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+            </AccordionContent>
+          </AccordionItem>
 
-              <Accordion
-                type="multiple"
-                className="w-full space-y-3"
-                value={openAccordions}
-                onValueChange={setOpenAccordions}
-              >
-                {/* Followed Artists */}
-                <AccordionItem
-                  value="item-1"
-                  className="bg-zinc-900/30 rounded-lg border border-zinc-800/50"
-                >
-                  <AccordionTrigger className="px-4 text-white hover:text-green-400 transition-colors">
-                    <div className="flex items-center space-x-2">
-                      <Users className="h-5 w-5" />
-                      <span>Your Followed Artists</span>
-                      <span className="text-zinc-400 text-sm">
-                        ({memoizedFollowedArtists.length})
-                      </span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="text-white p-4">
-                    {memoizedFollowedArtists.length === 0 ? (
-                      <EmptyState
-                        icon={Users}
-                        title="No Followed Artists"
-                        description="Start following artists to see them here. Discover new music and keep track of your favorite artists."
-                      />
-                    ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
-                        {memoizedFollowedArtists.map((artist) => (
-                          <PlaylistCard
-                            key={artist.id}
-                            id={artist.id}
-                            image={artist.image || "/default-artist.png"}
-                            title={artist.name}
-                            description={artist.genres?.join(", ")}
-                            onPlay={handlePlayArtist}
-                            onClick={(id, name) =>
-                              router.push(
-                                `/Artists/${id}?name=${encodeURIComponent(
-                                  name
-                                )}`
-                              )
-                            }
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
+          {/* Favorite Artists */}
+          <AccordionItem
+            value="item-2"
+            className="bg-zinc-900/30 rounded-lg border border-zinc-800/50"
+          >
+            <AccordionTrigger className="px-4 text-white hover:text-green-400 transition-colors">
+              <div className="flex items-center space-x-2">
+                <Music className="h-5 w-5" />
+                <span>Your Favorite Artists</span>
+                <span className="text-zinc-400 text-sm">
+                  ({memoizedFavoriteArtists.length})
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="text-white p-4">
+              {memoizedFavoriteArtists.length === 0 ? (
+                <EmptyState
+                  icon={Music}
+                  title="No Favorite Artists"
+                  description="Your top artists will appear here based on your listening habits. Keep listening to build your favorites!"
+                />
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+                  {memoizedFavoriteArtists.map((artist) => (
+                    <PlaylistCard
+                      key={artist.id}
+                      id={artist.id}
+                      image={artist.image || "/default-artist.png"}
+                      title={artist.name}
+                      description={artist.genres?.join(", ")}
+                      onPlay={handlePlayArtist}
+                      onClick={(id, name) =>
+                        router.push(
+                          `/Artists/${id}?name=${encodeURIComponent(name)}`
+                        )
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+            </AccordionContent>
+          </AccordionItem>
 
-                {/* Favorite Artists */}
-                <AccordionItem
-                  value="item-2"
-                  className="bg-zinc-900/30 rounded-lg border border-zinc-800/50"
-                >
-                  <AccordionTrigger className="px-4 text-white hover:text-green-400 transition-colors">
-                    <div className="flex items-center space-x-2">
-                      <Music className="h-5 w-5" />
-                      <span>Your Favorite Artists</span>
-                      <span className="text-zinc-400 text-sm">
-                        ({memoizedFavoriteArtists.length})
-                      </span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="text-white p-4">
-                    {memoizedFavoriteArtists.length === 0 ? (
-                      <EmptyState
-                        icon={Music}
-                        title="No Favorite Artists"
-                        description="Your top artists will appear here based on your listening habits. Keep listening to build your favorites!"
-                      />
-                    ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
-                        {memoizedFavoriteArtists.map((artist) => (
-                          <PlaylistCard
-                            key={artist.id}
-                            id={artist.id}
-                            image={artist.image || "/default-artist.png"}
-                            title={artist.name}
-                            description={artist.genres?.join(", ")}
-                            onPlay={handlePlayArtist}
-                            onClick={(id, name) =>
-                              router.push(
-                                `/Artists/${id}?name=${encodeURIComponent(
-                                  name
-                                )}`
-                              )
-                            }
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-
-                {/* Recently Played Tracks */}
-                <AccordionItem
-                  value="item-3"
-                  className="bg-zinc-900/30 rounded-lg border border-zinc-800/50"
-                >
-                  <AccordionTrigger className="px-4 text-white hover:text-green-400 transition-colors">
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-5 w-5" />
-                      <span>Your Recently Listening</span>
-                      <span className="text-zinc-400 text-sm">
-                        ({memoizedRecentTracks.length})
-                      </span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="text-white p-4">
-                    {memoizedRecentTracks.length === 0 ? (
-                      <EmptyState
-                        icon={Clock}
-                        title="No Recent Tracks"
-                        description="Your recently played tracks will appear here. Start listening to music to see your history!"
-                      />
-                    ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
-                        {memoizedRecentTracks.map((tracks, index) => (
-                          <PlaylistCard
-                            key={`${tracks.track.id}-${index}`}
-                            id={
-                              tracks.track.album.artists[0]?.id ||
-                              tracks.track.id
-                            }
-                            image={
-                              tracks.track.album.images[0]?.url ||
-                              "/default-artist.png"
-                            }
-                            title={tracks.track.name}
-                            description={`${tracks.track.album.artists
-                              .map((a) => a.name)
-                              .join(", ")} • ${
-                              tracks.track.album.release_date
-                            }`}
-                            onPlay={() => handlePlayTrack(tracks.track)}
-                            onClick={(id) => {
-                              if (tracks.track.album.artists.length > 0) {
-                                router.push(
-                                  `/Artists/${id}?name=${encodeURIComponent(
-                                    tracks.track.album.artists[0].name
-                                  )}`
-                                );
-                              }
-                            }}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </div>
-          </div>
-        </>
-      )}
+          {/* Recently Played Tracks */}
+          <AccordionItem
+            value="item-3"
+            className="bg-zinc-900/30 rounded-lg border border-zinc-800/50"
+          >
+            <AccordionTrigger className="px-4 text-white hover:text-green-400 transition-colors">
+              <div className="flex items-center space-x-2">
+                <Clock className="h-5 w-5" />
+                <span>Your Recently Listening</span>
+                <span className="text-zinc-400 text-sm">
+                  ({memoizedRecentTracks.length})
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="text-white p-4">
+              {memoizedRecentTracks.length === 0 ? (
+                <EmptyState
+                  icon={Clock}
+                  title="No Recent Tracks"
+                  description="Your recently played tracks will appear here. Start listening to music to see your history!"
+                />
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+                  {memoizedRecentTracks.map((tracks, index) => (
+                    <PlaylistCard
+                      key={`${tracks.track.id}-${index}`}
+                      id={
+                        tracks.track.album.artists[0]?.id || tracks.track.id
+                      }
+                      image={
+                        tracks.track.album.images[0]?.url ||
+                        "/default-artist.png"
+                      }
+                      title={tracks.track.name}
+                      description={`${tracks.track.album.artists
+                        .map((a) => a.name)
+                        .join(", ")} • ${tracks.track.album.release_date}`}
+                      onPlay={() => handlePlayTrack(tracks.track)}
+                      onClick={(id) => {
+                        if (tracks.track.album.artists.length > 0) {
+                          router.push(
+                            `/Artists/${id}?name=${encodeURIComponent(
+                              tracks.track.album.artists[0].name
+                            )}`
+                          );
+                        }
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </div>
     </div>
   );
 };
