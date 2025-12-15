@@ -647,7 +647,10 @@ export default function UserHeader({
             <Settings playlistID={playlist.id} />
             <SearchSongs playlistID={playlist.id} refetch={refetch} />
             {/* View Summary Button */}
-            <Dialog open={summaryDialogOpen} onOpenChange={setSummaryDialogOpen}>
+            <Dialog
+              open={summaryDialogOpen}
+              onOpenChange={setSummaryDialogOpen}
+            >
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
@@ -673,7 +676,9 @@ export default function UserHeader({
                 ) : aiSummary ? (
                   <div className="space-y-4">
                     <div>
-                      <span className="font-semibold text-green-400">Genres:</span>
+                      <span className="font-semibold text-green-400">
+                        Genres:
+                      </span>
                       <div className="flex flex-wrap gap-2 mt-1">
                         {aiSummary.genres?.map((g: string) => (
                           <Badge
@@ -686,7 +691,9 @@ export default function UserHeader({
                       </div>
                     </div>
                     <div>
-                      <span className="font-semibold text-blue-400">Moods:</span>
+                      <span className="font-semibold text-blue-400">
+                        Moods:
+                      </span>
                       <div className="flex flex-wrap gap-2 mt-1">
                         {aiSummary.moods?.map((m: string) => (
                           <Badge
@@ -699,7 +706,9 @@ export default function UserHeader({
                       </div>
                     </div>
                     <div>
-                      <span className="font-semibold text-purple-400">Eras:</span>
+                      <span className="font-semibold text-purple-400">
+                        Eras:
+                      </span>
                       <div className="flex flex-wrap gap-2 mt-1">
                         {aiSummary.eras?.map((e: string) => (
                           <Badge
@@ -727,7 +736,9 @@ export default function UserHeader({
                       </div>
                     </div>
                     <div>
-                      <span className="font-semibold text-pink-400">Search Terms:</span>
+                      <span className="font-semibold text-pink-400">
+                        Search Terms:
+                      </span>
                       <div className="flex flex-wrap gap-2 mt-1">
                         {aiSummary.searchTerms?.map((s: string) => (
                           <Badge
