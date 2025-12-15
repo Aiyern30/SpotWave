@@ -440,8 +440,7 @@ const PlaylistPage = () => {
                         <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
                           <Image
                             src={
-                              track.album.images[0]?.url ||
-                              "/placeholder.svg"
+                              track.album.images[0]?.url || "/placeholder.svg"
                             }
                             width={48}
                             height={48}
@@ -466,16 +465,12 @@ const PlaylistPage = () => {
                                   className="hover:underline hover:text-white transition-colors"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleArtistClick(
-                                      artist.id,
-                                      artist.name
-                                    );
+                                    handleArtistClick(artist.id, artist.name);
                                   }}
                                 >
                                   {artist.name}
                                 </button>
-                                {artistIndex < track.artists.length - 1 &&
-                                  ", "}
+                                {artistIndex < track.artists.length - 1 && ", "}
                               </span>
                             ))}
                           </div>
@@ -488,10 +483,7 @@ const PlaylistPage = () => {
                         className="text-zinc-400 hover:text-white hover:underline transition-colors truncate"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleAlbumClick(
-                            track.album.id,
-                            track.album.name
-                          );
+                          handleAlbumClick(track.album.id, track.album.name);
                         }}
                       >
                         {track.album.name}
@@ -500,9 +492,7 @@ const PlaylistPage = () => {
 
                     <TableCell className="hidden md:table-cell">
                       <span className="text-zinc-400 text-sm">
-                        {new Date(
-                          playlistTrack.added_at
-                        ).toLocaleDateString()}
+                        {new Date(playlistTrack.added_at).toLocaleDateString()}
                       </span>
                     </TableCell>
 

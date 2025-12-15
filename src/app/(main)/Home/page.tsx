@@ -1,7 +1,7 @@
 "use client";
-import Image from "next/image";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import Header from "@/components/Header";
+import PlaylistCard from "@/components/PlaylistCard";
 import {
   Card,
   CardContent,
@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/";
 import { Skeleton } from "@/components/ui/";
 import { useRouter } from "next/navigation";
 import { IoMdAdd } from "react-icons/io";
-import { Play, Music, MoreHorizontal } from "lucide-react";
+import { Play, Music } from "lucide-react";
 import { fetchUserProfile } from "@/utils/fetchProfile";
 import { CreatePlaylist } from "@/utils/createPlaylist";
 import { fetchSpotifyPlaylists } from "@/utils/fetchAllPlaylist";
@@ -113,98 +113,6 @@ const Page = () => {
     }));
   };
 
-  const PlaylistCard = ({ playlist }: { playlist: PlaylistsProps }) => (
-    <TooltipProvider>
-      <Card
-        className="relative w-full max-w-[140px] sm:max-w-[200px] h-[165px] sm:h-[290px] cursor-pointer bg-zinc-900/50 hover:bg-zinc-800/70 transition-all duration-300 hover:scale-105 group border-zinc-800/50 mx-auto"
-        onClick={() => handleClick(playlist.id, playlist.title)}
-      >
-        <CardHeader className="p-0 pb-0">
-          <div className="relative w-full px-3 sm:px-5 pt-3 sm:pt-5 pb-2 sm:pb-3">
-            <div className="w-full aspect-square max-w-[115px] sm:max-w-[170px] mx-auto rounded-lg shadow-xl overflow-hidden">
-              {imageError[playlist.id] || !playlist.image ? (
-                <Image
-                  src="/default-artist.png"
-                  width={170}
-                  height={170}
-                  className="object-cover rounded-lg w-full h-full"
-                  alt={playlist.title}
-                  priority
-                />
-              ) : (
-                <Image
-                  src={playlist.image || "/placeholder.svg"}
-                  width={170}
-                  height={170}
-                  className="object-cover rounded-lg w-full h-full"
-                  alt={playlist.title}
-                  onError={() => handleImageError(playlist.id)}
-                  priority
-                />
-              )}
-            </div>
-
-            {/* Play button overlay */}
-            <div className="absolute bottom-2 right-4 sm:bottom-4 sm:right-7 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-              <Button
-                size="icon"
-                className="h-10 w-10 sm:h-14 sm:w-14 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl hover:scale-110 transition-all duration-200"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handlePlayPlaylist(playlist.id);
-                }}
-              >
-                <Play
-                  className="h-4 w-4 sm:h-6 sm:w-6 ml-0.5"
-                  fill="currentColor"
-                />
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-3 pt-1 sm:p-5 sm:pt-2 sm:space-y-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <CardTitle className="text-white text-xs sm:text-base font-semibold line-clamp-2 sm:line-clamp-1 hover:text-green-400 transition-colors leading-tight sm:leading-normal">
-                {playlist.title}
-              </CardTitle>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
-              <p>{playlist.title}</p>
-            </TooltipContent>
-          </Tooltip>
-
-          {playlist.description && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <CardDescription className="hidden sm:block text-zinc-400 text-sm line-clamp-2 truncate leading-relaxed mt-1">
-                  {playlist.description}
-                </CardDescription>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-xs">
-                <p className="truncate">{playlist.description}</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </CardContent>
-
-        {/* More options button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 sm:top-3 sm:right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-7 w-7 sm:h-8 sm:w-8 text-zinc-400 hover:text-white hover:bg-zinc-700/50"
-          onClick={(e) => {
-            e.stopPropagation();
-            // Handle more options
-          }}
-        >
-          <MoreHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
-        </Button>
-      </Card>
-    </TooltipProvider>
-  );
-
   const CreatePlaylistCard = () => (
     <Card
       className="relative w-full max-w-[140px] sm:max-w-[200px] h-[165px] sm:h-[290px] cursor-pointer bg-zinc-900/30 hover:bg-zinc-800/50 border-2 border-dashed border-zinc-700 hover:border-green-500/50 transition-all duration-300 hover:scale-105 flex flex-col items-center justify-center group mx-auto"
@@ -264,7 +172,15 @@ const Page = () => {
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
             <CreatePlaylistCard />
             {memoizedPlaylists.map((playlist) => (
-              <PlaylistCard key={playlist.id} playlist={playlist} />
+              <PlaylistCard
+                key={playlist.id}
+                id={playlist.id}
+                image={playlist.image}
+                title={playlist.title}
+                description={playlist.description}
+                onPlay={handlePlayPlaylist}
+                onClick={handleClick}
+              />
             ))}
           </div>
         )}
