@@ -4,7 +4,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import {
   Card,
@@ -36,7 +35,6 @@ import type { PlaylistProps, PlaylistTrack, UserProfile } from "@/lib/types";
 import UserHeader from "@/components/Home/UserHeader";
 
 const PlaylistPage = () => {
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [playlist, setPlaylist] = useState<PlaylistProps | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -292,35 +290,23 @@ const PlaylistPage = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-black">
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen((prev) => !prev)}
-        />
-        <div
-          className={`flex-1 transition-all ml-16 duration-300 ${
-            sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
-          }`}
-        >
-          <div className="p-4 space-y-6">
-            <Header />
-            <div className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <Skeleton className="w-48 h-48 rounded-lg" />
-                <div className="space-y-2">
-                  <Skeleton className="h-8 w-64" />
-                  <Skeleton className="h-4 w-48" />
-                  <Skeleton className="h-4 w-32" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                {Array(10)
-                  .fill(0)
-                  .map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full" />
-                  ))}
-              </div>
+      <div className="p-4 space-y-6">
+        <Header />
+        <div className="space-y-4">
+          <div className="flex items-center space-x-4">
+            <Skeleton className="w-48 h-48 rounded-lg" />
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-4 w-32" />
             </div>
+          </div>
+          <div className="space-y-2">
+            {Array(10)
+              .fill(0)
+              .map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
           </div>
         </div>
       </div>
@@ -329,32 +315,20 @@ const PlaylistPage = () => {
 
   if (!playlist || !userProfile) {
     return (
-      <div className="flex min-h-screen bg-black">
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen((prev) => !prev)}
-        />
-        <div
-          className={`flex-1 transition-all ml-16 duration-300 ${
-            sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
-          }`}
-        >
-          <div className="p-4 space-y-6">
-            <Header />
-            <div className="flex flex-col items-center justify-center py-16 space-y-4">
-              <div className="w-24 h-24 rounded-full bg-zinc-800 flex items-center justify-center">
-                <Music className="h-12 w-12 text-zinc-600" />
-              </div>
-              <div className="text-center space-y-2">
-                <h3 className="text-xl font-semibold text-white">
-                  Playlist not found
-                </h3>
-                <p className="text-zinc-400 max-w-md">
-                  The playlist you're looking for doesn't exist or is not
-                  accessible.
-                </p>
-              </div>
-            </div>
+      <div className="p-4 space-y-6">
+        <Header />
+        <div className="flex flex-col items-center justify-center py-16 space-y-4">
+          <div className="w-24 h-24 rounded-full bg-zinc-800 flex items-center justify-center">
+            <Music className="h-12 w-12 text-zinc-600" />
+          </div>
+          <div className="text-center space-y-2">
+            <h3 className="text-xl font-semibold text-white">
+              Playlist not found
+            </h3>
+            <p className="text-zinc-400 max-w-md">
+              The playlist you're looking for doesn't exist or is not
+              accessible.
+            </p>
           </div>
         </div>
       </div>
@@ -362,226 +336,214 @@ const PlaylistPage = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-black">
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen((prev) => !prev)}
+    <div className="p-4 space-y-6">
+      <Header />
+
+      {/* Enhanced UserHeader */}
+      <UserHeader
+        playlist={playlist}
+        user={userProfile}
+        id={userProfile.id}
+        refetch={fetchPlaylistDetails}
       />
-      <div
-        className={`flex-1 transition-all ml-16 duration-300 ${
-          sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
-        }`}
-      >
-        <div className="p-4 space-y-6">
-          <Header />
 
-          {/* Enhanced UserHeader */}
-          <UserHeader
-            playlist={playlist}
-            user={userProfile}
-            id={userProfile.id}
-            refetch={fetchPlaylistDetails}
+      {/* Display Toggle */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-white">Songs</h2>
+        <div className="flex items-center space-x-3">
+          <PiTable
+            size={35}
+            onClick={() => setDisplayUI("Table")}
+            className={`cursor-pointer transition-colors ${
+              displayUI === "Table"
+                ? "text-white"
+                : "text-[#707070] hover:text-white"
+            }`}
           />
-
-          {/* Display Toggle */}
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">Songs</h2>
-            <div className="flex items-center space-x-3">
-              <PiTable
-                size={35}
-                onClick={() => setDisplayUI("Table")}
-                className={`cursor-pointer transition-colors ${
-                  displayUI === "Table"
-                    ? "text-white"
-                    : "text-[#707070] hover:text-white"
-                }`}
-              />
-              <LuLayoutGrid
-                size={30}
-                onClick={() => setDisplayUI("Grid")}
-                className={`cursor-pointer transition-colors ${
-                  displayUI === "Grid"
-                    ? "text-white"
-                    : "text-[#707070] hover:text-white"
-                }`}
-              />
-            </div>
-          </div>
-
-          {/* Songs Display */}
-          {displayUI === "Table" ? (
-            <div className="bg-zinc-900/30 rounded-lg border border-zinc-800/50">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
-                    <TableHead className="w-[60px] text-center text-zinc-400 font-medium">
-                      #
-                    </TableHead>
-                    <TableHead className="text-zinc-400 font-medium">
-                      Title
-                    </TableHead>
-                    <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
-                      Album
-                    </TableHead>
-                    <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
-                      Date added
-                    </TableHead>
-                    <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium">
-                      <Clock className="h-4 w-4 ml-auto" />
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {memoizedTracks.map((playlistTrack, index) => {
-                    const { track } = playlistTrack;
-                    const isCurrentlyPlaying = isCurrentTrackPlaying(track.id);
-                    const isHovered = hoveredTrackId === track.id;
-
-                    return (
-                      <TableRow
-                        key={track.id}
-                        className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
-                        onClick={() => handlePlayPause(track)}
-                        onMouseEnter={() => setHoveredTrackId(track.id)}
-                        onMouseLeave={() => setHoveredTrackId(null)}
-                      >
-                        <TableCell className="text-center">
-                          {isHovered ? (
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="w-8 h-8 rounded-full hover:bg-green-500 hover:text-black"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handlePlayPause(track);
-                              }}
-                            >
-                              {getPlayPauseIcon(track.id, true)}
-                            </Button>
-                          ) : (
-                            <span
-                              className={`text-sm ${
-                                isCurrentlyPlaying
-                                  ? "text-green-400"
-                                  : "text-zinc-400"
-                              }`}
-                            >
-                              {index + 1}
-                            </span>
-                          )}
-                        </TableCell>
-
-                        <TableCell>
-                          <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
-                              <Image
-                                src={
-                                  track.album.images[0]?.url ||
-                                  "/placeholder.svg"
-                                }
-                                width={48}
-                                height={48}
-                                className="object-cover"
-                                alt={track.name}
-                              />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div
-                                className={`font-medium truncate hover:text-green-400 transition-colors ${
-                                  isCurrentlyPlaying
-                                    ? "text-green-400"
-                                    : "text-white"
-                                }`}
-                              >
-                                {track.name}
-                              </div>
-                              <div className="text-zinc-400 text-sm truncate">
-                                {track.artists.map((artist, artistIndex) => (
-                                  <span key={artist.id}>
-                                    <button
-                                      className="hover:underline hover:text-white transition-colors"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleArtistClick(
-                                          artist.id,
-                                          artist.name
-                                        );
-                                      }}
-                                    >
-                                      {artist.name}
-                                    </button>
-                                    {artistIndex < track.artists.length - 1 &&
-                                      ", "}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </TableCell>
-
-                        <TableCell className="hidden md:table-cell">
-                          <button
-                            className="text-zinc-400 hover:text-white hover:underline transition-colors truncate"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAlbumClick(
-                                track.album.id,
-                                track.album.name
-                              );
-                            }}
-                          >
-                            {track.album.name}
-                          </button>
-                        </TableCell>
-
-                        <TableCell className="hidden md:table-cell">
-                          <span className="text-zinc-400 text-sm">
-                            {new Date(
-                              playlistTrack.added_at
-                            ).toLocaleDateString()}
-                          </span>
-                        </TableCell>
-
-                        <TableCell className="hidden md:table-cell text-right">
-                          <span className="text-zinc-400 text-sm">
-                            {formatSongDuration(track.duration_ms)}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 px-1">
-              {memoizedTracks.map((playlistTrack, index) => (
-                <TrackCard
-                  key={playlistTrack.track.id}
-                  playlistTrack={playlistTrack}
-                  index={index}
-                />
-              ))}
-            </div>
-          )}
-
-          {memoizedTracks.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 space-y-4">
-              <div className="w-24 h-24 rounded-full bg-zinc-800 flex items-center justify-center">
-                <Music className="h-12 w-12 text-zinc-600" />
-              </div>
-              <div className="text-center space-y-2">
-                <h3 className="text-xl font-semibold text-white">
-                  No songs in this playlist
-                </h3>
-                <p className="text-zinc-400 max-w-md">
-                  This playlist is empty. Add some songs to get started!
-                </p>
-              </div>
-            </div>
-          )}
+          <LuLayoutGrid
+            size={30}
+            onClick={() => setDisplayUI("Grid")}
+            className={`cursor-pointer transition-colors ${
+              displayUI === "Grid"
+                ? "text-white"
+                : "text-[#707070] hover:text-white"
+            }`}
+          />
         </div>
       </div>
+
+      {/* Songs Display */}
+      {displayUI === "Table" ? (
+        <div className="bg-zinc-900/30 rounded-lg border border-zinc-800/50">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
+                <TableHead className="w-[60px] text-center text-zinc-400 font-medium">
+                  #
+                </TableHead>
+                <TableHead className="text-zinc-400 font-medium">
+                  Title
+                </TableHead>
+                <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
+                  Album
+                </TableHead>
+                <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
+                  Date added
+                </TableHead>
+                <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium">
+                  <Clock className="h-4 w-4 ml-auto" />
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {memoizedTracks.map((playlistTrack, index) => {
+                const { track } = playlistTrack;
+                const isCurrentlyPlaying = isCurrentTrackPlaying(track.id);
+                const isHovered = hoveredTrackId === track.id;
+
+                return (
+                  <TableRow
+                    key={track.id}
+                    className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
+                    onClick={() => handlePlayPause(track)}
+                    onMouseEnter={() => setHoveredTrackId(track.id)}
+                    onMouseLeave={() => setHoveredTrackId(null)}
+                  >
+                    <TableCell className="text-center">
+                      {isHovered ? (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="w-8 h-8 rounded-full hover:bg-green-500 hover:text-black"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePlayPause(track);
+                          }}
+                        >
+                          {getPlayPauseIcon(track.id, true)}
+                        </Button>
+                      ) : (
+                        <span
+                          className={`text-sm ${
+                            isCurrentlyPlaying
+                              ? "text-green-400"
+                              : "text-zinc-400"
+                          }`}
+                        >
+                          {index + 1}
+                        </span>
+                      )}
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
+                          <Image
+                            src={
+                              track.album.images[0]?.url ||
+                              "/placeholder.svg"
+                            }
+                            width={48}
+                            height={48}
+                            className="object-cover"
+                            alt={track.name}
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div
+                            className={`font-medium truncate hover:text-green-400 transition-colors ${
+                              isCurrentlyPlaying
+                                ? "text-green-400"
+                                : "text-white"
+                            }`}
+                          >
+                            {track.name}
+                          </div>
+                          <div className="text-zinc-400 text-sm truncate">
+                            {track.artists.map((artist, artistIndex) => (
+                              <span key={artist.id}>
+                                <button
+                                  className="hover:underline hover:text-white transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleArtistClick(
+                                      artist.id,
+                                      artist.name
+                                    );
+                                  }}
+                                >
+                                  {artist.name}
+                                </button>
+                                {artistIndex < track.artists.length - 1 &&
+                                  ", "}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="hidden md:table-cell">
+                      <button
+                        className="text-zinc-400 hover:text-white hover:underline transition-colors truncate"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAlbumClick(
+                            track.album.id,
+                            track.album.name
+                          );
+                        }}
+                      >
+                        {track.album.name}
+                      </button>
+                    </TableCell>
+
+                    <TableCell className="hidden md:table-cell">
+                      <span className="text-zinc-400 text-sm">
+                        {new Date(
+                          playlistTrack.added_at
+                        ).toLocaleDateString()}
+                      </span>
+                    </TableCell>
+
+                    <TableCell className="hidden md:table-cell text-right">
+                      <span className="text-zinc-400 text-sm">
+                        {formatSongDuration(track.duration_ms)}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 px-1">
+          {memoizedTracks.map((playlistTrack, index) => (
+            <TrackCard
+              key={playlistTrack.track.id}
+              playlistTrack={playlistTrack}
+              index={index}
+            />
+          ))}
+        </div>
+      )}
+
+      {memoizedTracks.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-16 space-y-4">
+          <div className="w-24 h-24 rounded-full bg-zinc-800 flex items-center justify-center">
+            <Music className="h-12 w-12 text-zinc-600" />
+          </div>
+          <div className="text-center space-y-2">
+            <h3 className="text-xl font-semibold text-white">
+              No songs in this playlist
+            </h3>
+            <p className="text-zinc-400 max-w-md">
+              This playlist is empty. Add some songs to get started!
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

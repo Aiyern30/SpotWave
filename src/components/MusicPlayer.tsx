@@ -134,7 +134,7 @@ export const MusicPlayer = () => {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 px-4 py-3 z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 px-4 py-3 z-40">
       <div className="flex items-center justify-between max-w-screen-2xl mx-auto">
         {/* Track Info */}
         <div className="flex items-center space-x-4 min-w-0 flex-1">
