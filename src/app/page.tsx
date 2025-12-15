@@ -3,12 +3,28 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
 import { Music, Play, Headphones, Volume2 } from "lucide-react";
-import { Button } from "@/components/ui/";
 
-// Import Lottie dynamically only on the client-side
-const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
+// PKCE Helper Functions
+function generateRandomString(length: number): string {
+  const possible =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const values = crypto.getRandomValues(new Uint8Array(length));
+  return values.reduce((acc, x) => acc + possible[x % possible.length], "");
+}
+
+async function sha256(plain: string): Promise<ArrayBuffer> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(plain);
+  return crypto.subtle.digest("SHA-256", data);
+}
+
+function base64encode(input: ArrayBuffer): string {
+  return btoa(String.fromCharCode(...Array.from(new Uint8Array(input))))
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+}
 
 export default function Home() {
   const CLIENT_ID = "5bf8d69f8aaf4727a4677c0ad2fef6ec";
@@ -16,7 +32,7 @@ export default function Home() {
     process.env.NEXT_PUBLIC_REDIRECT_URI || "http://127.0.0.1:3000/callback";
 
   const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
-  const RESPONSE_TYPE = "token";
+  const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
 
   const [token, setToken] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -37,68 +53,71 @@ export default function Home() {
     }
   }, []);
 
-  const initializePlayer = useCallback(() => {
-    window.onSpotifyWebPlaybackSDKReady = () => {
-      if (window.Spotify) {
-        const player = new window.Spotify.Player({
-          name: "SpotWave Player",
-          getOAuthToken: (cb: (token: string) => void) => {
-            cb(token);
-          },
-        });
+  // Exchange code for token
+  const exchangeCodeForToken = async (code: string, codeVerifier: string) => {
+    const params = new URLSearchParams({
+      client_id: CLIENT_ID,
+      grant_type: "authorization_code",
+      code: code,
+      redirect_uri: REDIRECT_URI,
+      code_verifier: codeVerifier,
+    });
 
-        player.addListener("ready", ({ device_id }: { device_id: string }) => {
-          console.log("Ready with Device ID", device_id);
-        });
+    try {
+      const response = await fetch(TOKEN_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: params.toString(),
+      });
 
-        player.addListener(
-          "not_ready",
-          ({ device_id }: { device_id: string }) => {
-            console.log("Device ID has gone offline", device_id);
-          }
-        );
+      const data = await response.json();
 
-        player.connect();
-      }
-    };
-  }, [token]);
-
-  // Load Spotify SDK
-  useEffect(() => {
-    const loadSpotifySdk = () => {
-      if (window.Spotify) {
-        initializePlayer();
-      } else {
-        const script = document.createElement("script");
-        script.src = "https://sdk.scdn.co/spotify-player.js";
-        script.onload = () => initializePlayer();
-        document.body.appendChild(script);
-      }
-    };
-
-    loadSpotifySdk();
-  }, [initializePlayer]);
-
-  // Check for token in URL after redirect from Spotify
-  useEffect(() => {
-    const hash = window.location.hash;
-    let storedToken = window.localStorage.getItem("Token") || "";
-
-    // Only handle the case when the URL has a hash (redirect from Spotify)
-    if (!storedToken && hash) {
-      const tokenFragment = hash
-        .substring(1)
-        .split("&")
-        .find((elem) => elem.startsWith("access_token"));
-
-      if (tokenFragment) {
-        storedToken = tokenFragment.split("=")[1];
-        window.localStorage.setItem("Token", storedToken);
-        window.location.hash = "";
-        setToken(storedToken);
+      if (data.access_token) {
+        window.localStorage.setItem("Token", data.access_token);
+        if (data.refresh_token) {
+          window.localStorage.setItem("RefreshToken", data.refresh_token);
+        }
+        setToken(data.access_token);
         router.push("/Home");
+      } else {
+        console.error("Failed to get access token:", data);
+        router.push("/");
       }
-    } else if (storedToken) {
+    } catch (error) {
+      console.error("Error exchanging code for token:", error);
+      router.push("/");
+    }
+  };
+
+  // Check for existing token or handle OAuth callback
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get("code");
+    const error = urlParams.get("error");
+    const storedToken = window.localStorage.getItem("Token") || "";
+
+    // Handle OAuth error
+    if (error) {
+      console.error("Spotify OAuth error:", error);
+      window.location.href = "/";
+      return;
+    }
+
+    // Handle OAuth callback with code
+    if (code) {
+      const codeVerifier = window.localStorage.getItem("code_verifier");
+      if (codeVerifier) {
+        setLoading(true);
+        exchangeCodeForToken(code, codeVerifier);
+        window.localStorage.removeItem("code_verifier");
+      }
+      return;
+    }
+
+    // Check existing token
+    if (storedToken) {
       setLoading(true);
       validateToken(storedToken).then((isValid) => {
         if (isValid) {
@@ -106,49 +125,61 @@ export default function Home() {
           router.push("/Home");
         } else {
           window.localStorage.removeItem("Token");
+          window.localStorage.removeItem("RefreshToken");
           setToken("");
-          router.push("/401"); // Ensure we go to /401 if the token is invalid
         }
         setLoading(false);
       });
     }
   }, [router, validateToken]);
 
-  // Handle the login process
-  const handleLogin = () => {
+  // Handle the login process with PKCE
+  const handleLogin = async () => {
     setIsRedirecting(true);
 
-    // Delay the actual redirect to show the animation
-    setTimeout(() => {
-      const scopes = [
-        "ugc-image-upload",
-        "user-read-playback-state",
-        "user-modify-playback-state",
-        "user-read-currently-playing",
-        "app-remote-control",
-        "streaming",
-        "playlist-read-private",
-        "playlist-read-collaborative",
-        "playlist-modify-private",
-        "playlist-modify-public",
-        "user-follow-modify",
-        "user-follow-read",
-        "user-read-playback-position",
-        "user-top-read",
-        "user-read-recently-played",
-        "user-library-modify",
-        "user-library-read",
-        "user-read-email",
-        "user-read-private",
-      ].join(" ");
+    const codeVerifier = generateRandomString(64);
+    const hashed = await sha256(codeVerifier);
+    const codeChallenge = base64encode(hashed);
 
-      window.location.href = `${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(
-        REDIRECT_URI
-      )}&response_type=${RESPONSE_TYPE}&scope=${encodeURIComponent(scopes)}`;
-    }, 2500); // Show animation for 2.5 seconds before redirecting
+    // Store code verifier for later use
+    window.localStorage.setItem("code_verifier", codeVerifier);
+
+    const scopes = [
+      "ugc-image-upload",
+      "user-read-playback-state",
+      "user-modify-playback-state",
+      "user-read-currently-playing",
+      "app-remote-control",
+      "streaming",
+      "playlist-read-private",
+      "playlist-read-collaborative",
+      "playlist-modify-private",
+      "playlist-modify-public",
+      "user-follow-modify",
+      "user-follow-read",
+      "user-read-playback-position",
+      "user-top-read",
+      "user-read-recently-played",
+      "user-library-modify",
+      "user-library-read",
+      "user-read-email",
+      "user-read-private",
+    ].join(" ");
+
+    const authUrl = new URL(AUTH_ENDPOINT);
+    authUrl.searchParams.append("client_id", CLIENT_ID);
+    authUrl.searchParams.append("response_type", "code");
+    authUrl.searchParams.append("redirect_uri", REDIRECT_URI);
+    authUrl.searchParams.append("scope", scopes);
+    authUrl.searchParams.append("code_challenge_method", "S256");
+    authUrl.searchParams.append("code_challenge", codeChallenge);
+
+    setTimeout(() => {
+      window.location.href = authUrl.toString();
+    }, 2500);
   };
 
-  if (token || isRedirecting) {
+  if (token || isRedirecting || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-black to-green-900 flex flex-col items-center justify-center p-4 overflow-hidden">
         {/* Animated background elements */}
@@ -180,7 +211,7 @@ export default function Home() {
             <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
             <div className="absolute inset-0 bg-green-500/40 rounded-full animate-pulse" />
             <div className="relative bg-green-500 rounded-full p-5 shadow-lg shadow-green-500/30">
-              <Music className="h-10 w-10 text-black animate-wiggle" />
+              <Music className="h-10 w-10 text-black" />
             </div>
           </div>
 
@@ -199,18 +230,40 @@ export default function Home() {
             ))}
           </div>
 
-          <h2 className="text-4xl font-bold mb-4 animate-fadeIn">
-            Connecting to Spotify
-          </h2>
+          <h2 className="text-4xl font-bold mb-4">Connecting to Spotify</h2>
 
           <div className="w-full bg-black/30 h-2 rounded-full mb-6 overflow-hidden">
-            <div className="h-full bg-green-500 animate-progress rounded-full" />
+            <div
+              className="h-full bg-green-500 animate-pulse rounded-full"
+              style={{ width: "70%" }}
+            />
           </div>
 
           <p className="text-green-400 animate-pulse text-lg">
             Preparing your music experience...
           </p>
         </div>
+
+        <style jsx>{`
+          @keyframes float {
+            0%,
+            100% {
+              transform: translateY(0px);
+            }
+            50% {
+              transform: translateY(-20px);
+            }
+          }
+          @keyframes soundWave {
+            0%,
+            100% {
+              height: 30%;
+            }
+            50% {
+              height: 80%;
+            }
+          }
+        `}</style>
       </div>
     );
   }
@@ -239,66 +292,83 @@ export default function Home() {
       </div>
 
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 opacity-10 animate-float">
+        <div
+          className="absolute top-1/4 left-1/4 opacity-10"
+          style={{ animation: "float 6s ease-in-out infinite" }}
+        >
           <Music className="h-32 w-32 text-white" />
         </div>
-        <div className="absolute top-2/3 right-1/4 opacity-10 animate-float2">
+        <div
+          className="absolute top-2/3 right-1/4 opacity-10"
+          style={{
+            animation: "float 8s ease-in-out infinite",
+            animationDelay: "1s",
+          }}
+        >
           <Headphones className="h-24 w-24 text-white" />
         </div>
-        <div className="absolute bottom-1/4 left-1/3 opacity-10 animate-float3">
+        <div
+          className="absolute bottom-1/4 left-1/3 opacity-10"
+          style={{
+            animation: "float 7s ease-in-out infinite",
+            animationDelay: "2s",
+          }}
+        >
           <Volume2 className="h-20 w-20 text-white" />
         </div>
       </div>
 
-      <div className="max-w-md w-full backdrop-blur-sm bg-black/30 rounded-xl p-8 shadow-2xl border border-green-500/20 relative z-10 animate-fadeIn">
-        <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-green-500 rounded-full p-4 shadow-lg shadow-green-500/30 animate-bounce-slow">
-          <Music className="h-8 w-8 text-black animate-wiggle" />
+      <div className="max-w-md w-full backdrop-blur-sm bg-black/30 rounded-xl p-8 shadow-2xl border border-green-500/20 relative z-10">
+        <div
+          className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-green-500 rounded-full p-4 shadow-lg shadow-green-500/30"
+          style={{ animation: "float 3s ease-in-out infinite" }}
+        >
+          <Music className="h-8 w-8 text-black" />
         </div>
 
         <div className="text-center mt-6 mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2 animate-slideDown">
-            SpotWave
-          </h1>
-          <p className="text-green-400 animate-slideUp">
-            Your music, amplified.
-          </p>
+          <h1 className="text-4xl font-bold text-white mb-2">SpotWave</h1>
+          <p className="text-green-400">Your music, amplified.</p>
         </div>
 
         <div className="space-y-6">
-          <div
-            className="bg-black/40 rounded-lg p-4 text-white/80 animate-fadeIn"
-            style={{ animationDelay: "0.3s" }}
-          >
+          <div className="bg-black/40 rounded-lg p-4 text-white/80">
             <p>
               Connect with Spotify to access your playlists, discover new music,
               and enjoy a seamless listening experience.
             </p>
           </div>
 
-          <Button
+          <button
             onClick={handleLogin}
-            className="w-full py-6 bg-green-500 hover:bg-green-600 text-black font-bold text-lg flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 group animate-pulse-slow"
+            className="w-full py-6 bg-green-500 hover:bg-green-600 text-black font-bold text-lg flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 group rounded-lg"
           >
-            <Play className="h-5 w-5 group-hover:animate-ping" />
+            <Play className="h-5 w-5" />
             <span>Connect with Spotify</span>
-          </Button>
+          </button>
 
-          <div
-            className="text-center text-xs text-white/60 animate-fadeIn"
-            style={{ animationDelay: "0.6s" }}
-          >
+          <div className="text-center text-xs text-white/60">
             By connecting, you agree to Spotify's Terms of Service and Privacy
             Policy
           </div>
         </div>
       </div>
 
-      <div
-        className="mt-8 text-white/80 text-sm animate-fadeIn"
-        style={{ animationDelay: "0.9s" }}
-      >
+      <div className="mt-8 text-white/80 text-sm">
         © {new Date().getFullYear()} SpotWave. All rights reserved.
       </div>
+
+      <style jsx>{`
+        @keyframes float {
+          0%,
+          100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-20px);
+          }
+        }
+      `}</style>
     </div>
   );
 }
