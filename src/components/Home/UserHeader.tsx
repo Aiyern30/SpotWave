@@ -653,12 +653,11 @@ export default function UserHeader({
             >
               <DialogTrigger asChild>
                 <Button
-                  variant="outline"
-                  className="flex items-center gap-2 border-green-500 text-green-400 hover:bg-green-500/10"
-                  onClick={() => setSummaryDialogOpen(true)}
+                  variant="ghost"
+                  size="icon"
+                  className="h-12 w-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 hover:bg-black/30 hover:border-white/20 transition-all duration-200 hover:scale-105"
                 >
-                  <Sparkles className="h-4 w-4" />
-                  View Summary
+                  <Sparkles className="h-4 w-4 text-white" />
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-zinc-900 border-zinc-800 max-w-lg">
