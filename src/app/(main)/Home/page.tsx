@@ -118,12 +118,12 @@ const Page = () => {
   const PlaylistCard = ({ playlist }: { playlist: PlaylistsProps }) => (
     <TooltipProvider>
       <Card
-        className="relative w-[200px] h-[280px] cursor-pointer bg-zinc-900/50 hover:bg-zinc-800/70 transition-all duration-300 hover:scale-105 group"
+        className="relative w-[200px] h-[290px] cursor-pointer bg-zinc-900/50 hover:bg-zinc-800/70 transition-all duration-300 hover:scale-105 group border-zinc-800/50"
         onClick={() => handleClick(playlist.id, playlist.title)}
       >
         <CardHeader className="p-0 pb-0">
-          <div className="relative w-full px-4 pt-4 pb-2">
-            <div className="w-[170px] h-[170px] rounded-lg shadow-lg overflow-hidden">
+          <div className="relative w-full px-5 pt-5 pb-3">
+            <div className="w-[170px] h-[170px] rounded-lg shadow-xl overflow-hidden">
               {imageError[playlist.id] || !playlist.image ? (
                 <Image
                   src="/default-artist.png"
@@ -147,10 +147,10 @@ const Page = () => {
             </div>
 
             {/* Play button overlay */}
-            <div className="absolute bottom-3 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+            <div className="absolute bottom-4 right-7 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
               <Button
                 size="icon"
-                className="h-14 w-14 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-lg hover:scale-110 transition-all duration-200"
+                className="h-14 w-14 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl hover:scale-110 transition-all duration-200"
                 onClick={(e) => {
                   e.stopPropagation();
                   handlePlayPlaylist(playlist.id);
@@ -162,7 +162,7 @@ const Page = () => {
           </div>
         </CardHeader>
 
-        <CardContent className="p-4 pt-2">
+        <CardContent className="p-5 pt-2 space-y-1">
           <Tooltip>
             <TooltipTrigger asChild>
               <CardTitle className="text-white text-base font-semibold line-clamp-1 hover:text-green-400 transition-colors">
@@ -177,7 +177,7 @@ const Page = () => {
           {playlist.description && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <CardDescription className="text-zinc-400 text-sm line-clamp-2 leading-relaxed mt-1">
+                <CardDescription className="text-zinc-400 text-sm line-clamp-2 leading-relaxed">
                   {playlist.description}
                 </CardDescription>
               </TooltipTrigger>
@@ -192,7 +192,7 @@ const Page = () => {
         <Button
           variant="ghost"
           size="icon"
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 text-zinc-400 hover:text-white"
+          className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-700/50"
           onClick={(e) => {
             e.stopPropagation();
             // Handle more options
@@ -206,16 +206,16 @@ const Page = () => {
 
   const CreatePlaylistCard = () => (
     <Card
-      className="relative w-[200px] h-[280px] cursor-pointer bg-zinc-900/30 hover:bg-zinc-800/50 border border-dashed border-zinc-700 transition-all duration-300 hover:scale-105 flex flex-col items-center justify-center group"
+      className="relative w-[200px] h-[290px] cursor-pointer bg-zinc-900/30 hover:bg-zinc-800/50 border-2 border-dashed border-zinc-700 hover:border-green-500/50 transition-all duration-300 hover:scale-105 flex flex-col items-center justify-center group"
       onClick={handleCreatePlaylist}
     >
-      <div className="flex flex-col items-center justify-center space-y-4">
-        <div className="w-20 h-20 rounded-full bg-zinc-700 group-hover:bg-green-500/20 flex items-center justify-center transition-all duration-300">
+      <div className="flex flex-col items-center justify-center space-y-5">
+        <div className="w-20 h-20 rounded-full bg-zinc-800/50 group-hover:bg-green-500/20 flex items-center justify-center transition-all duration-300 border border-zinc-700 group-hover:border-green-500/50">
           {creating ? (
             <div className="animate-spin rounded-full h-8 w-8 border-2 border-green-500 border-t-transparent" />
           ) : (
             <IoMdAdd
-              size={32}
+              size={36}
               className="text-green-500 group-hover:scale-110 transition-transform"
             />
           )}
@@ -228,12 +228,12 @@ const Page = () => {
   );
 
   const LoadingSkeleton = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 px-1">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
       {[...Array(12)].map((_, i) => (
-        <div key={i} className="space-y-3">
-          <Skeleton className="w-[170px] h-[170px] mx-auto rounded-lg bg-zinc-800" />
-          <Skeleton className="h-5 w-36 mx-auto bg-zinc-800" />
-          <Skeleton className="h-4 w-32 mx-auto bg-zinc-800" />
+        <div key={i} className="space-y-4">
+          <Skeleton className="w-[200px] h-[200px] rounded-lg bg-zinc-800" />
+          <Skeleton className="h-5 w-36 bg-zinc-800" />
+          <Skeleton className="h-4 w-32 bg-zinc-800" />
         </div>
       ))}
     </div>
@@ -250,13 +250,15 @@ const Page = () => {
           sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
         }`}
       >
-        <div className="px-6 py-4 space-y-5">
+        <div className="px-8 py-6 space-y-8">
           <Header />
 
-          <div className="space-y-5">
-            <div className="flex items-center justify-between px-1">
-              <h1 className="text-2xl font-bold text-white">Your Playlists</h1>
-              <p className="text-zinc-400 text-sm">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between px-2">
+              <h1 className="text-3xl font-bold text-white tracking-tight">
+                Your Playlists
+              </h1>
+              <p className="text-zinc-400 text-sm font-medium">
                 {memoizedPlaylists.length} playlist
                 {memoizedPlaylists.length !== 1 ? "s" : ""}
               </p>
@@ -265,7 +267,7 @@ const Page = () => {
             {loading ? (
               <LoadingSkeleton />
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 px-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
                 <CreatePlaylistCard />
                 {memoizedPlaylists.map((playlist) => (
                   <PlaylistCard key={playlist.id} playlist={playlist} />
@@ -274,22 +276,22 @@ const Page = () => {
             )}
 
             {!loading && memoizedPlaylists.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                <div className="w-24 h-24 rounded-full bg-zinc-800 flex items-center justify-center">
-                  <Music className="h-12 w-12 text-zinc-600" />
+              <div className="flex flex-col items-center justify-center py-20 space-y-6">
+                <div className="w-28 h-28 rounded-full bg-zinc-800/50 flex items-center justify-center border border-zinc-700">
+                  <Music className="h-14 w-14 text-zinc-600" />
                 </div>
-                <div className="text-center space-y-2">
-                  <h3 className="text-xl font-semibold text-white">
+                <div className="text-center space-y-3">
+                  <h3 className="text-2xl font-semibold text-white">
                     No playlists yet
                   </h3>
-                  <p className="text-zinc-400 max-w-md">
+                  <p className="text-zinc-400 max-w-md text-base">
                     Create your first playlist to start organizing your favorite
                     music
                   </p>
                 </div>
                 <Button
                   onClick={handleCreatePlaylist}
-                  className="bg-green-500 hover:bg-green-600 text-black font-semibold"
+                  className="bg-green-500 hover:bg-green-600 text-black font-semibold px-6 py-6 text-base mt-4"
                   disabled={creating}
                 >
                   {creating ? "Creating..." : "Create Your First Playlist"}
