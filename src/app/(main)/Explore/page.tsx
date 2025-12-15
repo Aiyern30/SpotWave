@@ -111,10 +111,22 @@ const Page = () => {
           id: track.id,
           name: track.name,
           artists: track.artists,
-          album: track.album,
+          album: {
+            name: track.album.name,
+            images: track.album.images,
+            id: track.album.id,
+            artists: track.artists,
+            release_date: track.album.release_date || "",
+            total_tracks: track.album.total_tracks || 0,
+          },
           duration_ms: track.duration_ms,
-          uri: track.uri,
+          explicit: track.explicit || false,
+          external_urls: track.external_urls || { spotify: "" },
+          popularity: track.popularity || 0,
           preview_url: track.preview_url || null,
+          track_number: track.track_number || 0,
+          disc_number: track.disc_number || 1,
+          uri: track.uri,
         });
       }
     } catch (error) {
@@ -129,10 +141,22 @@ const Page = () => {
         id: track.id,
         name: track.name,
         artists: track.album.artists,
-        album: track.album,
+        album: {
+          name: track.album.name,
+          images: track.album.images,
+          id: track.album.artists[0]?.id || "",
+          artists: track.album.artists,
+          release_date: track.album.release_date,
+          total_tracks: 0,
+        },
         duration_ms: track.duration_ms,
-        uri: track.uri,
+        explicit: false,
+        external_urls: { spotify: "" },
+        popularity: 0,
         preview_url: track.preview_url || null,
+        track_number: 0,
+        disc_number: 1,
+        uri: track.uri,
       });
     } catch (error) {
       console.error("Error playing track:", error);
