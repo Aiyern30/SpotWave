@@ -80,14 +80,21 @@ export default function Home() {
           window.localStorage.setItem("RefreshToken", data.refresh_token);
         }
         setToken(data.access_token);
+        setLoading(false);
+        
+        // Clean up URL before redirecting
+        window.history.replaceState({}, document.title, "/");
+        
+        // Navigate to Home
         router.push("/Home");
       } else {
         console.error("Failed to get access token:", data);
-        router.push("/");
+        setLoading(false);
+        // Don't redirect, show error state instead
       }
     } catch (error) {
       console.error("Error exchanging code for token:", error);
-      router.push("/");
+      setLoading(false);
     }
   };
 
@@ -101,7 +108,8 @@ export default function Home() {
     // Handle OAuth error
     if (error) {
       console.error("Spotify OAuth error:", error);
-      window.location.href = "/";
+      window.history.replaceState({}, document.title, "/");
+      setLoading(false);
       return;
     }
 
@@ -112,6 +120,10 @@ export default function Home() {
         setLoading(true);
         exchangeCodeForToken(code, codeVerifier);
         window.localStorage.removeItem("code_verifier");
+      } else {
+        console.error("No code verifier found");
+        window.history.replaceState({}, document.title, "/");
+        setLoading(false);
       }
       return;
     }
@@ -127,8 +139,8 @@ export default function Home() {
           window.localStorage.removeItem("Token");
           window.localStorage.removeItem("RefreshToken");
           setToken("");
+          setLoading(false);
         }
-        setLoading(false);
       });
     }
   }, [router, validateToken]);
@@ -174,9 +186,8 @@ export default function Home() {
     authUrl.searchParams.append("code_challenge_method", "S256");
     authUrl.searchParams.append("code_challenge", codeChallenge);
 
-    setTimeout(() => {
-      window.location.href = authUrl.toString();
-    }, 2500);
+    // Redirect immediately without delay
+    window.location.href = authUrl.toString();
   };
 
   if (token || isRedirecting || loading) {
