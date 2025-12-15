@@ -34,6 +34,8 @@ import {
 import { useEffect, useState, useRef, useCallback } from "react";
 import type { Artist, Track } from "@/lib/types";
 import { toast } from "react-toastify";
+import { analyzePlaylistGenres } from "@/utils/analyzePlaylistGenres";
+import { getPlaylistRecommendations } from "@/utils/getPlaylistRecommendations";
 
 interface SearchSongsProps {
   playlistID: string;
@@ -48,6 +50,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [addingTracks, setAddingTracks] = useState<Set<string>>(new Set());
   const [playingPreview, setPlayingPreview] = useState<string | null>(null);
+  const [recommendedTracks, setRecommendedTracks] = useState<Track[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
@@ -205,6 +208,23 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
     setSearchQuery("");
     setSearchResults([]);
   };
+
+  // Fetch recommendations when sheet opens
+  useEffect(() => {
+    async function fetchRecommendations() {
+      if (!token || !isSheetOpen) return;
+      // Fetch playlist tracks
+      const playlistRes = await fetch(
+        `https://api.spotify.com/v1/playlists/${playlistID}/tracks?limit=50`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const playlistData = await playlistRes.json();
+      const genres = await analyzePlaylistGenres(playlistData.items, token);
+      const recs = await getPlaylistRecommendations(genres, token);
+      setRecommendedTracks(recs);
+    }
+    fetchRecommendations();
+  }, [token, playlistID, isSheetOpen]);
 
   return (
     <TooltipProvider>
@@ -405,6 +425,37 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                   )}
                 </div>
               </ScrollArea>
+
+              {/* Recommended Songs Section */}
+              {recommendedTracks.length > 0 && (
+                <div className="mb-6">
+                  <h4 className="text-green-400 font-semibold mb-2 text-lg">
+                    Recommended for this playlist
+                  </h4>
+                  <div className="space-y-1">
+                    {recommendedTracks.map((track) => (
+                      <div
+                        key={track.id}
+                        className="flex items-center gap-3 p-2 rounded hover:bg-zinc-800/40"
+                      >
+                        {/* Render track info and add button, similar to search results */}
+                        <span className="truncate">
+                          {track.name} -{" "}
+                          {track.artists.map((a) => a.name).join(", ")}
+                        </span>
+                        <Button
+                          size="sm"
+                          onClick={() => handleAddTrackToPlaylist(track)}
+                          disabled={addingTracks.has(track.id)}
+                          className="ml-auto bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </SheetContent>
           </Sheet>
         </TooltipTrigger>
