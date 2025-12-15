@@ -180,12 +180,12 @@ const Page = () => {
           {playlist.description && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <CardDescription className="hidden sm:block text-zinc-400 text-sm line-clamp-2 leading-relaxed mt-1">
+                <CardDescription className="hidden sm:block text-zinc-400 text-sm line-clamp-2 truncate leading-relaxed mt-1">
                   {playlist.description}
                 </CardDescription>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="max-w-xs">
-                <p>{playlist.description}</p>
+                <p className="truncate">{playlist.description}</p>
               </TooltipContent>
             </Tooltip>
           )}
@@ -231,7 +231,7 @@ const Page = () => {
   );
 
   const LoadingSkeleton = () => (
-    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-6 justify-items-center">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
       {[...Array(12)].map((_, i) => (
         <div
           key={i}
@@ -273,7 +273,7 @@ const Page = () => {
             {loading ? (
               <LoadingSkeleton />
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-6 justify-items-center">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
                 <CreatePlaylistCard />
                 {memoizedPlaylists.map((playlist) => (
                   <PlaylistCard key={playlist.id} playlist={playlist} />
