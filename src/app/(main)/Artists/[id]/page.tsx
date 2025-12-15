@@ -5,12 +5,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
+import PlaylistCard from "@/components/PlaylistCard";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  Skeleton,
   Button,
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +23,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Skeleton,
 } from "@/components/ui";
 import {
   Tooltip,
@@ -46,6 +43,7 @@ import DOMPurify from "dompurify";
 import { Play, MoreHorizontal, Music, Users } from "lucide-react";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
+import { usePlayer } from "@/contexts/PlayerContext";
 
 interface ArtistProfilePageProps {
   id: string;
@@ -120,6 +118,7 @@ const ArtistProfilePage = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { playTrack } = usePlayer();
 
   const segments = pathname.split("/");
   const id = segments[segments.length - 1];
@@ -370,6 +369,45 @@ const ArtistProfilePage = () => {
     }
   };
 
+  const handlePlayTrack = (track: TopTrack) => {
+    try {
+      playTrack({
+        id: track.id,
+        name: track.name,
+        artists: track.album.artists,
+        album: {
+          name: track.album.name,
+          images: track.album.images,
+          id: track.album.id,
+          artists: track.album.artists,
+          release_date: "",
+          total_tracks: 0,
+        },
+        duration_ms: track.duration_ms,
+        explicit: false,
+        external_urls: {
+          spotify: `https://open.spotify.com/track/${track.id}`,
+        },
+        popularity: 0,
+        preview_url: track.preview_url || null,
+        track_number: 0,
+        disc_number: 1,
+        uri: `spotify:track:${track.id}`,
+      });
+    } catch (error) {
+      console.error("Error playing track:", error);
+    }
+  };
+
+  const handlePlayAlbum = async (albumId: string) => {
+    try {
+      // You can implement playing entire album using Spotify URI
+      console.log("Playing album:", albumId);
+    } catch (error) {
+      console.error("Error playing album:", error);
+    }
+  };
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedToken = localStorage.getItem("Token");
@@ -378,166 +416,6 @@ const ArtistProfilePage = () => {
       }
     }
   }, []);
-
-  // Track Card Component
-  const TrackCard = ({ track, index }: { track: TopTrack; index: number }) => (
-    <TooltipProvider>
-      <Card
-        className="relative w-[200px] h-[320px] cursor-pointer bg-zinc-900/50 hover:bg-zinc-800/70 transition-all duration-300 hover:scale-105 group"
-        onClick={() => router.push(`/Songs/${track.id}?name=${track.name}`)}
-      >
-        <CardHeader className="p-0 pb-0">
-          <div className="relative w-full px-4 pt-4 pb-2">
-            <div className="w-[170px] h-[170px] rounded-lg shadow-lg overflow-hidden">
-              <Image
-                src={track.album.images[0]?.url || "/default-artist.png"}
-                width={170}
-                height={170}
-                className="object-cover rounded-lg"
-                alt={track.name}
-              />
-            </div>
-
-            {/* Play button overlay */}
-            <div className="absolute bottom-3 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-              <Button
-                size="icon"
-                className="h-14 w-14 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-lg hover:scale-110 transition-all duration-200"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handlePlay(track.preview_url);
-                }}
-              >
-                <Play className="h-6 w-6 ml-0.5" fill="currentColor" />
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-4 pt-2 space-y-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <CardTitle className="text-white text-base font-semibold line-clamp-1 hover:text-green-400 transition-colors">
-                {track.name}
-              </CardTitle>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
-              <p>{track.name}</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <div className="space-y-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div
-                  className="text-zinc-500 text-xs line-clamp-1 hover:text-zinc-400 transition-colors cursor-pointer hover:underline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push(
-                      `/Albums/${track.album.id}?name=${track.album.name}`
-                    );
-                  }}
-                >
-                  {track.album.name}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-xs">
-                <p>{track.album.name}</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <div className="text-zinc-500 text-xs">
-              {formatSongDuration(track.duration_ms)}
-            </div>
-          </div>
-        </CardContent>
-
-        {/* More options button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 text-zinc-400 hover:text-white"
-          onClick={(e) => {
-            e.stopPropagation();
-            // Handle more options
-          }}
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </Card>
-    </TooltipProvider>
-  );
-
-  // Album Card Component
-  const AlbumCard = ({ album, index }: { album: Albums; index: number }) => (
-    <TooltipProvider>
-      <Card
-        className="relative w-[200px] h-[300px] cursor-pointer bg-zinc-900/50 hover:bg-zinc-800/70 transition-all duration-300 hover:scale-105 group"
-        onClick={() => router.push(`/Albums/${album.id}?name=${album.name}`)}
-      >
-        <CardHeader className="p-0 pb-0">
-          <div className="relative w-full px-4 pt-4 pb-2">
-            <div className="w-[170px] h-[170px] rounded-lg shadow-lg overflow-hidden">
-              <Image
-                src={album.images[0]?.url || "/default-artist.png"}
-                width={170}
-                height={170}
-                className="object-cover rounded-lg"
-                alt={album.name}
-              />
-            </div>
-
-            {/* Play button overlay */}
-            <div className="absolute bottom-3 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-              <Button
-                size="icon"
-                className="h-14 w-14 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-lg hover:scale-110 transition-all duration-200"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Handle play album
-                }}
-              >
-                <Play className="h-6 w-6 ml-0.5" fill="currentColor" />
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-4 pt-2 space-y-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <CardTitle className="text-white text-base font-semibold line-clamp-1 hover:text-green-400 transition-colors">
-                {album.name}
-              </CardTitle>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
-              <p>{album.name}</p>
-            </TooltipContent>
-          </Tooltip>
-
-          <div className="space-y-1">
-            <div className="text-zinc-400 text-sm capitalize">
-              {album.album_type}
-            </div>
-            <div className="text-zinc-500 text-xs">{album.release_date}</div>
-          </div>
-        </CardContent>
-
-        {/* More options button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 text-zinc-400 hover:text-white"
-          onClick={(e) => {
-            e.stopPropagation();
-            // Handle more options
-          }}
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </Card>
-    </TooltipProvider>
-  );
 
   return (
     <div className="flex min-h-screen bg-black">
@@ -695,11 +573,7 @@ const ArtistProfilePage = () => {
                           <TableRow
                             key={track.id}
                             className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors group cursor-pointer"
-                            onClick={() =>
-                              router.push(
-                                `/Songs/${track.id}?name=${track.name}`
-                              )
-                            }
+                            onClick={() => handlePlayTrack(track)}
                           >
                             <TableCell className="text-center">
                               <span className="text-zinc-400 text-sm">
@@ -755,7 +629,7 @@ const ArtistProfilePage = () => {
                                 className="h-8 w-8 text-zinc-400 hover:text-white opacity-0 group-hover:opacity-100 transition-all duration-200"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handlePlay(track.preview_url);
+                                  handlePlayTrack(track);
                                 }}
                               >
                                 <Play className="h-4 w-4" fill="currentColor" />
@@ -767,9 +641,23 @@ const ArtistProfilePage = () => {
                     </Table>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 px-1">
-                    {topTracks.map((track, index) => (
-                      <TrackCard key={track.id} track={track} index={index} />
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+                    {topTracks.map((track) => (
+                      <PlaylistCard
+                        key={track.id}
+                        id={track.id}
+                        image={
+                          track.album.images[0]?.url || "/default-artist.png"
+                        }
+                        title={track.name}
+                        description={track.album.name}
+                        onPlay={() => handlePlayTrack(track)}
+                        onClick={(id, name) =>
+                          router.push(
+                            `/Songs/${id}?name=${encodeURIComponent(name)}`
+                          )
+                        }
+                      />
                     ))}
                   </div>
                 )}
@@ -876,9 +764,21 @@ const ArtistProfilePage = () => {
                     </Table>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 px-1">
-                    {albums.map((album, index) => (
-                      <AlbumCard key={album.id} album={album} index={index} />
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+                    {albums.map((album) => (
+                      <PlaylistCard
+                        key={album.id}
+                        id={album.id}
+                        image={album.images[0]?.url || "/default-artist.png"}
+                        title={album.name}
+                        description={`${album.album_type} • ${album.release_date}`}
+                        onPlay={() => handlePlayAlbum(album.id)}
+                        onClick={(id, name) =>
+                          router.push(
+                            `/Albums/${id}?name=${encodeURIComponent(name)}`
+                          )
+                        }
+                      />
                     ))}
                   </div>
                 )}
