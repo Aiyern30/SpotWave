@@ -81,10 +81,10 @@ export default function Home() {
         }
         setToken(data.access_token);
         setLoading(false);
-        
+
         // Clean up URL before redirecting
         window.history.replaceState({}, document.title, "/");
-        
+
         // Navigate to Home
         router.push("/Home");
       } else {
