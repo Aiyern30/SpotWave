@@ -1,20 +1,28 @@
-// analyzePlaylistGenres.ts - AI-powered analysis
 import type { PlaylistTrack } from "@/lib/types";
 
-interface PlaylistAnalysis {
-  genres: string[];
-  moods: string[];
-  eras: string[];
-  artistStyles: string[];
-  searchTerms: string[];
-  summary: string;
-}
+// Cache for genre analysis
+const analysisCache = new Map<string, { analysis: any; timestamp: number }>();
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
 
 export async function analyzePlaylistGenres(
   tracks: PlaylistTrack[],
   token: string
-): Promise<PlaylistAnalysis> {
+): Promise<any> {
   try {
+    // Create cache key based on track IDs
+    const trackIds = tracks
+      .slice(0, 20)
+      .map((t) => t.track.id)
+      .join(",");
+    const cacheKey = `analysis_${trackIds}`;
+
+    // Check cache first
+    const cached = analysisCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log("✅ Using cached analysis");
+      return cached.analysis;
+    }
+
     // Get unique artist IDs
     const artistIds = Array.from(
       new Set(tracks.flatMap((t) => t.track.artists.map((a) => a.id)))
@@ -26,11 +34,10 @@ export async function analyzePlaylistGenres(
       console.log("No artist IDs found");
       return {
         genres: ["pop", "rock"],
-        moods: ["upbeat"],
+        moods: ["energetic"],
         eras: ["modern"],
         artistStyles: [],
-        searchTerms: ["pop", "rock"],
-        summary: "Mixed playlist",
+        searchTerms: ["popular music", "trending songs"],
       };
     }
 
@@ -51,18 +58,17 @@ export async function analyzePlaylistGenres(
       console.error("Failed to fetch artist data:", response.status);
       return {
         genres: ["pop", "rock"],
-        moods: ["upbeat"],
+        moods: ["energetic"],
         eras: ["modern"],
         artistStyles: [],
-        searchTerms: ["pop", "rock"],
-        summary: "Mixed playlist",
+        searchTerms: ["popular music"],
       };
     }
 
     const data = await response.json();
     const genreCounts: Record<string, number> = {};
 
-    // Collect all genres
+    // Count genre occurrences
     data.artists.forEach((artist: any) => {
       if (artist && artist.genres) {
         artist.genres.forEach((genre: string) => {
@@ -71,129 +77,38 @@ export async function analyzePlaylistGenres(
       }
     });
 
-    const topGenres = Object.entries(genreCounts)
+    // Sort genres by frequency
+    const sortedGenres = Object.entries(genreCounts)
       .sort((a, b) => b[1] - a[1])
       .map(([genre]) => genre)
-      .slice(0, 10);
+      .slice(0, 5);
 
-    // Prepare track info for Gemini
-    const trackList = tracks
-      .slice(0, 20)
-      .map(
-        (t) =>
-          `"${t.track.name}" by ${t.track.artists
-            .map((a) => a.name)
-            .join(", ")}`
-      )
-      .join("\n");
+    console.log("Top genres found:", sortedGenres);
 
-    console.log("Analyzing playlist with Gemini...");
-
-    // Call Gemini API
-    const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-
-    if (!GEMINI_API_KEY) {
-      console.error("Gemini API key not found");
-      return {
-        genres: topGenres.slice(0, 5),
-        moods: ["upbeat"],
-        eras: ["modern"],
-        artistStyles: [],
-        searchTerms: topGenres.slice(0, 3),
-        summary: "Mixed playlist",
-      };
-    }
-
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `Analyze this music playlist and provide recommendations. 
-
-Playlist tracks:
-${trackList}
-
-Spotify genres detected: ${topGenres.join(", ")}
-
-Please analyze this playlist and return a JSON object with:
-1. "moods": array of 3-5 mood descriptors (e.g., "energetic", "chill", "melancholic")
-2. "eras": array of 2-3 time periods (e.g., "2010s", "90s", "modern")
-3. "artistStyles": array of 3-5 similar artist names or musical styles
-4. "searchTerms": array of 5-7 specific search terms that would find similar songs (e.g., "indie folk", "synth pop", "female vocalist")
-5. "summary": a brief 1-sentence description of the playlist's vibe
-
-Return ONLY valid JSON, no other text.`,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
-          },
-        }),
-      }
-    );
-
-    if (!geminiResponse.ok) {
-      console.error("Gemini API error:", geminiResponse.status);
-      return {
-        genres: topGenres.slice(0, 5),
-        moods: ["upbeat"],
-        eras: ["modern"],
-        artistStyles: [],
-        searchTerms: topGenres.slice(0, 3),
-        summary: "Mixed playlist",
-      };
-    }
-
-    const geminiData = await geminiResponse.json();
-    const aiText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-    console.log("Gemini response:", aiText);
-
-    // Parse AI response
-    const jsonMatch = aiText.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const aiAnalysis = JSON.parse(jsonMatch[0]);
-      return {
-        genres: topGenres.slice(0, 5),
-        moods: aiAnalysis.moods || ["upbeat"],
-        eras: aiAnalysis.eras || ["modern"],
-        artistStyles: aiAnalysis.artistStyles || [],
-        searchTerms: aiAnalysis.searchTerms || topGenres.slice(0, 3),
-        summary: aiAnalysis.summary || "Mixed playlist",
-      };
-    }
-
-    // Fallback if parsing fails
-    return {
-      genres: topGenres.slice(0, 5),
-      moods: ["upbeat"],
-      eras: ["modern"],
-      artistStyles: [],
-      searchTerms: topGenres.slice(0, 3),
-      summary: "Mixed playlist",
+    // Build analysis object without AI
+    const analysis = {
+      genres: sortedGenres.length > 0 ? sortedGenres : ["pop", "rock", "indie"],
+      moods: ["energetic", "upbeat"],
+      eras: ["modern", "contemporary"],
+      artistStyles: tracks.slice(0, 5).map((t) => t.track.artists[0].name),
+      searchTerms: sortedGenres.slice(0, 3).map((g) => `${g} music`),
     };
+
+    // Cache the result
+    analysisCache.set(cacheKey, {
+      analysis,
+      timestamp: Date.now(),
+    });
+
+    return analysis;
   } catch (error) {
-    console.error("Error analyzing playlist:", error);
+    console.error("Error analyzing playlist genres:", error);
     return {
       genres: ["pop", "rock"],
-      moods: ["upbeat"],
+      moods: ["energetic"],
       eras: ["modern"],
       artistStyles: [],
-      searchTerms: ["pop", "rock"],
-      summary: "Mixed playlist",
+      searchTerms: ["popular music"],
     };
   }
 }

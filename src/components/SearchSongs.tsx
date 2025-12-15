@@ -10,6 +10,8 @@ import {
   Play,
   Loader2,
   X,
+  RefreshCw,
+  Sparkles,
 } from "lucide-react";
 import {
   Avatar,
@@ -51,9 +53,15 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
   const [addingTracks, setAddingTracks] = useState<Set<string>>(new Set());
   const [playingPreview, setPlayingPreview] = useState<string | null>(null);
   const [recommendedTracks, setRecommendedTracks] = useState<Track[]>([]);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] =
+    useState(false);
+  const [existingTrackIds, setExistingTrackIds] = useState<string[]>([]);
+  const [recommendationOffset, setRecommendationOffset] = useState(0);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
-  const [existingTrackIds, setExistingTrackIds] = useState<string[]>([]);
+  const lastFetchTimeRef = useRef<number>(0);
+  const FETCH_COOLDOWN = 3000; // 3 seconds cooldown between fetches
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -122,6 +130,84 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
     };
   }, [handleSearch, searchQuery]);
 
+  const fetchRecommendations = useCallback(
+    async (forceRefresh = false) => {
+      if (!token || !isSheetOpen) return;
+
+      // Check cooldown to prevent rate limiting
+      const now = Date.now();
+      if (!forceRefresh && now - lastFetchTimeRef.current < FETCH_COOLDOWN) {
+        console.log("Skipping fetch - cooldown period");
+        return;
+      }
+
+      setIsLoadingRecommendations(true);
+      lastFetchTimeRef.current = now;
+
+      try {
+        console.log("=== Fetching recommendations ===");
+
+        // Fetch playlist tracks
+        const playlistRes = await fetch(
+          `https://api.spotify.com/v1/playlists/${playlistID}/tracks?limit=50`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (!playlistRes.ok) {
+          throw new Error("Failed to fetch playlist tracks");
+        }
+
+        const playlistData = await playlistRes.json();
+        console.log(
+          "Fetched playlist data:",
+          playlistData.items.length,
+          "tracks"
+        );
+
+        // Store existing track IDs to filter duplicates
+        const trackIds = playlistData.items.map((item: any) => item.track.id);
+        setExistingTrackIds(trackIds);
+
+        // Get genres and recommendations with offset for variety
+        const analysis = await analyzePlaylistGenres(playlistData.items, token);
+        console.log("AI Analysis:", analysis);
+
+        const recs = await getPlaylistRecommendations(
+          analysis,
+          token,
+          trackIds,
+          recommendationOffset
+        );
+
+        console.log("Final recommendations:", recs.length);
+        setRecommendedTracks(recs);
+
+        if (recs.length === 0) {
+          toast.info("No new recommendations found. Try refreshing!");
+        }
+      } catch (error) {
+        console.error("Error fetching recommendations:", error);
+        toast.error("Failed to load recommendations. Please try again later.");
+      } finally {
+        setIsLoadingRecommendations(false);
+      }
+    },
+    [token, playlistID, isSheetOpen, recommendationOffset]
+  );
+
+  const handleRefreshRecommendations = () => {
+    // Increment offset to get different recommendations
+    setRecommendationOffset((prev) => prev + 10);
+    fetchRecommendations(true);
+  };
+
+  // Fetch recommendations when sheet opens
+  useEffect(() => {
+    if (isSheetOpen && token) {
+      fetchRecommendations();
+    }
+  }, [isSheetOpen, token, fetchRecommendations]);
+
   const handleAddTrackToPlaylist = async (track: Track) => {
     if (!token) {
       toast.error("Authentication required");
@@ -151,6 +237,9 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
 
       toast.success(`Added "${track.name}" to playlist!`);
       refetch(playlistID);
+
+      // Remove from recommendations after adding
+      setRecommendedTracks((prev) => prev.filter((t) => t.id !== track.id));
     } catch (error) {
       console.error("Error adding track to playlist:", error);
       toast.error("Failed to add track to playlist");
@@ -173,19 +262,16 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
     }
 
     if (playingPreview === trackId) {
-      // Stop current preview
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
       setPlayingPreview(null);
     } else {
-      // Stop any current preview
       if (audioRef.current) {
         audioRef.current.pause();
       }
 
-      // Play new preview
       const audio = new Audio(previewUrl);
       audio.volume = 0.5;
       audio.play();
@@ -210,67 +296,6 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
     setSearchResults([]);
   };
 
-  useEffect(() => {
-    async function fetchRecommendations() {
-      if (!token || !isSheetOpen) return;
-
-      try {
-        console.log("=== Fetching AI-powered recommendations ===");
-
-        // Fetch playlist tracks
-        const playlistRes = await fetch(
-          `https://api.spotify.com/v1/playlists/${playlistID}/tracks?limit=50`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        if (!playlistRes.ok) {
-          console.error("Failed to fetch playlist:", playlistRes.status);
-          toast.error("Failed to fetch playlist tracks");
-          return;
-        }
-
-        const playlistData = await playlistRes.json();
-        console.log(
-          "Fetched playlist data:",
-          playlistData.items?.length,
-          "tracks"
-        );
-
-        // Store existing track IDs to filter duplicates
-        const trackIds = playlistData.items
-          .map((item: any) => item.track?.id)
-          .filter(Boolean);
-
-        setExistingTrackIds(trackIds);
-
-        // Get AI-powered analysis
-        const analysis = await analyzePlaylistGenres(playlistData.items, token);
-        console.log("AI Analysis:", analysis);
-
-        // Get AI-powered recommendations
-        const recs = await getPlaylistRecommendations(
-          analysis,
-          token,
-          trackIds
-        );
-
-        console.log("Final recommendations:", recs.length);
-        setRecommendedTracks(recs);
-
-        if (recs.length === 0) {
-          toast.info(
-            "No recommendations available. Try adding more songs to your playlist."
-          );
-        }
-      } catch (error) {
-        console.error("Error fetching recommendations:", error);
-        toast.error("Failed to load recommendations");
-      }
-    }
-
-    fetchRecommendations();
-  }, [token, playlistID, isSheetOpen]);
-
   return (
     <TooltipProvider>
       <Tooltip>
@@ -288,7 +313,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
 
             <SheetContent
               side="right"
-              className="w-full sm:w-[500px] bg-zinc-900/95 backdrop-blur-sm border-zinc-700/50 text-white"
+              className="w-full sm:w-[500px] bg-zinc-900/95 backdrop-blur-sm border-zinc-700/50 text-white overflow-y-auto"
             >
               <SheetHeader className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -327,7 +352,6 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                   )}
                 </div>
 
-                {/* Search Stats */}
                 {searchResults.length > 0 && (
                   <div className="flex items-center gap-2 text-sm text-zinc-400">
                     <Music className="h-4 w-4" />
@@ -338,211 +362,275 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
 
               <Separator className="my-6 bg-zinc-700/50" />
 
-              {/* Search Results */}
-              <ScrollArea className="flex-1 -mx-6 px-6">
-                <div className="space-y-1">
-                  {isLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="flex flex-col items-center gap-3">
-                        <Loader2 className="h-8 w-8 animate-spin text-green-500" />
-                        <p className="text-sm text-zinc-400">
-                          Searching for tracks...
+              <ScrollArea className="flex-1 -mx-6 px-6 h-[calc(100vh-250px)]">
+                {/* Recommended Songs Section */}
+                {!searchQuery.trim() && (
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="p-2 bg-green-500/20 rounded-lg">
+                          <Sparkles className="h-4 w-4 text-green-400" />
+                        </div>
+                        <h4 className="text-green-400 font-semibold text-lg">
+                          Recommended for you
+                        </h4>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleRefreshRecommendations}
+                        disabled={isLoadingRecommendations}
+                        className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
+                      >
+                        <RefreshCw
+                          className={`h-4 w-4 mr-2 ${
+                            isLoadingRecommendations ? "animate-spin" : ""
+                          }`}
+                        />
+                        Refresh
+                      </Button>
+                    </div>
+
+                    {isLoadingRecommendations ? (
+                      <div className="flex items-center justify-center py-12">
+                        <div className="flex flex-col items-center gap-3">
+                          <Loader2 className="h-8 w-8 animate-spin text-green-500" />
+                          <p className="text-sm text-zinc-400">
+                            Finding perfect matches...
+                          </p>
+                        </div>
+                      </div>
+                    ) : recommendedTracks.length > 0 ? (
+                      <div className="space-y-1">
+                        {recommendedTracks.map((track) => (
+                          <div
+                            key={track.id}
+                            className="group flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800/50 transition-all duration-200"
+                          >
+                            <div className="relative">
+                              <Avatar className="h-12 w-12 rounded-md">
+                                <AvatarImage
+                                  src={
+                                    track.album.images[2]?.url ||
+                                    track.album.images[0]?.url
+                                  }
+                                  alt={track.album.name}
+                                />
+                                <AvatarFallback className="bg-zinc-700 text-zinc-300 rounded-md">
+                                  <Disc className="h-5 w-5" />
+                                </AvatarFallback>
+                              </Avatar>
+
+                              {track.preview_url && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    handlePlayPreview(
+                                      track.preview_url,
+                                      track.id
+                                    )
+                                  }
+                                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-md"
+                                >
+                                  <Play
+                                    className={`h-4 w-4 text-white ${
+                                      playingPreview === track.id
+                                        ? "animate-pulse"
+                                        : ""
+                                    }`}
+                                  />
+                                </Button>
+                              )}
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-medium text-white truncate">
+                                  {track.name}
+                                </h4>
+                                {track.explicit && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="text-xs px-1.5 py-0.5"
+                                  >
+                                    E
+                                  </Badge>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-1 text-sm text-zinc-400 truncate">
+                                <User className="h-3 w-3 flex-shrink-0" />
+                                <span className="truncate">
+                                  {track.artists
+                                    .map((artist: Artist) => artist.name)
+                                    .join(", ")}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-3 text-xs text-zinc-500">
+                                <span className="truncate">
+                                  {track.album.name}
+                                </span>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  <span>
+                                    {formatDuration(track.duration_ms)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <Button
+                              onClick={() => handleAddTrackToPlaylist(track)}
+                              disabled={addingTracks.has(track.id)}
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white opacity-0 group-hover:opacity-100 transition-all duration-200"
+                            >
+                              {addingTracks.has(track.id) ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Plus className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <div className="p-4 bg-zinc-800/50 rounded-full mb-4">
+                          <Sparkles className="h-8 w-8 text-zinc-400" />
+                        </div>
+                        <h3 className="text-lg font-medium text-white mb-2">
+                          No recommendations yet
+                        </h3>
+                        <p className="text-sm text-zinc-400 max-w-sm">
+                          We'll find perfect songs based on your playlist. Try
+                          refreshing!
                         </p>
                       </div>
-                    </div>
-                  ) : searchResults.length > 0 ? (
-                    searchResults.map((track) => (
-                      <div
-                        key={track.id}
-                        className="group flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800/50 transition-all duration-200"
-                      >
-                        {/* Album Art */}
-                        <div className="relative">
-                          <Avatar className="h-12 w-12 rounded-md">
-                            <AvatarImage
-                              src={
-                                track.album.images[2]?.url ||
-                                track.album.images[0]?.url
-                              }
-                              alt={track.album.name}
-                            />
-                            <AvatarFallback className="bg-zinc-700 text-zinc-300 rounded-md">
-                              <Disc className="h-5 w-5" />
-                            </AvatarFallback>
-                          </Avatar>
+                    )}
+                  </div>
+                )}
 
-                          {/* Preview Play Button */}
-                          {track.preview_url && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                handlePlayPreview(track.preview_url, track.id)
-                              }
-                              className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-md"
-                            >
-                              <Play
-                                className={`h-4 w-4 text-white ${
-                                  playingPreview === track.id
-                                    ? "animate-pulse"
-                                    : ""
-                                }`}
-                              />
-                            </Button>
-                          )}
+                {/* Search Results */}
+                {searchQuery.trim() && (
+                  <div className="space-y-1">
+                    {isLoading ? (
+                      <div className="flex items-center justify-center py-12">
+                        <div className="flex flex-col items-center gap-3">
+                          <Loader2 className="h-8 w-8 animate-spin text-green-500" />
+                          <p className="text-sm text-zinc-400">
+                            Searching for tracks...
+                          </p>
                         </div>
+                      </div>
+                    ) : searchResults.length > 0 ? (
+                      searchResults.map((track) => (
+                        <div
+                          key={track.id}
+                          className="group flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800/50 transition-all duration-200"
+                        >
+                          <div className="relative">
+                            <Avatar className="h-12 w-12 rounded-md">
+                              <AvatarImage
+                                src={
+                                  track.album.images[2]?.url ||
+                                  track.album.images[0]?.url
+                                }
+                                alt={track.album.name}
+                              />
+                              <AvatarFallback className="bg-zinc-700 text-zinc-300 rounded-md">
+                                <Disc className="h-5 w-5" />
+                              </AvatarFallback>
+                            </Avatar>
 
-                        {/* Track Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-white truncate">
-                              {track.name}
-                            </h4>
-                            {track.explicit && (
-                              <Badge
-                                variant="secondary"
-                                className="text-xs px-1.5 py-0.5"
+                            {track.preview_url && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  handlePlayPreview(track.preview_url, track.id)
+                                }
+                                className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-md"
                               >
-                                E
-                              </Badge>
+                                <Play
+                                  className={`h-4 w-4 text-white ${
+                                    playingPreview === track.id
+                                      ? "animate-pulse"
+                                      : ""
+                                  }`}
+                                />
+                              </Button>
                             )}
                           </div>
 
-                          <div className="flex items-center gap-1 text-sm text-zinc-400 truncate">
-                            <User className="h-3 w-3 flex-shrink-0" />
-                            <span className="truncate">
-                              {track.artists
-                                .map((artist: Artist) => artist.name)
-                                .join(", ")}
-                            </span>
-                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium text-white truncate">
+                                {track.name}
+                              </h4>
+                              {track.explicit && (
+                                <Badge
+                                  variant="secondary"
+                                  className="text-xs px-1.5 py-0.5"
+                                >
+                                  E
+                                </Badge>
+                              )}
+                            </div>
 
-                          <div className="flex items-center gap-3 text-xs text-zinc-500">
-                            <span className="truncate">{track.album.name}</span>
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              <span>{formatDuration(track.duration_ms)}</span>
+                            <div className="flex items-center gap-1 text-sm text-zinc-400 truncate">
+                              <User className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">
+                                {track.artists
+                                  .map((artist: Artist) => artist.name)
+                                  .join(", ")}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-3 text-xs text-zinc-500">
+                              <span className="truncate">
+                                {track.album.name}
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                <span>{formatDuration(track.duration_ms)}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        {/* Add Button */}
-                        <Button
-                          onClick={() => handleAddTrackToPlaylist(track)}
-                          disabled={addingTracks.has(track.id)}
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700 text-white opacity-0 group-hover:opacity-100 transition-all duration-200"
-                        >
-                          {addingTracks.has(track.id) ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Plus className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    ))
-                  ) : searchQuery.trim() ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-center">
-                      <div className="p-4 bg-zinc-800/50 rounded-full mb-4">
-                        <Search className="h-8 w-8 text-zinc-400" />
-                      </div>
-                      <h3 className="text-lg font-medium text-white mb-2">
-                        No results found
-                      </h3>
-                      <p className="text-sm text-zinc-400 max-w-sm">
-                        Try searching with different keywords or check your
-                        spelling.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-12 text-center">
-                      <div className="p-4 bg-zinc-800/50 rounded-full mb-4">
-                        <Music className="h-8 w-8 text-zinc-400" />
-                      </div>
-                      <h3 className="text-lg font-medium text-white mb-2">
-                        Search for music
-                      </h3>
-                      <p className="text-sm text-zinc-400 max-w-sm">
-                        Start typing to find songs, artists, or albums to add to
-                        your playlist.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-
-              {recommendedTracks.length > 0 && !searchQuery.trim() && (
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="p-2 bg-green-500/20 rounded-lg">
-                      <Music className="h-4 w-4 text-green-400" />
-                    </div>
-                    <h4 className="text-green-400 font-semibold text-lg">
-                      Recommended for this playlist
-                    </h4>
-                  </div>
-                  <div className="space-y-1">
-                    {recommendedTracks.map((track) => (
-                      <div
-                        key={track.id}
-                        className="group flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800/50 transition-all duration-200"
-                      >
-                        {/* Album Art */}
-                        <Avatar className="h-12 w-12 rounded-md">
-                          <AvatarImage
-                            src={
-                              track.album.images[2]?.url ||
-                              track.album.images[0]?.url
-                            }
-                            alt={track.album.name}
-                          />
-                          <AvatarFallback className="bg-zinc-700 text-zinc-300 rounded-md">
-                            <Disc className="h-5 w-5" />
-                          </AvatarFallback>
-                        </Avatar>
-
-                        {/* Track Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-white truncate">
-                              {track.name}
-                            </h4>
-                            {track.explicit && (
-                              <Badge
-                                variant="secondary"
-                                className="text-xs px-1.5 py-0.5"
-                              >
-                                E
-                              </Badge>
+                          <Button
+                            onClick={() => handleAddTrackToPlaylist(track)}
+                            disabled={addingTracks.has(track.id)}
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 text-white opacity-0 group-hover:opacity-100 transition-all duration-200"
+                          >
+                            {addingTracks.has(track.id) ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Plus className="h-4 w-4" />
                             )}
-                          </div>
-                          <p className="text-sm text-zinc-400 truncate">
-                            {track.artists.map((a) => a.name).join(", ")}
-                          </p>
-                          <div className="flex items-center gap-1 text-xs text-zinc-500">
-                            <Clock className="h-3 w-3" />
-                            <span>{formatDuration(track.duration_ms)}</span>
-                          </div>
+                          </Button>
                         </div>
-
-                        {/* Add Button */}
-                        <Button
-                          size="sm"
-                          onClick={() => handleAddTrackToPlaylist(track)}
-                          disabled={addingTracks.has(track.id)}
-                          className="bg-green-600 hover:bg-green-700 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          {addingTracks.has(track.id) ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Plus className="h-4 w-4" />
-                          )}
-                        </Button>
+                      ))
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <div className="p-4 bg-zinc-800/50 rounded-full mb-4">
+                          <Search className="h-8 w-8 text-zinc-400" />
+                        </div>
+                        <h3 className="text-lg font-medium text-white mb-2">
+                          No results found
+                        </h3>
+                        <p className="text-sm text-zinc-400 max-w-sm">
+                          Try searching with different keywords or check your
+                          spelling.
+                        </p>
                       </div>
-                    ))}
+                    )}
                   </div>
-                </div>
-              )}
+                )}
+              </ScrollArea>
             </SheetContent>
           </Sheet>
         </TooltipTrigger>
