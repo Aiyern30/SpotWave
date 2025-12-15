@@ -1,109 +1,62 @@
-// getPlaylistRecommendations.ts - AI-powered recommendations
+// getPlaylistRecommendations.ts
 import type { Track } from "@/lib/types";
 
-interface PlaylistAnalysis {
-  genres: string[];
-  moods: string[];
-  eras: string[];
-  artistStyles: string[];
-  searchTerms: string[];
-  summary: string;
-}
+// Cache for recommendations to avoid repeated API calls
+const recommendationsCache = new Map<
+  string,
+  { tracks: Track[]; timestamp: number }
+>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export async function getPlaylistRecommendations(
-  analysis: PlaylistAnalysis,
+  analysis: any,
   token: string,
-  existingTrackIds: string[] = []
+  existingTrackIds: string[] = [],
+  offset: number = 0
 ): Promise<Track[]> {
   try {
-    console.log("=== AI-Powered Recommendations ===");
-    console.log("Analysis:", analysis);
+    const cacheKey = `${JSON.stringify(analysis)}_${offset}`;
+
+    // Check cache first
+    const cached = recommendationsCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log("✅ Using cached recommendations");
+      return cached.tracks.filter(
+        (track) => !existingTrackIds.includes(track.id)
+      );
+    }
+
+    console.log("=== Fetching new recommendations from Spotify ===");
+
+    // Use Spotify's recommendations API with the analyzed data
+    const { genres = [], moods = [], searchTerms = [] } = analysis;
+
+    // Get seed genres (max 5 for Spotify API)
+    const seedGenres = genres
+      .slice(0, 3)
+      .map((g: string) => g.toLowerCase().replace(/\s+/g, "-"));
+
+    // Build search queries for variety
+    const searchQueries = [
+      ...searchTerms.slice(0, 5),
+      ...genres.slice(0, 3).map((g: string) => `genre:${g}`),
+      ...moods.slice(0, 2).map((m: string) => `${m} music`),
+    ];
 
     const allTracks: Track[] = [];
-    const seenIds = new Set(existingTrackIds);
+    const seenIds = new Set<string>();
 
-    // Strategy 1: Use Gemini to generate smart search queries
-    const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    // Search for tracks using different strategies
+    for (let i = 0; i < Math.min(searchQueries.length, 5); i++) {
+      const query = searchQueries[(i + offset) % searchQueries.length];
 
-    if (!GEMINI_API_KEY) {
-      console.error("Gemini API key not found, using fallback search");
-      return await fallbackSearch(analysis, token, seenIds);
-    }
-
-    console.log("Asking Gemini for search strategies...");
-
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `Based on this playlist analysis, generate 5 specific Spotify search queries that would find similar songs:
-
-Genres: ${analysis.genres.join(", ")}
-Moods: ${analysis.moods.join(", ")}
-Eras: ${analysis.eras.join(", ")}
-Similar Artists: ${analysis.artistStyles.join(", ")}
-Summary: ${analysis.summary}
-
-Return ONLY a JSON array of 5 search query strings. Each query should be specific and combine artist names, genres, or moods. Examples:
-["indie folk female vocalist", "Mac DeMarco similar artists", "chill synth pop 2010s"]
-
-Return ONLY the JSON array, no other text.`,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.8,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 512,
-          },
-        }),
-      }
-    );
-
-    if (!geminiResponse.ok) {
-      console.error("Gemini API error:", geminiResponse.status);
-      return await fallbackSearch(analysis, token, seenIds);
-    }
-
-    const geminiData = await geminiResponse.json();
-    const aiText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-    console.log("Gemini search queries:", aiText);
-
-    // Parse search queries
-    const jsonMatch = aiText.match(/\[[\s\S]*?\]/);
-    let searchQueries: string[] = [];
-
-    if (jsonMatch) {
       try {
-        searchQueries = JSON.parse(jsonMatch[0]);
-      } catch (e) {
-        console.error("Failed to parse Gemini response:", e);
-        searchQueries = analysis.searchTerms.slice(0, 5);
-      }
-    } else {
-      searchQueries = analysis.searchTerms.slice(0, 5);
-    }
+        await new Promise((resolve) => setTimeout(resolve, 300)); // Rate limiting delay
 
-    console.log("Using search queries:", searchQueries);
-
-    // Execute searches
-    for (const query of searchQueries) {
-      try {
         const response = await fetch(
           `https://api.spotify.com/v1/search?q=${encodeURIComponent(
             query
-          )}&type=track&limit=10`,
+          )}&type=track&limit=4`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -114,105 +67,92 @@ Return ONLY the JSON array, no other text.`,
 
         if (response.ok) {
           const data = await response.json();
-          const tracks: Track[] = data.tracks.items || [];
+          const tracks = data.tracks?.items || [];
 
-          for (const track of tracks) {
-            if (!seenIds.has(track.id) && allTracks.length < 20) {
-              allTracks.push(track);
+          tracks.forEach((track: Track) => {
+            if (
+              !seenIds.has(track.id) &&
+              !existingTrackIds.includes(track.id)
+            ) {
               seenIds.add(track.id);
+              allTracks.push(track);
             }
-          }
+          });
+        } else if (response.status === 429) {
+          console.warn("Rate limited, stopping search");
+          break;
         }
       } catch (error) {
         console.error(`Error searching for "${query}":`, error);
       }
 
-      if (allTracks.length >= 20) break;
+      // Stop if we have enough recommendations
+      if (allTracks.length >= 15) break;
     }
 
-    // If we still don't have enough tracks, use artist styles
-    if (allTracks.length < 10) {
-      for (const artist of analysis.artistStyles.slice(0, 3)) {
-        try {
-          const response = await fetch(
-            `https://api.spotify.com/v1/search?q=artist:${encodeURIComponent(
-              artist
-            )}&type=track&limit=10`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
+    // Try Spotify recommendations API as fallback/supplement
+    if (allTracks.length < 10 && seedGenres.length > 0) {
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 300));
 
-          if (response.ok) {
-            const data = await response.json();
-            const tracks: Track[] = data.tracks.items || [];
+        const params = new URLSearchParams({
+          seed_genres: seedGenres.join(","),
+          limit: "10",
+        });
 
-            for (const track of tracks) {
-              if (!seenIds.has(track.id) && allTracks.length < 20) {
-                allTracks.push(track);
-                seenIds.add(track.id);
-              }
-            }
+        const response = await fetch(
+          `https://api.spotify.com/v1/recommendations?${params.toString()}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           }
-        } catch (error) {
-          console.error(`Error searching for artist "${artist}":`, error);
-        }
+        );
 
-        if (allTracks.length >= 20) break;
+        if (response.ok) {
+          const data = await response.json();
+          const tracks = data.tracks || [];
+
+          tracks.forEach((track: Track) => {
+            if (
+              !seenIds.has(track.id) &&
+              !existingTrackIds.includes(track.id)
+            ) {
+              seenIds.add(track.id);
+              allTracks.push(track);
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching recommendations:", error);
       }
     }
 
-    console.log(`✅ Found ${allTracks.length} AI-recommended tracks`);
-    return allTracks.slice(0, 10);
+    const finalTracks = allTracks.slice(0, 10);
+
+    // Cache the results
+    recommendationsCache.set(cacheKey, {
+      tracks: finalTracks,
+      timestamp: Date.now(),
+    });
+
+    console.log(`✅ Got ${finalTracks.length} unique recommendations`);
+    return finalTracks;
   } catch (error) {
-    console.error("Error in AI recommendations:", error);
+    console.error("Error in getPlaylistRecommendations:", error);
     return [];
   }
 }
 
-// Fallback search without AI
-async function fallbackSearch(
-  analysis: PlaylistAnalysis,
-  token: string,
-  seenIds: Set<string>
-): Promise<Track[]> {
-  const allTracks: Track[] = [];
-
-  // Use the pre-generated search terms
-  for (const term of analysis.searchTerms.slice(0, 5)) {
-    try {
-      const response = await fetch(
-        `https://api.spotify.com/v1/search?q=${encodeURIComponent(
-          term
-        )}&type=track&limit=10`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const tracks: Track[] = data.tracks.items || [];
-
-        for (const track of tracks) {
-          if (!seenIds.has(track.id) && allTracks.length < 20) {
-            allTracks.push(track);
-            seenIds.add(track.id);
-          }
-        }
-      }
-    } catch (error) {
-      console.error(`Error searching for "${term}":`, error);
+// Clear old cache entries periodically
+export function clearOldCache() {
+  const now = Date.now();
+  const keysToDelete: string[] = [];
+  recommendationsCache.forEach((value, key) => {
+    if (now - value.timestamp > CACHE_DURATION) {
+      keysToDelete.push(key);
     }
-
-    if (allTracks.length >= 20) break;
-  }
-
-  return allTracks.slice(0, 10);
+  });
+  keysToDelete.forEach((key) => recommendationsCache.delete(key));
 }
