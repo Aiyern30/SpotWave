@@ -39,11 +39,13 @@ import {
   ImageIcon,
   Loader2,
   Save,
+  Sparkles,
 } from "lucide-react";
 import { formatDuration } from "@/utils/function";
 import type { PlaylistProps, UserProfile } from "@/lib/types";
 import Settings from "../Settings";
 import SearchSongs from "../SearchSongs";
+import { analyzePlaylistGenres } from "@/utils/analyzePlaylistGenres";
 
 interface UserHeaderProps {
   playlist: PlaylistProps;
@@ -74,6 +76,9 @@ export default function UserHeader({
   const [updating, setUpdating] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
+  const [aiSummary, setAiSummary] = useState<any>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
@@ -107,6 +112,15 @@ export default function UserHeader({
       descriptionInputRef.current.focus();
     }
   }, [descriptionEditing]);
+
+  useEffect(() => {
+    if (summaryDialogOpen && !aiSummary) {
+      setSummaryLoading(true);
+      analyzePlaylistGenres(playlist.tracks.items, token)
+        .then((summary) => setAiSummary(summary))
+        .finally(() => setSummaryLoading(false));
+    }
+  }, [summaryDialogOpen, aiSummary, playlist.tracks.items, token]);
 
   const updatePlaylistDetails = async () => {
     if (!id || !playlist.id || !token) return;
@@ -632,6 +646,105 @@ export default function UserHeader({
           <div className="flex flex-col space-y-3 lg:items-end">
             <Settings playlistID={playlist.id} />
             <SearchSongs playlistID={playlist.id} refetch={refetch} />
+            {/* View Summary Button */}
+            <Dialog open={summaryDialogOpen} onOpenChange={setSummaryDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 border-green-500 text-green-400 hover:bg-green-500/10"
+                  onClick={() => setSummaryDialogOpen(true)}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  View Summary
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-zinc-900 border-zinc-800 max-w-lg">
+                <DialogHeader>
+                  <DialogTitle className="text-green-400 flex items-center gap-2">
+                    <Sparkles className="h-5 w-5" />
+                    AI Playlist Summary
+                  </DialogTitle>
+                </DialogHeader>
+                {summaryLoading ? (
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-green-400 mb-3" />
+                    <span className="text-zinc-400">Analyzing playlist...</span>
+                  </div>
+                ) : aiSummary ? (
+                  <div className="space-y-4">
+                    <div>
+                      <span className="font-semibold text-green-400">Genres:</span>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {aiSummary.genres?.map((g: string) => (
+                          <Badge
+                            key={g}
+                            className="bg-green-700/30 text-green-300 border-green-700/40"
+                          >
+                            {g}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-blue-400">Moods:</span>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {aiSummary.moods?.map((m: string) => (
+                          <Badge
+                            key={m}
+                            className="bg-blue-700/30 text-blue-300 border-blue-700/40"
+                          >
+                            {m}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-purple-400">Eras:</span>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {aiSummary.eras?.map((e: string) => (
+                          <Badge
+                            key={e}
+                            className="bg-purple-700/30 text-purple-300 border-purple-700/40"
+                          >
+                            {e}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-yellow-400">
+                        Artist Styles:
+                      </span>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {aiSummary.artistStyles?.map((a: string) => (
+                          <Badge
+                            key={a}
+                            className="bg-yellow-700/30 text-yellow-300 border-yellow-700/40"
+                          >
+                            {a}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-pink-400">Search Terms:</span>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {aiSummary.searchTerms?.map((s: string) => (
+                          <Badge
+                            key={s}
+                            className="bg-pink-700/30 text-pink-300 border-pink-700/40"
+                          >
+                            {s}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-zinc-400">No summary available.</div>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
