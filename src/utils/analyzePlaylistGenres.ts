@@ -1,8 +1,11 @@
 import type { PlaylistTrack } from "@/lib/types";
 
-export async function analyzePlaylistGenres(tracks: PlaylistTrack[], token: string) {
+export async function analyzePlaylistGenres(
+  tracks: PlaylistTrack[],
+  token: string
+) {
   const artistIds = Array.from(
-    new Set(tracks.flatMap(t => t.track.artists.map(a => a.id)))
+    new Set(tracks.flatMap((t) => t.track.artists.map((a) => a.id)))
   ).slice(0, 50); // Spotify allows up to 50 IDs per request
 
   const response = await fetch(
