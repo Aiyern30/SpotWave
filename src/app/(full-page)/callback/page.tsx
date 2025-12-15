@@ -7,9 +7,18 @@ export default function CallbackPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // The home page will handle the code exchange
-    // Just redirect back to home
-    router.push("/");
+    // Extract the search params and pass them to home
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    const error = params.get("error");
+
+    if (code || error) {
+      // Redirect to home with query params
+      router.push(`/?${params.toString()}`);
+    } else {
+      // No params, just go home
+      router.push("/");
+    }
   }, [router]);
 
   return (
