@@ -16,6 +16,7 @@ import type { Artist, RecentTracksProps } from "@/lib/types";
 import { fetchFollowedArtists } from "@/utils/Artist/fetchFollowedArtists";
 import { fetchFavoriteArtists } from "@/utils/Artist/fetchFavoriteArtists";
 import { fetchRecentlyPlayed } from "@/utils/Artist/fetchRecentlyPlayed";
+import { usePlayer } from "@/contexts/PlayerContext";
 
 const Page = () => {
   const [token, setToken] = useState<string>("");
@@ -24,6 +25,7 @@ const Page = () => {
   const [favoriteArtists, setFavoriteArtists] = useState<Artist[]>([]);
   const [recentTracks, setRecentTracks] = useState<RecentTracksProps[]>([]);
   const router = useRouter();
+  const { playTrack } = usePlayer();
 
   // Track which accordion items are open
   const [openAccordions, setOpenAccordions] = useState<string[]>([
@@ -79,6 +81,62 @@ const Page = () => {
       setOpenAccordions([]); // Close all
     } else {
       setOpenAccordions(["item-1", "item-2", "item-3"]); // Open all
+    }
+  };
+
+  // Handler to play artist's top tracks
+  const handlePlayArtist = async (artistId: string) => {
+    try {
+      // Fetch artist's top tracks
+      const response = await fetch(
+        `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        console.error("Failed to fetch artist's top tracks");
+        return;
+      }
+
+      const data = await response.json();
+      const topTracks = data.tracks;
+
+      if (topTracks && topTracks.length > 0) {
+        // Play the first top track
+        const track = topTracks[0];
+        playTrack({
+          id: track.id,
+          name: track.name,
+          artists: track.artists,
+          album: track.album,
+          duration_ms: track.duration_ms,
+          uri: track.uri,
+          preview_url: track.preview_url || null,
+        });
+      }
+    } catch (error) {
+      console.error("Error playing artist:", error);
+    }
+  };
+
+  // Handler to play a track
+  const handlePlayTrack = (track: RecentTracksProps["track"]) => {
+    try {
+      playTrack({
+        id: track.id,
+        name: track.name,
+        artists: track.album.artists,
+        album: track.album,
+        duration_ms: track.duration_ms,
+        uri: track.uri,
+        preview_url: track.preview_url || null,
+      });
+    } catch (error) {
+      console.error("Error playing track:", error);
     }
   };
 
@@ -164,9 +222,12 @@ const Page = () => {
                             image={artist.image || "/default-artist.png"}
                             title={artist.name}
                             description={artist.genres?.join(", ")}
+                            onPlay={handlePlayArtist}
                             onClick={(id, name) =>
                               router.push(
-                                `/Artists/${id}?name=${encodeURIComponent(name)}`
+                                `/Artists/${id}?name=${encodeURIComponent(
+                                  name
+                                )}`
                               )
                             }
                           />
@@ -206,9 +267,12 @@ const Page = () => {
                             image={artist.image || "/default-artist.png"}
                             title={artist.name}
                             description={artist.genres?.join(", ")}
+                            onPlay={handlePlayArtist}
                             onClick={(id, name) =>
                               router.push(
-                                `/Artists/${id}?name=${encodeURIComponent(name)}`
+                                `/Artists/${id}?name=${encodeURIComponent(
+                                  name
+                                )}`
                               )
                             }
                           />
@@ -244,7 +308,10 @@ const Page = () => {
                         {memoizedRecentTracks.map((tracks, index) => (
                           <PlaylistCard
                             key={`${tracks.track.id}-${index}`}
-                            id={tracks.track.album.artists[0]?.id || tracks.track.id}
+                            id={
+                              tracks.track.album.artists[0]?.id ||
+                              tracks.track.id
+                            }
                             image={
                               tracks.track.album.images[0]?.url ||
                               "/default-artist.png"
@@ -252,7 +319,10 @@ const Page = () => {
                             title={tracks.track.name}
                             description={`${tracks.track.album.artists
                               .map((a) => a.name)
-                              .join(", ")} • ${tracks.track.album.release_date}`}
+                              .join(", ")} • ${
+                              tracks.track.album.release_date
+                            }`}
+                            onPlay={() => handlePlayTrack(tracks.track)}
                             onClick={(id) => {
                               if (tracks.track.album.artists.length > 0) {
                                 router.push(
