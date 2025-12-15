@@ -643,7 +643,7 @@ export default function UserHeader({
           </div>
 
           {/* Enhanced Action Buttons */}
-          <div className="flex flex-col space-y-3 lg:items-end">
+          <div className="flex flex-row lg:flex-col space-x-3 lg:space-x-0 lg:space-y-3 items-center lg:items-end justify-center lg:justify-end mt-6 lg:mt-0">
             <Settings playlistID={playlist.id} />
             <SearchSongs playlistID={playlist.id} refetch={refetch} />
             {/* View Summary Button */}
