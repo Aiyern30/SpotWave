@@ -9,19 +9,7 @@ import {
   useCallback,
   useRef,
 } from "react";
-
-interface Track {
-  id: string;
-  name: string;
-  artists: { name: string; id: string }[];
-  album: {
-    name: string;
-    images: { url: string }[];
-  };
-  duration_ms: number;
-  uri: string;
-  preview_url?: string | null;
-}
+import type { Track } from "@/lib/types";
 
 interface PlayerContextType {
   // Current track state
@@ -145,11 +133,32 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           const isCurrentlyPaused = state.paused;
 
           setCurrentTrack({
-            id: track.id,
+            id: track.id || "",
             name: track.name,
-            artists: track.artists,
-            album: track.album,
+            artists: track.artists.map((artist: any) => ({
+              name: artist.name,
+              id: artist.uri?.split(":")[2] || "",
+            })),
+            album: {
+              name: track.album.name,
+              images: track.album.images || [],
+              id: track.album.uri?.split(":")[2] || "",
+              artists: track.artists.map((artist: any) => ({
+                name: artist.name,
+                id: artist.uri?.split(":")[2] || "",
+              })),
+              release_date: "",
+              total_tracks: 0,
+            },
             duration_ms: state.duration,
+            explicit: false,
+            external_urls: {
+              spotify: `https://open.spotify.com/track/${track.id}`,
+            },
+            popularity: 0,
+            preview_url: null,
+            track_number: 0,
+            disc_number: 0,
             uri: track.uri,
           });
 
@@ -313,7 +322,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     async (track: Track) => {
       console.log("Attempting to play track:", track.name);
 
-      if (!token) {
+      // Get fresh token from localStorage if context token is not available
+      const currentToken = token || localStorage.getItem("Token");
+
+      if (!currentToken) {
         console.error("No Spotify token available");
         return;
       }
@@ -338,7 +350,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             }),
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${currentToken}`,
             },
           }
         );
@@ -368,7 +380,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     async (playlistUri: string, trackUri?: string) => {
       console.log("Attempting to play playlist:", playlistUri);
 
-      if (!token) {
+      // Get fresh token from localStorage if context token is not available
+      const currentToken = token || localStorage.getItem("Token");
+
+      if (!currentToken) {
         console.error("No Spotify token available");
         return;
       }
@@ -400,7 +415,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             body: JSON.stringify(body),
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${currentToken}`,
             },
           }
         );

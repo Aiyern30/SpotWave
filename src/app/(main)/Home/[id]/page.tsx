@@ -107,10 +107,24 @@ const PlaylistPage = () => {
           id: track.id,
           name: track.name,
           artists: track.artists,
-          album: track.album,
+          album: {
+            name: track.album.name,
+            images: track.album.images,
+            id: track.album.id,
+            artists: track.artists, // Use track artists as album artists
+            release_date: "",
+            total_tracks: 0,
+          },
           duration_ms: track.duration_ms,
+          explicit: false,
+          external_urls: {
+            spotify: `https://open.spotify.com/track/${track.id}`,
+          },
+          popularity: 0,
+          preview_url: track.preview_url || null,
+          track_number: 0,
+          disc_number: 1,
           uri: track.uri,
-          preview_url: track.preview_url,
         });
       }
     },

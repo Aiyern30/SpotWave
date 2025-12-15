@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { Button, Slider } from "@/components/ui";
 import {
@@ -34,6 +35,7 @@ const formatTime = (ms: number) => {
 };
 
 export const MusicPlayer = () => {
+  const router = useRouter();
   const {
     currentTrack,
     isPlaying,
@@ -134,6 +136,27 @@ export const MusicPlayer = () => {
     [seekTo]
   );
 
+  const handleTrackClick = () => {
+    if (currentTrack?.album?.id) {
+      router.push(
+        `/Albums/${currentTrack.album.id}?name=${encodeURIComponent(
+          currentTrack.album.name
+        )}`
+      );
+    }
+  };
+
+  const handleArtistClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (currentTrack?.artists?.[0]) {
+      router.push(
+        `/Artists/${currentTrack.artists[0].id}?name=${encodeURIComponent(
+          currentTrack.artists[0].name
+        )}`
+      );
+    }
+  };
+
   if (!isVisible) return null;
 
   return (
@@ -141,17 +164,22 @@ export const MusicPlayer = () => {
       <div className="h-[90px] flex items-center justify-between px-4 gap-4">
         {/* Left Section - Track Info */}
         <div className="flex items-center gap-3 min-w-[240px] w-[30%]">
-          <div className="w-14 h-14 rounded overflow-hidden flex-shrink-0 group relative">
+          <div
+            className="w-14 h-14 rounded overflow-hidden flex-shrink-0 group relative cursor-pointer"
+            onClick={handleTrackClick}
+          >
             {currentTrack ? (
               <>
                 <Image
-                  src={currentTrack.album.images[0]?.url || "/default-artist.png"}
+                  src={
+                    currentTrack.album.images[0]?.url || "/default-artist.png"
+                  }
                   width={56}
                   height={56}
                   alt={currentTrack.name}
                   className="object-cover w-full h-full"
                 />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <ChevronUp className="h-5 w-5 text-white" />
                 </div>
               </>
@@ -165,10 +193,16 @@ export const MusicPlayer = () => {
           <div className="min-w-0 flex-1">
             {currentTrack ? (
               <>
-                <h4 className="text-white text-sm font-medium truncate hover:underline cursor-pointer">
+                <h4
+                  className="text-white text-sm font-medium truncate hover:underline cursor-pointer"
+                  onClick={handleTrackClick}
+                >
                   {currentTrack.name}
                 </h4>
-                <p className="text-zinc-400 text-xs truncate hover:underline cursor-pointer">
+                <p
+                  className="text-zinc-400 text-xs truncate hover:underline cursor-pointer"
+                  onClick={handleArtistClick}
+                >
                   {currentTrack.artists.map((artist) => artist.name).join(", ")}
                 </p>
               </>
