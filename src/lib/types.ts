@@ -93,6 +93,9 @@ export interface RecentTracksProps {
     }[];
     id: string;
     name: string;
+    duration_ms: number;
+    uri: string;
+    preview_url?: string | null;
   };
   played_at: string;
 }
