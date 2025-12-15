@@ -210,27 +210,58 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
     setSearchResults([]);
   };
 
-  // Fetch recommendations when sheet opens
   useEffect(() => {
     async function fetchRecommendations() {
       if (!token || !isSheetOpen) return;
 
       try {
+        console.log("=== Fetching AI-powered recommendations ===");
+
         // Fetch playlist tracks
         const playlistRes = await fetch(
           `https://api.spotify.com/v1/playlists/${playlistID}/tracks?limit=50`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
+
+        if (!playlistRes.ok) {
+          console.error("Failed to fetch playlist:", playlistRes.status);
+          toast.error("Failed to fetch playlist tracks");
+          return;
+        }
+
         const playlistData = await playlistRes.json();
+        console.log(
+          "Fetched playlist data:",
+          playlistData.items?.length,
+          "tracks"
+        );
 
         // Store existing track IDs to filter duplicates
-        const trackIds = playlistData.items.map((item: any) => item.track.id);
+        const trackIds = playlistData.items
+          .map((item: any) => item.track?.id)
+          .filter(Boolean);
+
         setExistingTrackIds(trackIds);
 
-        // Get genres and recommendations
-        const genres = await analyzePlaylistGenres(playlistData.items, token);
-        const recs = await getPlaylistRecommendations(genres, token, trackIds);
+        // Get AI-powered analysis
+        const analysis = await analyzePlaylistGenres(playlistData.items, token);
+        console.log("AI Analysis:", analysis);
+
+        // Get AI-powered recommendations
+        const recs = await getPlaylistRecommendations(
+          analysis,
+          token,
+          trackIds
+        );
+
+        console.log("Final recommendations:", recs.length);
         setRecommendedTracks(recs);
+
+        if (recs.length === 0) {
+          toast.info(
+            "No recommendations available. Try adding more songs to your playlist."
+          );
+        }
       } catch (error) {
         console.error("Error fetching recommendations:", error);
         toast.error("Failed to load recommendations");
