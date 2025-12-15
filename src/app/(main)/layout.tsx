@@ -25,7 +25,7 @@ export default function MainLayout({
       <div
         className={`flex-1 transition-all ml-16 duration-300 ${
           sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
-        } ${isPlayerVisible ? "pb-20 sm:pb-24" : ""}`}
+        } ${isPlayerVisible ? "pb-[90px]" : ""}`}
       >
         {children}
         {pathname !== "/Events" && <InQueueWindow />}
