@@ -53,6 +53,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
   const [recommendedTracks, setRecommendedTracks] = useState<Track[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const [existingTrackIds, setExistingTrackIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -213,16 +214,29 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
   useEffect(() => {
     async function fetchRecommendations() {
       if (!token || !isSheetOpen) return;
-      // Fetch playlist tracks
-      const playlistRes = await fetch(
-        `https://api.spotify.com/v1/playlists/${playlistID}/tracks?limit=50`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const playlistData = await playlistRes.json();
-      const genres = await analyzePlaylistGenres(playlistData.items, token);
-      const recs = await getPlaylistRecommendations(genres, token);
-      setRecommendedTracks(recs);
+
+      try {
+        // Fetch playlist tracks
+        const playlistRes = await fetch(
+          `https://api.spotify.com/v1/playlists/${playlistID}/tracks?limit=50`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const playlistData = await playlistRes.json();
+
+        // Store existing track IDs to filter duplicates
+        const trackIds = playlistData.items.map((item: any) => item.track.id);
+        setExistingTrackIds(trackIds);
+
+        // Get genres and recommendations
+        const genres = await analyzePlaylistGenres(playlistData.items, token);
+        const recs = await getPlaylistRecommendations(genres, token, trackIds);
+        setRecommendedTracks(recs);
+      } catch (error) {
+        console.error("Error fetching recommendations:", error);
+        toast.error("Failed to load recommendations");
+      }
     }
+
     fetchRecommendations();
   }, [token, playlistID, isSheetOpen]);
 
@@ -426,30 +440,72 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                 </div>
               </ScrollArea>
 
-              {/* Recommended Songs Section */}
-              {recommendedTracks.length > 0 && (
+              {recommendedTracks.length > 0 && !searchQuery.trim() && (
                 <div className="mb-6">
-                  <h4 className="text-green-400 font-semibold mb-2 text-lg">
-                    Recommended for this playlist
-                  </h4>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-2 bg-green-500/20 rounded-lg">
+                      <Music className="h-4 w-4 text-green-400" />
+                    </div>
+                    <h4 className="text-green-400 font-semibold text-lg">
+                      Recommended for this playlist
+                    </h4>
+                  </div>
                   <div className="space-y-1">
                     {recommendedTracks.map((track) => (
                       <div
                         key={track.id}
-                        className="flex items-center gap-3 p-2 rounded hover:bg-zinc-800/40"
+                        className="group flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800/50 transition-all duration-200"
                       >
-                        {/* Render track info and add button, similar to search results */}
-                        <span className="truncate">
-                          {track.name} -{" "}
-                          {track.artists.map((a) => a.name).join(", ")}
-                        </span>
+                        {/* Album Art */}
+                        <Avatar className="h-12 w-12 rounded-md">
+                          <AvatarImage
+                            src={
+                              track.album.images[2]?.url ||
+                              track.album.images[0]?.url
+                            }
+                            alt={track.album.name}
+                          />
+                          <AvatarFallback className="bg-zinc-700 text-zinc-300 rounded-md">
+                            <Disc className="h-5 w-5" />
+                          </AvatarFallback>
+                        </Avatar>
+
+                        {/* Track Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium text-white truncate">
+                              {track.name}
+                            </h4>
+                            {track.explicit && (
+                              <Badge
+                                variant="secondary"
+                                className="text-xs px-1.5 py-0.5"
+                              >
+                                E
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-zinc-400 truncate">
+                            {track.artists.map((a) => a.name).join(", ")}
+                          </p>
+                          <div className="flex items-center gap-1 text-xs text-zinc-500">
+                            <Clock className="h-3 w-3" />
+                            <span>{formatDuration(track.duration_ms)}</span>
+                          </div>
+                        </div>
+
+                        {/* Add Button */}
                         <Button
                           size="sm"
                           onClick={() => handleAddTrackToPlaylist(track)}
                           disabled={addingTracks.has(track.id)}
-                          className="ml-auto bg-green-600 hover:bg-green-700 text-white"
+                          className="bg-green-600 hover:bg-green-700 text-white opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <Plus className="h-4 w-4" />
+                          {addingTracks.has(track.id) ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Plus className="h-4 w-4" />
+                          )}
                         </Button>
                       </div>
                     ))}
