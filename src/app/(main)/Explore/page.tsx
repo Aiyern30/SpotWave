@@ -320,9 +320,7 @@ const Page = () => {
                   {memoizedRecentTracks.map((tracks, index) => (
                     <PlaylistCard
                       key={`${tracks.track.id}-${index}`}
-                      id={
-                        tracks.track.album.artists[0]?.id || tracks.track.id
-                      }
+                      id={tracks.track.album.artists[0]?.id || tracks.track.id}
                       image={
                         tracks.track.album.images[0]?.url ||
                         "/default-artist.png"

@@ -20,6 +20,7 @@ import {
   List,
   Maximize2,
   ChevronUp,
+  Loader2,
 } from "lucide-react";
 import {
   checkUserSavedTracks,
@@ -90,14 +91,19 @@ export const MusicPlayer = () => {
       if (isSaved) {
         await removeTracksFromUser([currentTrack.id]);
         setIsSaved(false);
+        console.log(`Removed "${currentTrack.name}" from your library`);
       } else {
         await saveTracksForUser([currentTrack.id]);
         setIsSaved(true);
+        console.log(`Added "${currentTrack.name}" to your library`);
       }
     } catch (error) {
       console.error("Failed to toggle track save status:", error);
+      // Revert the state if there's an error
+      setIsSaved((prev) => !prev);
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
   const handlePlayPause = useCallback(() => {
@@ -219,14 +225,16 @@ export const MusicPlayer = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-400 hover:text-white h-8 w-8 flex-shrink-0"
+            className="text-zinc-400 hover:text-white h-8 w-8 flex-shrink-0 transition-all duration-200"
             onClick={handleToggleSave}
             disabled={!currentTrack || isSaving}
           >
-            {isSaved ? (
-              <Heart className="h-4 w-4 fill-green-500 text-green-500" />
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 animate-spin text-green-500" />
+            ) : isSaved ? (
+              <Heart className="h-4 w-4 fill-green-500 text-green-500 animate-in zoom-in-50 duration-200" />
             ) : (
-              <Heart className="h-4 w-4" />
+              <Heart className="h-4 w-4 hover:scale-110 transition-transform" />
             )}
           </Button>
         </div>
