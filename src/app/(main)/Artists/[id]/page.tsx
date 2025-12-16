@@ -44,6 +44,7 @@ import { Play, MoreHorizontal, Music, Users } from "lucide-react";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
 import { usePlayer } from "@/contexts/PlayerContext";
+import { fetchArtistTopTracks } from "@/utils/Tracks/fetchArtistTopTracks";
 
 interface ArtistProfilePageProps {
   id: string;
@@ -259,31 +260,6 @@ const ArtistProfilePage = () => {
     } catch (error) {
       console.error("Error fetching artist profile:", error);
       return null;
-    }
-  };
-
-  const fetchArtistTopTracks = async (id: string) => {
-    const token = localStorage.getItem("Token");
-    if (!token) return [];
-
-    try {
-      const response = await fetch(
-        `https://api.spotify.com/v1/artists/${id}/top-tracks?market=US`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (!response.ok) {
-        console.error("Failed to fetch top tracks:", response.statusText);
-        return [];
-      }
-
-      const data = await response.json();
-      return data.tracks;
-    } catch (error) {
-      console.error("Error fetching top tracks:", error);
-      return [];
     }
   };
 
@@ -583,7 +559,9 @@ const ArtistProfilePage = () => {
                           <TableRow
                             key={track.id}
                             className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors group cursor-pointer"
-                            onClick={() => handleSongClick(track.id, track.name)}
+                            onClick={() =>
+                              handleSongClick(track.id, track.name)
+                            }
                             onMouseEnter={() => setHoveredTrackId(track.id)}
                             onMouseLeave={() => setHoveredTrackId(null)}
                           >
@@ -615,7 +593,10 @@ const ArtistProfilePage = () => {
                                         handlePlayTrack(track);
                                       }}
                                     >
-                                      <Play className="h-4 w-4 ml-0.5" fill="currentColor" />
+                                      <Play
+                                        className="h-4 w-4 ml-0.5"
+                                        fill="currentColor"
+                                      />
                                     </Button>
                                   </div>
                                 </div>
@@ -645,7 +626,10 @@ const ArtistProfilePage = () => {
                                 className="text-zinc-400 hover:text-white hover:underline cursor-pointer truncate"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleAlbumClick(track.album.id, track.album.name);
+                                  handleAlbumClick(
+                                    track.album.id,
+                                    track.album.name
+                                  );
                                 }}
                               >
                                 {track.album.name}
@@ -671,7 +655,7 @@ const ArtistProfilePage = () => {
                           track.album.images[0]?.url || "/default-artist.png"
                         }
                         title={track.name}
-                        description={track.album.name}
+                        description={artistProfile.name}
                         onPlay={() => handlePlayTrack(track)}
                         onClick={(id, name) => handleSongClick(id, name)}
                       />
@@ -730,7 +714,9 @@ const ArtistProfilePage = () => {
                           <TableRow
                             key={album.id}
                             className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer"
-                            onClick={() => handleAlbumClick(album.id, album.name)}
+                            onClick={() =>
+                              handleAlbumClick(album.id, album.name)
+                            }
                           >
                             <TableCell>
                               <div className="flex items-center space-x-3">
@@ -795,7 +781,9 @@ const ArtistProfilePage = () => {
                         id={album.id}
                         image={album.images[0]?.url || "/default-artist.png"}
                         title={album.name}
-                        description={`${album.album_type} • ${album.release_date}`}
+                        description={`${album.release_date.split("-")[0]} • ${
+                          album.total_tracks
+                        } tracks`}
                         onPlay={() => handlePlayAlbum(album.id)}
                         onClick={(id, name) => handleAlbumClick(id, name)}
                       />
@@ -826,7 +814,10 @@ const ArtistProfilePage = () => {
                         <div
                           className="flex flex-col items-center p-4 rounded-lg bg-zinc-900/30 hover:bg-zinc-800/50 transition-all duration-300 cursor-pointer group"
                           onClick={() =>
-                            handleArtistClick(similarArtist.id, similarArtist.name)
+                            handleArtistClick(
+                              similarArtist.id,
+                              similarArtist.name
+                            )
                           }
                         >
                           <Avatar className="w-20 h-20 mb-3">

@@ -3,15 +3,11 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
+import PlaylistCard from "@/components/PlaylistCard";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-  Card,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  CardContent,
   Table,
   TableBody,
   TableCell,
@@ -19,7 +15,6 @@ import {
   TableHeader,
   TableHead,
   TableRow,
-  Button,
 } from "@/components/ui";
 import {
   Select,
@@ -44,6 +39,8 @@ import type {
   GlobalArtistPropsLASTFM,
 } from "@/lib/types";
 import { NumberTicker } from "@/components/magicui/NumberTicker";
+import { usePlayer } from "@/contexts/PlayerContext";
+import { fetchArtistTopTracks } from "@/utils/Tracks/fetchArtistTopTracks";
 
 const Page = () => {
   const [artists, setArtists] = useState<GlobalArtistPropsLASTFM[]>([]);
@@ -52,6 +49,7 @@ const Page = () => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [displayUI, setDisplayUI] = useState<DisplayUIProps | string>("Table");
   const router = useRouter();
+  const { playTrack } = usePlayer();
 
   const LASTFM_API_KEY = process.env.NEXT_PUBLIC_LASTFM_API_KEY;
 
@@ -156,6 +154,53 @@ const Page = () => {
 
   const handleSelectChange = (value: string) => {
     setNumArtists(Number.parseInt(value));
+  };
+
+  const handlePlayArtist = async (artistId: string) => {
+    try {
+      console.log("Fetching top tracks for artist:", artistId);
+
+      // Fetch the artist's top tracks
+      const topTracks = await fetchArtistTopTracks(artistId);
+
+      if (topTracks && topTracks.length > 0) {
+        // Play the first top track
+        const firstTrack = topTracks[0];
+
+        playTrack({
+          id: firstTrack.id,
+          name: firstTrack.name,
+          artists: firstTrack.artists.map((artist: any) => ({
+            name: artist.name,
+            id: artist.id,
+          })),
+          album: {
+            name: firstTrack.album.name,
+            images: firstTrack.album.images,
+            id: firstTrack.album.id,
+            artists: firstTrack.album.artists || firstTrack.artists,
+            release_date: firstTrack.album.release_date || "",
+            total_tracks: firstTrack.album.total_tracks || 0,
+          },
+          duration_ms: firstTrack.duration_ms,
+          explicit: firstTrack.explicit || false,
+          external_urls: {
+            spotify: `https://open.spotify.com/track/${firstTrack.id}`,
+          },
+          popularity: firstTrack.popularity || 0,
+          preview_url: firstTrack.preview_url || null,
+          track_number: firstTrack.track_number || 0,
+          disc_number: firstTrack.disc_number || 1,
+          uri: firstTrack.uri,
+        });
+
+        console.log("Playing artist's top track:", firstTrack.name);
+      } else {
+        console.error("No top tracks found for this artist");
+      }
+    } catch (error) {
+      console.error("Error playing artist:", error);
+    }
   };
 
   return (
@@ -284,94 +329,20 @@ const Page = () => {
           )}
 
           {displayUI === "Grid" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 px-1">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
               {memoizedArtists.map((artist, index) => {
                 const imageUrl = artist.image[0]["#text"];
 
                 return (
-                  <TooltipProvider key={artist.id || index}>
-                    <Card
-                      className="relative w-[200px] h-[300px] cursor-pointer bg-zinc-900/50 hover:bg-zinc-800/70 transition-all duration-300 hover:scale-105 group"
-                      onClick={() => handleClick(artist.id, artist.name)}
-                    >
-                      <CardHeader className="p-0 pb-0">
-                        <div className="relative w-full px-4 pt-4 pb-2">
-                          <Avatar className="w-[170px] h-[170px] rounded-full shadow-lg">
-                            <AvatarImage
-                              src={imageUrl || "/placeholder.svg"}
-                              alt={artist.name}
-                              className="rounded-full object-cover"
-                            />
-                            <AvatarFallback className="bg-zinc-700 text-white text-2xl rounded-full">
-                              {artist.name[0]}
-                            </AvatarFallback>
-                          </Avatar>
-
-                          {/* Play button overlay */}
-                          <div className="absolute bottom-3 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                            <Button
-                              size="icon"
-                              className="h-14 w-14 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-lg hover:scale-110 transition-all duration-200"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                // Handle play artist's top tracks
-                              }}
-                            >
-                              <Play
-                                className="h-6 w-6 ml-0.5"
-                                fill="currentColor"
-                              />
-                            </Button>
-                          </div>
-
-                          {/* Rank badge */}
-                          <div className="absolute top-2 left-2 bg-black/70 text-white text-xs font-bold px-2 py-1 rounded-full">
-                            #{index + 1}
-                          </div>
-                        </div>
-                      </CardHeader>
-
-                      <CardContent className="p-4 pt-2 space-y-2">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <CardTitle className="text-white text-base font-semibold line-clamp-1 hover:text-green-400 transition-colors">
-                              {artist.name}
-                            </CardTitle>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-xs">
-                            <p>{artist.name}</p>
-                          </TooltipContent>
-                        </Tooltip>
-
-                        <div className="text-zinc-400 text-sm">
-                          <NumberTicker
-                            value={artist.playcount}
-                            className="text-zinc-400"
-                          />{" "}
-                          plays
-                        </div>
-                      </CardContent>
-
-                      <CardFooter className="p-4 pt-0">
-                        <div className="text-zinc-500 text-xs">
-                          {artist.listeners.toLocaleString()} listeners
-                        </div>
-                      </CardFooter>
-
-                      {/* More options button */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 text-zinc-400 hover:text-white"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Handle more options
-                        }}
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </Card>
-                  </TooltipProvider>
+                  <PlaylistCard
+                    key={artist.id || index}
+                    id={artist.id}
+                    image={imageUrl || "/placeholder.svg"}
+                    title={artist.name}
+                    description={`${artist.playcount.toLocaleString()} plays`}
+                    onPlay={handlePlayArtist}
+                    onClick={handleClick}
+                  />
                 );
               })}
             </div>
