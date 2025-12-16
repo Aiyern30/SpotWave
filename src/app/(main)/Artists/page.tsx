@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableHead,
   TableRow,
+  Button,
 } from "@/components/ui";
 import {
   Select,
@@ -50,6 +51,7 @@ const Page = () => {
   const [displayUI, setDisplayUI] = useState<DisplayUIProps | string>("Table");
   const router = useRouter();
   const { playTrack } = usePlayer();
+  const [hoveredArtistId, setHoveredArtistId] = useState<string | null>(null);
 
   const LASTFM_API_KEY = process.env.NEXT_PUBLIC_LASTFM_API_KEY;
 
@@ -282,6 +284,8 @@ const Page = () => {
                         <TableRow
                           key={artist.id || index}
                           onClick={() => handleClick(artist.id, artist.name)}
+                          onMouseEnter={() => setHoveredArtistId(artist.id)}
+                          onMouseLeave={() => setHoveredArtistId(null)}
                           className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
                         >
                           <TableCell className="text-center">
@@ -291,7 +295,7 @@ const Page = () => {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-3">
-                              <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                              <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 group/image">
                                 <Avatar className="w-12 h-12">
                                   <AvatarImage
                                     src={imageUrl || "/placeholder.svg"}
@@ -302,6 +306,22 @@ const Page = () => {
                                     {artist.name[0]}
                                   </AvatarFallback>
                                 </Avatar>
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handlePlayArtist(artist.id);
+                                    }}
+                                  >
+                                    <Play
+                                      className="h-4 w-4 ml-0.5"
+                                      fill="currentColor"
+                                    />
+                                  </Button>
+                                </div>
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="text-white font-medium truncate hover:text-green-400 transition-colors">
