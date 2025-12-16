@@ -3,11 +3,8 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
+import PlaylistCard from "@/components/PlaylistCard";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
   Table,
   TableBody,
   TableCell,
@@ -41,6 +38,8 @@ import type {
 } from "@/lib/types";
 import { searchTrackOnSpotify } from "@/utils/Songs/searchTrackOnSpotify";
 import Image from "next/image";
+import { usePlayer } from "@/contexts/PlayerContext";
+import { fetchArtistTopTracks } from "@/utils/Tracks/fetchArtistTopTracks";
 
 const Page = () => {
   const [tracks, setTracks] = useState<TrackDataLASTFM[]>([]);
@@ -48,8 +47,10 @@ const Page = () => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [displayUI, setDisplayUI] = useState<DisplayUIProps | string>("Table");
   const [loading, setLoading] = useState<boolean>(false);
+  const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
 
   const router = useRouter();
+  const { playTrack } = usePlayer();
 
   const LASTFM_API_KEY = process.env.NEXT_PUBLIC_LASTFM_API_KEY;
 
@@ -112,105 +113,70 @@ const Page = () => {
     setNumTracks(Number.parseInt(value));
   };
 
-  // Track Card Component
-  const TrackCard = ({
-    track,
-    index,
-  }: {
-    track: TrackDataLASTFM;
-    index: number;
-  }) => (
-    <TooltipProvider>
-      <Card
-        className="relative w-[200px] h-[300px] cursor-pointer bg-zinc-900/50 hover:bg-zinc-800/70 transition-all duration-300 hover:scale-105 group"
-        onClick={() => router.push(`/Songs/${track.id}?name=${track.name}`)}
-      >
-        <CardHeader className="p-0 pb-0">
-          <div className="relative w-full px-4 pt-4 pb-2">
-            <div className="w-[170px] h-[170px] rounded-lg shadow-lg overflow-hidden">
-              <Image
-                src={track.image[0]["#text"] || "/placeholder.svg"}
-                width={170}
-                height={170}
-                className="object-cover rounded-lg"
-                alt={track.name}
-              />
-            </div>
+  const handlePlayTrack = useCallback(
+    async (trackId: string, trackName: string, artistName: string) => {
+      try {
+        console.log("Fetching track details for:", trackName);
 
-            {/* Play button overlay */}
-            <div className="absolute bottom-3 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-              <Button
-                size="icon"
-                className="h-14 w-14 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-lg hover:scale-110 transition-all duration-200"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Handle play track
-                }}
-              >
-                <Play className="h-6 w-6 ml-0.5" fill="currentColor" />
-              </Button>
-            </div>
+        // Search for the track on Spotify to get full details
+        const spotifyData = await searchTrackOnSpotify(trackName, artistName);
 
-            {/* Rank badge */}
-            <div className="absolute top-2 left-2 bg-black/70 text-white text-xs font-bold px-2 py-1 rounded-full">
-              #{index + 1}
-            </div>
-          </div>
-        </CardHeader>
+        if (!spotifyData) {
+          console.error("Could not find track on Spotify");
+          return;
+        }
 
-        <CardContent className="p-4 pt-2 space-y-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <CardTitle className="text-white text-base font-semibold line-clamp-1 hover:text-green-400 transition-colors">
-                {track.name}
-              </CardTitle>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
-              <p>{track.name}</p>
-            </TooltipContent>
-          </Tooltip>
+        // Fetch additional track details if needed
+        const token = localStorage.getItem("Token");
+        if (!token) return;
 
-          <div className="space-y-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div
-                  className="text-zinc-400 text-sm line-clamp-1 hover:text-zinc-300 transition-colors cursor-pointer hover:underline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push(
-                      `/Artists/${track.artist.id}?name=${track.artist.name}`
-                    );
-                  }}
-                >
-                  {track.artist.name}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-xs">
-                <p>{track.artist.name}</p>
-              </TooltipContent>
-            </Tooltip>
+        const response = await fetch(
+          `https://api.spotify.com/v1/tracks/${spotifyData.id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
-            <div className="text-zinc-500 text-xs">
-              <NumberTicker value={track.listeners} className="text-zinc-500" />{" "}
-              listeners
-            </div>
-          </div>
-        </CardContent>
+        if (!response.ok) {
+          console.error("Failed to fetch track details");
+          return;
+        }
 
-        {/* More options button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 text-zinc-400 hover:text-white"
-          onClick={(e) => {
-            e.stopPropagation();
-            // Handle more options
-          }}
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </Card>
-    </TooltipProvider>
+        const trackData = await response.json();
+
+        playTrack({
+          id: trackData.id,
+          name: trackData.name,
+          artists: trackData.artists.map((artist: any) => ({
+            name: artist.name,
+            id: artist.id,
+          })),
+          album: {
+            name: trackData.album.name,
+            images: trackData.album.images,
+            id: trackData.album.id,
+            artists: trackData.album.artists || trackData.artists,
+            release_date: trackData.album.release_date || "",
+            total_tracks: trackData.album.total_tracks || 0,
+          },
+          duration_ms: trackData.duration_ms,
+          explicit: trackData.explicit || false,
+          external_urls: {
+            spotify: trackData.external_urls.spotify,
+          },
+          popularity: trackData.popularity || 0,
+          preview_url: trackData.preview_url || null,
+          track_number: trackData.track_number || 0,
+          disc_number: trackData.disc_number || 1,
+          uri: trackData.uri,
+        });
+
+        console.log("Playing track:", trackData.name);
+      } catch (error) {
+        console.error("Error playing track:", error);
+      }
+    },
+    [playTrack]
   );
 
   return (
@@ -294,6 +260,8 @@ const Page = () => {
                         onClick={() =>
                           router.push(`/Songs/${track.id}?name=${track.name}`)
                         }
+                        onMouseEnter={() => setHoveredTrackId(track.id)}
+                        onMouseLeave={() => setHoveredTrackId(null)}
                         className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
                       >
                         <TableCell className="text-center">
@@ -303,7 +271,7 @@ const Page = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
+                            <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0 group/image">
                               <Image
                                 src={
                                   track.image[0]["#text"] || "/placeholder.svg"
@@ -313,6 +281,26 @@ const Page = () => {
                                 className="object-cover"
                                 alt={track.name}
                               />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePlayTrack(
+                                      track.id,
+                                      track.name,
+                                      track.artist.name
+                                    );
+                                  }}
+                                >
+                                  <Play
+                                    className="h-4 w-4 ml-0.5"
+                                    fill="currentColor"
+                                  />
+                                </Button>
+                              </div>
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="text-white font-medium truncate hover:text-green-400 transition-colors">
@@ -354,12 +342,20 @@ const Page = () => {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 px-1">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
               {memoizedTracks.map((track, index) => (
-                <TrackCard
+                <PlaylistCard
                   key={track.id || index}
-                  track={track}
-                  index={index}
+                  id={track.id}
+                  image={track.image[0]["#text"] || "/placeholder.svg"}
+                  title={track.name}
+                  description={track.artist.name}
+                  onPlay={() =>
+                    handlePlayTrack(track.id, track.name, track.artist.name)
+                  }
+                  onClick={(id, name) =>
+                    router.push(`/Songs/${id}?name=${encodeURIComponent(name)}`)
+                  }
                 />
               ))}
             </div>
