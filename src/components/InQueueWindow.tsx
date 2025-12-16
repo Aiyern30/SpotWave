@@ -205,7 +205,9 @@ const InQueueWindow = () => {
                           className="font-bold cursor-pointer hover:underline"
                           onClick={() =>
                             router.push(
-                              `/Albums/${currentTrack.album.id}?name=${encodeURIComponent(
+                              `/Albums/${
+                                currentTrack.album.id
+                              }?name=${encodeURIComponent(
                                 currentTrack.album.name
                               )}`
                             )
@@ -221,9 +223,9 @@ const InQueueWindow = () => {
                                   className="cursor-pointer hover:underline text-gray-700"
                                   onClick={() =>
                                     router.push(
-                                      `/Artists/${artist.id}?name=${encodeURIComponent(
-                                        artist.name
-                                      )}`
+                                      `/Artists/${
+                                        artist.id
+                                      }?name=${encodeURIComponent(artist.name)}`
                                     )
                                   }
                                 >
@@ -238,7 +240,9 @@ const InQueueWindow = () => {
                           className="text-gray-500 text-sm cursor-pointer hover:underline"
                           onClick={() =>
                             router.push(
-                              `/Albums/${currentTrack.album.id}?name=${encodeURIComponent(
+                              `/Albums/${
+                                currentTrack.album.id
+                              }?name=${encodeURIComponent(
                                 currentTrack.album.name
                               )}`
                             )
@@ -285,9 +289,9 @@ const InQueueWindow = () => {
                           className="font-bold cursor-pointer hover:underline"
                           onClick={() =>
                             router.push(
-                              `/Albums/${track.album.id}?name=${encodeURIComponent(
-                                track.album.name
-                              )}`
+                              `/Albums/${
+                                track.album.id
+                              }?name=${encodeURIComponent(track.album.name)}`
                             )
                           }
                         >
@@ -300,9 +304,9 @@ const InQueueWindow = () => {
                                 className="cursor-pointer hover:underline text-gray-700"
                                 onClick={() =>
                                   router.push(
-                                    `/Artists/${artist.id}?name=${encodeURIComponent(
-                                      artist.name
-                                    )}`
+                                    `/Artists/${
+                                      artist.id
+                                    }?name=${encodeURIComponent(artist.name)}`
                                   )
                                 }
                               >
@@ -355,9 +359,9 @@ const InQueueWindow = () => {
                           className="font-bold cursor-pointer hover:underline"
                           onClick={() =>
                             router.push(
-                              `/Songs/${track.track.id}?name=${encodeURIComponent(
-                                track.track.name
-                              )}`
+                              `/Songs/${
+                                track.track.id
+                              }?name=${encodeURIComponent(track.track.name)}`
                             )
                           }
                         >
@@ -370,9 +374,9 @@ const InQueueWindow = () => {
                                 className="cursor-pointer hover:underline text-gray-700"
                                 onClick={() =>
                                   router.push(
-                                    `/Artists/${artist.id}?name=${encodeURIComponent(
-                                      artist.name
-                                    )}`
+                                    `/Artists/${
+                                      artist.id
+                                    }?name=${encodeURIComponent(artist.name)}`
                                   )
                                 }
                               >

@@ -130,6 +130,7 @@ const ArtistProfilePage = () => {
   );
   const { toast } = useToast();
   const [isFollowing, setIsFollowing] = useState(false);
+  const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
 
   useEffect(() => {
     if (artistProfile?.id && followedArtists.length > 0) {
@@ -417,6 +418,18 @@ const ArtistProfilePage = () => {
     }
   }, []);
 
+  const handleArtistClick = (artistId: string, artistName: string) => {
+    router.push(`/Artists/${artistId}?name=${encodeURIComponent(artistName)}`);
+  };
+
+  const handleAlbumClick = (albumId: string, albumName: string) => {
+    router.push(`/Albums/${albumId}?name=${encodeURIComponent(albumName)}`);
+  };
+
+  const handleSongClick = (trackId: string, trackName: string) => {
+    router.push(`/Songs/${trackId}?name=${encodeURIComponent(trackName)}`);
+  };
+
   return (
     <div className="flex min-h-screen bg-black">
       <Sidebar
@@ -563,9 +576,6 @@ const ArtistProfilePage = () => {
                           <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium">
                             Duration
                           </TableHead>
-                          <TableHead className="w-[100px] text-center text-zinc-400 font-medium">
-                            Actions
-                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -573,7 +583,9 @@ const ArtistProfilePage = () => {
                           <TableRow
                             key={track.id}
                             className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors group cursor-pointer"
-                            onClick={() => handlePlayTrack(track)}
+                            onClick={() => handleSongClick(track.id, track.name)}
+                            onMouseEnter={() => setHoveredTrackId(track.id)}
+                            onMouseLeave={() => setHoveredTrackId(null)}
                           >
                             <TableCell className="text-center">
                               <span className="text-zinc-400 text-sm">
@@ -582,7 +594,7 @@ const ArtistProfilePage = () => {
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center space-x-3">
-                                <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
+                                <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0 group/image">
                                   <Image
                                     src={
                                       track.album.images[0]?.url ||
@@ -593,13 +605,37 @@ const ArtistProfilePage = () => {
                                     className="object-cover"
                                     alt={track.name}
                                   />
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handlePlayTrack(track);
+                                      }}
+                                    >
+                                      <Play className="h-4 w-4 ml-0.5" fill="currentColor" />
+                                    </Button>
+                                  </div>
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <div className="text-white font-medium truncate hover:text-green-400 transition-colors">
                                     {track.name}
                                   </div>
                                   <div className="text-zinc-400 text-sm truncate">
-                                    {artistProfile.name}
+                                    <span
+                                      className="hover:underline hover:text-white transition-colors cursor-pointer"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleArtistClick(
+                                          artistProfile.id,
+                                          artistProfile.name
+                                        );
+                                      }}
+                                    >
+                                      {artistProfile.name}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
@@ -609,9 +645,7 @@ const ArtistProfilePage = () => {
                                 className="text-zinc-400 hover:text-white hover:underline cursor-pointer truncate"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  router.push(
-                                    `/Albums/${track.album.id}?name=${track.album.name}`
-                                  );
+                                  handleAlbumClick(track.album.id, track.album.name);
                                 }}
                               >
                                 {track.album.name}
@@ -621,19 +655,6 @@ const ArtistProfilePage = () => {
                               <span className="text-zinc-400 text-sm">
                                 {formatSongDuration(track.duration_ms)}
                               </span>
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-zinc-400 hover:text-white opacity-0 group-hover:opacity-100 transition-all duration-200"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handlePlayTrack(track);
-                                }}
-                              >
-                                <Play className="h-4 w-4" fill="currentColor" />
-                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -652,11 +673,7 @@ const ArtistProfilePage = () => {
                         title={track.name}
                         description={track.album.name}
                         onPlay={() => handlePlayTrack(track)}
-                        onClick={(id, name) =>
-                          router.push(
-                            `/Songs/${id}?name=${encodeURIComponent(name)}`
-                          )
-                        }
+                        onClick={(id, name) => handleSongClick(id, name)}
                       />
                     ))}
                   </div>
@@ -713,11 +730,7 @@ const ArtistProfilePage = () => {
                           <TableRow
                             key={album.id}
                             className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer"
-                            onClick={() =>
-                              router.push(
-                                `/Albums/${album.id}?name=${album.name}`
-                              )
-                            }
+                            onClick={() => handleAlbumClick(album.id, album.name)}
                           >
                             <TableCell>
                               <div className="flex items-center space-x-3">
@@ -738,7 +751,18 @@ const ArtistProfilePage = () => {
                                     {album.name}
                                   </div>
                                   <div className="text-zinc-400 text-sm truncate">
-                                    {artistProfile.name}
+                                    <span
+                                      className="hover:underline hover:text-white transition-colors cursor-pointer"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleArtistClick(
+                                          artistProfile.id,
+                                          artistProfile.name
+                                        );
+                                      }}
+                                    >
+                                      {artistProfile.name}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
@@ -773,11 +797,7 @@ const ArtistProfilePage = () => {
                         title={album.name}
                         description={`${album.album_type} • ${album.release_date}`}
                         onPlay={() => handlePlayAlbum(album.id)}
-                        onClick={(id, name) =>
-                          router.push(
-                            `/Albums/${id}?name=${encodeURIComponent(name)}`
-                          )
-                        }
+                        onClick={(id, name) => handleAlbumClick(id, name)}
                       />
                     ))}
                   </div>
@@ -806,9 +826,7 @@ const ArtistProfilePage = () => {
                         <div
                           className="flex flex-col items-center p-4 rounded-lg bg-zinc-900/30 hover:bg-zinc-800/50 transition-all duration-300 cursor-pointer group"
                           onClick={() =>
-                            router.push(
-                              `/Artists/${similarArtist.id}?name=${similarArtist.name}`
-                            )
+                            handleArtistClick(similarArtist.id, similarArtist.name)
                           }
                         >
                           <Avatar className="w-20 h-20 mb-3">
