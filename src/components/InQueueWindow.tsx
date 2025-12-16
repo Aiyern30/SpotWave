@@ -101,6 +101,33 @@ const InQueueWindow = () => {
     playTrack(track);
   };
 
+  // Helper function to convert recent track to Track type
+  const convertToTrack = (recentTrack: RecentTracksProps): Track => {
+    return {
+      id: recentTrack.track.id,
+      name: recentTrack.track.name,
+      artists: recentTrack.track.artists,
+      album: {
+        name: recentTrack.track.album.name,
+        images: recentTrack.track.album.images,
+        id: recentTrack.track.album.id,
+        artists: recentTrack.track.album.artists,
+        release_date: recentTrack.track.album.release_date,
+        total_tracks: 0,
+      },
+      duration_ms: recentTrack.track.duration_ms,
+      explicit: false,
+      external_urls: {
+        spotify: `https://open.spotify.com/track/${recentTrack.track.id}`,
+      },
+      popularity: 0,
+      preview_url: recentTrack.track.preview_url || null,
+      track_number: 0,
+      disc_number: 1,
+      uri: recentTrack.track.uri,
+    };
+  };
+
   useEffect(() => {
     if (isOpen) {
       fetchCurrentTrack();
@@ -177,7 +204,11 @@ const InQueueWindow = () => {
                         <div
                           className="font-bold cursor-pointer hover:underline"
                           onClick={() =>
-                            router.push(`/Albums/${currentTrack.album.id}`)
+                            router.push(
+                              `/Albums/${currentTrack.album.id}?name=${encodeURIComponent(
+                                currentTrack.album.name
+                              )}`
+                            )
                           }
                         >
                           {currentTrack.name}
@@ -189,7 +220,11 @@ const InQueueWindow = () => {
                                 <span
                                   className="cursor-pointer hover:underline text-gray-700"
                                   onClick={() =>
-                                    router.push(`/Artists/${artist.id}`)
+                                    router.push(
+                                      `/Artists/${artist.id}?name=${encodeURIComponent(
+                                        artist.name
+                                      )}`
+                                    )
                                   }
                                 >
                                   {artist.name}
@@ -202,7 +237,11 @@ const InQueueWindow = () => {
                         <div
                           className="text-gray-500 text-sm cursor-pointer hover:underline"
                           onClick={() =>
-                            router.push(`/Albums/${currentTrack.album.id}`)
+                            router.push(
+                              `/Albums/${currentTrack.album.id}?name=${encodeURIComponent(
+                                currentTrack.album.name
+                              )}`
+                            )
                           }
                         >
                           {currentTrack.album.name}
@@ -245,7 +284,11 @@ const InQueueWindow = () => {
                         <div
                           className="font-bold cursor-pointer hover:underline"
                           onClick={() =>
-                            router.push(`/Albums/${track.album.id}`)
+                            router.push(
+                              `/Albums/${track.album.id}?name=${encodeURIComponent(
+                                track.album.name
+                              )}`
+                            )
                           }
                         >
                           {track.name}
@@ -256,7 +299,11 @@ const InQueueWindow = () => {
                               <span
                                 className="cursor-pointer hover:underline text-gray-700"
                                 onClick={() =>
-                                  router.push(`/Artists/${artist.id}`)
+                                  router.push(
+                                    `/Artists/${artist.id}?name=${encodeURIComponent(
+                                      artist.name
+                                    )}`
+                                  )
                                 }
                               >
                                 {artist.name}
@@ -293,7 +340,7 @@ const InQueueWindow = () => {
                             className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl hover:scale-110 transition-all duration-200"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handlePlayTrack(track.track as Track);
+                              handlePlayTrack(convertToTrack(track));
                             }}
                           >
                             <Play
@@ -307,7 +354,11 @@ const InQueueWindow = () => {
                         <div
                           className="font-bold cursor-pointer hover:underline"
                           onClick={() =>
-                            router.push(`/Albums/${track.track.id}`)
+                            router.push(
+                              `/Songs/${track.track.id}?name=${encodeURIComponent(
+                                track.track.name
+                              )}`
+                            )
                           }
                         >
                           {track.track.name}
@@ -318,7 +369,11 @@ const InQueueWindow = () => {
                               <span
                                 className="cursor-pointer hover:underline text-gray-700"
                                 onClick={() =>
-                                  router.push(`/Artists/${artist.id}`)
+                                  router.push(
+                                    `/Artists/${artist.id}?name=${encodeURIComponent(
+                                      artist.name
+                                    )}`
+                                  )
                                 }
                               >
                                 {artist.name}

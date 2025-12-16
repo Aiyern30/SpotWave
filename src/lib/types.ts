@@ -77,6 +77,7 @@ export interface Artist {
 export interface RecentTracksProps {
   track: {
     album: {
+      id: string;
       artists: {
         id: string;
         name: string;
