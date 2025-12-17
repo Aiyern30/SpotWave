@@ -28,9 +28,12 @@ import { Play, MoreHorizontal, Users } from "lucide-react";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
 import Image from "next/image";
+import PlaylistCard from "@/components/PlaylistCard";
+import { usePlayer } from "@/contexts/PlayerContext";
 
 const FollowingArtists = () => {
   const router = useRouter();
+  const { playTrack } = usePlayer();
   const [token, setToken] = useState<string>("");
   const [followedArtists, setFollowedArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,86 +63,60 @@ const FollowingArtists = () => {
     [followedArtists]
   );
 
-  // Artist Card Component
-  const ArtistCard = ({ artist }: { artist: Artist }) => (
-    <TooltipProvider>
-      <Card
-        className="relative w-[200px] h-[280px] cursor-pointer bg-zinc-900/50 hover:bg-zinc-800/70 transition-all duration-300 hover:scale-105 group"
-        onClick={() =>
-          router.push(
-            `/Artists/${artist.id}?name=${encodeURIComponent(artist.name)}`
-          )
+  // Handler to play artist's top tracks
+  const handlePlayArtist = async (artistId: string) => {
+    try {
+      // Fetch artist's top tracks
+      const response = await fetch(
+        `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      >
-        <CardHeader className="p-0 pb-0">
-          <div className="relative w-full px-4 pt-4 pb-2">
-            <div className="w-[170px] h-[170px] rounded-full shadow-lg overflow-hidden">
-              <Image
-                src={artist.image || "/placeholder.svg"}
-                width={170}
-                height={170}
-                className="object-cover rounded-full"
-                alt={artist.name}
-              />
-            </div>
+      );
 
-            {/* Play button overlay */}
-            <div className="absolute bottom-3 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-              <Button
-                size="icon"
-                className="h-14 w-14 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-lg hover:scale-110 transition-all duration-200"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Handle play artist's top tracks
-                }}
-              >
-                <Play className="h-6 w-6 ml-0.5" fill="currentColor" />
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
+      if (!response.ok) {
+        console.error("Failed to fetch artist's top tracks");
+        return;
+      }
 
-        <CardContent className="p-4 pt-2 space-y-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <CardTitle className="text-white text-base font-semibold line-clamp-1 hover:text-green-400 transition-colors">
-                {artist.name}
-              </CardTitle>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
-              <p>{artist.name}</p>
-            </TooltipContent>
-          </Tooltip>
+      const data = await response.json();
+      const topTracks = data.tracks;
 
-          {artist.genres && artist.genres.length > 0 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <p className="text-zinc-400 text-sm line-clamp-2 leading-relaxed">
-                  {artist.genres.join(", ")}
-                </p>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-xs">
-                <p>{artist.genres.join(", ")}</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </CardContent>
+      if (topTracks && topTracks.length > 0) {
+        // Play the first top track
+        const track = topTracks[0];
+        playTrack({
+          id: track.id,
+          name: track.name,
+          artists: track.artists,
+          album: {
+            name: track.album.name,
+            images: track.album.images,
+            id: track.album.id,
+            artists: track.artists,
+            release_date: track.album.release_date || "",
+            total_tracks: track.album.total_tracks || 0,
+          },
+          duration_ms: track.duration_ms,
+          explicit: track.explicit || false,
+          external_urls: track.external_urls || { spotify: "" },
+          popularity: track.popularity || 0,
+          preview_url: track.preview_url || null,
+          track_number: track.track_number || 0,
+          disc_number: track.disc_number || 1,
+          uri: track.uri,
+        });
+      }
+    } catch (error) {
+      console.error("Error playing artist:", error);
+    }
+  };
 
-        {/* More options button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 text-zinc-400 hover:text-white"
-          onClick={(e) => {
-            e.stopPropagation();
-            // Handle more options
-          }}
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </Card>
-    </TooltipProvider>
-  );
+  const handleClick = (id: string, name: string) => {
+    router.push(`/Artists/${id}?name=${encodeURIComponent(name)}`);
+  };
 
   return (
     <div className="space-y-4">
@@ -280,9 +257,17 @@ const FollowingArtists = () => {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 px-1">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
               {memoizedFollowedArtists.map((artist) => (
-                <ArtistCard key={artist.id} artist={artist} />
+                <PlaylistCard
+                  key={artist.id}
+                  id={artist.id}
+                  image={artist.image || "/placeholder.svg"}
+                  title={artist.name}
+                  description={artist.genres?.join(", ") || "Artist"}
+                  onPlay={handlePlayArtist}
+                  onClick={handleClick}
+                />
               ))}
             </div>
           )}
