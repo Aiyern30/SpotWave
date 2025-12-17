@@ -3,7 +3,7 @@
 import ReactPlayer from "react-player";
 import Sidebar from "@/components/Sidebar";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import {
   Skeleton,
@@ -19,6 +19,7 @@ import {
 import Header from "@/components/Header";
 import type { Track } from "@/lib/types";
 import { formatLyrics } from "@/utils/function";
+import { usePlayer } from "@/contexts/PlayerContext";
 import {
   Play,
   ExternalLink,
@@ -29,18 +30,61 @@ import {
   TrendingUp,
 } from "lucide-react";
 
+interface LyricsLine {
+  time: number;
+  text: string;
+}
+
+interface LyricsCache {
+  plainLyrics: string | null;
+  syncedLyrics: LyricsLine[] | null;
+  instrumental: boolean;
+  timestamp: number;
+}
+
 const SongPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [track, setTrack] = useState<Track | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [lyrics, setLyrics] = useState<string | null>(null);
+  const [syncedLyrics, setSyncedLyrics] = useState<LyricsLine[] | null>(null);
   const [loadingLyrics, setLoadingLyrics] = useState<boolean>(false);
+  const [currentLyricIndex, setCurrentLyricIndex] = useState<number>(-1);
+  const [isSheetOpen, setIsSheetOpen] = useState<boolean>(false);
+
+  // Cache lyrics to avoid refetching
+  const lyricsCache = useRef<Map<string, LyricsCache>>(new Map());
+  const lyricsContainerRef = useRef<HTMLDivElement>(null);
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { position, currentTrack, isPlaying } = usePlayer();
 
   const id = pathname.split("/").pop() || "";
+
+  // Parse synced lyrics (LRC format)
+  const parseSyncedLyrics = (lrcText: string): LyricsLine[] => {
+    const lines: LyricsLine[] = [];
+    const lrcLines = lrcText.split("\n");
+
+    for (const line of lrcLines) {
+      const match = line.match(/\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/);
+      if (match) {
+        const minutes = parseInt(match[1]);
+        const seconds = parseInt(match[2]);
+        const centiseconds = parseInt(match[3].padEnd(3, "0"));
+        const time = (minutes * 60 + seconds) * 1000 + centiseconds;
+        const text = match[4].trim();
+
+        if (text) {
+          lines.push({ time, text });
+        }
+      }
+    }
+
+    return lines.sort((a, b) => a.time - b.time);
+  };
 
   const fetchLyrics = async (
     artist: string,
@@ -48,14 +92,25 @@ const SongPage = () => {
     album: string,
     duration: number
   ) => {
+    const cacheKey = `${artist}-${title}-${album}`;
+
+    // Check cache first
+    const cached = lyricsCache.current.get(cacheKey);
+    if (cached) {
+      console.log("Using cached lyrics");
+      setLyrics(cached.plainLyrics);
+      setSyncedLyrics(cached.syncedLyrics);
+      setCurrentLyricIndex(-1);
+      return;
+    }
+
     setLoadingLyrics(true);
     try {
-      // Build query parameters
       const params = new URLSearchParams({
         artist_name: artist,
         track_name: title,
         album_name: album,
-        duration: Math.round(duration / 1000).toString(), // Convert ms to seconds
+        duration: Math.round(duration / 1000).toString(),
       });
 
       const response = await fetch(
@@ -68,24 +123,82 @@ const SongPage = () => {
 
       const data = await response.json();
 
-      // LRCLIB returns plainLyrics and syncedLyrics
-      if (data.plainLyrics && data.plainLyrics.trim()) {
-        setLyrics(data.plainLyrics);
-      } else if (data.syncedLyrics && data.syncedLyrics.trim()) {
-        // If only synced lyrics available, parse and use them
-        setLyrics(data.syncedLyrics);
+      let plainLyricsText = null;
+      let syncedLyricsData = null;
+      let isInstrumental = false;
+
+      if (data.syncedLyrics && data.syncedLyrics.trim()) {
+        syncedLyricsData = parseSyncedLyrics(data.syncedLyrics);
+        plainLyricsText =
+          data.plainLyrics ||
+          data.syncedLyrics.replace(/\[\d{2}:\d{2}\.\d{2,3}\]/g, "").trim();
+      } else if (data.plainLyrics && data.plainLyrics.trim()) {
+        plainLyricsText = data.plainLyrics;
       } else if (data.instrumental) {
-        setLyrics("🎵 This track is instrumental (no lyrics available)");
+        plainLyricsText = "🎵 This track is instrumental (no lyrics available)";
+        isInstrumental = true;
       } else {
-        setLyrics("Lyrics not found for this track.");
+        plainLyricsText = "Lyrics not found for this track.";
       }
+
+      // Cache the lyrics
+      lyricsCache.current.set(cacheKey, {
+        plainLyrics: plainLyricsText,
+        syncedLyrics: syncedLyricsData,
+        instrumental: isInstrumental,
+        timestamp: Date.now(),
+      });
+
+      setLyrics(plainLyricsText);
+      setSyncedLyrics(syncedLyricsData);
+      setCurrentLyricIndex(-1);
     } catch (error) {
       console.error("Error fetching lyrics from LRCLIB:", error);
-      setLyrics("Unable to fetch lyrics at this time.");
+      const errorMessage = "Unable to fetch lyrics at this time.";
+      setLyrics(errorMessage);
+      setSyncedLyrics(null);
     } finally {
       setLoadingLyrics(false);
     }
   };
+
+  // Sync lyrics with current playback position
+  useEffect(() => {
+    if (
+      !syncedLyrics ||
+      syncedLyrics.length === 0 ||
+      !isSheetOpen ||
+      !isPlaying
+    ) {
+      return;
+    }
+
+    // Find the current lyric line based on position
+    let newIndex = -1;
+    for (let i = syncedLyrics.length - 1; i >= 0; i--) {
+      if (position >= syncedLyrics[i].time) {
+        newIndex = i;
+        break;
+      }
+    }
+
+    if (newIndex !== currentLyricIndex) {
+      setCurrentLyricIndex(newIndex);
+
+      // Auto-scroll to current lyric
+      if (lyricsContainerRef.current && newIndex >= 0) {
+        const activeElement = lyricsContainerRef.current.querySelector(
+          `[data-index="${newIndex}"]`
+        );
+        if (activeElement) {
+          activeElement.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }
+      }
+    }
+  }, [position, syncedLyrics, currentLyricIndex, isSheetOpen, isPlaying]);
 
   const fetchTrackDetails = useCallback(async () => {
     const token = localStorage.getItem("Token");
@@ -130,7 +243,6 @@ const SongPage = () => {
           <div className="p-4 space-y-6">
             <Header />
             <div className="space-y-8">
-              {/* Loading Header */}
               <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-lg p-8">
                 <Skeleton className="w-48 h-48 rounded-lg" />
                 <div className="flex-1 space-y-4">
@@ -139,7 +251,6 @@ const SongPage = () => {
                   <Skeleton className="h-10 w-32" />
                 </div>
               </div>
-              {/* Loading Content */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Skeleton className="h-32 w-full rounded-lg" />
                 <Skeleton className="h-32 w-full rounded-lg" />
@@ -238,19 +349,21 @@ const SongPage = () => {
                       Open in Spotify
                     </Button>
 
-                    <Sheet>
+                    <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                       <SheetTrigger asChild>
                         <Button
                           variant="outline"
                           className="bg-transparent border-white text-white hover:bg-white hover:text-black"
-                          onClick={() =>
-                            fetchLyrics(
-                              track.artists[0].name,
-                              track.name,
-                              track.album.name,
-                              track.duration_ms
-                            )
-                          }
+                          onClick={() => {
+                            if (!lyrics && !loadingLyrics) {
+                              fetchLyrics(
+                                track.artists[0].name,
+                                track.name,
+                                track.album.name,
+                                track.duration_ms
+                              );
+                            }
+                          }}
                         >
                           <FileText className="h-4 w-4 mr-2" />
                           View Lyrics
@@ -291,6 +404,29 @@ const SongPage = () => {
                               <span className="ml-3 text-zinc-400">
                                 Loading lyrics...
                               </span>
+                            </div>
+                          ) : syncedLyrics && syncedLyrics.length > 0 ? (
+                            <div
+                              ref={lyricsContainerRef}
+                              className="bg-zinc-800/30 rounded-lg p-4 max-h-[60vh] overflow-y-auto scroll-smooth"
+                            >
+                              <div className="space-y-3">
+                                {syncedLyrics.map((line, index) => (
+                                  <div
+                                    key={index}
+                                    data-index={index}
+                                    className={`text-sm leading-relaxed transition-all duration-300 py-1 ${
+                                      index === currentLyricIndex
+                                        ? "text-green-400 font-semibold text-lg scale-105"
+                                        : index < currentLyricIndex
+                                        ? "text-zinc-500"
+                                        : "text-zinc-300"
+                                    }`}
+                                  >
+                                    {line.text}
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           ) : (
                             <div className="bg-zinc-800/30 rounded-lg p-4 max-h-[60vh] overflow-y-auto">
