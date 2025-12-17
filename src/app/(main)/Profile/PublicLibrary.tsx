@@ -29,9 +29,12 @@ import { Play, MoreHorizontal, Music } from "lucide-react";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
 import Image from "next/image";
+import PlaylistCard from "@/components/PlaylistCard";
+import { usePlayer } from "@/contexts/PlayerContext";
 
 const PublicLibrary = () => {
   const router = useRouter();
+  const { playPlaylist } = usePlayer();
   const [publicPlaylists, setPublicPlaylists] = useState<PlaylistProps[]>([]);
   const [token, setToken] = useState<string>("");
   const [myProfile, setMyProfile] = useState<User | null>(null);
@@ -85,6 +88,15 @@ const PublicLibrary = () => {
     router.push(`/Home/${id}?name=${encodeURIComponent(name)}`);
   };
 
+  const handlePlayPlaylist = async (playlistId: string) => {
+    try {
+      const playlistUri = `spotify:playlist:${playlistId}`;
+      playPlaylist(playlistUri);
+    } catch (error) {
+      console.error("Error playing playlist:", error);
+    }
+  };
+
   useEffect(() => {
     if (token) {
       fetchMyProfile();
@@ -96,83 +108,6 @@ const PublicLibrary = () => {
       fetchPublicPlaylists();
     }
   }, [token, myProfile, fetchPublicPlaylists]);
-
-  // Playlist Card Component
-  const PlaylistCard = ({ playlist }: { playlist: PlaylistProps }) => (
-    <TooltipProvider>
-      <Card
-        className="relative w-[200px] h-[280px] cursor-pointer bg-zinc-900/50 hover:bg-zinc-800/70 transition-all duration-300 hover:scale-105 group"
-        onClick={() => handleClick(playlist.id, playlist.name)}
-      >
-        <CardHeader className="p-0 pb-0">
-          <div className="relative w-full px-4 pt-4 pb-2">
-            <div className="w-[170px] h-[170px] rounded-lg shadow-lg overflow-hidden">
-              <Image
-                src={playlist.images?.[0]?.url || "/placeholder.svg"}
-                width={170}
-                height={170}
-                className="object-cover rounded-lg"
-                alt={playlist.name}
-              />
-            </div>
-
-            {/* Play button overlay */}
-            <div className="absolute bottom-3 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-              <Button
-                size="icon"
-                className="h-14 w-14 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-lg hover:scale-110 transition-all duration-200"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Handle play action
-                }}
-              >
-                <Play className="h-6 w-6 ml-0.5" fill="currentColor" />
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-4 pt-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <CardTitle className="text-white text-base font-semibold line-clamp-1 hover:text-green-400 transition-colors">
-                {playlist.name}
-              </CardTitle>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
-              <p>{playlist.name}</p>
-            </TooltipContent>
-          </Tooltip>
-
-          {playlist.description && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <p className="text-zinc-400 text-sm line-clamp-2 leading-relaxed mt-1">
-                  {playlist.description}
-                </p>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-xs">
-                <p>{playlist.description}</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </CardContent>
-
-        {/* More options button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 text-zinc-400 hover:text-white"
-          onClick={(e) => {
-            e.stopPropagation();
-            // Handle more options
-          }}
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </Card>
-    </TooltipProvider>
-  );
 
   return (
     <div className="space-y-4">
@@ -319,9 +254,17 @@ const PublicLibrary = () => {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 px-1">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
               {publicPlaylists.map((playlist) => (
-                <PlaylistCard key={playlist.id} playlist={playlist} />
+                <PlaylistCard
+                  key={playlist.id}
+                  id={playlist.id}
+                  image={playlist.images?.[0]?.url || ""}
+                  title={playlist.name}
+                  description={playlist.description || ""}
+                  onPlay={handlePlayPlaylist}
+                  onClick={handleClick}
+                />
               ))}
             </div>
           )}
