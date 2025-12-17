@@ -71,6 +71,7 @@ export default function PlaylistCard({
                   className="object-cover rounded-lg w-full h-full"
                   alt={title}
                   priority
+                  unoptimized
                 />
               ) : (
                 <Image
@@ -81,6 +82,7 @@ export default function PlaylistCard({
                   alt={title}
                   onError={() => setImageError(true)}
                   priority
+                  unoptimized
                 />
               )}
             </div>

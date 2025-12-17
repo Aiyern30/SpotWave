@@ -3,6 +3,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    unoptimized: true,
     domains: [
       `i2o.scdn.co`,
       'mosaic.scdn.co',
