@@ -173,10 +173,13 @@ const SongPage = () => {
       return;
     }
 
+    // Add a 200ms offset to make lyrics appear slightly earlier
+    const adjustedPosition = position + 300;
+
     // Find the current lyric line based on position
     let newIndex = -1;
     for (let i = syncedLyrics.length - 1; i >= 0; i--) {
-      if (position >= syncedLyrics[i].time) {
+      if (adjustedPosition >= syncedLyrics[i].time) {
         newIndex = i;
         break;
       }
@@ -369,8 +372,8 @@ const SongPage = () => {
                           View Lyrics
                         </Button>
                       </SheetTrigger>
-                      <SheetContent className="w-[400px] sm:w-[540px] bg-zinc-900 border-zinc-800">
-                        <SheetHeader className="space-y-4">
+                      <SheetContent className="w-[400px] sm:w-[540px] bg-zinc-900 border-zinc-800 flex flex-col overflow-hidden">
+                        <SheetHeader className="space-y-4 flex-shrink-0">
                           <div className="flex items-center space-x-3">
                             <div className="w-16 h-16 rounded-lg overflow-hidden">
                               <Image
@@ -397,9 +400,9 @@ const SongPage = () => {
                             </div>
                           </div>
                         </SheetHeader>
-                        <div className="mt-6">
+                        <div className="flex-1 overflow-hidden mt-6">
                           {loadingLyrics ? (
-                            <div className="flex items-center justify-center py-8">
+                            <div className="flex items-center justify-center h-full">
                               <div className="animate-spin rounded-full h-8 w-8 border-2 border-green-500 border-t-transparent"></div>
                               <span className="ml-3 text-zinc-400">
                                 Loading lyrics...
@@ -408,9 +411,10 @@ const SongPage = () => {
                           ) : syncedLyrics && syncedLyrics.length > 0 ? (
                             <div
                               ref={lyricsContainerRef}
-                              className="bg-zinc-800/30 rounded-lg p-4 max-h-[60vh] overflow-y-auto scroll-smooth"
+                              className="bg-zinc-800/30 rounded-lg p-4 h-full overflow-y-auto scroll-smooth"
+                              style={{ maxHeight: "calc(100vh - 200px)" }}
                             >
-                              <div className="space-y-3">
+                              <div className="space-y-3 pb-32">
                                 {syncedLyrics.map((line, index) => (
                                   <div
                                     key={index}
@@ -429,7 +433,10 @@ const SongPage = () => {
                               </div>
                             </div>
                           ) : (
-                            <div className="bg-zinc-800/30 rounded-lg p-4 max-h-[60vh] overflow-y-auto">
+                            <div
+                              className="bg-zinc-800/30 rounded-lg p-4 h-full overflow-y-auto"
+                              style={{ maxHeight: "calc(100vh - 200px)" }}
+                            >
                               <pre className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap font-sans">
                                 {formatLyrics(lyrics)}
                               </pre>
