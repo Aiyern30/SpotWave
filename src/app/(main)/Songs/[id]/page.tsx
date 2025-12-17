@@ -42,23 +42,45 @@ const SongPage = () => {
 
   const id = pathname.split("/").pop() || "";
 
-  const fetchLyrics = async (artist: string, title: string) => {
+  const fetchLyrics = async (
+    artist: string,
+    title: string,
+    album: string,
+    duration: number
+  ) => {
     setLoadingLyrics(true);
     try {
+      // Build query parameters
+      const params = new URLSearchParams({
+        artist_name: artist,
+        track_name: title,
+        album_name: album,
+        duration: Math.round(duration / 1000).toString(), // Convert ms to seconds
+      });
+
       const response = await fetch(
-        `https://api.lyrics.ovh/v1/${encodeURIComponent(
-          artist
-        )}/${encodeURIComponent(title)}`
+        `https://lrclib.net/api/get?${params.toString()}`
       );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
 
-      if (data.lyrics && data.lyrics.trim()) {
-        setLyrics(data.lyrics);
+      // LRCLIB returns plainLyrics and syncedLyrics
+      if (data.plainLyrics && data.plainLyrics.trim()) {
+        setLyrics(data.plainLyrics);
+      } else if (data.syncedLyrics && data.syncedLyrics.trim()) {
+        // If only synced lyrics available, parse and use them
+        setLyrics(data.syncedLyrics);
+      } else if (data.instrumental) {
+        setLyrics("🎵 This track is instrumental (no lyrics available)");
       } else {
         setLyrics("Lyrics not found for this track.");
       }
     } catch (error) {
-      console.error("Error fetching lyrics:", error);
+      console.error("Error fetching lyrics from LRCLIB:", error);
       setLyrics("Unable to fetch lyrics at this time.");
     } finally {
       setLoadingLyrics(false);
@@ -222,7 +244,12 @@ const SongPage = () => {
                           variant="outline"
                           className="bg-transparent border-white text-white hover:bg-white hover:text-black"
                           onClick={() =>
-                            fetchLyrics(track.artists[0].name, track.name)
+                            fetchLyrics(
+                              track.artists[0].name,
+                              track.name,
+                              track.album.name,
+                              track.duration_ms
+                            )
                           }
                         >
                           <FileText className="h-4 w-4 mr-2" />

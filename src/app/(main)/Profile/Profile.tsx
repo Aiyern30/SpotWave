@@ -97,15 +97,14 @@ const ProfileComponent = () => {
       {/* Profile Header */}
       <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-lg p-8">
         <div className="flex-shrink-0">
-          <div className="relative">
+          <div className="relative w-[200px] h-[200px]">
             <Image
               src={
                 uploadedImage ||
                 myProfile?.images[0]?.url ||
                 "/default-artist.png"
               }
-              width={200}
-              height={200}
+              fill
               alt={myProfile?.display_name || "User name"}
               priority
               className="rounded-full object-cover shadow-2xl border-4 border-green-500/20"
