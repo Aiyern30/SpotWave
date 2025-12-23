@@ -79,6 +79,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [repeatMode, setRepeatMode] = useState<"off" | "context" | "track">(
     "off"
   );
+  const trackEndHandlerRef = useRef<boolean>(false);
   const playerRef = useRef<any>(null);
   const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -91,7 +92,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    // Use global flag to prevent ANY re-initialization
     if (!token || isGloballyInitialized) {
       // If already initialized, use the existing player
       if (globalPlayerInstance && globalDeviceId) {
@@ -189,6 +189,19 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           setIsPaused(isCurrentlyPaused);
           setPosition(state.position);
           setDuration(state.duration);
+
+          // Handle track end for repeat one
+          const trackEnded =
+            state.position === 0 &&
+            isCurrentlyPaused &&
+            state.duration > 0;
+          if (trackEnded && !trackEndHandlerRef.current) {
+            trackEndHandlerRef.current = true;
+            // Use a small delay to ensure we detect the track end properly
+            setTimeout(() => {
+              trackEndHandlerRef.current = false;
+            }, 1000);
+          }
         });
 
         // Error handling
@@ -565,12 +578,43 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     [deviceId, token]
   );
 
+  // Handle repeat one functionality
+  useEffect(() => {
+    if (repeatMode === "track" && position > 0 && duration > 0) {
+      // Check if track is about to end (within 1 second)
+      const timeRemaining = duration - position;
+
+      if (timeRemaining <= 1000 && timeRemaining > 0) {
+        const timeout = setTimeout(() => {
+          // Seek back to the beginning
+          if (player && typeof player.seek === "function") {
+            player
+              .seek(0)
+              .then(() => {
+                console.log("Repeating track from beginning");
+              })
+              .catch((error: any) => {
+                console.error("Error seeking to beginning:", error);
+              });
+          }
+        }, timeRemaining);
+
+        return () => clearTimeout(timeout);
+      }
+    }
+  }, [position, duration, repeatMode, player]);
+
   const toggleRepeat = useCallback(() => {
     const modes: ("off" | "context" | "track")[] = ["off", "context", "track"];
     const currentIndex = modes.indexOf(repeatMode);
     const nextMode = modes[(currentIndex + 1) % modes.length];
     setRepeatMode(nextMode);
-    setSpotifyRepeatMode(nextMode);
+
+    // For 'track' mode, set Spotify to 'off' since we handle it manually
+    // For 'context' mode, set Spotify to 'context'
+    // For 'off' mode, set Spotify to 'off'
+    const spotifyMode = nextMode === "track" ? "off" : nextMode;
+    setSpotifyRepeatMode(spotifyMode);
   }, [repeatMode, setSpotifyRepeatMode]);
 
   const addToQueue = useCallback((track: Track) => {

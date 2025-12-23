@@ -199,7 +199,7 @@ const Page = () => {
           <Button
             onClick={handleToggleAll}
             variant="outline"
-            className="bg-zinc-800/50 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white w-fit"
+            className="bg-zinc-800/50 border-zinc-700 text-zinc-300 hover:bg-green-500 hover:text-black hover:border-green-500 w-fit transition-all"
           >
             {allOpen ? "Collapse All" : "Expand All"}
           </Button>

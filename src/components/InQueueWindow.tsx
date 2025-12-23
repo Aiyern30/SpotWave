@@ -156,7 +156,7 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
           <div className="flex justify-end">
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-gray-500 hover:text-green-500 transition-colors"
             >
               <FiChevronDown size={24} />
             </button>

@@ -285,7 +285,7 @@ const Page = () => {
                                 <Button
                                   size="icon"
                                   variant="ghost"
-                                  className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl"
+                                  className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl hover:scale-110 transition-all"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handlePlayTrack(

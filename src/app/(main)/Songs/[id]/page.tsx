@@ -346,7 +346,7 @@ const SongPage = () => {
                       onClick={() =>
                         window.open(track.external_urls?.spotify, "_blank")
                       }
-                      className="bg-green-500 hover:bg-green-600 text-black font-semibold"
+                      className="bg-green-500 hover:bg-green-600 text-black font-semibold hover:scale-105 transition-all"
                     >
                       <ExternalLink className="h-4 w-4 mr-2" />
                       Open in Spotify
@@ -356,7 +356,7 @@ const SongPage = () => {
                       <SheetTrigger asChild>
                         <Button
                           variant="outline"
-                          className="bg-transparent border-white text-white hover:bg-white hover:text-black"
+                          className="bg-transparent border-white text-white hover:bg-green-500 hover:text-black hover:border-green-500 transition-all"
                           onClick={() => {
                             if (!lyrics && !loadingLyrics) {
                               fetchLyrics(

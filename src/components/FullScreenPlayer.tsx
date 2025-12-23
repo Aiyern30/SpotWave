@@ -363,7 +363,7 @@ export const FullScreenPlayer = ({
           className={`h-10 w-10 ${
             viewMode === "image"
               ? "text-green-400 bg-zinc-800"
-              : "text-white hover:text-green-400"
+              : "text-white hover:text-green-400 hover:bg-zinc-800"
           }`}
           title="Show Album Art"
         >
@@ -376,7 +376,7 @@ export const FullScreenPlayer = ({
           className={`h-10 w-10 ${
             viewMode === "lyrics"
               ? "text-green-400 bg-zinc-800"
-              : "text-white hover:text-green-400"
+              : "text-white hover:text-green-400 hover:bg-zinc-800"
           }`}
           title="Show Lyrics"
         >
@@ -387,7 +387,7 @@ export const FullScreenPlayer = ({
           variant="ghost"
           size="icon"
           onClick={onClose}
-          className="text-white hover:text-green-400 h-10 w-10"
+          className="text-white hover:text-green-400 hover:bg-zinc-800 h-10 w-10"
           title="Close"
         >
           <X className="h-6 w-6" />
@@ -511,7 +511,7 @@ export const FullScreenPlayer = ({
             variant="ghost"
             size="icon"
             onClick={handleToggleSave}
-            className="text-zinc-400 hover:text-white h-10 w-10"
+            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-10 w-10 transition-all"
             disabled={isSaving}
           >
             {isSaving ? (
@@ -526,7 +526,7 @@ export const FullScreenPlayer = ({
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-400 hover:text-white h-10 w-10"
+            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-10 w-10 transition-all"
           >
             <Shuffle className="h-4 w-4" />
           </Button>
@@ -535,7 +535,7 @@ export const FullScreenPlayer = ({
             variant="ghost"
             size="icon"
             onClick={previousTrack}
-            className="text-white hover:text-green-400 h-12 w-12"
+            className="text-white hover:text-green-400 hover:bg-zinc-800 h-12 w-12 transition-all"
             disabled={!isReady}
           >
             <SkipBack className="h-6 w-6 fill-current" />
@@ -544,7 +544,7 @@ export const FullScreenPlayer = ({
           <Button
             onClick={isPlaying ? pauseTrack : resumeTrack}
             size="icon"
-            className="bg-white hover:bg-white/90 hover:scale-105 text-black h-14 w-14 rounded-full"
+            className="bg-white hover:bg-green-500 hover:scale-105 text-black h-14 w-14 rounded-full transition-all"
             disabled={!isReady || isLoadingTrack}
           >
             {isLoadingTrack ? (
@@ -560,7 +560,7 @@ export const FullScreenPlayer = ({
             variant="ghost"
             size="icon"
             onClick={nextTrack}
-            className="text-white hover:text-green-400 h-12 w-12"
+            className="text-white hover:text-green-400 hover:bg-zinc-800 h-12 w-12 transition-all"
             disabled={!isReady}
           >
             <SkipForward className="h-6 w-6 fill-current" />
@@ -570,10 +570,10 @@ export const FullScreenPlayer = ({
             variant="ghost"
             size="icon"
             onClick={toggleRepeat}
-            className={`h-10 w-10 transition-colors ${
+            className={`h-10 w-10 transition-all ${
               repeatMode === "off"
-                ? "text-zinc-400 hover:text-white"
-                : "text-green-500 hover:text-green-400"
+                ? "text-zinc-400 hover:text-green-400 hover:bg-zinc-800"
+                : "text-green-500 hover:text-green-400 hover:bg-zinc-800"
             }`}
             title={
               repeatMode === "off"
@@ -595,7 +595,7 @@ export const FullScreenPlayer = ({
               variant="ghost"
               size="icon"
               onClick={handleMute}
-              className="text-zinc-400 hover:text-white h-10 w-10"
+              className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-10 w-10 transition-all"
             >
               {isMuted || localVolume === 0 ? (
                 <VolumeX className="h-5 w-5" />
@@ -652,7 +652,7 @@ export const FullScreenPlayer = ({
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="opacity-0 group-hover:opacity-100 h-10 w-10 rounded-full bg-green-500 hover:bg-green-400 text-black flex-shrink-0"
+                    className="opacity-0 group-hover:opacity-100 h-10 w-10 rounded-full bg-green-500 hover:bg-green-400 text-black flex-shrink-0 transition-all"
                   >
                     <Play className="h-5 w-5 ml-0.5" fill="currentColor" />
                   </Button>
