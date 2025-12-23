@@ -17,10 +17,9 @@ export const checkUserSavedTracks = async (
     const response = await fetch(
       `https://api.spotify.com/v1/me/tracks/contains?ids=${idsParam}`,
       {
-        headers:
-          {
-            Authorization: `Bearer ${accessToken}`,
-          },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       }
     );
 
