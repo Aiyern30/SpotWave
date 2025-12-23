@@ -24,6 +24,7 @@ import {
   HeartOff,
   Shuffle,
   Repeat,
+  Repeat1,
   Mic2,
   List,
   Maximize2,
@@ -80,6 +81,8 @@ export const MusicPlayer = ({
     setVolume,
     isReady,
     isConnecting,
+    repeatMode,
+    toggleRepeat,
   } = usePlayer();
 
   const [isMuted, setIsMuted] = useState(false);
@@ -491,9 +494,25 @@ export const MusicPlayer = ({
             <Button
               variant="ghost"
               size="icon"
-              className="text-zinc-400 hover:text-white h-8 w-8"
+              onClick={toggleRepeat}
+              className={`h-8 w-8 transition-colors ${
+                repeatMode === "off"
+                  ? "text-zinc-400 hover:text-white"
+                  : "text-green-500 hover:text-green-400"
+              }`}
+              title={
+                repeatMode === "off"
+                  ? "Repeat Off"
+                  : repeatMode === "context"
+                  ? "Repeat All"
+                  : "Repeat One"
+              }
             >
-              <Repeat className="h-4 w-4" />
+              {repeatMode === "track" ? (
+                <Repeat1 className="h-4 w-4" />
+              ) : (
+                <Repeat className="h-4 w-4" />
+              )}
             </Button>
           </div>
 

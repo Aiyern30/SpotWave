@@ -30,6 +30,10 @@ interface PlayerContextType {
   seekTo: (position: number) => void;
   setVolume: (volume: number) => void;
 
+  // Repeat mode: 'off' | 'context' | 'track'
+  repeatMode: "off" | "context" | "track";
+  toggleRepeat: () => void;
+
   // Queue management
   queue: Track[];
   addToQueue: (track: Track) => void;
@@ -72,6 +76,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isConnecting, setIsConnecting] = useState(false);
   const [player, setPlayer] = useState<any>(null);
   const [token, setToken] = useState<string>("");
+  const [repeatMode, setRepeatMode] = useState<"off" | "context" | "track">(
+    "off"
+  );
   const playerRef = useRef<any>(null);
   const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -530,6 +537,42 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     [player, isReady]
   );
 
+  // Set repeat mode on Spotify player
+  const setSpotifyRepeatMode = useCallback(
+    async (mode: "off" | "context" | "track") => {
+      if (!deviceId || !token) return;
+
+      try {
+        const response = await fetch(
+          `https://api.spotify.com/v1/me/player/repeat?state=${mode}&device_id=${deviceId}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          console.log(`Repeat mode set to: ${mode}`);
+        } else {
+          console.error("Failed to set repeat mode:", response.status);
+        }
+      } catch (error) {
+        console.error("Error setting repeat mode:", error);
+      }
+    },
+    [deviceId, token]
+  );
+
+  const toggleRepeat = useCallback(() => {
+    const modes: ("off" | "context" | "track")[] = ["off", "context", "track"];
+    const currentIndex = modes.indexOf(repeatMode);
+    const nextMode = modes[(currentIndex + 1) % modes.length];
+    setRepeatMode(nextMode);
+    setSpotifyRepeatMode(nextMode);
+  }, [repeatMode, setSpotifyRepeatMode]);
+
   const addToQueue = useCallback((track: Track) => {
     setQueue((prev) => [...prev, track]);
   }, []);
@@ -553,6 +596,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     previousTrack,
     seekTo,
     setVolume,
+    repeatMode,
+    toggleRepeat,
     queue,
     addToQueue,
     clearQueue,

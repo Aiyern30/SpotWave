@@ -24,6 +24,7 @@ import {
   Heart,
   Shuffle,
   Repeat,
+  Repeat1,
   Loader2,
   X,
   Music,
@@ -84,6 +85,8 @@ export const FullScreenPlayer = ({
     setVolume,
     isReady,
     playTrack,
+    repeatMode,
+    toggleRepeat,
   } = usePlayer();
 
   const [isMuted, setIsMuted] = useState(false);
@@ -566,9 +569,25 @@ export const FullScreenPlayer = ({
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-400 hover:text-white h-10 w-10"
+            onClick={toggleRepeat}
+            className={`h-10 w-10 transition-colors ${
+              repeatMode === "off"
+                ? "text-zinc-400 hover:text-white"
+                : "text-green-500 hover:text-green-400"
+            }`}
+            title={
+              repeatMode === "off"
+                ? "Repeat Off"
+                : repeatMode === "context"
+                ? "Repeat All"
+                : "Repeat One"
+            }
           >
-            <Repeat className="h-4 w-4" />
+            {repeatMode === "track" ? (
+              <Repeat1 className="h-5 w-5" />
+            ) : (
+              <Repeat className="h-5 w-5" />
+            )}
           </Button>
 
           <div className="flex items-center gap-2">
