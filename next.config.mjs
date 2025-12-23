@@ -1,11 +1,11 @@
-// next.config.mjs
+import withPWA from 'next-pwa';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
     unoptimized: true,
     domains: [
-      `i2o.scdn.co`,
+      'i2o.scdn.co',
       'mosaic.scdn.co',
       'i.scdn.co',
       'platform-lookaside.fbsbx.com',
@@ -16,10 +16,15 @@ const nextConfig = {
       'newjams-images.scdn.co',
       'pickasso.spotifycdn.com',
       'image-cdn-fa.spotifycdn.com',
-      "s1.ticketm.net",
-      "images.universe.com",
+      's1.ticketm.net',
+      'images.universe.com',
     ],
   },
 };
 
-export default nextConfig;
+export default withPWA({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development',
+})(nextConfig);
