@@ -105,9 +105,16 @@ const Sidebar = ({
               }`}
             >
               {!isCompact && (
-                <div className="flex flex-col text-white">
-                  <span className="text-xl">SpotWave</span>
-                  <span className="text-sm">All Music</span>
+                <div className="flex items-center gap-3 text-white">
+                  <img
+                    src="/Logo.png"
+                    alt="SpotWave Logo"
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xl font-bold">SpotWave</span>
+                    <span className="text-sm">All Music</span>
+                  </div>
                 </div>
               )}
               <button
@@ -208,7 +215,12 @@ const Sidebar = ({
             aria-label="Sidebar"
           >
             <div className="flex flex-col items-center py-5 text-white">
-              <span className="text-xl">SW</span>
+              {/* Replace SW with Logo.png */}
+              <img
+                src="/Logo.png"
+                alt="SpotWave Logo"
+                className="w-10 h-10 rounded-full"
+              />
             </div>
             <div className="flex-grow overflow-auto">
               <ul>
