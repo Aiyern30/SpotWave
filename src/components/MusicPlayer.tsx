@@ -57,6 +57,7 @@ export const MusicPlayer = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [previousVolume, setPreviousVolume] = useState(volume);
   const [isVisible, setIsVisible] = useState(false);
+  const [hasConnected, setHasConnected] = useState(false); // Track if ever connected
   const [localVolume, setLocalVolume] = useState(volume);
   const [isSaved, setIsSaved] = useState<boolean | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -64,6 +65,13 @@ export const MusicPlayer = () => {
   useEffect(() => {
     setIsVisible(!!currentTrack || isConnecting);
   }, [currentTrack, isConnecting]);
+
+  // Track if we've ever connected successfully
+  useEffect(() => {
+    if (isReady && !hasConnected) {
+      setHasConnected(true);
+    }
+  }, [isReady, hasConnected]);
 
   useEffect(() => {
     setLocalVolume(volume);
@@ -363,8 +371,8 @@ export const MusicPlayer = () => {
         </div>
       </div>
 
-      {/* Status Overlays */}
-      {isConnecting && (
+      {/* Status Overlays - Only show on initial connection */}
+      {isConnecting && !hasConnected && (
         <div className="absolute inset-0 bg-black/90 flex items-center justify-center">
           <div className="flex items-center space-x-3 text-zinc-300">
             <div className="animate-spin rounded-full h-5 w-5 border-2 border-green-500 border-t-transparent" />
@@ -372,7 +380,7 @@ export const MusicPlayer = () => {
           </div>
         </div>
       )}
-      {!isReady && !isConnecting && (
+      {!isReady && !isConnecting && hasConnected && (
         <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
           <div className="text-zinc-400 text-sm">
             Player not ready. Please refresh the page.

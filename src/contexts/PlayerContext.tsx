@@ -70,7 +70,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const playerRef = useRef<any>(null);
   const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initializationAttempted = useRef(false);
-  const isInitializing = useRef(false); // Add this to prevent double initialization
+  const hasInitialized = useRef(false); // Add permanent flag
 
   // Initialize Spotify Web Playback SDK
   useEffect(() => {
@@ -81,17 +81,13 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    // Prevent re-initialization if already initialized or currently initializing
-    if (!token || initializationAttempted.current || isInitializing.current)
-      return;
+    // Strong guard: prevent any re-initialization
+    if (!token || hasInitialized.current) return;
 
     const initializePlayer = () => {
-      if (
-        window.Spotify &&
-        !initializationAttempted.current &&
-        !isInitializing.current
-      ) {
-        isInitializing.current = true;
+      // Double check before initialization
+      if (window.Spotify && !hasInitialized.current) {
+        hasInitialized.current = true; // Set immediately to prevent race conditions
         initializationAttempted.current = true;
         setIsConnecting(true);
 
@@ -215,12 +211,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         spotifyPlayer.connect().then((success: boolean) => {
           if (success) {
             console.log("Successfully connected to Spotify Player!");
-            isInitializing.current = false;
           } else {
             console.error("Failed to connect to Spotify Player");
             setIsConnecting(false);
             setIsReady(false);
-            isInitializing.current = false;
           }
         });
 
@@ -229,19 +223,16 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     };
 
-    // Wait for Spotify SDK to be ready
     if (window.Spotify) {
       initializePlayer();
     } else {
       window.onSpotifyWebPlaybackSDKReady = initializePlayer;
     }
 
-    // Cleanup function - only clear timeout, don't disconnect player
     return () => {
       if (volumeTimeoutRef.current) {
         clearTimeout(volumeTimeoutRef.current);
       }
-      // DO NOT disconnect the player here - let it persist
     };
   }, [token]);
 
