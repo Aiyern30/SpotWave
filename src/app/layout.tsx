@@ -21,6 +21,10 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "SpotWave",
   },
+  icons: {
+    icon: "/Logo.png",
+    apple: "/Logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -37,7 +41,8 @@ export default function RootLayout({
         />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#22c55e" />
-        <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        <link rel="icon" href="/Logo.png" />
+        <link rel="apple-touch-icon" href="/Logo.png" />
       </head>
       <body className={`${inter.className} bg-primary-background`}>
         <Providers>{children}</Providers>

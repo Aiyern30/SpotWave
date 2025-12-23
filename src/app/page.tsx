@@ -3,7 +3,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Music, Play, Headphones, Volume2 } from "lucide-react";
+import { Play, Headphones, Volume2 } from "lucide-react";
+import Image from "next/image";
 
 // PKCE Helper Functions
 function generateRandomString(length: number): string {
@@ -221,8 +222,14 @@ export default function Home() {
           <div className="relative mb-8">
             <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
             <div className="absolute inset-0 bg-green-500/40 rounded-full animate-pulse" />
-            <div className="relative bg-green-500 rounded-full p-5 shadow-lg shadow-green-500/30">
-              <Music className="h-10 w-10 text-black" />
+            <div className="relative rounded-full p-5 shadow-lg shadow-green-500/30 bg-white/10 backdrop-blur-sm">
+              <Image
+                src="/Logo.png"
+                alt="SpotWave Logo"
+                width={80}
+                height={80}
+                className="rounded-full"
+              />
             </div>
           </div>
 
@@ -307,7 +314,13 @@ export default function Home() {
           className="absolute top-1/4 left-1/4 opacity-10"
           style={{ animation: "float 6s ease-in-out infinite" }}
         >
-          <Music className="h-32 w-32 text-white" />
+          <Image
+            src="/Logo.png"
+            alt="Logo"
+            width={128}
+            height={128}
+            className="rounded-full"
+          />
         </div>
         <div
           className="absolute top-2/3 right-1/4 opacity-10"
@@ -331,10 +344,16 @@ export default function Home() {
 
       <div className="max-w-md w-full backdrop-blur-sm bg-black/30 rounded-xl p-8 shadow-2xl border border-green-500/20 relative z-10">
         <div
-          className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-green-500 rounded-full p-4 shadow-lg shadow-green-500/30"
+          className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/10 backdrop-blur-sm rounded-full p-4 shadow-lg shadow-green-500/30"
           style={{ animation: "float 3s ease-in-out infinite" }}
         >
-          <Music className="h-8 w-8 text-black" />
+          <Image
+            src="/Logo.png"
+            alt="SpotWave Logo"
+            width={64}
+            height={64}
+            className="rounded-full"
+          />
         </div>
 
         <div className="text-center mt-6 mb-8">
