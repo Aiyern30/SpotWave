@@ -16,6 +16,9 @@ export default function MainLayout({
   const { currentTrack, isConnecting } = usePlayer();
   const isPlayerVisible = !!currentTrack || isConnecting;
 
+  // Add state for InQueueWindow
+  const [isQueueOpen, setIsQueueOpen] = useState(false);
+
   return (
     <div className="flex min-h-screen bg-black">
       <Sidebar
@@ -28,7 +31,12 @@ export default function MainLayout({
         } ${isPlayerVisible ? "pb-[90px]" : ""}`}
       >
         {children}
-        {pathname !== "/Events" && <InQueueWindow />}
+        {pathname !== "/Events" && (
+          <InQueueWindow
+            isOpen={isQueueOpen}
+            onClose={() => setIsQueueOpen(false)}
+          />
+        )}
       </div>
     </div>
   );
