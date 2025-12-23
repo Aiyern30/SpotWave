@@ -57,9 +57,13 @@ interface LyricsCache {
 
 interface MusicPlayerProps {
   onToggleQueue?: () => void;
+  onToggleFullScreen?: () => void;
 }
 
-export const MusicPlayer = ({ onToggleQueue }: MusicPlayerProps = {}) => {
+export const MusicPlayer = ({
+  onToggleQueue,
+  onToggleFullScreen,
+}: MusicPlayerProps = {}) => {
   const router = useRouter();
   const {
     currentTrack,
@@ -357,6 +361,12 @@ export const MusicPlayer = ({ onToggleQueue }: MusicPlayerProps = {}) => {
     }
   };
 
+  const handleFullScreenClick = () => {
+    if (onToggleFullScreen) {
+      onToggleFullScreen();
+    }
+  };
+
   if (!isVisible) return null;
 
   return (
@@ -632,6 +642,8 @@ export const MusicPlayer = ({ onToggleQueue }: MusicPlayerProps = {}) => {
             variant="ghost"
             size="icon"
             className="text-zinc-400 hover:text-white h-8 w-8 hidden lg:flex"
+            onClick={handleFullScreenClick}
+            disabled={!currentTrack}
           >
             <Maximize2 className="h-4 w-4" />
           </Button>
