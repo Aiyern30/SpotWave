@@ -1,43 +1,108 @@
-const BASE_URL = "https://api.spotify.com/v1";
+// Spotify API functions for saving/checking tracks
 
-const getAccessToken = () => {
-  // You should use your own access token mechanism (auth context, cookie, etc.)
-  return localStorage.getItem("spotify_access_token") || "";
+/**
+ * Check if tracks are saved in user's library
+ * @param trackIds - Array of Spotify track IDs
+ * @returns Array of booleans indicating if each track is saved
+ */
+export const checkUserSavedTracks = async (
+  trackIds: string[]
+): Promise<boolean[]> => {
+  try {
+    const accessToken = await getAccessToken(); // Your function to get token
+
+    // Convert array to comma-separated string
+    const idsParam = trackIds.join(",");
+
+    const response = await fetch(
+      `https://api.spotify.com/v1/me/tracks/contains?ids=${idsParam}`,
+      {
+        headers:
+          {
+            Authorization: `Bearer ${accessToken}`,
+          },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to check saved tracks: ${response.status} ${response.statusText}`
+      );
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error checking saved tracks:", error);
+    throw new Error("Failed to check saved tracks");
+  }
 };
 
-export async function checkUserSavedTracks(ids: string[]) {
-  const res = await fetch(
-    `${BASE_URL}/me/tracks/contains?ids=${ids.join(",")}`,
-    {
+/**
+ * Save tracks to user's library
+ * @param trackIds - Array of Spotify track IDs to save
+ */
+export const saveTracksForUser = async (trackIds: string[]): Promise<void> => {
+  try {
+    const accessToken = await getAccessToken();
+
+    const response = await fetch("https://api.spotify.com/v1/me/tracks", {
+      method: "PUT",
       headers: {
-        Authorization: `Bearer ${getAccessToken()}`,
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({ ids: trackIds }),
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to save tracks: ${response.status} ${response.statusText}`
+      );
     }
-  );
-  if (!res.ok) throw new Error("Failed to check saved tracks");
-  return res.json() as Promise<boolean[]>;
-}
+  } catch (error) {
+    console.error("Error saving tracks:", error);
+    throw new Error("Failed to save tracks");
+  }
+};
 
-export async function saveTracksForUser(ids: string[]) {
-  const res = await fetch(`${BASE_URL}/me/tracks`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${getAccessToken()}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ ids }),
-  });
-  if (!res.ok) throw new Error("Failed to save tracks");
-}
+/**
+ * Remove tracks from user's library
+ * @param trackIds - Array of Spotify track IDs to remove
+ */
+export const removeTracksFromUser = async (
+  trackIds: string[]
+): Promise<void> => {
+  try {
+    const accessToken = await getAccessToken();
 
-export async function removeTracksFromUser(ids: string[]) {
-  const res = await fetch(`${BASE_URL}/me/tracks`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${getAccessToken()}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ ids }),
-  });
-  if (!res.ok) throw new Error("Failed to remove tracks");
+    const response = await fetch("https://api.spotify.com/v1/me/tracks", {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ ids: trackIds }),
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to remove tracks: ${response.status} ${response.statusText}`
+      );
+    }
+  } catch (error) {
+    console.error("Error removing tracks:", error);
+    throw new Error("Failed to remove tracks");
+  }
+};
+
+// Placeholder - replace with your actual token retrieval function
+async function getAccessToken(): Promise<string> {
+  const token = localStorage.getItem("Token");
+
+  if (!token) {
+    console.error("No access token found.");
+    throw new Error("No access token found");
+  }
+
+  return token;
 }
