@@ -90,6 +90,9 @@ export const FullScreenPlayer = ({
   const [isSaved, setIsSaved] = useState<boolean | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  // View toggle state
+  const [viewMode, setViewMode] = useState<"image" | "lyrics">("image");
+
   // Top tracks state
   const [topTracks, setTopTracks] = useState<TopTrack[]>([]);
   const [loadingTopTracks, setLoadingTopTracks] = useState(false);
@@ -276,9 +279,12 @@ export const FullScreenPlayer = ({
   const handlePlayTopTrack = async (track: TopTrack) => {
     try {
       const token = localStorage.getItem("Token");
-      const response = await fetch(`https://api.spotify.com/v1/tracks/${track.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `https://api.spotify.com/v1/tracks/${track.id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       const trackData = await response.json();
 
       playTrack({
@@ -310,37 +316,98 @@ export const FullScreenPlayer = ({
   if (!isOpen || !currentTrack) return null;
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-b from-zinc-900 via-zinc-800 to-black z-50 flex">
+    <div className="fixed inset-0 bg-gradient-to-b from-zinc-900 via-zinc-800 to-black z-50 overflow-y-auto">
       {/* Close Button */}
       <Button
         variant="ghost"
         size="icon"
         onClick={onClose}
-        className="absolute top-4 right-4 text-white hover:text-green-400 h-10 w-10 z-10"
+        className="fixed top-4 right-4 text-white hover:text-green-400 h-10 w-10 z-10"
       >
         <X className="h-6 w-6" />
       </Button>
 
-      {/* Left: Album Art & Controls */}
-      <div className="w-2/5 flex flex-col items-center justify-center p-8 space-y-8">
-        {/* Album Art */}
-        <div className="relative w-full max-w-md aspect-square">
-          <Image
-            src={currentTrack.album.images[0]?.url || "/default-artist.png"}
-            fill
-            className="object-cover rounded-2xl shadow-2xl"
-            alt={currentTrack.name}
-            priority
-          />
+      {/* Main Content Container */}
+      <div className="max-w-4xl mx-auto px-8 py-8 space-y-6">
+        {/* Hero Section - Album Art or Lyrics */}
+        <div className="relative w-full">
+          {viewMode === "image" ? (
+            <div className="relative w-full aspect-square max-w-2xl mx-auto">
+              <Image
+                src={currentTrack.album.images[0]?.url || "/default-artist.png"}
+                fill
+                className="object-cover rounded-2xl shadow-2xl"
+                alt={currentTrack.name}
+                priority
+              />
+            </div>
+          ) : (
+            <div className="w-full min-h-[600px] bg-zinc-900/50 rounded-2xl p-8 backdrop-blur-sm">
+              {loadingLyrics ? (
+                <div className="flex justify-center items-center h-[600px]">
+                  <Loader2 className="h-8 w-8 animate-spin text-green-500" />
+                </div>
+              ) : syncedLyrics && syncedLyrics.length > 0 ? (
+                <div
+                  ref={lyricsContainerRef}
+                  className="h-[600px] overflow-y-auto scroll-smooth space-y-4"
+                >
+                  {syncedLyrics.map((line, index) => (
+                    <div
+                      key={index}
+                      data-index={index}
+                      className={`text-base leading-relaxed transition-all duration-300 py-1 ${
+                        index === currentLyricIndex
+                          ? "text-green-400 font-semibold text-2xl scale-105"
+                          : index < currentLyricIndex
+                          ? "text-zinc-500"
+                          : "text-zinc-300"
+                      }`}
+                    >
+                      {line.text}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <pre className="text-zinc-300 text-base leading-relaxed whitespace-pre-wrap">
+                  {lyrics}
+                </pre>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* View Toggle Buttons */}
+        <div className="flex justify-center gap-4">
+          <Button
+            variant={viewMode === "image" ? "default" : "outline"}
+            onClick={() => setViewMode("image")}
+            className={`px-6 ${
+              viewMode === "image"
+                ? "bg-green-500 hover:bg-green-600 text-black"
+                : "bg-zinc-800 hover:bg-zinc-700 text-white border-zinc-700"
+            }`}
+          >
+            Album Art
+          </Button>
+          <Button
+            variant={viewMode === "lyrics" ? "default" : "outline"}
+            onClick={() => setViewMode("lyrics")}
+            className={`px-6 ${
+              viewMode === "lyrics"
+                ? "bg-green-500 hover:bg-green-600 text-black"
+                : "bg-zinc-800 hover:bg-zinc-700 text-white border-zinc-700"
+            }`}
+          >
+            Lyrics
+          </Button>
         </div>
 
         {/* Track Info */}
-        <div className="w-full max-w-md text-center space-y-2">
-          <h1 className="text-3xl font-bold text-white truncate">
-            {currentTrack.name}
-          </h1>
+        <div className="text-center space-y-2 pt-4">
+          <h1 className="text-4xl font-bold text-white">{currentTrack.name}</h1>
           <p
-            className="text-lg text-zinc-400 hover:underline cursor-pointer"
+            className="text-xl text-zinc-400 hover:underline cursor-pointer"
             onClick={() =>
               router.push(
                 `/Artists/${currentTrack.artists[0].id}?name=${currentTrack.artists[0].name}`
@@ -352,7 +419,7 @@ export const FullScreenPlayer = ({
         </div>
 
         {/* Progress Bar */}
-        <div className="w-full max-w-md space-y-2">
+        <div className="space-y-2 max-w-2xl mx-auto">
           <Slider
             value={[position]}
             max={duration}
@@ -385,7 +452,11 @@ export const FullScreenPlayer = ({
             )}
           </Button>
 
-          <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white h-10 w-10">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-zinc-400 hover:text-white h-10 w-10"
+          >
             <Shuffle className="h-4 w-4" />
           </Button>
 
@@ -422,7 +493,11 @@ export const FullScreenPlayer = ({
             <SkipForward className="h-6 w-6 fill-current" />
           </Button>
 
-          <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white h-10 w-10">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-zinc-400 hover:text-white h-10 w-10"
+          >
             <Repeat className="h-4 w-4" />
           </Button>
 
@@ -449,141 +524,119 @@ export const FullScreenPlayer = ({
             />
           </div>
         </div>
-      </div>
 
-      {/* Right: Tabs with Info */}
-      <div className="flex-1 p-8 overflow-y-auto">
-        <Tabs defaultValue="top-tracks" className="w-full">
-          <TabsList className="bg-zinc-800/50 mb-6">
-            <TabsTrigger value="top-tracks">Top Tracks</TabsTrigger>
-            <TabsTrigger value="lyrics">Lyrics</TabsTrigger>
-            <TabsTrigger value="details">Details</TabsTrigger>
-          </TabsList>
+        {/* Related Music Videos Section */}
+        <div className="pt-8">
+          <h2 className="text-2xl font-semibold text-white mb-6">
+            Related music videos
+          </h2>
+          {/* Placeholder for related videos - you can populate this with actual data */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((item) => (
+              <div key={item} className="aspect-video bg-zinc-800 rounded-lg" />
+            ))}
+          </div>
+        </div>
 
-          <TabsContent value="top-tracks" className="space-y-4">
-            <h2 className="text-xl font-semibold text-white mb-4">
-              Popular tracks by {currentTrack.artists[0]?.name}
-            </h2>
-            {loadingTopTracks ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-green-500" />
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {topTracks.map((track, index) => (
-                  <div
-                    key={track.id}
-                    className="flex items-center space-x-3 p-3 rounded-lg hover:bg-zinc-800/50 transition-colors group cursor-pointer"
-                    onClick={() => handlePlayTopTrack(track)}
-                  >
-                    <span className="text-zinc-400 text-sm w-6">{index + 1}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-white font-medium truncate">{track.name}</div>
-                      <div className="text-zinc-400 text-sm flex items-center space-x-2">
+        {/* Top Tracks Section */}
+        <div className="pt-8">
+          <h2 className="text-2xl font-semibold text-white mb-6">
+            Popular tracks by {currentTrack.artists[0]?.name}
+          </h2>
+          {loadingTopTracks ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-green-500" />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {topTracks.map((track, index) => (
+                <div
+                  key={track.id}
+                  className="flex items-center space-x-4 p-4 rounded-lg hover:bg-zinc-800/50 transition-colors group cursor-pointer"
+                  onClick={() => handlePlayTopTrack(track)}
+                >
+                  <span className="text-zinc-400 text-sm w-8 text-center">
+                    {index + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-white font-medium truncate text-base">
+                      {track.name}
+                    </div>
+                    <div className="text-zinc-400 text-sm flex items-center space-x-3">
+                      <div className="flex items-center space-x-1">
                         <TrendingUp className="h-3 w-3" />
                         <span>{track.popularity}/100</span>
-                        <Clock className="h-3 w-3 ml-2" />
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Clock className="h-3 w-3" />
                         <span>{formatTime(track.duration_ms)}</span>
                       </div>
                     </div>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="opacity-0 group-hover:opacity-100 h-8 w-8 rounded-full bg-green-500 hover:bg-green-400 text-black"
-                    >
-                      <Play className="h-4 w-4 ml-0.5" fill="currentColor" />
-                    </Button>
                   </div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="lyrics" className="h-[calc(100vh-200px)]">
-            {loadingLyrics ? (
-              <div className="flex justify-center items-center h-full">
-                <Loader2 className="h-8 w-8 animate-spin text-green-500" />
-              </div>
-            ) : syncedLyrics && syncedLyrics.length > 0 ? (
-              <div
-                ref={lyricsContainerRef}
-                className="h-full overflow-y-auto scroll-smooth space-y-3 pb-32"
-              >
-                {syncedLyrics.map((line, index) => (
-                  <div
-                    key={index}
-                    data-index={index}
-                    className={`text-sm leading-relaxed transition-all duration-300 py-1 ${
-                      index === currentLyricIndex
-                        ? "text-green-400 font-semibold text-lg scale-105"
-                        : index < currentLyricIndex
-                        ? "text-zinc-500"
-                        : "text-zinc-300"
-                    }`}
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="opacity-0 group-hover:opacity-100 h-10 w-10 rounded-full bg-green-500 hover:bg-green-400 text-black"
                   >
-                    {line.text}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <pre className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap">
-                {lyrics}
-              </pre>
-            )}
-          </TabsContent>
+                    <Play className="h-5 w-5 ml-0.5" fill="currentColor" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-          <TabsContent value="details" className="space-y-6">
-            <Card className="bg-zinc-800/30 border-zinc-700">
-              <CardContent className="p-6 space-y-4">
-                <h3 className="text-lg font-semibold text-white flex items-center">
-                  <Music className="h-5 w-5 mr-2" />
-                  Track Information
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between py-2 border-b border-zinc-700">
-                    <span className="text-zinc-400">Duration</span>
-                    <span className="text-white">
-                      {formatTime(currentTrack.duration_ms)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b border-zinc-700">
-                    <span className="text-zinc-400">Explicit</span>
-                    <span className="text-white">
-                      {currentTrack.explicit ? "Yes" : "No"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b border-zinc-700">
-                    <span className="text-zinc-400">Popularity</span>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-20 h-2 bg-zinc-700 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-green-500 rounded-full"
-                          style={{ width: `${currentTrack.popularity}%` }}
-                        />
-                      </div>
-                      <span className="text-white text-sm">
-                        {currentTrack.popularity}/100
-                      </span>
+        {/* Track Details Section */}
+        <div className="pt-8 pb-16">
+          <h2 className="text-2xl font-semibold text-white mb-6">
+            Track Information
+          </h2>
+          <Card className="bg-zinc-800/30 border-zinc-700">
+            <CardContent className="p-6 space-y-4">
+              <div className="space-y-3">
+                <div className="flex justify-between py-3 border-b border-zinc-700">
+                  <span className="text-zinc-400 text-base">Duration</span>
+                  <span className="text-white text-base">
+                    {formatTime(currentTrack.duration_ms)}
+                  </span>
+                </div>
+                <div className="flex justify-between py-3 border-b border-zinc-700">
+                  <span className="text-zinc-400 text-base">Explicit</span>
+                  <span className="text-white text-base">
+                    {currentTrack.explicit ? "Yes" : "No"}
+                  </span>
+                </div>
+                <div className="flex justify-between py-3 border-b border-zinc-700">
+                  <span className="text-zinc-400 text-base">Popularity</span>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-24 h-2 bg-zinc-700 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-green-500 rounded-full"
+                        style={{ width: `${currentTrack.popularity}%` }}
+                      />
                     </div>
-                  </div>
-                  <div className="flex justify-between py-2">
-                    <span className="text-zinc-400">Album</span>
-                    <span
-                      className="text-white hover:text-green-400 cursor-pointer hover:underline"
-                      onClick={() =>
-                        router.push(
-                          `/Albums/${currentTrack.album.id}?name=${currentTrack.album.name}`
-                        )
-                      }
-                    >
-                      {currentTrack.album.name}
+                    <span className="text-white text-base">
+                      {currentTrack.popularity}/100
                     </span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                <div className="flex justify-between py-3">
+                  <span className="text-zinc-400 text-base">Album</span>
+                  <span
+                    className="text-white hover:text-green-400 cursor-pointer hover:underline text-base"
+                    onClick={() =>
+                      router.push(
+                        `/Albums/${currentTrack.album.id}?name=${currentTrack.album.name}`
+                      )
+                    }
+                  >
+                    {currentTrack.album.name}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
