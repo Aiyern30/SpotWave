@@ -70,6 +70,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const playerRef = useRef<any>(null);
   const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const initializationAttempted = useRef(false);
+  const isInitializing = useRef(false); // Add this to prevent double initialization
 
   // Initialize Spotify Web Playback SDK
   useEffect(() => {
@@ -80,10 +81,17 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    if (!token || initializationAttempted.current) return;
+    // Prevent re-initialization if already initialized or currently initializing
+    if (!token || initializationAttempted.current || isInitializing.current)
+      return;
 
     const initializePlayer = () => {
-      if (window.Spotify && !initializationAttempted.current) {
+      if (
+        window.Spotify &&
+        !initializationAttempted.current &&
+        !isInitializing.current
+      ) {
+        isInitializing.current = true;
         initializationAttempted.current = true;
         setIsConnecting(true);
 
@@ -207,10 +215,12 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         spotifyPlayer.connect().then((success: boolean) => {
           if (success) {
             console.log("Successfully connected to Spotify Player!");
+            isInitializing.current = false;
           } else {
             console.error("Failed to connect to Spotify Player");
             setIsConnecting(false);
             setIsReady(false);
+            isInitializing.current = false;
           }
         });
 
@@ -226,23 +236,31 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       window.onSpotifyWebPlaybackSDKReady = initializePlayer;
     }
 
-    // Cleanup function
+    // Cleanup function - only clear timeout, don't disconnect player
     return () => {
       if (volumeTimeoutRef.current) {
         clearTimeout(volumeTimeoutRef.current);
       }
+      // DO NOT disconnect the player here - let it persist
     };
   }, [token]);
 
-  // Cleanup on unmount
+  // Add cleanup only on window unload (when user closes tab)
   useEffect(() => {
-    return () => {
+    const handleBeforeUnload = () => {
       if (
         playerRef.current &&
         typeof playerRef.current.disconnect === "function"
       ) {
+        console.log("Disconnecting player on window unload");
         playerRef.current.disconnect();
       }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
 

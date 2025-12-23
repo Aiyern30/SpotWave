@@ -2,11 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
-import AuthProvider from "./AuthProvider";
-import { Toaster } from "@/components/ui/Toaster";
-import InQueueWindow from "@/components/InQueueWindow";
-import { PlayerProvider } from "@/contexts/PlayerContext";
-import { MusicPlayer } from "@/components/MusicPlayer";
+import { Providers } from "@/components/Providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,13 +25,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} bg-primary-background`}>
-        <PlayerProvider>
-          <AuthProvider>
-            {children}
-            <Toaster />
-            <MusicPlayer />
-          </AuthProvider>
-        </PlayerProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
