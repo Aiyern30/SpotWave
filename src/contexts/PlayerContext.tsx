@@ -44,6 +44,11 @@ interface PlayerContextType {
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
+// Global flag to prevent re-initialization across ALL component instances
+let globalPlayerInstance: any = null;
+let globalDeviceId: string | null = null;
+let isGloballyInitialized = false;
+
 export const usePlayer = () => {
   const context = useContext(PlayerContext);
   if (!context) {
@@ -69,8 +74,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [token, setToken] = useState<string>("");
   const playerRef = useRef<any>(null);
   const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const initializationAttempted = useRef(false);
-  const hasInitialized = useRef(false); // Add permanent flag
 
   // Initialize Spotify Web Playback SDK
   useEffect(() => {
@@ -81,17 +84,25 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    // Strong guard: prevent any re-initialization
-    if (!token || hasInitialized.current) return;
+    // Use global flag to prevent ANY re-initialization
+    if (!token || isGloballyInitialized) {
+      // If already initialized, use the existing player
+      if (globalPlayerInstance && globalDeviceId) {
+        setPlayer(globalPlayerInstance);
+        playerRef.current = globalPlayerInstance;
+        setDeviceId(globalDeviceId);
+        setIsReady(true);
+        setIsConnecting(false);
+      }
+      return;
+    }
 
     const initializePlayer = () => {
-      // Double check before initialization
-      if (window.Spotify && !hasInitialized.current) {
-        hasInitialized.current = true; // Set immediately to prevent race conditions
-        initializationAttempted.current = true;
+      if (window.Spotify && !isGloballyInitialized) {
+        isGloballyInitialized = true;
         setIsConnecting(true);
 
-        console.log("Initializing Spotify Player...");
+        console.log("Initializing Spotify Player (ONE TIME ONLY)...");
 
         const spotifyPlayer = new window.Spotify.Player({
           name: "SpotWave Player",
@@ -106,6 +117,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           "ready",
           ({ device_id }: { device_id: string }) => {
             console.log("Spotify Player Ready with Device ID:", device_id);
+            globalDeviceId = device_id;
             setDeviceId(device_id);
             setIsReady(true);
             setIsConnecting(false);
@@ -218,6 +230,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         });
 
+        globalPlayerInstance = spotifyPlayer;
         setPlayer(spotifyPlayer);
         playerRef.current = spotifyPlayer;
       }

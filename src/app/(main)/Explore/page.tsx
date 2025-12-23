@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import Header from "@/components/Header";
 import PlaylistCard from "@/components/PlaylistCard";
 import {
@@ -23,10 +23,10 @@ const Page = () => {
   const [followedArtists, setFollowedArtists] = useState<Artist[]>([]);
   const [favoriteArtists, setFavoriteArtists] = useState<Artist[]>([]);
   const [recentTracks, setRecentTracks] = useState<RecentTracksProps[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const { playTrack } = usePlayer();
 
-  // Track which accordion items are open
   const [openAccordions, setOpenAccordions] = useState<string[]>([
     "item-1",
     "item-2",
@@ -44,6 +44,7 @@ const Page = () => {
     const fetchData = async () => {
       if (!token) return;
 
+      setIsLoading(true);
       try {
         const [followed, favorite, recent] = await Promise.all([
           fetchFollowedArtists(token),
@@ -55,6 +56,8 @@ const Page = () => {
         setRecentTracks(recent);
       } catch (error) {
         console.error(error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -71,97 +74,97 @@ const Page = () => {
   );
   const memoizedRecentTracks = useMemo(() => recentTracks, [recentTracks]);
 
-  // Check if all accordions are open
   const allOpen = openAccordions.length === 3;
 
-  // Toggle Expand/Collapse All
-  const handleToggleAll = () => {
-    if (allOpen) {
-      setOpenAccordions([]); // Close all
-    } else {
-      setOpenAccordions(["item-1", "item-2", "item-3"]); // Open all
-    }
-  };
+  const handleToggleAll = useCallback(() => {
+    setOpenAccordions((prev) =>
+      prev.length === 3 ? [] : ["item-1", "item-2", "item-3"]
+    );
+  }, []);
 
-  // Handler to play artist's top tracks
-  const handlePlayArtist = async (artistId: string) => {
-    try {
-      // Fetch artist's top tracks
-      const response = await fetch(
-        `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+  const handlePlayArtist = useCallback(
+    async (artistId: string) => {
+      try {
+        // Fetch artist's top tracks
+        const response = await fetch(
+          `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          console.error("Failed to fetch artist's top tracks");
+          return;
         }
-      );
 
-      if (!response.ok) {
-        console.error("Failed to fetch artist's top tracks");
-        return;
+        const data = await response.json();
+        const topTracks = data.tracks;
+
+        if (topTracks && topTracks.length > 0) {
+          // Play the first top track
+          const track = topTracks[0];
+          playTrack({
+            id: track.id,
+            name: track.name,
+            artists: track.artists,
+            album: {
+              name: track.album.name,
+              images: track.album.images,
+              id: track.album.id,
+              artists: track.artists,
+              release_date: track.album.release_date || "",
+              total_tracks: track.album.total_tracks || 0,
+            },
+            duration_ms: track.duration_ms,
+            explicit: track.explicit || false,
+            external_urls: track.external_urls || { spotify: "" },
+            popularity: track.popularity || 0,
+            preview_url: track.preview_url || null,
+            track_number: track.track_number || 0,
+            disc_number: track.disc_number || 1,
+            uri: track.uri,
+          });
+        }
+      } catch (error) {
+        console.error("Error playing artist:", error);
       }
+    },
+    [token, playTrack]
+  );
 
-      const data = await response.json();
-      const topTracks = data.tracks;
-
-      if (topTracks && topTracks.length > 0) {
-        // Play the first top track
-        const track = topTracks[0];
+  const handlePlayTrack = useCallback(
+    (track: RecentTracksProps["track"]) => {
+      try {
         playTrack({
           id: track.id,
           name: track.name,
-          artists: track.artists,
+          artists: track.album.artists,
           album: {
             name: track.album.name,
             images: track.album.images,
-            id: track.album.id,
-            artists: track.artists,
-            release_date: track.album.release_date || "",
-            total_tracks: track.album.total_tracks || 0,
+            id: track.album.artists[0]?.id || "",
+            artists: track.album.artists,
+            release_date: track.album.release_date,
+            total_tracks: 0,
           },
           duration_ms: track.duration_ms,
-          explicit: track.explicit || false,
-          external_urls: track.external_urls || { spotify: "" },
-          popularity: track.popularity || 0,
+          explicit: false,
+          external_urls: { spotify: "" },
+          popularity: 0,
           preview_url: track.preview_url || null,
-          track_number: track.track_number || 0,
-          disc_number: track.disc_number || 1,
+          track_number: 0,
+          disc_number: 1,
           uri: track.uri,
         });
+      } catch (error) {
+        console.error("Error playing track:", error);
       }
-    } catch (error) {
-      console.error("Error playing artist:", error);
-    }
-  };
-
-  // Handler to play a track
-  const handlePlayTrack = (track: RecentTracksProps["track"]) => {
-    try {
-      playTrack({
-        id: track.id,
-        name: track.name,
-        artists: track.album.artists,
-        album: {
-          name: track.album.name,
-          images: track.album.images,
-          id: track.album.artists[0]?.id || "",
-          artists: track.album.artists,
-          release_date: track.album.release_date,
-          total_tracks: 0,
-        },
-        duration_ms: track.duration_ms,
-        explicit: false,
-        external_urls: { spotify: "" },
-        popularity: 0,
-        preview_url: track.preview_url || null,
-        track_number: 0,
-        disc_number: 1,
-        uri: track.uri,
-      });
-    } catch (error) {
-      console.error("Error playing track:", error);
-    }
-  };
+    },
+    [playTrack]
+  );
 
   // Empty State Component
   const EmptyState = ({
