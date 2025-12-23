@@ -111,6 +111,31 @@ export const FullScreenPlayer = ({
     setLocalVolume(volume);
   }, [volume]);
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+
+      // Prevent body scroll
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = "100%";
+
+      return () => {
+        // Restore body scroll
+        document.body.style.overflow = "";
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+
+        // Restore scroll position
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [isOpen]);
+
   // Fetch saved status
   useEffect(() => {
     const checkIfTrackIsSaved = async () => {
@@ -325,7 +350,7 @@ export const FullScreenPlayer = ({
   if (!isOpen || !currentTrack) return null;
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-b from-zinc-900 via-zinc-800 to-black z-50 overflow-y-auto">
+    <div className="fixed inset-0 bg-gradient-to-b from-zinc-900 via-zinc-800 to-black z-50 overflow-y-auto overflow-x-hidden">
       {/* Header with View Toggle and Close Button */}
       <div className="fixed top-4 right-4 flex items-center gap-2 z-10">
         <Button
@@ -381,7 +406,7 @@ export const FullScreenPlayer = ({
               />
             </div>
           ) : (
-            <div className="w-full min-h-[600px] bg-zinc-900/50 rounded-2xl p-8 backdrop-blur-sm">
+            <div className="w-full min-h-[600px] bg-zinc-900/50 rounded-2xl p-8 backdrop-blur-sm overflow-hidden">
               {loadingLyrics ? (
                 <div className="flex justify-center items-center h-[600px]">
                   <Loader2 className="h-8 w-8 animate-spin text-green-500" />
@@ -389,28 +414,58 @@ export const FullScreenPlayer = ({
               ) : syncedLyrics && syncedLyrics.length > 0 ? (
                 <div
                   ref={lyricsContainerRef}
-                  className="h-[600px] overflow-y-auto scroll-smooth space-y-4"
+                  className="h-[600px] overflow-y-auto overflow-x-hidden scroll-smooth space-y-4 pr-4"
+                  style={{
+                    scrollbarWidth: "thin",
+                    scrollbarColor: "#3b82f6 #27272a",
+                  }}
                 >
+                  <style jsx>{`
+                    div::-webkit-scrollbar {
+                      width: 8px;
+                    }
+                    div::-webkit-scrollbar-track {
+                      background: #27272a;
+                      border-radius: 10px;
+                    }
+                    div::-webkit-scrollbar-thumb {
+                      background: #3b82f6;
+                      border-radius: 10px;
+                    }
+                    div::-webkit-scrollbar-thumb:hover {
+                      background: #2563eb;
+                    }
+                  `}</style>
                   {syncedLyrics.map((line, index) => (
                     <div
                       key={index}
                       data-index={index}
-                      className={`text-base leading-relaxed transition-all duration-300 py-1 ${
+                      className={`text-base leading-relaxed transition-all duration-300 py-1 break-words ${
                         index === currentLyricIndex
-                          ? "text-green-400 font-semibold text-2xl scale-105"
+                          ? "text-green-400 font-semibold text-2xl"
                           : index < currentLyricIndex
                           ? "text-zinc-500"
                           : "text-zinc-300"
                       }`}
+                      style={
+                        index === currentLyricIndex
+                          ? {
+                              transform: "scale(1.05)",
+                              transformOrigin: "left center",
+                            }
+                          : undefined
+                      }
                     >
                       {line.text}
                     </div>
                   ))}
                 </div>
               ) : (
-                <pre className="text-zinc-300 text-base leading-relaxed whitespace-pre-wrap">
-                  {lyrics}
-                </pre>
+                <div className="h-[600px] overflow-y-auto overflow-x-hidden pr-4">
+                  <pre className="text-zinc-300 text-base leading-relaxed whitespace-pre-wrap break-words">
+                    {lyrics}
+                  </pre>
+                </div>
               )}
             </div>
           )}
@@ -550,27 +605,27 @@ export const FullScreenPlayer = ({
               <Loader2 className="h-8 w-8 animate-spin text-green-500" />
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 overflow-x-hidden">
               {topTracks.map((track, index) => (
                 <div
                   key={track.id}
                   className="flex items-center space-x-4 p-4 rounded-lg hover:bg-zinc-800/50 transition-colors group cursor-pointer"
                   onClick={() => handlePlayTopTrack(track)}
                 >
-                  <span className="text-zinc-400 text-sm w-8 text-center">
+                  <span className="text-zinc-400 text-sm w-8 text-center flex-shrink-0">
                     {index + 1}
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="text-white font-medium truncate text-base">
                       {track.name}
                     </div>
-                    <div className="text-zinc-400 text-sm flex items-center space-x-3">
+                    <div className="text-zinc-400 text-sm flex items-center space-x-3 flex-wrap">
                       <div className="flex items-center space-x-1">
-                        <TrendingUp className="h-3 w-3" />
+                        <TrendingUp className="h-3 w-3 flex-shrink-0" />
                         <span>{track.popularity}/100</span>
                       </div>
                       <div className="flex items-center space-x-1">
-                        <Clock className="h-3 w-3" />
+                        <Clock className="h-3 w-3 flex-shrink-0" />
                         <span>{formatTime(track.duration_ms)}</span>
                       </div>
                     </div>
@@ -578,7 +633,7 @@ export const FullScreenPlayer = ({
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="opacity-0 group-hover:opacity-100 h-10 w-10 rounded-full bg-green-500 hover:bg-green-400 text-black"
+                    className="opacity-0 group-hover:opacity-100 h-10 w-10 rounded-full bg-green-500 hover:bg-green-400 text-black flex-shrink-0"
                   >
                     <Play className="h-5 w-5 ml-0.5" fill="currentColor" />
                   </Button>
@@ -594,7 +649,7 @@ export const FullScreenPlayer = ({
             Track Information
           </h2>
           <Card className="bg-zinc-800/30 border-zinc-700">
-            <CardContent className="p-6 space-y-4">
+            <CardContent className="p-6 space-y-4 overflow-x-hidden">
               <div className="space-y-3">
                 <div className="flex justify-between py-3 border-b border-zinc-700">
                   <span className="text-zinc-400 text-base">Duration</span>
@@ -625,7 +680,7 @@ export const FullScreenPlayer = ({
                 <div className="flex justify-between py-3">
                   <span className="text-zinc-400 text-base">Album</span>
                   <span
-                    className="text-white hover:text-green-400 cursor-pointer hover:underline text-base"
+                    className="text-white hover:text-green-400 cursor-pointer hover:underline text-base truncate ml-4"
                     onClick={() =>
                       router.push(
                         `/Albums/${currentTrack.album.id}?name=${currentTrack.album.name}`
