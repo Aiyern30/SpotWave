@@ -30,6 +30,8 @@ import {
   Users,
   TrendingUp,
   Clock,
+  Image as ImageIcon,
+  FileText,
 } from "lucide-react";
 import {
   checkUserSavedTracks,
@@ -89,6 +91,7 @@ export const FullScreenPlayer = ({
   const [localVolume, setLocalVolume] = useState(volume);
   const [isSaved, setIsSaved] = useState<boolean | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingTrack, setIsLoadingTrack] = useState(false);
 
   // View toggle state
   const [viewMode, setViewMode] = useState<"image" | "lyrics">("image");
@@ -277,6 +280,7 @@ export const FullScreenPlayer = ({
   };
 
   const handlePlayTopTrack = async (track: TopTrack) => {
+    setIsLoadingTrack(true);
     try {
       const token = localStorage.getItem("Token");
       const response = await fetch(
@@ -287,7 +291,7 @@ export const FullScreenPlayer = ({
       );
       const trackData = await response.json();
 
-      playTrack({
+      await playTrack({
         id: trackData.id,
         name: trackData.name,
         artists: trackData.artists,
@@ -308,8 +312,13 @@ export const FullScreenPlayer = ({
         disc_number: trackData.disc_number || 1,
         uri: trackData.uri,
       });
+
+      // Wait a bit for the track to start loading
+      await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
       console.error("Error playing track:", error);
+    } finally {
+      setIsLoadingTrack(false);
     }
   };
 
@@ -317,15 +326,45 @@ export const FullScreenPlayer = ({
 
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-zinc-900 via-zinc-800 to-black z-50 overflow-y-auto">
-      {/* Close Button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onClose}
-        className="fixed top-4 right-4 text-white hover:text-green-400 h-10 w-10 z-10"
-      >
-        <X className="h-6 w-6" />
-      </Button>
+      {/* Header with View Toggle and Close Button */}
+      <div className="fixed top-4 right-4 flex items-center gap-2 z-10">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setViewMode("image")}
+          className={`h-10 w-10 ${
+            viewMode === "image"
+              ? "text-green-400 bg-zinc-800"
+              : "text-white hover:text-green-400"
+          }`}
+          title="Show Album Art"
+        >
+          <ImageIcon className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setViewMode("lyrics")}
+          className={`h-10 w-10 ${
+            viewMode === "lyrics"
+              ? "text-green-400 bg-zinc-800"
+              : "text-white hover:text-green-400"
+          }`}
+          title="Show Lyrics"
+        >
+          <FileText className="h-5 w-5" />
+        </Button>
+        <div className="w-px h-6 bg-zinc-700 mx-1" />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="text-white hover:text-green-400 h-10 w-10"
+          title="Close"
+        >
+          <X className="h-6 w-6" />
+        </Button>
+      </div>
 
       {/* Main Content Container */}
       <div className="max-w-4xl mx-auto px-8 py-8 space-y-6">
@@ -375,32 +414,6 @@ export const FullScreenPlayer = ({
               )}
             </div>
           )}
-        </div>
-
-        {/* View Toggle Buttons */}
-        <div className="flex justify-center gap-4">
-          <Button
-            variant={viewMode === "image" ? "default" : "outline"}
-            onClick={() => setViewMode("image")}
-            className={`px-6 ${
-              viewMode === "image"
-                ? "bg-green-500 hover:bg-green-600 text-black"
-                : "bg-zinc-800 hover:bg-zinc-700 text-white border-zinc-700"
-            }`}
-          >
-            Album Art
-          </Button>
-          <Button
-            variant={viewMode === "lyrics" ? "default" : "outline"}
-            onClick={() => setViewMode("lyrics")}
-            className={`px-6 ${
-              viewMode === "lyrics"
-                ? "bg-green-500 hover:bg-green-600 text-black"
-                : "bg-zinc-800 hover:bg-zinc-700 text-white border-zinc-700"
-            }`}
-          >
-            Lyrics
-          </Button>
         </div>
 
         {/* Track Info */}
@@ -474,9 +487,11 @@ export const FullScreenPlayer = ({
             onClick={isPlaying ? pauseTrack : resumeTrack}
             size="icon"
             className="bg-white hover:bg-white/90 hover:scale-105 text-black h-14 w-14 rounded-full"
-            disabled={!isReady}
+            disabled={!isReady || isLoadingTrack}
           >
-            {isPlaying ? (
+            {isLoadingTrack ? (
+              <Loader2 className="h-7 w-7 animate-spin" />
+            ) : isPlaying ? (
               <Pause className="h-7 w-7 fill-current" />
             ) : (
               <Play className="h-7 w-7 ml-0.5 fill-current" />
@@ -522,19 +537,6 @@ export const FullScreenPlayer = ({
               className="w-24 cursor-pointer"
               disabled={!isReady}
             />
-          </div>
-        </div>
-
-        {/* Related Music Videos Section */}
-        <div className="pt-8">
-          <h2 className="text-2xl font-semibold text-white mb-6">
-            Related music videos
-          </h2>
-          {/* Placeholder for related videos - you can populate this with actual data */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((item) => (
-              <div key={item} className="aspect-video bg-zinc-800 rounded-lg" />
-            ))}
           </div>
         </div>
 
