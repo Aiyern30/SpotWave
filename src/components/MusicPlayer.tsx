@@ -1,10 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { usePlayer } from "@/contexts/PlayerContext";
-import { Button, Slider } from "@/components/ui";
+import {
+  Button,
+  Slider,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui";
 import {
   Play,
   Pause,
@@ -35,6 +43,18 @@ const formatTime = (ms: number) => {
   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 };
 
+interface LyricsLine {
+  time: number;
+  text: string;
+}
+
+interface LyricsCache {
+  plainLyrics: string | null;
+  syncedLyrics: LyricsLine[] | null;
+  instrumental: boolean;
+  timestamp: number;
+}
+
 export const MusicPlayer = () => {
   const router = useRouter();
   const {
@@ -61,6 +81,13 @@ export const MusicPlayer = () => {
   const [localVolume, setLocalVolume] = useState(volume);
   const [isSaved, setIsSaved] = useState<boolean | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLyricsSheetOpen, setIsLyricsSheetOpen] = useState(false);
+  const [lyrics, setLyrics] = useState<string | null>(null);
+  const [syncedLyrics, setSyncedLyrics] = useState<LyricsLine[] | null>(null);
+  const [loadingLyrics, setLoadingLyrics] = useState(false);
+  const [currentLyricIndex, setCurrentLyricIndex] = useState<number>(-1);
+  const lyricsCache = useRef<Map<string, LyricsCache>>(new Map());
+  const lyricsContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsVisible(!!currentTrack || isConnecting);
@@ -112,6 +139,155 @@ export const MusicPlayer = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Parse synced lyrics (LRC format)
+  const parseSyncedLyrics = (lrcText: string): LyricsLine[] => {
+    const lines: LyricsLine[] = [];
+    const lrcLines = lrcText.split("\n");
+
+    for (const line of lrcLines) {
+      const match = line.match(/\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/);
+      if (match) {
+        const minutes = parseInt(match[1]);
+        const seconds = parseInt(match[2]);
+        const centiseconds = parseInt(match[3].padEnd(3, "0"));
+        const time = (minutes * 60 + seconds) * 1000 + centiseconds;
+        const text = match[4].trim();
+
+        if (text) {
+          lines.push({ time, text });
+        }
+      }
+    }
+
+    return lines.sort((a, b) => a.time - b.time);
+  };
+
+  const fetchLyrics = async (
+    artist: string,
+    title: string,
+    album: string,
+    durationMs: number
+  ) => {
+    const cacheKey = `${artist}-${title}-${album}`;
+
+    const cached = lyricsCache.current.get(cacheKey);
+    if (cached) {
+      console.log("Using cached lyrics");
+      setLyrics(cached.plainLyrics);
+      setSyncedLyrics(cached.syncedLyrics);
+      setCurrentLyricIndex(-1);
+      return;
+    }
+
+    setLoadingLyrics(true);
+    try {
+      const params = new URLSearchParams({
+        artist_name: artist,
+        track_name: title,
+        album_name: album,
+        duration: Math.round(durationMs / 1000).toString(),
+      });
+
+      const response = await fetch(
+        `https://lrclib.net/api/get?${params.toString()}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      let plainLyricsText = null;
+      let syncedLyricsData = null;
+      let isInstrumental = false;
+
+      if (data.syncedLyrics && data.syncedLyrics.trim()) {
+        syncedLyricsData = parseSyncedLyrics(data.syncedLyrics);
+        plainLyricsText =
+          data.plainLyrics ||
+          data.syncedLyrics.replace(/\[\d{2}:\d{2}\.\d{2,3}\]/g, "").trim();
+      } else if (data.plainLyrics && data.plainLyrics.trim()) {
+        plainLyricsText = data.plainLyrics;
+      } else if (data.instrumental) {
+        plainLyricsText = "🎵 This track is instrumental (no lyrics available)";
+        isInstrumental = true;
+      } else {
+        plainLyricsText = "Lyrics not found for this track.";
+      }
+
+      lyricsCache.current.set(cacheKey, {
+        plainLyrics: plainLyricsText,
+        syncedLyrics: syncedLyricsData,
+        instrumental: isInstrumental,
+        timestamp: Date.now(),
+      });
+
+      setLyrics(plainLyricsText);
+      setSyncedLyrics(syncedLyricsData);
+      setCurrentLyricIndex(-1);
+    } catch (error) {
+      console.error("Error fetching lyrics from LRCLIB:", error);
+      const errorMessage = "Unable to fetch lyrics at this time.";
+      setLyrics(errorMessage);
+      setSyncedLyrics(null);
+    } finally {
+      setLoadingLyrics(false);
+    }
+  };
+
+  // Sync lyrics with current playback position
+  useEffect(() => {
+    if (
+      !syncedLyrics ||
+      syncedLyrics.length === 0 ||
+      !isLyricsSheetOpen ||
+      !isPlaying
+    ) {
+      return;
+    }
+
+    const adjustedPosition = position + 300;
+
+    let newIndex = -1;
+    for (let i = syncedLyrics.length - 1; i >= 0; i--) {
+      if (adjustedPosition >= syncedLyrics[i].time) {
+        newIndex = i;
+        break;
+      }
+    }
+
+    if (newIndex !== currentLyricIndex) {
+      setCurrentLyricIndex(newIndex);
+
+      if (lyricsContainerRef.current && newIndex >= 0) {
+        const activeElement = lyricsContainerRef.current.querySelector(
+          `[data-index="${newIndex}"]`
+        );
+        if (activeElement) {
+          activeElement.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }
+      }
+    }
+  }, [position, syncedLyrics, currentLyricIndex, isLyricsSheetOpen, isPlaying]);
+
+  const handleLyricsClick = () => {
+    if (!currentTrack) return;
+
+    if (!lyrics && !loadingLyrics) {
+      fetchLyrics(
+        currentTrack.artists[0].name,
+        currentTrack.name,
+        currentTrack.album.name,
+        currentTrack.duration_ms
+      );
+    }
+    setIsLyricsSheetOpen(true);
   };
 
   const handlePlayPause = useCallback(() => {
@@ -322,13 +498,93 @@ export const MusicPlayer = () => {
 
         {/* Right Section - Additional Controls */}
         <div className="flex items-center justify-end gap-2 min-w-[240px] w-[30%]">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-zinc-400 hover:text-white h-8 w-8 hidden lg:flex"
-          >
-            <Mic2 className="h-4 w-4" />
-          </Button>
+          <Sheet open={isLyricsSheetOpen} onOpenChange={setIsLyricsSheetOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-zinc-400 hover:text-white h-8 w-8 hidden lg:flex"
+                onClick={handleLyricsClick}
+                disabled={!currentTrack}
+              >
+                <Mic2 className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="w-[400px] sm:w-[540px] bg-zinc-900 border-zinc-800 flex flex-col overflow-hidden">
+              <SheetHeader className="space-y-4 flex-shrink-0">
+                {currentTrack && (
+                  <div className="flex items-center space-x-3">
+                    <div className="w-16 h-16 rounded-lg overflow-hidden">
+                      <Image
+                        src={
+                          currentTrack.album?.images[0]?.url ||
+                          "/default-artist.png"
+                        }
+                        width={64}
+                        height={64}
+                        className="object-cover"
+                        alt={currentTrack.name}
+                      />
+                    </div>
+                    <div>
+                      <SheetTitle className="text-white text-lg font-semibold">
+                        {currentTrack.name}
+                      </SheetTitle>
+                      <p className="text-zinc-400 text-sm">
+                        by{" "}
+                        {currentTrack.artists
+                          .map((artist) => artist.name)
+                          .join(", ")}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </SheetHeader>
+              <div className="flex-1 overflow-hidden mt-6">
+                {loadingLyrics ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-green-500 border-t-transparent"></div>
+                    <span className="ml-3 text-zinc-400">
+                      Loading lyrics...
+                    </span>
+                  </div>
+                ) : syncedLyrics && syncedLyrics.length > 0 ? (
+                  <div
+                    ref={lyricsContainerRef}
+                    className="bg-zinc-800/30 rounded-lg p-4 h-full overflow-y-auto scroll-smooth"
+                    style={{ maxHeight: "calc(100vh - 200px)" }}
+                  >
+                    <div className="space-y-3 pb-32">
+                      {syncedLyrics.map((line, index) => (
+                        <div
+                          key={index}
+                          data-index={index}
+                          className={`text-sm leading-relaxed transition-all duration-300 py-1 ${
+                            index === currentLyricIndex
+                              ? "text-green-400 font-semibold text-lg scale-105"
+                              : index < currentLyricIndex
+                              ? "text-zinc-500"
+                              : "text-zinc-300"
+                          }`}
+                        >
+                          {line.text}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="bg-zinc-800/30 rounded-lg p-4 h-full overflow-y-auto"
+                    style={{ maxHeight: "calc(100vh - 200px)" }}
+                  >
+                    <pre className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap font-sans">
+                      {lyrics}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
 
           <Button
             variant="ghost"
