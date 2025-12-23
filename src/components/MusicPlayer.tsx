@@ -55,7 +55,11 @@ interface LyricsCache {
   timestamp: number;
 }
 
-export const MusicPlayer = () => {
+interface MusicPlayerProps {
+  onToggleQueue?: () => void;
+}
+
+export const MusicPlayer = ({ onToggleQueue }: MusicPlayerProps = {}) => {
   const router = useRouter();
   const {
     currentTrack,
@@ -347,6 +351,12 @@ export const MusicPlayer = () => {
     }
   };
 
+  const handleQueueClick = () => {
+    if (onToggleQueue) {
+      onToggleQueue();
+    }
+  };
+
   if (!isVisible) return null;
 
   return (
@@ -590,6 +600,7 @@ export const MusicPlayer = () => {
             variant="ghost"
             size="icon"
             className="text-zinc-400 hover:text-white h-8 w-8 hidden lg:flex"
+            onClick={handleQueueClick}
           >
             <List className="h-4 w-4" />
           </Button>

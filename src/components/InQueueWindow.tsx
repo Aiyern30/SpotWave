@@ -18,8 +18,12 @@ import { Artist, RecentTracksProps, Track } from "@/lib/types";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { fetchRecentlyPlayed } from "@/utils/Artist/fetchRecentlyPlayed";
 
-const InQueueWindow = () => {
-  const [isOpen, setIsOpen] = useState(false);
+interface InQueueWindowProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
   const [queue, setQueue] = useState<any[]>([]);
   const [currentTrack, setCurrentTrack] = useState<any>(null);
   const [recentTracks, setRecentTracks] = useState<RecentTracksProps[]>([]);
@@ -138,20 +142,20 @@ const InQueueWindow = () => {
 
   return (
     <div
-      className={`fixed bottom-4 right-4 ${
+      className={`fixed bottom-24 right-4 ${
         isOpen
-          ? "w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] md:w-[500px] md:h-[500px] "
-          : "w-[50px] h-[50px]"
-      } bg-white shadow-lg rounded-md flex items-center justify-center`}
+          ? "w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] md:w-[500px] md:h-[500px]"
+          : "w-0 h-0 opacity-0 pointer-events-none"
+      } bg-white shadow-lg rounded-md flex items-center justify-center z-50`}
       style={{
-        transition: "width 0.3s ease, height 0.3s ease",
+        transition: "width 0.3s ease, height 0.3s ease, opacity 0.3s ease",
       }}
     >
-      {isOpen ? (
+      {isOpen && (
         <div className="w-full h-full p-4 flex flex-col">
           <div className="flex justify-end">
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={onClose}
               className="text-gray-500 hover:text-gray-700"
             >
               <FiChevronDown size={24} />
@@ -397,10 +401,6 @@ const InQueueWindow = () => {
             </Tabs>
           </div>
         </div>
-      ) : (
-        <button onClick={() => setIsOpen(true)} className="text-gray-500">
-          <FiChevronUp size={24} />
-        </button>
       )}
     </div>
   );
