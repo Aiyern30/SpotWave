@@ -432,7 +432,7 @@ export const MusicPlayer = ({
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-400 hover:text-white h-8 w-8 flex-shrink-0 transition-all duration-200"
+            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 flex-shrink-0 transition-all duration-200"
             onClick={handleToggleSave}
             disabled={!currentTrack || isSaving}
           >
@@ -453,7 +453,7 @@ export const MusicPlayer = ({
             <Button
               variant="ghost"
               size="icon"
-              className="text-zinc-400 hover:text-white h-8 w-8"
+              className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 transition-all"
             >
               <Shuffle className="h-4 w-4" />
             </Button>
@@ -462,7 +462,7 @@ export const MusicPlayer = ({
               variant="ghost"
               size="icon"
               onClick={previousTrack}
-              className="text-zinc-400 hover:text-white h-8 w-8"
+              className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 transition-all"
               disabled={!isReady}
             >
               <SkipBack className="h-4 w-4 fill-current" />
@@ -471,7 +471,7 @@ export const MusicPlayer = ({
             <Button
               onClick={handlePlayPause}
               size="icon"
-              className="bg-white hover:bg-white/90 hover:scale-105 text-black h-8 w-8 rounded-full"
+              className="bg-white hover:bg-green-500 hover:scale-105 text-black h-8 w-8 rounded-full transition-all"
               disabled={!isReady}
             >
               {isPlaying ? (
@@ -485,7 +485,7 @@ export const MusicPlayer = ({
               variant="ghost"
               size="icon"
               onClick={nextTrack}
-              className="text-zinc-400 hover:text-white h-8 w-8"
+              className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 transition-all"
               disabled={!isReady}
             >
               <SkipForward className="h-4 w-4 fill-current" />
@@ -495,10 +495,10 @@ export const MusicPlayer = ({
               variant="ghost"
               size="icon"
               onClick={toggleRepeat}
-              className={`h-8 w-8 transition-colors ${
+              className={`h-8 w-8 transition-all ${
                 repeatMode === "off"
-                  ? "text-zinc-400 hover:text-white"
-                  : "text-green-500 hover:text-green-400"
+                  ? "text-zinc-400 hover:text-green-400 hover:bg-zinc-800"
+                  : "text-green-500 hover:text-green-400 hover:bg-zinc-800"
               }`}
               title={
                 repeatMode === "off"
@@ -542,7 +542,7 @@ export const MusicPlayer = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-zinc-400 hover:text-white h-8 w-8 hidden lg:flex"
+                className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 hidden lg:flex transition-all"
                 onClick={handleLyricsClick}
                 disabled={!currentTrack}
               >
@@ -628,7 +628,7 @@ export const MusicPlayer = ({
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-400 hover:text-white h-8 w-8 hidden lg:flex"
+            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 hidden lg:flex transition-all"
             onClick={handleQueueClick}
           >
             <List className="h-4 w-4" />
@@ -638,7 +638,7 @@ export const MusicPlayer = ({
             variant="ghost"
             size="icon"
             onClick={handleMute}
-            className="text-zinc-400 hover:text-white h-8 w-8"
+            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 transition-all"
             disabled={!isReady}
           >
             {isMuted || localVolume === 0 ? (
@@ -660,7 +660,7 @@ export const MusicPlayer = ({
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-400 hover:text-white h-8 w-8 hidden lg:flex"
+            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 hidden lg:flex transition-all"
             onClick={handleFullScreenClick}
             disabled={!currentTrack}
           >

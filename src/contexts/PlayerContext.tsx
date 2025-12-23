@@ -192,9 +192,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
           // Handle track end for repeat one
           const trackEnded =
-            state.position === 0 &&
-            isCurrentlyPaused &&
-            state.duration > 0;
+            state.position === 0 && isCurrentlyPaused && state.duration > 0;
           if (trackEnded && !trackEndHandlerRef.current) {
             trackEndHandlerRef.current = true;
             // Use a small delay to ensure we detect the track end properly
