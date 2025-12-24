@@ -44,7 +44,14 @@ import { fetchFollowedArtists } from "@/utils/Artist/fetchFollowedArtists";
 import type { Artist } from "@/lib/types";
 import parse from "html-react-parser";
 import DOMPurify from "dompurify";
-import { Play, MoreHorizontal, Music, Users, Clock, ExternalLink } from "lucide-react";
+import {
+  Play,
+  MoreHorizontal,
+  Music,
+  Users,
+  Clock,
+  ExternalLink,
+} from "lucide-react";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
 import { usePlayer } from "@/contexts/PlayerContext";
@@ -537,10 +544,16 @@ const ArtistProfilePage = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-zinc-800 hover:bg-transparent">
-                      <TableHead className="w-12 text-center text-zinc-400">#</TableHead>
+                      <TableHead className="w-12 text-center text-zinc-400">
+                        #
+                      </TableHead>
                       <TableHead className="text-zinc-400">Title</TableHead>
-                      <TableHead className="hidden md:table-cell text-zinc-400">Album</TableHead>
-                      <TableHead className="hidden lg:table-cell text-center text-zinc-400">Action</TableHead>
+                      <TableHead className="hidden md:table-cell text-zinc-400">
+                        Album
+                      </TableHead>
+                      <TableHead className="hidden lg:table-cell text-center text-zinc-400">
+                        Action
+                      </TableHead>
                       <TableHead className="hidden md:table-cell text-right text-zinc-400">
                         <Clock className="w-4 h-4 ml-auto" />
                       </TableHead>
@@ -667,7 +680,7 @@ const ArtistProfilePage = () => {
                           alt={track.name}
                           className="w-full aspect-square object-cover rounded-lg"
                         />
-                        
+
                         {/* Play Button Overlay */}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
                           <Button
@@ -773,10 +786,18 @@ const ArtistProfilePage = () => {
                   <TableHeader>
                     <TableRow className="border-zinc-800 hover:bg-transparent">
                       <TableHead className="text-zinc-400">Album</TableHead>
-                      <TableHead className="hidden md:table-cell text-zinc-400">Type</TableHead>
-                      <TableHead className="hidden md:table-cell text-zinc-400">Release Date</TableHead>
-                      <TableHead className="hidden lg:table-cell text-center text-zinc-400">Action</TableHead>
-                      <TableHead className="hidden lg:table-cell text-right text-zinc-400">Tracks</TableHead>
+                      <TableHead className="hidden md:table-cell text-zinc-400">
+                        Type
+                      </TableHead>
+                      <TableHead className="hidden md:table-cell text-zinc-400">
+                        Release Date
+                      </TableHead>
+                      <TableHead className="hidden lg:table-cell text-center text-zinc-400">
+                        Action
+                      </TableHead>
+                      <TableHead className="hidden lg:table-cell text-right text-zinc-400">
+                        Tracks
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -874,7 +895,7 @@ const ArtistProfilePage = () => {
                           alt={album.name}
                           className="w-full aspect-square object-cover rounded-lg"
                         />
-                        
+
                         {/* Play Button Overlay */}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
                           <Button

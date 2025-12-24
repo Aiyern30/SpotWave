@@ -8,8 +8,8 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
   Button,
+  Badge,
 } from "@/components/ui/";
 import {
   Tooltip,
@@ -17,13 +17,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/";
-import { Play, MoreHorizontal } from "lucide-react";
+import { Play, Music, Clock, ExternalLink } from "lucide-react";
 
 interface PlaylistCardProps {
   id: string;
   image: string;
   title: string;
   description?: string;
+  badge?: string; // Optional badge text (e.g., "#1", "Album", "Single")
+  duration?: string; // Optional duration display
+  externalUrl?: string; // Optional Spotify URL
   onPlay?: (id: string) => void;
   onClick?: (id: string, title: string) => void;
 }
@@ -33,6 +36,9 @@ export default function PlaylistCard({
   image,
   title,
   description,
+  badge,
+  duration,
+  externalUrl,
   onPlay,
   onClick,
 }: PlaylistCardProps) {
@@ -54,95 +60,100 @@ export default function PlaylistCard({
     }
   };
 
+  const handleExternalClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (externalUrl) {
+      window.open(externalUrl, "_blank");
+    }
+  };
+
   return (
     <TooltipProvider>
       <Card
-        className="relative w-full max-w-[140px] sm:max-w-[200px] h-[165px] sm:h-[290px] cursor-pointer bg-zinc-900/50 hover:bg-zinc-800/70 transition-all duration-300 hover:scale-105 group border-zinc-800/50 mx-auto"
+        className="group bg-zinc-900/50 border-zinc-800 hover:bg-zinc-800/50 transition-all duration-300 cursor-pointer relative overflow-hidden w-full max-w-[140px] sm:max-w-[200px] mx-auto"
         onClick={handleCardClick}
       >
-        <CardHeader className="p-0 pb-0">
-          <div className="relative w-full px-3 sm:px-5 pt-3 sm:pt-5 pb-2 sm:pb-3">
-            <div className="w-full aspect-square max-w-[115px] sm:max-w-[170px] mx-auto rounded-lg shadow-xl overflow-hidden">
-              {imageError || !image ? (
-                <Image
-                  src="/default-artist.png"
-                  width={170}
-                  height={170}
-                  className="object-cover rounded-lg w-full h-full"
-                  alt={title}
-                  priority
-                  unoptimized
-                />
-              ) : (
-                <Image
-                  src={image}
-                  width={170}
-                  height={170}
-                  className="object-cover rounded-lg w-full h-full"
-                  alt={title}
-                  onError={() => setImageError(true)}
-                  priority
-                  unoptimized
-                />
-              )}
-            </div>
+        <CardHeader className="pb-3">
+          <div className="relative">
+            {imageError || !image ? (
+              <div className="w-full aspect-square bg-zinc-800 rounded-lg flex items-center justify-center">
+                <Music className="w-12 h-12 text-zinc-600" />
+              </div>
+            ) : (
+              <Image
+                src={image}
+                width={200}
+                height={200}
+                alt={title}
+                className="w-full aspect-square object-cover rounded-lg"
+                onError={() => setImageError(true)}
+                priority
+                unoptimized
+              />
+            )}
 
-            {/* Play button overlay */}
+            {/* Play Button Overlay */}
             {onPlay && (
-              <div className="absolute bottom-2 right-4 sm:bottom-4 sm:right-7 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
                 <Button
-                  size="icon"
-                  className="h-10 w-10 sm:h-14 sm:w-14 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl hover:scale-110 transition-all duration-200"
+                  size="sm"
+                  className="bg-green-500 hover:bg-green-400 text-black rounded-full w-12 h-12 p-0 shadow-xl"
                   onClick={handlePlayClick}
                 >
-                  <Play
-                    className="h-4 w-4 sm:h-6 sm:w-6 ml-0.5"
-                    fill="currentColor"
-                  />
+                  <Play className="w-5 h-5" fill="currentColor" />
                 </Button>
               </div>
+            )}
+
+            {/* Badge (e.g., track number, album type) */}
+            {badge && (
+              <Badge className="absolute top-2 left-2 bg-black/70 text-white text-xs">
+                {badge}
+              </Badge>
             )}
           </div>
         </CardHeader>
 
-        <CardContent className="p-3 pt-1 sm:p-5 sm:pt-2 sm:space-y-1">
+        <CardContent className="pt-0 space-y-2">
           <Tooltip>
             <TooltipTrigger asChild>
-              <CardTitle className="text-white text-xs sm:text-base font-semibold line-clamp-2 sm:line-clamp-1 hover:text-green-400 transition-colors leading-tight sm:leading-normal">
+              <CardTitle className="text-base font-semibold text-white truncate group-hover:text-green-400 transition-colors">
                 {title}
               </CardTitle>
             </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
+            <TooltipContent>
               <p>{title}</p>
             </TooltipContent>
           </Tooltip>
 
           {description && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <CardDescription className="hidden sm:block text-zinc-400 text-sm line-clamp-2 truncate leading-relaxed mt-1">
-                  {description}
-                </CardDescription>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-xs">
-                <p className="truncate">{description}</p>
-              </TooltipContent>
-            </Tooltip>
+            <div className="text-sm text-zinc-400 truncate leading-relaxed">
+              {description}
+            </div>
+          )}
+
+          {/* Footer with duration and external link */}
+          {(duration || externalUrl) && (
+            <div className="flex items-center justify-between text-xs text-zinc-500 pt-1">
+              {duration && (
+                <span className="flex items-center">
+                  <Clock className="w-3 h-3 mr-1" />
+                  {duration}
+                </span>
+              )}
+              {externalUrl && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-xs hover:text-green-400"
+                  onClick={handleExternalClick}
+                >
+                  <ExternalLink className="w-3 h-3" />
+                </Button>
+              )}
+            </div>
           )}
         </CardContent>
-
-        {/* More options button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 sm:top-3 sm:right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-7 w-7 sm:h-8 sm:w-8 text-zinc-400 hover:text-white hover:bg-zinc-700/50"
-          onClick={(e) => {
-            e.stopPropagation();
-            // Handle more options
-          }}
-        >
-          <MoreHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
-        </Button>
       </Card>
     </TooltipProvider>
   );
