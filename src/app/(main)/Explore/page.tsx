@@ -25,7 +25,7 @@ const Page = () => {
   const [recentTracks, setRecentTracks] = useState<RecentTracksProps[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const { playTrack } = usePlayer();
+  const { playTrack, pauseTrack, currentTrack, isPlaying } = usePlayer();
 
   const [openAccordions, setOpenAccordions] = useState<string[]>([
     "item-1",
@@ -241,7 +241,12 @@ const Page = () => {
                       image={artist.image || "/default-artist.png"}
                       title={artist.name}
                       description={artist.genres?.join(", ")}
+                      isPlaying={
+                        currentTrack?.artists?.some((a) => a.id === artist.id) &&
+                        isPlaying
+                      }
                       onPlay={handlePlayArtist}
+                      onPause={pauseTrack}
                       onClick={(id, name) =>
                         router.push(
                           `/Artists/${id}?name=${encodeURIComponent(name)}`
@@ -284,7 +289,12 @@ const Page = () => {
                       image={artist.image || "/default-artist.png"}
                       title={artist.name}
                       description={artist.genres?.join(", ")}
+                      isPlaying={
+                        currentTrack?.artists?.some((a) => a.id === artist.id) &&
+                        isPlaying
+                      }
                       onPlay={handlePlayArtist}
+                      onPause={pauseTrack}
                       onClick={(id, name) =>
                         router.push(
                           `/Artists/${id}?name=${encodeURIComponent(name)}`
@@ -323,7 +333,7 @@ const Page = () => {
                   {memoizedRecentTracks.map((tracks, index) => (
                     <PlaylistCard
                       key={`${tracks.track.id}-${index}`}
-                      id={tracks.track.album.artists[0]?.id || tracks.track.id}
+                      id={tracks.track.id}
                       image={
                         tracks.track.album.images[0]?.url ||
                         "/default-artist.png"
@@ -332,11 +342,15 @@ const Page = () => {
                       description={`${tracks.track.album.artists
                         .map((a) => a.name)
                         .join(", ")} • ${tracks.track.album.release_date}`}
+                      isPlaying={
+                        currentTrack?.id === tracks.track.id && isPlaying
+                      }
                       onPlay={() => handlePlayTrack(tracks.track)}
+                      onPause={pauseTrack}
                       onClick={(id) => {
                         if (tracks.track.album.artists.length > 0) {
                           router.push(
-                            `/Artists/${id}?name=${encodeURIComponent(
+                            `/Artists/${tracks.track.album.artists[0].id}?name=${encodeURIComponent(
                               tracks.track.album.artists[0].name
                             )}`
                           );

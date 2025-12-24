@@ -17,17 +17,19 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/";
-import { Play, Music, Clock, ExternalLink } from "lucide-react";
+import { Play, Pause, Music, Clock, ExternalLink } from "lucide-react";
 
 interface PlaylistCardProps {
   id: string;
   image: string;
   title: string;
   description?: string;
-  badge?: string; // Optional badge text (e.g., "#1", "Album", "Single")
-  duration?: string; // Optional duration display
-  externalUrl?: string; // Optional Spotify URL
+  badge?: string;
+  duration?: string;
+  externalUrl?: string;
+  isPlaying?: boolean; // Add isPlaying prop
   onPlay?: (id: string) => void;
+  onPause?: () => void; // Add onPause prop
   onClick?: (id: string, title: string) => void;
 }
 
@@ -39,7 +41,9 @@ export default function PlaylistCard({
   badge,
   duration,
   externalUrl,
+  isPlaying = false,
   onPlay,
+  onPause,
   onClick,
 }: PlaylistCardProps) {
   const [imageError, setImageError] = useState(false);
@@ -53,9 +57,11 @@ export default function PlaylistCard({
     }
   };
 
-  const handlePlayClick = (e: React.MouseEvent) => {
+  const handlePlayPauseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onPlay) {
+    if (isPlaying && onPause) {
+      onPause();
+    } else if (onPlay) {
       onPlay(id);
     }
   };
@@ -92,15 +98,19 @@ export default function PlaylistCard({
               />
             )}
 
-            {/* Play Button Overlay */}
-            {onPlay && (
+            {/* Play/Pause Button Overlay */}
+            {(onPlay || onPause) && (
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
                 <Button
                   size="sm"
                   className="bg-green-500 hover:bg-green-400 text-black rounded-full w-12 h-12 p-0 shadow-xl"
-                  onClick={handlePlayClick}
+                  onClick={handlePlayPauseClick}
                 >
-                  <Play className="w-5 h-5" fill="currentColor" />
+                  {isPlaying ? (
+                    <Pause className="w-5 h-5" fill="currentColor" />
+                  ) : (
+                    <Play className="w-5 h-5" fill="currentColor" />
+                  )}
                 </Button>
               </div>
             )}
@@ -111,13 +121,26 @@ export default function PlaylistCard({
                 {badge}
               </Badge>
             )}
+
+            {/* Currently Playing Indicator */}
+            {isPlaying && (
+              <Badge className="absolute top-2 right-2 bg-green-500 text-black text-xs font-bold animate-pulse">
+                Playing
+              </Badge>
+            )}
           </div>
         </CardHeader>
 
         <CardContent className="pt-0 space-y-2">
           <Tooltip>
             <TooltipTrigger asChild>
-              <CardTitle className="text-base font-semibold text-white truncate group-hover:text-green-400 transition-colors">
+              <CardTitle
+                className={`text-base font-semibold truncate transition-colors ${
+                  isPlaying
+                    ? "text-green-400"
+                    : "text-white group-hover:text-green-400"
+                }`}
+              >
                 {title}
               </CardTitle>
             </TooltipTrigger>

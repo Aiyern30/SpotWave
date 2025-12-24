@@ -13,6 +13,7 @@ import {
   Music,
   Calendar,
   Disc3,
+  Pause,
 } from "lucide-react";
 import {
   Card,
@@ -51,7 +52,7 @@ const AlbumsIDPage = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { playTrack } = usePlayer();
+  const { playTrack, pauseTrack, currentTrack, isPlaying } = usePlayer();
 
   const segments = pathname.split("/");
   const id = segments[segments.length - 1];
@@ -130,8 +131,14 @@ const AlbumsIDPage = () => {
     fetchAndSetAlbum();
   }, [id, token]);
 
-  const handlePlayTrack = (item: any) => {
-    try {
+  // Update handlePlayTrack to handle play/pause properly
+  const handlePlayPauseTrack = (item: any) => {
+    // Check if this track is currently playing
+    if (currentTrack?.id === item.id && isPlaying) {
+      // If it's playing, pause it
+      pauseTrack();
+    } else if (currentTrack?.id === item.id && !isPlaying) {
+      // If it's the same track but paused, we need to resume (play the same track)
       playTrack({
         id: item.id,
         name: item.name,
@@ -158,9 +165,44 @@ const AlbumsIDPage = () => {
         disc_number: item.disc_number || 1,
         uri: item.uri,
       });
-    } catch (error) {
-      console.error("Error playing track:", error);
+    } else {
+      // Different track, play it
+      try {
+        playTrack({
+          id: item.id,
+          name: item.name,
+          artists: item.artists.map((artist: any) => ({
+            name: artist.name,
+            id: artist.id,
+          })),
+          album: {
+            name: item.album?.name || album?.name || "",
+            images: item.album?.images || album?.images || [],
+            id: item.album?.id || album?.id || "",
+            artists: item.artists,
+            release_date: item.album?.release_date || album?.release_date || "",
+            total_tracks: item.album?.total_tracks || album?.total_tracks || 0,
+          },
+          duration_ms: item.duration_ms,
+          explicit: item.explicit || false,
+          external_urls: {
+            spotify: `https://open.spotify.com/track/${item.id}`,
+          },
+          popularity: 0,
+          preview_url: item.preview_url || null,
+          track_number: item.track_number || 0,
+          disc_number: item.disc_number || 1,
+          uri: item.uri,
+        });
+      } catch (error) {
+        console.error("Error playing track:", error);
+      }
     }
+  };
+
+  // Helper function to check if track is currently playing
+  const isTrackPlaying = (trackId: string) => {
+    return currentTrack?.id === trackId && isPlaying;
   };
 
   const truncateText = (text: string, maxLength: number) => {
@@ -348,13 +390,23 @@ const AlbumsIDPage = () => {
                             className="w-8 h-8 p-0 rounded-full hover:bg-green-500 hover:text-black"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handlePlayTrack(item);
+                              handlePlayPauseTrack(item);
                             }}
                           >
-                            <Play className="w-3 h-3" fill="currentColor" />
+                            {isTrackPlaying(item.id) ? (
+                              <Pause className="w-3 h-3" fill="currentColor" />
+                            ) : (
+                              <Play className="w-3 h-3" fill="currentColor" />
+                            )}
                           </Button>
                         ) : (
-                          <span className="text-zinc-400 text-sm">
+                          <span
+                            className={`text-sm ${
+                              isTrackPlaying(item.id)
+                                ? "text-green-400"
+                                : "text-zinc-400"
+                            }`}
+                          >
                             {startIndex + index + 1}
                           </span>
                         )}
@@ -376,7 +428,13 @@ const AlbumsIDPage = () => {
                             </div>
                           )}
                           <div className="min-w-0 flex-1">
-                            <div className="text-white font-medium truncate group-hover:text-green-400 transition-colors">
+                            <div
+                              className={`font-medium truncate transition-colors ${
+                                isTrackPlaying(item.id)
+                                  ? "text-green-400"
+                                  : "text-white group-hover:text-green-400"
+                              }`}
+                            >
                               {item.name}
                             </div>
                             <div className="text-zinc-400 text-sm truncate">
@@ -461,17 +519,21 @@ const AlbumsIDPage = () => {
                         </div>
                       )}
 
-                      {/* Play Button Overlay */}
+                      {/* Play/Pause Button Overlay */}
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
                         <Button
                           size="sm"
                           className="bg-green-500 hover:bg-green-400 text-black rounded-full w-12 h-12 p-0"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handlePlayTrack(item);
+                            handlePlayPauseTrack(item);
                           }}
                         >
-                          <Play className="w-5 h-5" fill="currentColor" />
+                          {isTrackPlaying(item.id) ? (
+                            <Pause className="w-5 h-5" fill="currentColor" />
+                          ) : (
+                            <Play className="w-5 h-5" fill="currentColor" />
+                          )}
                         </Button>
                       </div>
 
@@ -479,6 +541,13 @@ const AlbumsIDPage = () => {
                       <Badge className="absolute top-2 left-2 bg-black/70 text-white">
                         #{startIndex + index + 1}
                       </Badge>
+
+                      {/* Currently Playing Indicator */}
+                      {isTrackPlaying(item.id) && (
+                        <Badge className="absolute top-2 right-2 bg-green-500 text-black text-xs font-bold animate-pulse">
+                          Playing
+                        </Badge>
+                      )}
                     </div>
                   </CardHeader>
 
