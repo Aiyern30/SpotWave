@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Header from "@/components/Header";
+import PlaylistCard from "@/components/PlaylistCard";
 import {
   Card,
   CardContent,
@@ -98,11 +99,13 @@ const PlaylistPage = () => {
 
   const handlePlayPause = useCallback(
     (track: PlaylistTrack["track"]) => {
-      // If this track is currently playing, pause it
+      // Check if this track is currently playing
       if (currentTrack?.id === track.id && isPlaying) {
+        // If it's playing, pause it
         pauseTrack();
-      } else {
-        // Otherwise, play this track
+      } else if (currentTrack?.id === track.id && !isPlaying) {
+        // If it's the same track but paused, resume it (don't restart)
+        // The resumeTrack function will continue from where it left off
         playTrack({
           id: track.id,
           name: track.name,
@@ -111,7 +114,32 @@ const PlaylistPage = () => {
             name: track.album.name,
             images: track.album.images,
             id: track.album.id,
-            artists: track.artists, // Use track artists as album artists
+            artists: track.artists,
+            release_date: "",
+            total_tracks: 0,
+          },
+          duration_ms: track.duration_ms,
+          explicit: false,
+          external_urls: {
+            spotify: `https://open.spotify.com/track/${track.id}`,
+          },
+          popularity: 0,
+          preview_url: track.preview_url || null,
+          track_number: 0,
+          disc_number: 1,
+          uri: track.uri,
+        });
+      } else {
+        // Different track, play it from the beginning
+        playTrack({
+          id: track.id,
+          name: track.name,
+          artists: track.artists,
+          album: {
+            name: track.album.name,
+            images: track.album.images,
+            id: track.album.id,
+            artists: track.artists,
             release_date: "",
             total_tracks: 0,
           },
@@ -160,146 +188,6 @@ const PlaylistPage = () => {
     }
 
     return null;
-  };
-
-  const TrackCard = ({
-    playlistTrack,
-    index,
-  }: {
-    playlistTrack: PlaylistTrack;
-    index: number;
-  }) => {
-    const { track } = playlistTrack;
-    const isCurrentlyPlaying = isCurrentTrackPlaying(track.id);
-    const isHovered = hoveredTrackId === track.id;
-
-    return (
-      <TooltipProvider>
-        <Card
-          className="relative w-[200px] h-[320px] cursor-pointer bg-zinc-900/50 hover:bg-zinc-800/70 transition-all duration-300 hover:scale-105 group"
-          onClick={() => handlePlayPause(track)}
-          onMouseEnter={() => setHoveredTrackId(track.id)}
-          onMouseLeave={() => setHoveredTrackId(null)}
-        >
-          <CardHeader className="p-0 pb-0">
-            <div className="relative w-full px-4 pt-4 pb-2">
-              <div className="w-[170px] h-[170px] rounded-lg shadow-lg overflow-hidden">
-                <Image
-                  src={track.album.images[0]?.url || "/placeholder.svg"}
-                  width={170}
-                  height={170}
-                  className="object-cover rounded-lg"
-                  alt={track.name}
-                />
-              </div>
-
-              {/* Play/Pause button overlay */}
-              <div className="absolute bottom-3 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                <Button
-                  size="icon"
-                  className="h-14 w-14 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-lg hover:scale-110 transition-all duration-200"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePlayPause(track);
-                  }}
-                >
-                  {isCurrentlyPlaying ? (
-                    <Pause className="h-6 w-6" />
-                  ) : (
-                    <Play className="h-6 w-6 ml-0.5" fill="currentColor" />
-                  )}
-                </Button>
-              </div>
-
-              {/* Track number badge */}
-              <div className="absolute top-2 left-2 bg-black/70 text-white text-xs font-bold px-2 py-1 rounded-full">
-                #{index + 1}
-              </div>
-
-              {/* Currently playing indicator */}
-              {isCurrentlyPlaying && (
-                <div className="absolute top-2 right-2 bg-green-500 text-black text-xs font-bold px-2 py-1 rounded-full">
-                  Playing
-                </div>
-              )}
-            </div>
-          </CardHeader>
-
-          <CardContent className="p-4 pt-2 space-y-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <CardTitle
-                  className={`text-base font-semibold line-clamp-1 hover:text-green-400 transition-colors ${
-                    isCurrentlyPlaying ? "text-green-400" : "text-white"
-                  }`}
-                >
-                  {track.name}
-                </CardTitle>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                <p>{track.name}</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <div className="space-y-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div
-                    className="text-zinc-400 text-sm line-clamp-1 hover:text-zinc-300 transition-colors cursor-pointer hover:underline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleArtistClick(
-                        track.artists[0].id,
-                        track.artists[0].name
-                      );
-                    }}
-                  >
-                    {track.artists.map((artist) => artist.name).join(", ")}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs">
-                  <p>{track.artists.map((artist) => artist.name).join(", ")}</p>
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div
-                    className="text-zinc-500 text-xs line-clamp-1 hover:text-zinc-400 transition-colors cursor-pointer hover:underline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAlbumClick(track.album.id, track.album.name);
-                    }}
-                  >
-                    {track.album.name}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs">
-                  <p>{track.album.name}</p>
-                </TooltipContent>
-              </Tooltip>
-
-              <div className="text-zinc-500 text-xs">
-                {formatSongDuration(track.duration_ms)}
-              </div>
-            </div>
-          </CardContent>
-
-          {/* More options button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 text-zinc-400 hover:text-white"
-            onClick={(e) => {
-              e.stopPropagation();
-              // Handle more options
-            }}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </Card>
-      </TooltipProvider>
-    );
   };
 
   if (loading) {
@@ -445,7 +333,11 @@ const PlaylistPage = () => {
                               handlePlayPause(track);
                             }}
                           >
-                            {getPlayPauseIcon(track.id, true)}
+                            {isCurrentlyPlaying ? (
+                              <Pause className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" />
+                            ) : (
+                              <Play className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" />
+                            )}
                           </Button>
                         ) : (
                           <span
@@ -538,13 +430,27 @@ const PlaylistPage = () => {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
-          {memoizedTracks.map((playlistTrack, index) => (
-            <TrackCard
-              key={playlistTrack.track.id}
-              playlistTrack={playlistTrack}
-              index={index}
-            />
-          ))}
+          {memoizedTracks.map((playlistTrack, index) => {
+            const { track } = playlistTrack;
+            return (
+              <PlaylistCard
+                key={track.id}
+                id={track.id}
+                image={track.album.images[0]?.url || "/placeholder.svg"}
+                title={track.name}
+                description={track.artists.map((a) => a.name).join(", ")}
+                badge={`#${index + 1}`}
+                duration={formatSongDuration(track.duration_ms)}
+                isPlaying={currentTrack?.id === track.id && isPlaying}
+                onPlay={() => handlePlayPause(track)}
+                onPause={pauseTrack}
+                onClick={(id) => {
+                  // Navigate to song details
+                  router.push(`/Songs/${id}?name=${encodeURIComponent(track.name)}`);
+                }}
+              />
+            );
+          })}
         </div>
       )}
 
