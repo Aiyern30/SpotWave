@@ -51,6 +51,7 @@ import {
   Users,
   Clock,
   ExternalLink,
+  Pause,
 } from "lucide-react";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
@@ -130,7 +131,8 @@ const ArtistProfilePage = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { playTrack } = usePlayer();
+  const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } =
+    usePlayer();
 
   const segments = pathname.split("/");
   const id = segments[segments.length - 1];
@@ -141,6 +143,7 @@ const ArtistProfilePage = () => {
   const { toast } = useToast();
   const [isFollowing, setIsFollowing] = useState(false);
   const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
+  const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
 
   useEffect(() => {
     if (artistProfile?.id && followedArtists.length > 0) {
@@ -341,58 +344,122 @@ const ArtistProfilePage = () => {
     }
   };
 
-  const handlePlay = (url: string | null, trackId: string) => {
-    if (audio) {
-      audio.pause();
-      setPlayingTrackId(null);
-    }
-    if (url) {
-      const newAudio = new Audio(url);
-      setAudio(newAudio);
-      setPlayingTrackId(trackId);
-      newAudio.play();
-      newAudio.onended = () => setPlayingTrackId(null);
+  const handlePlayPauseTrack = (track: TopTrack) => {
+    // Check if this track is currently playing
+    if (currentTrackId === track.id) {
+      // Same track - toggle play/pause
+      if (isPlaying) {
+        pauseTrack();
+      } else {
+        resumeTrack();
+      }
+    } else {
+      // Different track - play it
+      try {
+        playTrack({
+          id: track.id,
+          name: track.name,
+          artists: track.album.artists,
+          album: {
+            name: track.album.name,
+            images: track.album.images,
+            id: track.album.id,
+            artists: track.album.artists,
+            release_date: "",
+            total_tracks: 0,
+          },
+          duration_ms: track.duration_ms,
+          explicit: false,
+          external_urls: {
+            spotify: `https://open.spotify.com/track/${track.id}`,
+          },
+          popularity: 0,
+          preview_url: track.preview_url || null,
+          track_number: 0,
+          disc_number: 1,
+          uri: `spotify:track:${track.id}`,
+        });
+        setCurrentTrackId(track.id);
+      } catch (error) {
+        console.error("Error playing track:", error);
+      }
     }
   };
 
-  const handlePlayTrack = (track: TopTrack) => {
-    try {
-      playTrack({
-        id: track.id,
-        name: track.name,
-        artists: track.album.artists,
-        album: {
-          name: track.album.name,
-          images: track.album.images,
-          id: track.album.id,
-          artists: track.album.artists,
-          release_date: "",
-          total_tracks: 0,
-        },
-        duration_ms: track.duration_ms,
-        explicit: false,
-        external_urls: {
-          spotify: `https://open.spotify.com/track/${track.id}`,
-        },
-        popularity: 0,
-        preview_url: track.preview_url || null,
-        track_number: 0,
-        disc_number: 1,
-        uri: `spotify:track:${track.id}`,
-      });
-    } catch (error) {
-      console.error("Error playing track:", error);
-    }
+  // Helper function to check if track is currently playing
+  const isTrackPlaying = (trackId: string) => {
+    return currentTrackId === trackId && isPlaying;
   };
 
   const handlePlayAlbum = async (albumId: string) => {
     try {
-      // You can implement playing entire album using Spotify URI
-      console.log("Playing album:", albumId);
+      // Fetch album tracks
+      const token = localStorage.getItem("Token");
+      if (!token) return;
+
+      const response = await fetch(
+        `https://api.spotify.com/v1/albums/${albumId}/tracks?limit=1`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (!response.ok) {
+        console.error("Failed to fetch album tracks");
+        return;
+      }
+
+      const data = await response.json();
+      const firstTrack = data.items[0];
+
+      if (firstTrack) {
+        // Fetch full track details
+        const trackResponse = await fetch(
+          `https://api.spotify.com/v1/tracks/${firstTrack.id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (trackResponse.ok) {
+          const trackData = await trackResponse.json();
+          playTrack({
+            id: trackData.id,
+            name: trackData.name,
+            artists: trackData.artists,
+            album: {
+              name: trackData.album.name,
+              images: trackData.album.images,
+              id: trackData.album.id,
+              artists: trackData.album.artists,
+              release_date: trackData.album.release_date || "",
+              total_tracks: trackData.album.total_tracks || 0,
+            },
+            duration_ms: trackData.duration_ms,
+            explicit: trackData.explicit || false,
+            external_urls: {
+              spotify: `https://open.spotify.com/track/${trackData.id}`,
+            },
+            popularity: trackData.popularity || 0,
+            preview_url: trackData.preview_url || null,
+            track_number: trackData.track_number || 0,
+            disc_number: trackData.disc_number || 1,
+            uri: trackData.uri,
+          });
+          console.log("Playing album:", albumId);
+        }
+      }
     } catch (error) {
       console.error("Error playing album:", error);
     }
   };
+
+  // Update current track ID when track changes
+  useEffect(() => {
+    if (currentTrack?.id) {
+      setCurrentTrackId(currentTrack.id);
+    }
+  }, [currentTrack]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -576,13 +643,26 @@ const ArtistProfilePage = () => {
                               className="w-8 h-8 p-0 rounded-full hover:bg-green-500 hover:text-black"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handlePlay(track.preview_url, track.id);
+                                handlePlayPauseTrack(track);
                               }}
                             >
-                              <Play className="w-3 h-3" fill="currentColor" />
+                              {isTrackPlaying(track.id) ? (
+                                <Pause
+                                  className="w-3 h-3"
+                                  fill="currentColor"
+                                />
+                              ) : (
+                                <Play className="w-3 h-3" fill="currentColor" />
+                              )}
                             </Button>
                           ) : (
-                            <span className="text-zinc-400 text-sm">
+                            <span
+                              className={`text-sm ${
+                                isTrackPlaying(track.id)
+                                  ? "text-green-400"
+                                  : "text-zinc-400"
+                              }`}
+                            >
                               {index + 1}
                             </span>
                           )}
@@ -602,7 +682,13 @@ const ArtistProfilePage = () => {
                               />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="text-white font-medium truncate group-hover:text-green-400 transition-colors">
+                              <div
+                                className={`font-medium truncate transition-colors ${
+                                  isTrackPlaying(track.id)
+                                    ? "text-green-400"
+                                    : "text-white group-hover:text-green-400"
+                                }`}
+                              >
                                 {track.name}
                               </div>
                               <div className="text-zinc-400 text-sm truncate">
@@ -663,85 +749,114 @@ const ArtistProfilePage = () => {
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6">
-                {topTracks.map((track, index) => (
-                  <Card
-                    key={track.id}
-                    className="group bg-zinc-900/50 border-zinc-800 hover:bg-zinc-800/50 transition-all duration-300 cursor-pointer relative overflow-hidden"
-                    onClick={() => handleSongClick(track.id, track.name)}
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="relative">
-                        <Image
-                          src={
-                            track.album.images[0]?.url || "/default-artist.png"
-                          }
-                          width={200}
-                          height={200}
-                          alt={track.name}
-                          className="w-full aspect-square object-cover rounded-lg"
-                        />
+                {topTracks.map((track, index) => {
+                  const isThisTrack = currentTrackId === track.id;
+                  return (
+                    <Card
+                      key={track.id}
+                      className="group bg-zinc-900/50 border-zinc-800 hover:bg-zinc-800/50 transition-all duration-300 cursor-pointer relative overflow-hidden"
+                      onClick={() => handleSongClick(track.id, track.name)}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="relative">
+                          <Image
+                            src={
+                              track.album.images[0]?.url ||
+                              "/default-artist.png"
+                            }
+                            width={200}
+                            height={200}
+                            alt={track.name}
+                            className="w-full aspect-square object-cover rounded-lg"
+                          />
 
-                        {/* Play Button Overlay */}
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
-                          <Button
-                            size="sm"
-                            className="bg-green-500 hover:bg-green-400 text-black rounded-full w-12 h-12 p-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePlayTrack(track);
-                            }}
-                          >
-                            <Play className="w-5 h-5" fill="currentColor" />
-                          </Button>
+                          {/* Play/Pause Button Overlay */}
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
+                            <Button
+                              size="sm"
+                              className="bg-green-500 hover:bg-green-400 text-black rounded-full w-12 h-12 p-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePlayPauseTrack(track);
+                              }}
+                            >
+                              {isThisTrack && isPlaying ? (
+                                <Pause
+                                  className="w-5 h-5"
+                                  fill="currentColor"
+                                />
+                              ) : (
+                                <Play className="w-5 h-5" fill="currentColor" />
+                              )}
+                            </Button>
+                          </div>
+
+                          {/* Track Number Badge */}
+                          <Badge className="absolute top-2 left-2 bg-black/70 text-white">
+                            #{index + 1}
+                          </Badge>
+
+                          {/* Currently Playing Indicator */}
+                          {isThisTrack && isPlaying && (
+                            <Badge className="absolute top-2 right-2 bg-green-500 text-black text-xs font-bold animate-pulse">
+                              Playing
+                            </Badge>
+                          )}
+                          {isThisTrack && !isPlaying && (
+                            <Badge className="absolute top-2 right-2 bg-yellow-500 text-black text-xs font-bold">
+                              Paused
+                            </Badge>
+                          )}
                         </div>
+                      </CardHeader>
 
-                        {/* Track Number Badge */}
-                        <Badge className="absolute top-2 left-2 bg-black/70 text-white">
-                          #{index + 1}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-
-                    <CardContent className="pt-0">
-                      <CardTitle className="text-base font-semibold text-white truncate mb-2 group-hover:text-green-400 transition-colors">
-                        {track.name}
-                      </CardTitle>
-
-                      <div className="space-y-2">
-                        <div
-                          className="text-sm text-zinc-400 truncate hover:underline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleArtistClick(
-                              artistProfile.id,
-                              artistProfile.name
-                            );
-                          }}
+                      <CardContent className="pt-0">
+                        <CardTitle
+                          className={`text-base font-semibold truncate mb-2 transition-colors ${
+                            isThisTrack
+                              ? "text-green-400"
+                              : "text-white group-hover:text-green-400"
+                          }`}
                         >
-                          {artistProfile.name}
-                        </div>
+                          {track.name}
+                        </CardTitle>
 
-                        <div className="flex items-center justify-between text-xs text-zinc-500">
-                          <span>{formatSongDuration(track.duration_ms)}</span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 px-2 text-xs hover:text-green-400"
+                        <div className="space-y-2">
+                          <div
+                            className="text-sm text-zinc-400 truncate hover:underline"
                             onClick={(e) => {
                               e.stopPropagation();
-                              window.open(
-                                `https://open.spotify.com/track/${track.id}`,
-                                "_blank"
+                              handleArtistClick(
+                                artistProfile.id,
+                                artistProfile.name
                               );
                             }}
                           >
-                            <ExternalLink className="w-3 h-3" />
-                          </Button>
+                            {artistProfile.name}
+                          </div>
+
+                          <div className="flex items-center justify-between text-xs text-zinc-500">
+                            <span>{formatSongDuration(track.duration_ms)}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 px-2 text-xs hover:text-green-400"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(
+                                  `https://open.spotify.com/track/${track.id}`,
+                                  "_blank"
+                                );
+                              }}
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </div>
