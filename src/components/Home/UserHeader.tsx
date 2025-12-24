@@ -484,7 +484,7 @@ export default function UserHeader({
                         handleKeyPress(e, "name")
                       }
                       style={{ width: `${inputWidth}px` }}
-                      className="text-4xl lg:text-6xl font-bold bg-transparent border-2 border-green-500/50 focus:border-green-500 text-white p-2 rounded-lg transition-all"
+                      className="text-4xl lg:text-6xl font-bold bg-transparent border-2 border-green-500/50 focus:border-green-500 text-white px-3 py-0 h-auto leading-tight rounded-lg transition-all"
                       disabled={updating}
                     />
                     <div className="flex space-x-1 flex-shrink-0">
@@ -793,24 +793,6 @@ export default function UserHeader({
                 </p>
                 <p className="text-2xl font-bold text-white">
                   {playlist.tracks.total}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-zinc-900/90 to-zinc-800/50 border-zinc-800/50 backdrop-blur-sm hover:bg-zinc-800/30 transition-all duration-300">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-blue-500/20 rounded-xl ring-1 ring-blue-500/30">
-                <Clock className="h-6 w-6 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-sm text-zinc-400 font-medium">
-                  Total Duration
-                </p>
-                <p className="text-2xl font-bold text-white">
-                  {formatDuration(totalDuration)}
                 </p>
               </div>
             </div>
