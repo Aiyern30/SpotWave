@@ -1,7 +1,6 @@
 "use client";
 
 import ReactPlayer from "react-player";
-import Sidebar from "@/components/Sidebar";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, useRef } from "react";
 import Image from "next/image";
@@ -233,32 +232,20 @@ const SongPage = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-black">
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen((prev) => !prev)}
-        />
-        <div
-          className={`flex-1 transition-all ml-16 duration-300 text-white ${
-            sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
-          }`}
-        >
-          <div className="p-4 space-y-6">
-            <Header />
-            <div className="space-y-8">
-              <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-lg p-8">
-                <Skeleton className="w-48 h-48 rounded-lg" />
-                <div className="flex-1 space-y-4">
-                  <Skeleton className="h-12 w-64" />
-                  <Skeleton className="h-6 w-48" />
-                  <Skeleton className="h-10 w-32" />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Skeleton className="h-32 w-full rounded-lg" />
-                <Skeleton className="h-32 w-full rounded-lg" />
-              </div>
+      <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8">
+        <Header />
+        <div className="space-y-8">
+          <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-lg p-8">
+            <Skeleton className="w-48 h-48 rounded-lg" />
+            <div className="flex-1 space-y-4">
+              <Skeleton className="h-12 w-64" />
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-10 w-32" />
             </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Skeleton className="h-32 w-full rounded-lg" />
+            <Skeleton className="h-32 w-full rounded-lg" />
           </div>
         </div>
       </div>
@@ -266,320 +253,308 @@ const SongPage = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-black">
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen((prev) => !prev)}
-      />
-      <div
-        className={`flex-1 transition-all ml-16 duration-300 text-white ${
-          sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
-        }`}
-      >
-        <div className="p-4 space-y-6 overflow-auto">
-          <Header />
-          {track && (
-            <div className="space-y-8">
-              {/* Track Header */}
-              <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-lg p-8">
-                <div className="flex-shrink-0">
-                  <Image
-                    src={track.album?.images[0]?.url || "/default-artist.png"}
-                    width={300}
-                    height={300}
-                    className="rounded-lg object-cover shadow-2xl"
-                    alt={track.name}
-                  />
+    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8 overflow-auto">
+      <Header />
+      {track && (
+        <div className="space-y-8">
+          {/* Track Header */}
+          <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-lg p-8">
+            <div className="flex-shrink-0">
+              <Image
+                src={track.album?.images[0]?.url || "/default-artist.png"}
+                width={300}
+                height={300}
+                className="rounded-lg object-cover shadow-2xl"
+                alt={track.name}
+              />
+            </div>
+
+            <div className="flex-1 text-center md:text-left space-y-6">
+              <div className="space-y-2">
+                <div className="text-sm text-zinc-400 uppercase tracking-wide">
+                  Song
                 </div>
+                <h1 className="text-4xl md:text-6xl font-bold">
+                  {track.name}
+                </h1>
+              </div>
 
-                <div className="flex-1 text-center md:text-left space-y-6">
-                  <div className="space-y-2">
-                    <div className="text-sm text-zinc-400 uppercase tracking-wide">
-                      Song
-                    </div>
-                    <h1 className="text-4xl md:text-6xl font-bold">
-                      {track.name}
-                    </h1>
-                  </div>
-
-                  <div className="flex flex-wrap justify-center md:justify-start gap-4 text-zinc-300">
-                    <div className="flex items-center space-x-2">
-                      <Users className="h-4 w-4" />
-                      <span>
-                        {track.artists.map((artist, idx) => (
-                          <span
-                            key={artist.id}
-                            onClick={() =>
-                              router.push(
-                                `/Artists/${artist.id}?name=${artist.name}`
-                              )
-                            }
-                            className="hover:underline cursor-pointer hover:text-white"
-                          >
-                            {artist.name}
-                            {idx < track.artists.length - 1 && ", "}
-                          </span>
-                        ))}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Music className="h-4 w-4" />
+              <div className="flex flex-wrap justify-center md:justify-start gap-4 text-zinc-300">
+                <div className="flex items-center space-x-2">
+                  <Users className="h-4 w-4" />
+                  <span>
+                    {track.artists.map((artist, idx) => (
                       <span
+                        key={artist.id}
                         onClick={() =>
                           router.push(
-                            `/Albums/${track.album.id}?name=${track.album.name}`
+                            `/Artists/${artist.id}?name=${artist.name}`
                           )
                         }
                         className="hover:underline cursor-pointer hover:text-white"
                       >
-                        {track.album?.name}
+                        {artist.name}
+                        {idx < track.artists.length - 1 && ", "}
                       </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <TrendingUp className="h-4 w-4" />
-                      <span>Popularity: {track.popularity}/100</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap justify-center md:justify-start gap-4">
-                    <Button
-                      onClick={() =>
-                        window.open(track.external_urls?.spotify, "_blank")
-                      }
-                      className="bg-green-500 hover:bg-green-600 text-black font-semibold hover:scale-105 transition-all"
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Open in Spotify
-                    </Button>
-
-                    <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                      <SheetTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="bg-transparent border-white text-white hover:bg-green-500 hover:text-black hover:border-green-500 transition-all"
-                          onClick={() => {
-                            if (!lyrics && !loadingLyrics) {
-                              fetchLyrics(
-                                track.artists[0].name,
-                                track.name,
-                                track.album.name,
-                                track.duration_ms
-                              );
-                            }
-                          }}
-                        >
-                          <FileText className="h-4 w-4 mr-2" />
-                          View Lyrics
-                        </Button>
-                      </SheetTrigger>
-                      <SheetContent className="w-[400px] sm:w-[540px] bg-zinc-900 border-zinc-800 flex flex-col overflow-hidden">
-                        <SheetHeader className="space-y-4 flex-shrink-0">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-16 h-16 rounded-lg overflow-hidden">
-                              <Image
-                                src={
-                                  track.album?.images[0]?.url ||
-                                  "/default-artist.png"
-                                }
-                                width={64}
-                                height={64}
-                                className="object-cover"
-                                alt={track.name}
-                              />
-                            </div>
-                            <div>
-                              <SheetTitle className="text-white text-lg font-semibold">
-                                {track.name}
-                              </SheetTitle>
-                              <p className="text-zinc-400 text-sm">
-                                by{" "}
-                                {track.artists
-                                  .map((artist) => artist.name)
-                                  .join(", ")}
-                              </p>
-                            </div>
-                          </div>
-                        </SheetHeader>
-                        <div className="flex-1 overflow-hidden mt-6">
-                          {loadingLyrics ? (
-                            <div className="flex items-center justify-center h-full">
-                              <div className="animate-spin rounded-full h-8 w-8 border-2 border-green-500 border-t-transparent"></div>
-                              <span className="ml-3 text-zinc-400">
-                                Loading lyrics...
-                              </span>
-                            </div>
-                          ) : syncedLyrics && syncedLyrics.length > 0 ? (
-                            <div
-                              ref={lyricsContainerRef}
-                              className="bg-zinc-800/30 rounded-lg p-4 h-full overflow-y-auto scroll-smooth"
-                              style={{ maxHeight: "calc(100vh - 200px)" }}
-                            >
-                              <div className="space-y-3 pb-32">
-                                {syncedLyrics.map((line, index) => (
-                                  <div
-                                    key={index}
-                                    data-index={index}
-                                    className={`text-sm leading-relaxed transition-all duration-300 py-1 ${
-                                      index === currentLyricIndex
-                                        ? "text-green-400 font-semibold text-lg scale-105"
-                                        : index < currentLyricIndex
-                                        ? "text-zinc-500"
-                                        : "text-zinc-300"
-                                    }`}
-                                  >
-                                    {line.text}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ) : (
-                            <div
-                              className="bg-zinc-800/30 rounded-lg p-4 h-full overflow-y-auto"
-                              style={{ maxHeight: "calc(100vh - 200px)" }}
-                            >
-                              <pre className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap font-sans">
-                                {formatLyrics(lyrics)}
-                              </pre>
-                            </div>
-                          )}
-                        </div>
-                      </SheetContent>
-                    </Sheet>
-                  </div>
+                    ))}
+                  </span>
                 </div>
-              </div>
-
-              {/* Track Details Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Audio Preview */}
-                <Card className="bg-zinc-900/30 border-zinc-800/50">
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center">
-                      <Play className="h-5 w-5 mr-2" />
-                      Audio Preview
-                    </h3>
-                    {track.preview_url ? (
-                      <div className="w-full rounded-lg overflow-hidden bg-zinc-800/50 p-4">
-                        <ReactPlayer
-                          url={track.preview_url}
-                          controls
-                          playing={false}
-                          width="100%"
-                          height="60px"
-                          config={{
-                            file: {
-                              attributes: {
-                                style: { backgroundColor: "transparent" },
-                              },
-                            },
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-8 text-zinc-400">
-                        <Music className="h-12 w-12 mb-2 opacity-50" />
-                        <p>No preview available for this track</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Track Information */}
-                <Card className="bg-zinc-900/30 border-zinc-800/50">
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-semibold mb-4 flex items-center">
-                      <Music className="h-5 w-5 mr-2" />
-                      Track Information
-                    </h3>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center py-2 border-b border-zinc-800">
-                        <span className="text-zinc-400">Duration</span>
-                        <span className="text-white">
-                          {Math.floor(track.duration_ms / 60000)}:
-                          {Math.floor((track.duration_ms % 60000) / 1000)
-                            .toString()
-                            .padStart(2, "0")}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b border-zinc-800">
-                        <span className="text-zinc-400">Explicit</span>
-                        <span className="text-white">
-                          {track.explicit ? "Yes" : "No"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b border-zinc-800">
-                        <span className="text-zinc-400">Track Number</span>
-                        <span className="text-white">{track.track_number}</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 border-b border-zinc-800">
-                        <span className="text-zinc-400">Disc Number</span>
-                        <span className="text-white">{track.disc_number}</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2">
-                        <span className="text-zinc-400">Popularity</span>
-                        <div className="flex items-center space-x-2">
-                          <div className="w-20 h-2 bg-zinc-700 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-green-500 rounded-full"
-                              style={{ width: `${track.popularity}%` }}
-                            />
-                          </div>
-                          <span className="text-white text-sm">
-                            {track.popularity}/100
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Album Information */}
-              <Card className="bg-zinc-900/30 border-zinc-800/50">
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold mb-4 flex items-center">
-                    <Music className="h-5 w-5 mr-2" />
-                    Album Information
-                  </h3>
-                  <div
-                    className="flex items-center space-x-4 p-4 rounded-lg bg-zinc-800/30 hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                <div className="flex items-center space-x-2">
+                  <Music className="h-4 w-4" />
+                  <span
                     onClick={() =>
                       router.push(
                         `/Albums/${track.album.id}?name=${track.album.name}`
                       )
                     }
+                    className="hover:underline cursor-pointer hover:text-white"
                   >
-                    <Image
-                      src={track.album?.images[0]?.url || "/default-artist.png"}
-                      width={80}
-                      height={80}
-                      className="rounded-lg object-cover"
-                      alt={track.album.name}
-                    />
-                    <div className="flex-1">
-                      <h4 className="text-lg font-semibold text-white hover:text-green-400 transition-colors">
-                        {track.album.name}
-                      </h4>
-                      <p className="text-zinc-400">
-                        {track.album.artists
-                          .map((artist) => artist.name)
-                          .join(", ")}
-                      </p>
-                      <div className="flex items-center space-x-4 mt-2 text-sm text-zinc-500">
-                        <span className="flex items-center">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          {track.album.release_date}
-                        </span>
-                        <span>{track.album.total_tracks} tracks</span>
+                    {track.album?.name}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="h-4 w-4" />
+                  <span>Popularity: {track.popularity}/100</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap justify-center md:justify-start gap-4">
+                <Button
+                  onClick={() =>
+                    window.open(track.external_urls?.spotify, "_blank")
+                  }
+                  className="bg-green-500 hover:bg-green-600 text-black font-semibold hover:scale-105 transition-all"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Open in Spotify
+                </Button>
+
+                <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                  <SheetTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="bg-transparent border-white text-white hover:bg-green-500 hover:text-black hover:border-green-500 transition-all"
+                      onClick={() => {
+                        if (!lyrics && !loadingLyrics) {
+                          fetchLyrics(
+                            track.artists[0].name,
+                            track.name,
+                            track.album.name,
+                            track.duration_ms
+                          );
+                        }
+                      }}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      View Lyrics
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent className="w-[400px] sm:w-[540px] bg-zinc-900 border-zinc-800 flex flex-col overflow-hidden">
+                    <SheetHeader className="space-y-4 flex-shrink-0">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden">
+                          <Image
+                            src={
+                              track.album?.images[0]?.url ||
+                              "/default-artist.png"
+                            }
+                            width={64}
+                            height={64}
+                            className="object-cover"
+                            alt={track.name}
+                          />
+                        </div>
+                        <div>
+                          <SheetTitle className="text-white text-lg font-semibold">
+                            {track.name}
+                          </SheetTitle>
+                          <p className="text-zinc-400 text-sm">
+                            by{" "}
+                            {track.artists
+                              .map((artist) => artist.name)
+                              .join(", ")}
+                          </p>
+                        </div>
                       </div>
+                    </SheetHeader>
+                    <div className="flex-1 overflow-hidden mt-6">
+                      {loadingLyrics ? (
+                        <div className="flex items-center justify-center h-full">
+                          <div className="animate-spin rounded-full h-8 w-8 border-2 border-green-500 border-t-transparent"></div>
+                          <span className="ml-3 text-zinc-400">
+                            Loading lyrics...
+                          </span>
+                        </div>
+                      ) : syncedLyrics && syncedLyrics.length > 0 ? (
+                        <div
+                          ref={lyricsContainerRef}
+                          className="bg-zinc-800/30 rounded-lg p-4 h-full overflow-y-auto scroll-smooth"
+                          style={{ maxHeight: "calc(100vh - 200px)" }}
+                        >
+                          <div className="space-y-3 pb-32">
+                            {syncedLyrics.map((line, index) => (
+                              <div
+                                key={index}
+                                data-index={index}
+                                className={`text-sm leading-relaxed transition-all duration-300 py-1 ${
+                                  index === currentLyricIndex
+                                    ? "text-green-400 font-semibold text-lg scale-105"
+                                    : index < currentLyricIndex
+                                    ? "text-zinc-500"
+                                    : "text-zinc-300"
+                                }`}
+                              >
+                                {line.text}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          className="bg-zinc-800/30 rounded-lg p-4 h-full overflow-y-auto"
+                          style={{ maxHeight: "calc(100vh - 200px)" }}
+                        >
+                          <pre className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap font-sans">
+                            {formatLyrics(lyrics)}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
+            </div>
+          </div>
+
+          {/* Track Details Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Audio Preview */}
+            <Card className="bg-zinc-900/30 border-zinc-800/50">
+              <CardContent className="p-6">
+                <h3 className="text-xl font-semibold mb-4 flex items-center">
+                  <Play className="h-5 w-5 mr-2" />
+                  Audio Preview
+                </h3>
+                {track.preview_url ? (
+                  <div className="w-full rounded-lg overflow-hidden bg-zinc-800/50 p-4">
+                    <ReactPlayer
+                      url={track.preview_url}
+                      controls
+                      playing={false}
+                      width="100%"
+                      height="60px"
+                      config={{
+                        file: {
+                          attributes: {
+                            style: { backgroundColor: "transparent" },
+                          },
+                        },
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-zinc-400">
+                    <Music className="h-12 w-12 mb-2 opacity-50" />
+                    <p>No preview available for this track</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Track Information */}
+            <Card className="bg-zinc-900/30 border-zinc-800/50">
+              <CardContent className="p-6">
+                <h3 className="text-xl font-semibold mb-4 flex items-center">
+                  <Music className="h-5 w-5 mr-2" />
+                  Track Information
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center py-2 border-b border-zinc-800">
+                    <span className="text-zinc-400">Duration</span>
+                    <span className="text-white">
+                      {Math.floor(track.duration_ms / 60000)}:
+                      {Math.floor((track.duration_ms % 60000) / 1000)
+                        .toString()
+                        .padStart(2, "0")}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-zinc-800">
+                    <span className="text-zinc-400">Explicit</span>
+                    <span className="text-white">
+                      {track.explicit ? "Yes" : "No"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-zinc-800">
+                    <span className="text-zinc-400">Track Number</span>
+                    <span className="text-white">{track.track_number}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-zinc-800">
+                    <span className="text-zinc-400">Disc Number</span>
+                    <span className="text-white">{track.disc_number}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-zinc-400">Popularity</span>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-20 h-2 bg-zinc-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-green-500 rounded-full"
+                          style={{ width: `${track.popularity}%` }}
+                        />
+                      </div>
+                      <span className="text-white text-sm">
+                        {track.popularity}/100
+                      </span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Album Information */}
+          <Card className="bg-zinc-900/30 border-zinc-800/50">
+            <CardContent className="p-6">
+              <h3 className="text-xl font-semibold mb-4 flex items-center">
+                <Music className="h-5 w-5 mr-2" />
+                Album Information
+              </h3>
+              <div
+                className="flex items-center space-x-4 p-4 rounded-lg bg-zinc-800/30 hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                onClick={() =>
+                  router.push(
+                    `/Albums/${track.album.id}?name=${track.album.name}`
+                  )
+                }
+              >
+                <Image
+                  src={track.album?.images[0]?.url || "/default-artist.png"}
+                  width={80}
+                  height={80}
+                  className="rounded-lg object-cover"
+                  alt={track.album.name}
+                />
+                <div className="flex-1">
+                  <h4 className="text-lg font-semibold text-white hover:text-green-400 transition-colors">
+                    {track.album.name}
+                  </h4>
+                  <p className="text-zinc-400">
+                    {track.album.artists
+                      .map((artist) => artist.name)
+                      .join(", ")}
+                  </p>
+                  <div className="flex items-center space-x-4 mt-2 text-sm text-zinc-500">
+                    <span className="flex items-center">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      {track.album.release_date}
+                    </span>
+                    <span>{track.album.total_tracks} tracks</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </div>
+      )}
     </div>
   );
 };

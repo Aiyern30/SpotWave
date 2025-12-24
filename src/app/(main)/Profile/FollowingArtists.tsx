@@ -122,30 +122,38 @@ const FollowingArtists = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-white">Following Artists</h2>
-        <div className="flex items-center space-x-3">
-          <PiTable
-            size={35}
+        <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setDisplayUI("Table")}
-            className={`cursor-pointer transition-colors ${
+            className={`h-9 px-3 transition-all ${
               displayUI === "Table"
-                ? "text-white"
-                : "text-[#707070] hover:text-white"
+                ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             }`}
-          />
-          <LuLayoutGrid
-            size={30}
+          >
+            <PiTable className="h-5 w-5 sm:mr-2" />
+            <span className="hidden sm:inline">Table</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setDisplayUI("Grid")}
-            className={`cursor-pointer transition-colors ${
+            className={`h-9 px-3 transition-all ${
               displayUI === "Grid"
-                ? "text-white"
-                : "text-[#707070] hover:text-white"
+                ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             }`}
-          />
+          >
+            <LuLayoutGrid className="h-5 w-5 sm:mr-2" />
+            <span className="hidden sm:inline">Grid</span>
+          </Button>
         </div>
       </div>
 
       {displayUI === "Table" ? (
-        <div className="overflow-x-auto container">
+        <div className="overflow-x-auto rounded-lg border border-zinc-800/50">
           {loading ? (
             <div className="space-y-3">
               {Array(5)
@@ -172,14 +180,14 @@ const FollowingArtists = () => {
               </div>
             </div>
           ) : (
-            <div className="bg-zinc-900/30 rounded-lg border border-zinc-800/50">
+            <div className="bg-zinc-900/30">
               <Table>
                 <TableHeader>
                   <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
-                    <TableHead className="text-zinc-400 font-medium">
+                    <TableHead className="text-zinc-400 font-medium text-xs sm:text-sm">
                       Artist
                     </TableHead>
-                    <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
+                    <TableHead className="hidden md:table-cell text-zinc-400 font-medium text-xs sm:text-sm">
                       Genres
                     </TableHead>
                   </TableRow>
@@ -197,9 +205,9 @@ const FollowingArtists = () => {
                       }
                       className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
                     >
-                      <TableCell>
+                      <TableCell className="py-3 sm:py-4">
                         <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex-shrink-0">
                             <Image
                               src={artist.image || "/placeholder.svg"}
                               width={48}
@@ -209,15 +217,17 @@ const FollowingArtists = () => {
                             />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="text-white font-medium truncate hover:text-green-400 transition-colors">
+                            <div className="text-white font-medium truncate hover:text-green-400 transition-colors text-sm sm:text-base">
                               {artist.name}
                             </div>
-                            <div className="text-zinc-400 text-sm">Artist</div>
+                            <div className="text-zinc-400 text-xs sm:text-sm">
+                              Artist
+                            </div>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <div className="text-zinc-400 truncate max-w-xs">
+                      <TableCell className="hidden md:table-cell py-3 sm:py-4">
+                        <div className="text-zinc-400 truncate max-w-xs text-sm">
                           {artist.genres?.join(", ") || "No genres"}
                         </div>
                       </TableCell>
