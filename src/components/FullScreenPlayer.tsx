@@ -122,9 +122,13 @@ export const FullScreenPlayer = ({
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
 
   // Add display mode and current artist tracking
-  const [topTracksDisplayUI, setTopTracksDisplayUI] = useState<"Table" | "Grid">("Table");
+  const [topTracksDisplayUI, setTopTracksDisplayUI] = useState<
+    "Table" | "Grid"
+  >("Table");
   const [currentArtistId, setCurrentArtistId] = useState<string | null>(null);
-  const [currentPlayingTrackId, setCurrentPlayingTrackId] = useState<string | null>(null);
+  const [currentPlayingTrackId, setCurrentPlayingTrackId] = useState<
+    string | null
+  >(null);
   const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -175,7 +179,7 @@ export const FullScreenPlayer = ({
   useEffect(() => {
     if (isOpen && currentTrack?.artists[0]?.id) {
       const artistId = currentTrack.artists[0].id;
-      
+
       // Only fetch if artist changed or no tracks loaded
       if (artistId !== currentArtistId || topTracks.length === 0) {
         setCurrentArtistId(artistId);
@@ -423,48 +427,47 @@ export const FullScreenPlayer = ({
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-zinc-900 via-zinc-800 to-black z-50 overflow-y-auto overflow-x-hidden">
       {/* Header with View Toggle and Close Button */}
-      <div className="fixed top-4 right-4 flex items-center gap-2 z-10">
+      <div className="fixed top-2 sm:top-4 right-2 sm:right-4 flex items-center gap-1 sm:gap-2 z-10">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setViewMode("image")}
-          className={`h-10 w-10 ${
+          className={`h-8 w-8 sm:h-10 sm:w-10 ${
             viewMode === "image"
               ? "text-green-400 bg-zinc-800"
               : "text-white hover:text-green-400 hover:bg-zinc-800"
           }`}
           title="Show Album Art"
         >
-          <ImageIcon className="h-5 w-5" />
+          <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setViewMode("lyrics")}
-          className={`h-10 w-10 ${
+          className={`h-8 w-8 sm:h-10 sm:w-10 ${
             viewMode === "lyrics"
               ? "text-green-400 bg-zinc-800"
               : "text-white hover:text-green-400 hover:bg-zinc-800"
           }`}
           title="Show Lyrics"
         >
-          <FileText className="h-5 w-5" />
+          <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
         </Button>
-        <div className="w-px h-6 bg-zinc-700 mx-1" />
+        <div className="w-px h-4 sm:h-6 bg-zinc-700 mx-1" />
         <Button
           variant="ghost"
           size="icon"
           onClick={onClose}
-          className="text-white hover:text-green-400 hover:bg-zinc-800 h-10 w-10"
+          className="text-white hover:text-green-400 hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10"
           title="Close"
         >
-          <X className="h-6 w-6" />
+          <X className="h-5 w-5 sm:h-6 sm:w-6" />
         </Button>
       </div>
 
-      {/* Main Content Container */}
-      <div className="max-w-4xl mx-auto px-8 py-8 space-y-6">
-        {/* Hero Section - Album Art or Lyrics */}
+      {/* Hero Section - Album Art or Lyrics (max-w-4xl) */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-8 py-4 sm:py-8">
         <div className="relative w-full">
           {viewMode === "image" ? (
             <div className="relative w-full aspect-square max-w-2xl mx-auto">
@@ -477,15 +480,15 @@ export const FullScreenPlayer = ({
               />
             </div>
           ) : (
-            <div className="w-full min-h-[600px] bg-zinc-900/50 rounded-2xl p-8 backdrop-blur-sm overflow-hidden">
+            <div className="w-full min-h-[400px] sm:min-h-[600px] bg-zinc-900/50 rounded-2xl p-4 sm:p-8 backdrop-blur-sm overflow-hidden">
               {loadingLyrics ? (
-                <div className="flex justify-center items-center h-[600px]">
-                  <Loader2 className="h-8 w-8 animate-spin text-green-500" />
+                <div className="flex justify-center items-center h-[400px] sm:h-[600px]">
+                  <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-green-500" />
                 </div>
               ) : syncedLyrics && syncedLyrics.length > 0 ? (
                 <div
                   ref={lyricsContainerRef}
-                  className="h-[600px] overflow-y-auto overflow-x-hidden scroll-smooth space-y-4 pr-4"
+                  className="h-[400px] sm:h-[600px] overflow-y-auto overflow-x-hidden scroll-smooth space-y-3 sm:space-y-4 pr-2 sm:pr-4"
                   style={{
                     scrollbarWidth: "thin",
                     scrollbarColor: "#3b82f6 #27272a",
@@ -511,9 +514,9 @@ export const FullScreenPlayer = ({
                     <div
                       key={index}
                       data-index={index}
-                      className={`text-base leading-relaxed transition-all duration-300 py-1 break-words ${
+                      className={`text-sm sm:text-base leading-relaxed transition-all duration-300 py-1 break-words ${
                         index === currentLyricIndex
-                          ? "text-green-400 font-semibold text-2xl"
+                          ? "text-green-400 font-semibold text-lg sm:text-2xl"
                           : index < currentLyricIndex
                           ? "text-zinc-500"
                           : "text-zinc-300"
@@ -532,8 +535,8 @@ export const FullScreenPlayer = ({
                   ))}
                 </div>
               ) : (
-                <div className="h-[600px] overflow-y-auto overflow-x-hidden pr-4">
-                  <pre className="text-zinc-300 text-base leading-relaxed whitespace-pre-wrap break-words">
+                <div className="h-[400px] sm:h-[600px] overflow-y-auto overflow-x-hidden pr-2 sm:pr-4">
+                  <pre className="text-zinc-300 text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words">
                     {lyrics}
                   </pre>
                 </div>
@@ -543,9 +546,11 @@ export const FullScreenPlayer = ({
         </div>
 
         {/* Track Info */}
-        <div className="text-center space-y-2 pt-4">
-          <h1 className="text-4xl font-bold text-white">{currentTrack.name}</h1>
-          <div className="text-xl text-zinc-400 flex items-center justify-center flex-wrap gap-2">
+        <div className="text-center space-y-2 pt-4 sm:pt-6">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white px-4 leading-tight">
+            {currentTrack.name}
+          </h1>
+          <div className="text-base sm:text-lg md:text-xl text-zinc-400 flex items-center justify-center flex-wrap gap-1 sm:gap-2 px-4">
             {currentTrack.artists.map((artist, index) => (
               <span key={artist.id} className="inline-flex items-center">
                 <span
@@ -563,7 +568,7 @@ export const FullScreenPlayer = ({
         </div>
 
         {/* Progress Bar */}
-        <div className="space-y-2 max-w-2xl mx-auto">
+        <div className="space-y-2 px-4 sm:px-0">
           <Slider
             value={[position]}
             max={duration}
@@ -579,53 +584,53 @@ export const FullScreenPlayer = ({
         </div>
 
         {/* Controls */}
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex items-center justify-center gap-2 sm:gap-4 flex-wrap px-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={handleToggleSave}
-            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-10 w-10 transition-all"
+            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10 transition-all"
             disabled={isSaving}
           >
             {isSaving ? (
-              <Loader2 className="h-5 w-5 animate-spin text-green-500" />
+              <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-green-500" />
             ) : isSaved ? (
-              <Heart className="h-5 w-5 fill-green-500 text-green-500" />
+              <Heart className="h-4 w-4 sm:h-5 sm:w-5 fill-green-500 text-green-500" />
             ) : (
-              <Heart className="h-5 w-5" />
+              <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
             )}
           </Button>
 
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-10 w-10 transition-all"
+            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10 transition-all hidden sm:flex"
           >
-            <Shuffle className="h-4 w-4" />
+            <Shuffle className="h-3 w-3 sm:h-4 sm:w-4" />
           </Button>
 
           <Button
             variant="ghost"
             size="icon"
             onClick={previousTrack}
-            className="text-white hover:text-green-400 hover:bg-zinc-800 h-12 w-12 transition-all"
+            className="text-white hover:text-green-400 hover:bg-zinc-800 h-10 w-10 sm:h-12 sm:w-12 transition-all"
             disabled={!isReady}
           >
-            <SkipBack className="h-6 w-6 fill-current" />
+            <SkipBack className="h-5 w-5 sm:h-6 sm:w-6 fill-current" />
           </Button>
 
           <Button
             onClick={isPlaying ? pauseTrack : resumeTrack}
             size="icon"
-            className="bg-white hover:bg-green-500 hover:scale-105 text-black h-14 w-14 rounded-full transition-all"
+            className="bg-white hover:bg-green-500 hover:scale-105 text-black h-12 w-12 sm:h-14 sm:w-14 rounded-full transition-all"
             disabled={!isReady || isLoadingTrack}
           >
             {isLoadingTrack ? (
-              <Loader2 className="h-7 w-7 animate-spin" />
+              <Loader2 className="h-6 w-6 sm:h-7 sm:w-7 animate-spin" />
             ) : isPlaying ? (
-              <Pause className="h-7 w-7 fill-current" />
+              <Pause className="h-6 w-6 sm:h-7 sm:w-7 fill-current" />
             ) : (
-              <Play className="h-7 w-7 ml-0.5 fill-current" />
+              <Play className="h-6 w-6 sm:h-7 sm:w-7 ml-0.5 fill-current" />
             )}
           </Button>
 
@@ -633,17 +638,17 @@ export const FullScreenPlayer = ({
             variant="ghost"
             size="icon"
             onClick={nextTrack}
-            className="text-white hover:text-green-400 hover:bg-zinc-800 h-12 w-12 transition-all"
+            className="text-white hover:text-green-400 hover:bg-zinc-800 h-10 w-10 sm:h-12 sm:w-12 transition-all"
             disabled={!isReady}
           >
-            <SkipForward className="h-6 w-6 fill-current" />
+            <SkipForward className="h-5 w-5 sm:h-6 sm:w-6 fill-current" />
           </Button>
 
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleRepeat}
-            className={`h-10 w-10 transition-all ${
+            className={`h-8 w-8 sm:h-10 sm:w-10 transition-all hidden sm:flex ${
               repeatMode === "off"
                 ? "text-zinc-400 hover:text-green-400 hover:bg-zinc-800"
                 : "text-green-500 hover:text-green-400 hover:bg-zinc-800"
@@ -657,23 +662,23 @@ export const FullScreenPlayer = ({
             }
           >
             {repeatMode === "track" ? (
-              <Repeat1 className="h-5 w-5" />
+              <Repeat1 className="h-4 w-4 sm:h-5 sm:w-5" />
             ) : (
-              <Repeat className="h-5 w-5" />
+              <Repeat className="h-4 w-4 sm:h-5 sm:w-5" />
             )}
           </Button>
 
-          <div className="flex items-center gap-2">
+          <div className="items-center gap-2 hidden sm:flex">
             <Button
               variant="ghost"
               size="icon"
               onClick={handleMute}
-              className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-10 w-10 transition-all"
+              className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10 transition-all"
             >
               {isMuted || localVolume === 0 ? (
-                <VolumeX className="h-5 w-5" />
+                <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" />
               ) : (
-                <Volume2 className="h-5 w-5" />
+                <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" />
               )}
             </Button>
             <Slider
@@ -681,43 +686,46 @@ export const FullScreenPlayer = ({
               max={1}
               step={0.01}
               onValueChange={handleVolumeChange}
-              className="w-24 cursor-pointer"
+              className="w-20 sm:w-24 cursor-pointer"
               disabled={!isReady}
             />
           </div>
         </div>
+      </div>
 
+      {/* Full Width Sections */}
+      <div className="w-full px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8 pb-16">
         {/* Top Tracks Section with Table/Grid Toggle */}
-        <div className="pt-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold text-white">
+        <div className="pt-4 sm:pt-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-semibold text-white">
               Popular tracks by {currentTrack.artists[0]?.name}
             </h2>
-            <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
+            <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50 w-fit">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setTopTracksDisplayUI("Table")}
-                className={`h-9 px-3 transition-all ${
+                className={`h-8 sm:h-9 px-2 sm:px-3 transition-all ${
                   topTracksDisplayUI === "Table"
                     ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
                     : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                 }`}
               >
-                <PiTable className="h-5 w-5 sm:mr-2" />
+                <PiTable className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
                 <span className="hidden sm:inline">Table</span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setTopTracksDisplayUI("Grid")}
-                className={`h-9 px-3 transition-all ${
+                className={`h-8 sm:h-9 px-2 sm:px-3 transition-all ${
                   topTracksDisplayUI === "Grid"
                     ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
                     : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                 }`}
               >
-                <LuLayoutGrid className="h-5 w-5 sm:mr-2" />
+                <LuLayoutGrid className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
                 <span className="hidden sm:inline">Grid</span>
               </Button>
             </div>
@@ -732,13 +740,17 @@ export const FullScreenPlayer = ({
               <Table>
                 <TableHeader>
                   <TableRow className="border-zinc-800 hover:bg-transparent">
-                    <TableHead className="w-12 text-center text-zinc-400">#</TableHead>
-                    <TableHead className="text-zinc-400">Title</TableHead>
-                    <TableHead className="hidden md:table-cell text-center text-zinc-400">
+                    <TableHead className="w-8 sm:w-12 text-center text-zinc-400 text-xs sm:text-sm">
+                      #
+                    </TableHead>
+                    <TableHead className="text-zinc-400 text-xs sm:text-sm">
+                      Title
+                    </TableHead>
+                    <TableHead className="hidden md:table-cell text-center text-zinc-400 text-xs sm:text-sm">
                       Popularity
                     </TableHead>
-                    <TableHead className="hidden md:table-cell text-right text-zinc-400">
-                      <Clock className="w-4 h-4 ml-auto" />
+                    <TableHead className="hidden sm:table-cell text-right text-zinc-400 text-xs sm:text-sm">
+                      <Clock className="w-3 h-3 sm:w-4 sm:h-4 ml-auto" />
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -753,26 +765,32 @@ export const FullScreenPlayer = ({
                         onMouseEnter={() => setHoveredTrackId(track.id)}
                         onMouseLeave={() => setHoveredTrackId(null)}
                       >
-                        <TableCell className="text-center">
+                        <TableCell className="text-center py-2 sm:py-3">
                           {hoveredTrackId === track.id ? (
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="w-8 h-8 p-0 rounded-full hover:bg-green-500 hover:text-black"
+                              className="w-6 h-6 sm:w-8 sm:h-8 p-0 rounded-full hover:bg-green-500 hover:text-black"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handlePlayPauseTopTrack(track);
                               }}
                             >
                               {isTrackPlaying(track.id) ? (
-                                <Pause className="w-3 h-3" fill="currentColor" />
+                                <Pause
+                                  className="w-2 h-2 sm:w-3 sm:h-3"
+                                  fill="currentColor"
+                                />
                               ) : (
-                                <Play className="w-3 h-3" fill="currentColor" />
+                                <Play
+                                  className="w-2 h-2 sm:w-3 sm:h-3"
+                                  fill="currentColor"
+                                />
                               )}
                             </Button>
                           ) : (
                             <span
-                              className={`text-sm ${
+                              className={`text-xs sm:text-sm ${
                                 isThisTrack ? "text-green-400" : "text-zinc-400"
                               }`}
                             >
@@ -780,9 +798,9 @@ export const FullScreenPlayer = ({
                             </span>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-2 sm:py-3">
                           <div
-                            className={`font-medium truncate transition-colors ${
+                            className={`font-medium truncate transition-colors text-xs sm:text-sm ${
                               isThisTrack
                                 ? "text-green-400"
                                 : "text-white group-hover:text-green-400"
@@ -791,15 +809,15 @@ export const FullScreenPlayer = ({
                             {track.name}
                           </div>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell text-center">
-                          <div className="flex items-center justify-center space-x-2">
+                        <TableCell className="hidden md:table-cell text-center py-2 sm:py-3">
+                          <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                             <TrendingUp className="h-3 w-3 text-zinc-400" />
-                            <span className="text-zinc-400 text-sm">
+                            <span className="text-zinc-400 text-xs sm:text-sm">
                               {track.popularity}/100
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell text-right text-zinc-400 text-sm">
+                        <TableCell className="hidden sm:table-cell text-right text-zinc-400 text-xs sm:text-sm py-2 sm:py-3">
                           {formatTime(track.duration_ms)}
                         </TableCell>
                       </TableRow>
@@ -809,14 +827,16 @@ export const FullScreenPlayer = ({
               </Table>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
               {topTracks.map((track, index) => {
                 const isThisTrack = currentPlayingTrackId === track.id;
                 return (
                   <PlaylistCard
                     key={track.id}
                     id={track.id}
-                    image={currentTrack.album.images[0]?.url || "/default-artist.png"}
+                    image={
+                      currentTrack.album.images[0]?.url || "/default-artist.png"
+                    }
                     title={track.name}
                     description={`Popularity: ${track.popularity}/100`}
                     badge={`#${index + 1}`}
@@ -834,43 +854,51 @@ export const FullScreenPlayer = ({
         </div>
 
         {/* Track Details Section */}
-        <div className="pt-8 pb-16">
-          <h2 className="text-2xl font-semibold text-white mb-6">
+        <div className="pt-4 sm:pt-8">
+          <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4 sm:mb-6">
             Track Information
           </h2>
           <Card className="bg-zinc-800/30 border-zinc-700">
-            <CardContent className="p-6 space-y-4 overflow-x-hidden">
-              <div className="space-y-3">
-                <div className="flex justify-between py-3 border-b border-zinc-700">
-                  <span className="text-zinc-400 text-base">Duration</span>
-                  <span className="text-white text-base">
+            <CardContent className="p-4 sm:p-6 space-y-3 sm:space-y-4 overflow-x-hidden">
+              <div className="space-y-2 sm:space-y-3">
+                <div className="flex justify-between py-2 sm:py-3 border-b border-zinc-700">
+                  <span className="text-zinc-400 text-sm sm:text-base">
+                    Duration
+                  </span>
+                  <span className="text-white text-sm sm:text-base">
                     {formatTime(currentTrack.duration_ms)}
                   </span>
                 </div>
-                <div className="flex justify-between py-3 border-b border-zinc-700">
-                  <span className="text-zinc-400 text-base">Explicit</span>
-                  <span className="text-white text-base">
+                <div className="flex justify-between py-2 sm:py-3 border-b border-zinc-700">
+                  <span className="text-zinc-400 text-sm sm:text-base">
+                    Explicit
+                  </span>
+                  <span className="text-white text-sm sm:text-base">
                     {currentTrack.explicit ? "Yes" : "No"}
                   </span>
                 </div>
-                <div className="flex justify-between py-3 border-b border-zinc-700">
-                  <span className="text-zinc-400 text-base">Popularity</span>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-24 h-2 bg-zinc-700 rounded-full overflow-hidden">
+                <div className="flex justify-between py-2 sm:py-3 border-b border-zinc-700">
+                  <span className="text-zinc-400 text-sm sm:text-base">
+                    Popularity
+                  </span>
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="w-16 sm:w-24 h-2 bg-zinc-700 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-green-500 rounded-full"
                         style={{ width: `${currentTrack.popularity}%` }}
                       />
                     </div>
-                    <span className="text-white text-base">
+                    <span className="text-white text-sm sm:text-base">
                       {currentTrack.popularity}/100
                     </span>
                   </div>
                 </div>
-                <div className="flex justify-between py-3">
-                  <span className="text-zinc-400 text-base">Album</span>
+                <div className="flex justify-between py-2 sm:py-3">
+                  <span className="text-zinc-400 text-sm sm:text-base">
+                    Album
+                  </span>
                   <span
-                    className="text-white hover:text-green-400 cursor-pointer hover:underline text-base truncate ml-4"
+                    className="text-white hover:text-green-400 cursor-pointer hover:underline text-sm sm:text-base truncate ml-4"
                     onClick={() =>
                       router.push(
                         `/Albums/${currentTrack.album.id}?name=${currentTrack.album.name}`
