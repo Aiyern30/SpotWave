@@ -9,14 +9,14 @@ import {
   SkipForward,
   CheckCircle2,
   XCircle,
-  Music,
   Volume2,
   HelpCircle,
   Loader2,
+  Music,
 } from "lucide-react";
 import { Button, Input, Card, CardContent, Badge } from "@/components/ui";
 import { fetchArtistTopTracks } from "@/utils/Tracks/fetchArtistTopTracks";
-import ReactPlayer from "react-player";
+import { usePlayer } from "@/contexts/PlayerContext";
 
 // Helper to normalize strings for comparison
 const normalizeString = (str: string) => {
@@ -35,30 +35,35 @@ const ArtistQuizGame = () => {
   const artistId = params.id as string;
   const artistName = searchParams.get("name") || "Unknown Artist";
 
+  // Player Context
+  const {
+    playTrack,
+    pauseTrack,
+    resumeTrack,
+    isPlaying: isGlobalPlaying,
+    currentTrack: globalTrack,
+  } = usePlayer();
+
   const [tracks, setTracks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [guess, setGuess] = useState("");
-  const [isPlaying, setIsPlaying] = useState(false);
   const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
-  const [progress, setProgress] = useState(0);
 
   // Game state
   const [gameTracks, setGameTracks] = useState<any[]>([]);
   const [isGameOver, setIsGameOver] = useState(false);
 
+  // Initialize Game
   useEffect(() => {
     const initGame = async () => {
       setLoading(true);
       const fetchedTracks = await fetchArtistTopTracks(artistId);
 
-      // Filter tracks with preview_url
-      const playableTracks = fetchedTracks.filter((t: any) => t.preview_url);
-
-      // Shuffle tracks
-      const shuffled = playableTracks.sort(() => Math.random() - 0.5);
+      // Shuffle tracks - Use ALL tracks since we don't need preview_url anymore
+      const shuffled = fetchedTracks.sort(() => Math.random() - 0.5);
 
       setTracks(shuffled);
       setGameTracks(shuffled.slice(0, 10)); // Top 10 rounds
@@ -72,6 +77,24 @@ const ArtistQuizGame = () => {
 
   const currentTrack = gameTracks[currentTrackIndex];
 
+  // Auto-play current track when round starts
+  useEffect(() => {
+    if (currentTrack && !showAnswer) {
+      // Small delay to ensure smooth transition
+      const timer = setTimeout(() => {
+        playTrack({
+          ...currentTrack,
+          album: {
+            ...currentTrack.album,
+            images: currentTrack.album.images || [], // Ensure images exist
+          },
+          duration_ms: currentTrack.duration_ms || 0,
+        });
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentTrack, showAnswer, playTrack]);
+
   // Handle guess submission
   const checkGuess = () => {
     if (!currentTrack || showAnswer) return;
@@ -83,7 +106,6 @@ const ArtistQuizGame = () => {
       setFeedback("correct");
       setScore((s) => s + 100);
       setShowAnswer(true);
-      setIsPlaying(false);
     } else {
       setFeedback("wrong");
     }
@@ -92,23 +114,33 @@ const ArtistQuizGame = () => {
   const handleNext = () => {
     if (currentTrackIndex >= gameTracks.length - 1) {
       setIsGameOver(true);
+      pauseTrack(); // Stop music when game ends
     } else {
       setCurrentTrackIndex((prev) => prev + 1);
       setGuess("");
       setFeedback(null);
       setShowAnswer(false);
-      setIsPlaying(false); // Auto-play handled by effect or manual? Let's auto-play next maybe?
-      // Better to let user start
     }
   };
 
   const handleGiveUp = () => {
     setShowAnswer(true);
-    setIsPlaying(false);
     setFeedback(null);
   };
 
   const progressPercentage = (currentTrackIndex / gameTracks.length) * 100;
+
+  // Determine if the current song is playing based on global state
+  const isCurrentSongPlaying =
+    isGlobalPlaying && globalTrack?.id === currentTrack?.id;
+
+  const togglePlayback = () => {
+    if (isCurrentSongPlaying) {
+      pauseTrack();
+    } else {
+      playTrack(currentTrack);
+    }
+  };
 
   if (loading) {
     return (
@@ -125,12 +157,10 @@ const ArtistQuizGame = () => {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center space-y-6">
         <Music className="w-20 h-20 text-zinc-600" />
-        <h2 className="text-2xl font-bold text-white">
-          No Playable Tracks Found
-        </h2>
+        <h2 className="text-2xl font-bold text-white">No Tracks Found</h2>
         <p className="text-zinc-400 max-w-md">
-          Sorry, we couldn't find enough tracks with audio previews for{" "}
-          {artistName} to create a quiz.
+          Sorry, we couldn't find enough tracks for {artistName} to create a
+          quiz.
         </p>
         <Button
           onClick={() => router.back()}
@@ -180,19 +210,22 @@ const ArtistQuizGame = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-black to-black flex flex-col items-center p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-black to-black flex flex-col items-center p-4 md:p-8 pb-32">
       {/* Header */}
       <div className="w-full max-w-3xl flex items-center justify-between mb-8">
         <Button
           variant="ghost"
-          onClick={() => router.back()}
+          onClick={() => {
+            pauseTrack();
+            router.back();
+          }}
           className="text-zinc-400 hover:text-white"
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
           Quit
         </Button>
         <div className="flex flex-col items-center">
-          <h2 className="text-white font-bold text-lg">{artistName}</h2>
+          <h2 className="text-white font-bold text-lg">{artistName} Quiz</h2>
           <span className="text-green-500 font-mono text-sm">
             Score: {score}
           </span>
@@ -215,30 +248,22 @@ const ArtistQuizGame = () => {
           {/* Visualizer / Icon */}
           <div
             className={`relative w-48 h-48 rounded-full flex items-center justify-center transition-all duration-500 ${
-              isPlaying ? "bg-green-500/10 scale-105" : "bg-zinc-800/50"
+              isCurrentSongPlaying
+                ? "bg-green-500/10 scale-105"
+                : "bg-zinc-800/50"
             }`}
           >
             <div
               className={`absolute inset-0 rounded-full border-4 border-green-500/20 ${
-                isPlaying ? "animate-ping opacity-20" : "opacity-0"
+                isCurrentSongPlaying ? "animate-ping opacity-20" : "opacity-0"
               }`}
             />
-            {isPlaying ? (
+            {isCurrentSongPlaying ? (
               <Volume2 className="w-20 h-20 text-green-500 animate-pulse" />
             ) : (
               <Music className="w-20 h-20 text-zinc-600" />
             )}
           </div>
-
-          {/* Player Helper */}
-          <ReactPlayer
-            url={currentTrack.preview_url}
-            playing={isPlaying}
-            width="0"
-            height="0"
-            onEnded={() => setIsPlaying(false)}
-            volume={0.5}
-          />
 
           {/* Controls */}
           <div className="flex flex-col items-center space-y-6 w-full max-w-md">
@@ -246,13 +271,13 @@ const ArtistQuizGame = () => {
               <Button
                 size="lg"
                 className={`rounded-full w-16 h-16 p-0 transition-transform hover:scale-105 ${
-                  isPlaying
+                  isCurrentSongPlaying
                     ? "bg-zinc-800 hover:bg-zinc-700"
                     : "bg-green-500 hover:bg-green-400 text-black"
                 }`}
-                onClick={() => setIsPlaying(!isPlaying)}
+                onClick={togglePlayback}
               >
-                {isPlaying ? (
+                {isCurrentSongPlaying ? (
                   <Pause className="w-8 h-8 text-white" />
                 ) : (
                   <Play className="w-8 h-8 ml-1" />
@@ -261,25 +286,25 @@ const ArtistQuizGame = () => {
             )}
 
             {showAnswer ? (
-              <div className="text-center space-y-4 animate-in zoom-in duration-300">
+              <div className="text-center space-y-4 animate-in zoom-in duration-300 w-full">
                 <div className="flex flex-col items-center gap-2">
                   <Badge
                     className={`${
                       feedback === "correct"
                         ? "bg-green-500 text-black"
                         : "bg-red-500 text-white"
-                    } px-4 py-1 text-lg`}
+                    } px-4 py-1 text-lg mb-2`}
                   >
                     {feedback === "correct" ? "Correct!" : "Missed it!"}
                   </Badge>
-                  <h3 className="text-2xl font-bold text-white mt-4">
+                  <h3 className="text-2xl font-bold text-white mt-2">
                     {currentTrack.name}
                   </h3>
                   <p className="text-zinc-400">{currentTrack.album.name}</p>
                 </div>
                 <Button
                   onClick={handleNext}
-                  className="mt-8 bg-white text-black hover:bg-zinc-200 min-w-[200px]"
+                  className="mt-8 bg-white text-black hover:bg-zinc-200 w-full"
                   size="lg"
                 >
                   Next Song <SkipForward className="w-4 h-4 ml-2" />
@@ -333,7 +358,9 @@ const ArtistQuizGame = () => {
 
       {/* Instructions / Footer */}
       <div className="mt-8 text-zinc-500 text-sm">
-        <p>Listen to the preview and guess the song title.</p>
+        <p>
+          Listen to the song and guess the title. (Full track playback enabled)
+        </p>
       </div>
     </div>
   );
