@@ -50,8 +50,9 @@ const Page = () => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [displayUI, setDisplayUI] = useState<DisplayUIProps | string>("Table");
   const router = useRouter();
-  const { playTrack } = usePlayer();
+  const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } = usePlayer();
   const [hoveredArtistId, setHoveredArtistId] = useState<string | null>(null);
+  const [currentArtistId, setCurrentArtistId] = useState<string | null>(null);
 
   const LASTFM_API_KEY = process.env.NEXT_PUBLIC_LASTFM_API_KEY;
 
@@ -158,52 +159,65 @@ const Page = () => {
     setNumArtists(Number.parseInt(value));
   };
 
-  const handlePlayArtist = async (artistId: string) => {
-    try {
-      console.log("Fetching top tracks for artist:", artistId);
-
-      // Fetch the artist's top tracks
-      const topTracks = await fetchArtistTopTracks(artistId);
-
-      if (topTracks && topTracks.length > 0) {
-        // Play the first top track
-        const firstTrack = topTracks[0];
-
-        playTrack({
-          id: firstTrack.id,
-          name: firstTrack.name,
-          artists: firstTrack.artists.map((artist: any) => ({
-            name: artist.name,
-            id: artist.id,
-          })),
-          album: {
-            name: firstTrack.album.name,
-            images: firstTrack.album.images,
-            id: firstTrack.album.id,
-            artists: firstTrack.album.artists || firstTrack.artists,
-            release_date: firstTrack.album.release_date || "",
-            total_tracks: firstTrack.album.total_tracks || 0,
-          },
-          duration_ms: firstTrack.duration_ms,
-          explicit: firstTrack.explicit || false,
-          external_urls: {
-            spotify: `https://open.spotify.com/track/${firstTrack.id}`,
-          },
-          popularity: firstTrack.popularity || 0,
-          preview_url: firstTrack.preview_url || null,
-          track_number: firstTrack.track_number || 0,
-          disc_number: firstTrack.disc_number || 1,
-          uri: firstTrack.uri,
-        });
-
-        console.log("Playing artist's top track:", firstTrack.name);
-      } else {
-        console.error("No top tracks found for this artist");
-      }
-    } catch (error) {
-      console.error("Error playing artist:", error);
+  // Update current artist ID when track changes
+  useEffect(() => {
+    if (currentTrack?.artists?.[0]?.id) {
+      setCurrentArtistId(currentTrack.artists[0].id);
     }
-  };
+  }, [currentTrack]);
+
+  const handlePlayArtist = useCallback(
+    async (artistId?: string) => {
+      if (!artistId) return;
+
+      try {
+        console.log("Fetching top tracks for artist:", artistId);
+
+        // Fetch the artist's top tracks
+        const topTracks = await fetchArtistTopTracks(artistId);
+
+        if (topTracks && topTracks.length > 0) {
+          // Play the first top track
+          const firstTrack = topTracks[0];
+
+          playTrack({
+            id: firstTrack.id,
+            name: firstTrack.name,
+            artists: firstTrack.artists.map((artist: any) => ({
+              name: artist.name,
+              id: artist.id,
+            })),
+            album: {
+              name: firstTrack.album.name,
+              images: firstTrack.album.images,
+              id: firstTrack.album.id,
+              artists: firstTrack.album.artists || firstTrack.artists,
+              release_date: firstTrack.album.release_date || "",
+              total_tracks: firstTrack.album.total_tracks || 0,
+            },
+            duration_ms: firstTrack.duration_ms,
+            explicit: firstTrack.explicit || false,
+            external_urls: {
+              spotify: `https://open.spotify.com/track/${firstTrack.id}`,
+            },
+            popularity: firstTrack.popularity || 0,
+            preview_url: firstTrack.preview_url || null,
+            track_number: firstTrack.track_number || 0,
+            disc_number: firstTrack.disc_number || 1,
+            uri: firstTrack.uri,
+          });
+
+          setCurrentArtistId(artistId);
+          console.log("Playing artist's top track:", firstTrack.name);
+        } else {
+          console.error("No top tracks found for this artist");
+        }
+      } catch (error) {
+        console.error("Error playing artist:", error);
+      }
+    },
+    [playTrack]
+  );
 
   // Add loading skeleton component
   const TableSkeleton = () => (
@@ -355,6 +369,7 @@ const Page = () => {
                     <TableBody>
                       {memoizedArtists.map((artist, index) => {
                         const imageUrl = artist.image[0]["#text"];
+                        const isThisArtist = currentArtistId === artist.id;
 
                         return (
                           <TableRow
@@ -428,6 +443,7 @@ const Page = () => {
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
                 {memoizedArtists.map((artist, index) => {
                   const imageUrl = artist.image[0]["#text"];
+                  const isThisArtist = currentArtistId === artist.id;
 
                   return (
                     <PlaylistCard
@@ -436,7 +452,11 @@ const Page = () => {
                       image={imageUrl || "/placeholder.svg"}
                       title={artist.name}
                       description={`${artist.playcount.toLocaleString()} plays`}
+                      isPlaying={isThisArtist && isPlaying}
+                      isPaused={isThisArtist && !isPlaying}
                       onPlay={handlePlayArtist}
+                      onPause={pauseTrack}
+                      onResume={resumeTrack}
                       onClick={handleClick}
                     />
                   );

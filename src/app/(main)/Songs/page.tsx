@@ -49,9 +49,10 @@ const Page = () => {
   const [displayUI, setDisplayUI] = useState<DisplayUIProps | string>("Table");
   const [loading, setLoading] = useState<boolean>(false);
   const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
+  const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
 
   const router = useRouter();
-  const { playTrack } = usePlayer();
+  const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } = usePlayer();
 
   const LASTFM_API_KEY = process.env.NEXT_PUBLIC_LASTFM_API_KEY;
 
@@ -114,8 +115,17 @@ const Page = () => {
     setNumTracks(Number.parseInt(value));
   };
 
+  // Update current track ID when track changes
+  useEffect(() => {
+    if (currentTrack?.id) {
+      setCurrentTrackId(currentTrack.id);
+    }
+  }, [currentTrack]);
+
   const handlePlayTrack = useCallback(
-    async (trackId: string, trackName: string, artistName: string) => {
+    async (trackId?: string, trackName?: string, artistName?: string) => {
+      if (!trackId || !trackName || !artistName) return;
+
       try {
         console.log("Fetching track details for:", trackName);
 
@@ -172,12 +182,25 @@ const Page = () => {
           uri: trackData.uri,
         });
 
+        setCurrentTrackId(trackData.id);
         console.log("Playing track:", trackData.name);
       } catch (error) {
         console.error("Error playing track:", error);
       }
     },
     [playTrack]
+  );
+
+  // Wrapper for PlaylistCard compatibility
+  const handlePlayTrackWrapper = useCallback(
+    (trackId?: string) => {
+      if (!trackId) return;
+      const track = memoizedTracks.find((t) => t.id === trackId);
+      if (track) {
+        handlePlayTrack(trackId, track.name, track.artist.name);
+      }
+    },
+    [memoizedTracks, handlePlayTrack]
   );
 
   // Add loading skeleton components
@@ -448,23 +471,28 @@ const Page = () => {
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
-                {memoizedTracks.map((track, index) => (
-                  <PlaylistCard
-                    key={track.id || index}
-                    id={track.id}
-                    image={track.image[0]["#text"] || "/placeholder.svg"}
-                    title={track.name}
-                    description={track.artist.name}
-                    onPlay={() =>
-                      handlePlayTrack(track.id, track.name, track.artist.name)
-                    }
-                    onClick={(id, name) =>
-                      router.push(
-                        `/Songs/${id}?name=${encodeURIComponent(name)}`
-                      )
-                    }
-                  />
-                ))}
+                {memoizedTracks.map((track, index) => {
+                  const isThisTrack = currentTrackId === track.id;
+                  return (
+                    <PlaylistCard
+                      key={track.id || index}
+                      id={track.id}
+                      image={track.image[0]["#text"] || "/placeholder.svg"}
+                      title={track.name}
+                      description={track.artist.name}
+                      isPlaying={isThisTrack && isPlaying}
+                      isPaused={isThisTrack && !isPlaying}
+                      onPlay={handlePlayTrackWrapper}
+                      onPause={pauseTrack}
+                      onResume={resumeTrack}
+                      onClick={(id, name) =>
+                        router.push(
+                          `/Songs/${id}?name=${encodeURIComponent(name)}`
+                        )
+                      }
+                    />
+                  );
+                })}
               </div>
             )}
           </>
