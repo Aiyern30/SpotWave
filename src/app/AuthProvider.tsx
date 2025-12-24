@@ -43,7 +43,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     window.localStorage.removeItem("Token");
     setToken(null);
     if (pathname !== "/401" && pathname !== "/") {
-      router.push("/401");
+      router.push("/");
     }
   }, [pathname, router]);
 
