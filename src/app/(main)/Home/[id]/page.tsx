@@ -350,7 +350,7 @@ const PlaylistPage = () => {
   }
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8">
       <Header />
 
       {/* Enhanced UserHeader */}
@@ -363,166 +363,178 @@ const PlaylistPage = () => {
 
       {/* Display Toggle */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">Songs</h2>
-        <div className="flex items-center space-x-3">
-          <PiTable
-            size={35}
+        <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+          Songs
+        </h2>
+        <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setDisplayUI("Table")}
-            className={`cursor-pointer transition-colors ${
+            className={`h-9 px-3 transition-all ${
               displayUI === "Table"
-                ? "text-white"
-                : "text-[#707070] hover:text-white"
+                ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             }`}
-          />
-          <LuLayoutGrid
-            size={30}
+          >
+            <PiTable className="h-5 w-5 sm:mr-2" />
+            <span className="hidden sm:inline">Table</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setDisplayUI("Grid")}
-            className={`cursor-pointer transition-colors ${
+            className={`h-9 px-3 transition-all ${
               displayUI === "Grid"
-                ? "text-white"
-                : "text-[#707070] hover:text-white"
+                ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             }`}
-          />
+          >
+            <LuLayoutGrid className="h-5 w-5 sm:mr-2" />
+            <span className="hidden sm:inline">Grid</span>
+          </Button>
         </div>
       </div>
 
       {/* Songs Display */}
       {displayUI === "Table" ? (
-        <div className="bg-zinc-900/30 rounded-lg border border-zinc-800/50">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
-                <TableHead className="w-[60px] text-center text-zinc-400 font-medium">
-                  #
-                </TableHead>
-                <TableHead className="text-zinc-400 font-medium">
-                  Title
-                </TableHead>
-                <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
-                  Album
-                </TableHead>
-                <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
-                  Date added
-                </TableHead>
-                <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium">
-                  <Clock className="h-4 w-4 ml-auto" />
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {memoizedTracks.map((playlistTrack, index) => {
-                const { track } = playlistTrack;
-                const isCurrentlyPlaying = isCurrentTrackPlaying(track.id);
-                const isHovered = hoveredTrackId === track.id;
+        <div className="overflow-x-auto rounded-lg border border-zinc-800/50">
+          <div className="bg-zinc-900/30">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
+                  <TableHead className="w-[50px] sm:w-[60px] text-center text-zinc-400 font-medium text-xs sm:text-sm">
+                    #
+                  </TableHead>
+                  <TableHead className="text-zinc-400 font-medium text-xs sm:text-sm">
+                    Title
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell text-zinc-400 font-medium text-xs sm:text-sm">
+                    Album
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell text-zinc-400 font-medium text-xs sm:text-sm">
+                    Date added
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium text-xs sm:text-sm">
+                    <Clock className="h-4 w-4 ml-auto" />
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {memoizedTracks.map((playlistTrack, index) => {
+                  const { track } = playlistTrack;
+                  const isCurrentlyPlaying = isCurrentTrackPlaying(track.id);
+                  const isHovered = hoveredTrackId === track.id;
 
-                return (
-                  <TableRow
-                    key={track.id}
-                    className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
-                    onClick={() => handlePlayPause(track)}
-                    onMouseEnter={() => setHoveredTrackId(track.id)}
-                    onMouseLeave={() => setHoveredTrackId(null)}
-                  >
-                    <TableCell className="text-center">
-                      {isHovered ? (
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="w-8 h-8 rounded-full hover:bg-green-500 hover:text-black"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePlayPause(track);
-                          }}
-                        >
-                          {getPlayPauseIcon(track.id, true)}
-                        </Button>
-                      ) : (
-                        <span
-                          className={`text-sm ${
-                            isCurrentlyPlaying
-                              ? "text-green-400"
-                              : "text-zinc-400"
-                          }`}
-                        >
-                          {index + 1}
-                        </span>
-                      )}
-                    </TableCell>
-
-                    <TableCell>
-                      <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
-                          <Image
-                            src={
-                              track.album.images[0]?.url || "/placeholder.svg"
-                            }
-                            width={48}
-                            height={48}
-                            className="object-cover"
-                            alt={track.name}
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div
-                            className={`font-medium truncate hover:text-green-400 transition-colors ${
+                  return (
+                    <TableRow
+                      key={track.id}
+                      className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
+                      onClick={() => handlePlayPause(track)}
+                      onMouseEnter={() => setHoveredTrackId(track.id)}
+                      onMouseLeave={() => setHoveredTrackId(null)}
+                    >
+                      <TableCell className="text-center py-3 sm:py-4">
+                        {isHovered ? (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:bg-green-500 hover:text-black"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePlayPause(track);
+                            }}
+                          >
+                            {getPlayPauseIcon(track.id, true)}
+                          </Button>
+                        ) : (
+                          <span
+                            className={`text-xs sm:text-sm font-medium ${
                               isCurrentlyPlaying
                                 ? "text-green-400"
-                                : "text-white"
+                                : "text-zinc-400"
                             }`}
                           >
-                            {track.name}
+                            {index + 1}
+                          </span>
+                        )}
+                      </TableCell>
+
+                      <TableCell className="py-3 sm:py-4">
+                        <div className="flex items-center space-x-2 sm:space-x-3">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0">
+                            <Image
+                              src={
+                                track.album.images[0]?.url || "/placeholder.svg"
+                              }
+                              width={48}
+                              height={48}
+                              className="object-cover"
+                              alt={track.name}
+                            />
                           </div>
-                          <div className="text-zinc-400 text-sm truncate">
-                            {track.artists.map((artist, artistIndex) => (
-                              <span key={artist.id}>
-                                <button
-                                  className="hover:underline hover:text-white transition-colors"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleArtistClick(artist.id, artist.name);
-                                  }}
-                                >
-                                  {artist.name}
-                                </button>
-                                {artistIndex < track.artists.length - 1 && ", "}
-                              </span>
-                            ))}
+                          <div className="min-w-0 flex-1">
+                            <div
+                              className={`font-medium truncate hover:text-green-400 transition-colors text-sm sm:text-base ${
+                                isCurrentlyPlaying
+                                  ? "text-green-400"
+                                  : "text-white"
+                              }`}
+                            >
+                              {track.name}
+                            </div>
+                            <div className="text-zinc-400 text-xs sm:text-sm truncate">
+                              {track.artists.map((artist, artistIndex) => (
+                                <span key={artist.id}>
+                                  <button
+                                    className="hover:underline hover:text-white transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleArtistClick(artist.id, artist.name);
+                                    }}
+                                  >
+                                    {artist.name}
+                                  </button>
+                                  {artistIndex < track.artists.length - 1 && ", "}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </TableCell>
+                      </TableCell>
 
-                    <TableCell className="hidden md:table-cell">
-                      <button
-                        className="text-zinc-400 hover:text-white hover:underline transition-colors truncate"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAlbumClick(track.album.id, track.album.name);
-                        }}
-                      >
-                        {track.album.name}
-                      </button>
-                    </TableCell>
+                      <TableCell className="hidden md:table-cell py-3 sm:py-4">
+                        <button
+                          className="text-zinc-400 hover:text-white hover:underline transition-colors truncate text-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAlbumClick(track.album.id, track.album.name);
+                          }}
+                        >
+                          {track.album.name}
+                        </button>
+                      </TableCell>
 
-                    <TableCell className="hidden md:table-cell">
-                      <span className="text-zinc-400 text-sm">
-                        {new Date(playlistTrack.added_at).toLocaleDateString()}
-                      </span>
-                    </TableCell>
+                      <TableCell className="hidden md:table-cell py-3 sm:py-4">
+                        <span className="text-zinc-400 text-sm">
+                          {new Date(playlistTrack.added_at).toLocaleDateString()}
+                        </span>
+                      </TableCell>
 
-                    <TableCell className="hidden md:table-cell text-right">
-                      <span className="text-zinc-400 text-sm">
-                        {formatSongDuration(track.duration_ms)}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                      <TableCell className="hidden md:table-cell text-right py-3 sm:py-4">
+                        <span className="text-zinc-400 text-sm">
+                          {formatSongDuration(track.duration_ms)}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 px-1">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
           {memoizedTracks.map((playlistTrack, index) => (
             <TrackCard
               key={playlistTrack.track.id}
