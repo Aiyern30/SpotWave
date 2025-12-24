@@ -44,6 +44,7 @@ import { formatSongDuration } from "@/utils/function";
 import { fetchAlbumDetails } from "@/utils/fetchAlbumDetails";
 import type { Album } from "@/lib/types";
 import { usePlayer } from "@/contexts/PlayerContext";
+import PlaylistCard from "@/components/PlaylistCard";
 
 const itemsPerPage = 10;
 
@@ -52,8 +53,8 @@ const AlbumsIDPage = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { playTrack, pauseTrack, currentTrack, isPlaying } = usePlayer();
-
+  const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } = usePlayer();
+  const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const segments = pathname.split("/");
   const id = segments[segments.length - 1];
   const name = searchParams.get("name");
@@ -131,40 +132,23 @@ const AlbumsIDPage = () => {
     fetchAndSetAlbum();
   }, [id, token]);
 
-  // Update handlePlayTrack to handle play/pause properly
+  // Update current track ID when track changes
+  useEffect(() => {
+    if (currentTrack?.id) {
+      setCurrentTrackId(currentTrack.id);
+    }
+  }, [currentTrack]);
+
+  // Update handlePlayPauseTrack to properly handle pause/resume
   const handlePlayPauseTrack = (item: any) => {
     // Check if this track is currently playing
-    if (currentTrack?.id === item.id && isPlaying) {
-      // If it's playing, pause it
-      pauseTrack();
-    } else if (currentTrack?.id === item.id && !isPlaying) {
-      // If it's the same track but paused, we need to resume (play the same track)
-      playTrack({
-        id: item.id,
-        name: item.name,
-        artists: item.artists.map((artist: any) => ({
-          name: artist.name,
-          id: artist.id,
-        })),
-        album: {
-          name: item.album?.name || album?.name || "",
-          images: item.album?.images || album?.images || [],
-          id: item.album?.id || album?.id || "",
-          artists: item.artists,
-          release_date: item.album?.release_date || album?.release_date || "",
-          total_tracks: item.album?.total_tracks || album?.total_tracks || 0,
-        },
-        duration_ms: item.duration_ms,
-        explicit: item.explicit || false,
-        external_urls: {
-          spotify: `https://open.spotify.com/track/${item.id}`,
-        },
-        popularity: 0,
-        preview_url: item.preview_url || null,
-        track_number: item.track_number || 0,
-        disc_number: item.disc_number || 1,
-        uri: item.uri,
-      });
+    if (currentTrackId === item.id) {
+      // Same track - toggle play/pause
+      if (isPlaying) {
+        pauseTrack();
+      } else {
+        resumeTrack();
+      }
     } else {
       // Different track, play it
       try {
@@ -194,6 +178,7 @@ const AlbumsIDPage = () => {
           disc_number: item.disc_number || 1,
           uri: item.uri,
         });
+        setCurrentTrackId(item.id);
       } catch (error) {
         console.error("Error playing track:", error);
       }
@@ -202,11 +187,16 @@ const AlbumsIDPage = () => {
 
   // Helper function to check if track is currently playing
   const isTrackPlaying = (trackId: string) => {
-    return currentTrack?.id === trackId && isPlaying;
+    return currentTrackId === trackId && isPlaying;
   };
 
-  const truncateText = (text: string, maxLength: number) => {
-    return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
+  // Wrapper for PlaylistCard compatibility
+  const handlePlayTrackWrapper = (trackId?: string) => {
+    if (!trackId) return;
+    const track = paginatedItems.find((t) => t.id === trackId);
+    if (track) {
+      handlePlayPauseTrack(track);
+    }
   };
 
   useEffect(() => {
@@ -493,112 +483,29 @@ const AlbumsIDPage = () => {
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6">
-              {paginatedItems.map((item, index) => (
-                <Card
-                  key={item.id}
-                  className="group bg-zinc-900/50 border-zinc-800 hover:bg-zinc-800/50 transition-all duration-300 cursor-pointer relative overflow-hidden"
-                  onClick={() =>
-                    router.push(
-                      `/Songs/${item.id}?name=${encodeURIComponent(item.name)}`
-                    )
-                  }
-                >
-                  <CardHeader className="pb-3">
-                    <div className="relative">
-                      {item.album?.images?.[0]?.url ? (
-                        <Image
-                          src={item.album.images[0].url || "/placeholder.svg"}
-                          width={200}
-                          height={200}
-                          alt={item.name}
-                          className="w-full aspect-square object-cover rounded-lg"
-                        />
-                      ) : (
-                        <div className="w-full aspect-square bg-zinc-800 rounded-lg flex items-center justify-center">
-                          <Music className="w-12 h-12 text-zinc-600" />
-                        </div>
-                      )}
-
-                      {/* Play/Pause Button Overlay */}
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
-                        <Button
-                          size="sm"
-                          className="bg-green-500 hover:bg-green-400 text-black rounded-full w-12 h-12 p-0"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePlayPauseTrack(item);
-                          }}
-                        >
-                          {isTrackPlaying(item.id) ? (
-                            <Pause className="w-5 h-5" fill="currentColor" />
-                          ) : (
-                            <Play className="w-5 h-5" fill="currentColor" />
-                          )}
-                        </Button>
-                      </div>
-
-                      {/* Track Number Badge */}
-                      <Badge className="absolute top-2 left-2 bg-black/70 text-white">
-                        #{startIndex + index + 1}
-                      </Badge>
-
-                      {/* Currently Playing Indicator */}
-                      {isTrackPlaying(item.id) && (
-                        <Badge className="absolute top-2 right-2 bg-green-500 text-black text-xs font-bold animate-pulse">
-                          Playing
-                        </Badge>
-                      )}
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="pt-0">
-                    <CardTitle className="text-base font-semibold text-white truncate mb-2 group-hover:text-green-400 transition-colors">
-                      {item.name}
-                    </CardTitle>
-
-                    <div className="space-y-2">
-                      <div className="text-sm text-zinc-400 truncate">
-                        {item.artists.map(
-                          (artist: any, artistIndex: number) => (
-                            <span key={artist.id}>
-                              <span
-                                className="hover:underline cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleArtistClick(artist.id, artist.name);
-                                }}
-                              >
-                                {artist.name}
-                              </span>
-                              {artistIndex < item.artists.length - 1 && ", "}
-                            </span>
-                          )
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between text-xs text-zinc-500">
-                        <span>{formatSongDuration(item.duration_ms)}</span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 px-2 text-xs hover:text-green-400"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open(
-                              `https://open.spotify.com/track/${item.uri
-                                .split(":")
-                                .pop()}`,
-                              "_blank"
-                            );
-                          }}
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              {paginatedItems.map((item, index) => {
+                const isThisTrack = currentTrackId === item.id;
+                return (
+                  <PlaylistCard
+                    key={item.id}
+                    id={item.id}
+                    image={item.album?.images?.[0]?.url || album?.images?.[0]?.url || "/placeholder.svg"}
+                    title={item.name}
+                    description={item.artists.map((a: any) => a.name).join(", ")}
+                    badge={`#${startIndex + index + 1}`}
+                    duration={formatSongDuration(item.duration_ms)}
+                    externalUrl={`https://open.spotify.com/track/${item.uri.split(":").pop()}`}
+                    isPlaying={isThisTrack && isPlaying}
+                    isPaused={isThisTrack && !isPlaying}
+                    onPlay={handlePlayTrackWrapper}
+                    onPause={pauseTrack}
+                    onResume={resumeTrack}
+                    onClick={(id, name) =>
+                      router.push(`/Songs/${id}?name=${encodeURIComponent(name)}`)
+                    }
+                  />
+                );
+              })}
             </div>
           )}
 
