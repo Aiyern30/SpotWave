@@ -27,9 +27,9 @@ interface PlaylistCardProps {
   badge?: string;
   duration?: string;
   externalUrl?: string;
-  isPlaying?: boolean; // Add isPlaying prop
-  onPlay?: (id: string) => void;
-  onPause?: () => void; // Add onPause prop
+  isPlaying?: boolean;
+  onPlay?: (id?: string) => void; // Make id optional
+  onPause?: () => void;
   onClick?: (id: string, title: string) => void;
 }
 
@@ -60,8 +60,10 @@ export default function PlaylistCard({
   const handlePlayPauseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isPlaying && onPause) {
+      // If currently playing, pause it
       onPause();
     } else if (onPlay) {
+      // If not playing (or paused), play/resume it
       onPlay(id);
     }
   };
@@ -103,13 +105,13 @@ export default function PlaylistCard({
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
                 <Button
                   size="sm"
-                  className="bg-green-500 hover:bg-green-400 text-black rounded-full w-12 h-12 p-0 shadow-xl"
+                  className="bg-green-500 hover:bg-green-400 text-black rounded-full w-12 h-12 p-0 shadow-xl hover:scale-110 transition-transform"
                   onClick={handlePlayPauseClick}
                 >
                   {isPlaying ? (
                     <Pause className="w-5 h-5" fill="currentColor" />
                   ) : (
-                    <Play className="w-5 h-5" fill="currentColor" />
+                    <Play className="w-5 h-5 ml-0.5" fill="currentColor" />
                   )}
                 </Button>
               </div>

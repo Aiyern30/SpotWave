@@ -80,15 +80,20 @@ const Page = () => {
     setCreating(false);
   };
 
-  const handlePlayPlaylist = async (playlistId: string) => {
-    try {
-      // Play the entire playlist using Spotify URI
-      const playlistUri = `spotify:playlist:${playlistId}`;
-      playPlaylist(playlistUri);
-    } catch (error) {
-      console.error("Error playing playlist:", error);
-    }
-  };
+  const handlePlayPlaylist = useCallback(
+    async (playlistId?: string) => {
+      if (!playlistId) return;
+      
+      try {
+        // Play the entire playlist using Spotify URI
+        const playlistUri = `spotify:playlist:${playlistId}`;
+        playPlaylist(playlistUri);
+      } catch (error) {
+        console.error("Error playing playlist:", error);
+      }
+    },
+    [playPlaylist]
+  );
 
   useEffect(() => {
     const storedToken = localStorage.getItem("Token");

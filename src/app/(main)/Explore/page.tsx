@@ -83,7 +83,9 @@ const Page = () => {
   }, []);
 
   const handlePlayArtist = useCallback(
-    async (artistId: string) => {
+    async (artistId?: string) => {
+      if (!artistId) return;
+
       try {
         // Fetch artist's top tracks
         const response = await fetch(
@@ -135,36 +137,46 @@ const Page = () => {
     [token, playTrack]
   );
 
-  const handlePlayTrack = useCallback(
-    (track: RecentTracksProps["track"]) => {
-      try {
-        playTrack({
-          id: track.id,
-          name: track.name,
-          artists: track.album.artists,
-          album: {
-            name: track.album.name,
-            images: track.album.images,
-            id: track.album.artists[0]?.id || "",
-            artists: track.album.artists,
-            release_date: track.album.release_date,
-            total_tracks: 0,
-          },
-          duration_ms: track.duration_ms,
-          explicit: false,
-          external_urls: { spotify: "" },
-          popularity: 0,
-          preview_url: track.preview_url || null,
-          track_number: 0,
-          disc_number: 1,
-          uri: track.uri,
-        });
-      } catch (error) {
-        console.error("Error playing track:", error);
+  // Create a wrapper for handlePlayTrack to match the signature
+  const handlePlayRecentTrack = useCallback(
+    (trackId?: string) => {
+      if (!trackId) return;
+
+      const track = memoizedRecentTracks.find((t) => t.track.id === trackId);
+      if (track) {
+        handlePlayTrack(track.track);
       }
     },
-    [playTrack]
+    [memoizedRecentTracks]
   );
+
+  const handlePlayTrack = (track: RecentTracksProps["track"]) => {
+    try {
+      playTrack({
+        id: track.id,
+        name: track.name,
+        artists: track.album.artists,
+        album: {
+          name: track.album.name,
+          images: track.album.images,
+          id: track.album.artists[0]?.id || "",
+          artists: track.album.artists,
+          release_date: track.album.release_date,
+          total_tracks: 0,
+        },
+        duration_ms: track.duration_ms,
+        explicit: false,
+        external_urls: { spotify: "" },
+        popularity: 0,
+        preview_url: track.preview_url || null,
+        track_number: 0,
+        disc_number: 1,
+        uri: track.uri,
+      });
+    } catch (error) {
+      console.error("Error playing track:", error);
+    }
+  };
 
   // Empty State Component
   const EmptyState = ({
@@ -345,7 +357,7 @@ const Page = () => {
                       isPlaying={
                         currentTrack?.id === tracks.track.id && isPlaying
                       }
-                      onPlay={() => handlePlayTrack(tracks.track)}
+                      onPlay={handlePlayRecentTrack}
                       onPause={pauseTrack}
                       onClick={(id) => {
                         if (tracks.track.album.artists.length > 0) {
