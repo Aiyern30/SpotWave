@@ -28,7 +28,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/";
 import { useRouter } from "next/navigation";
-import { Play, MoreHorizontal, Music } from "lucide-react";
+import { Play, MoreHorizontal, Music, Pause } from "lucide-react";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
 import { NumberTicker } from "@/components/magicui/NumberTicker";
@@ -280,6 +280,30 @@ const Page = () => {
     </div>
   );
 
+  // Add handler for play/pause in table view
+  const handlePlayPauseTrack = useCallback(
+    async (trackId: string, trackName: string, artistName: string) => {
+      // Check if this track is currently playing
+      if (currentTrackId === trackId) {
+        // Same track - toggle play/pause
+        if (isPlaying) {
+          pauseTrack();
+        } else {
+          resumeTrack();
+        }
+      } else {
+        // Different track - play it
+        await handlePlayTrack(trackId, trackName, artistName);
+      }
+    },
+    [currentTrackId, isPlaying, pauseTrack, resumeTrack, handlePlayTrack]
+  );
+
+  // Helper function to check if track is currently playing
+  const isTrackPlaying = (trackId: string) => {
+    return currentTrackId === trackId && isPlaying;
+  };
+
   return (
     <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8">
       <Header />
@@ -372,100 +396,119 @@ const Page = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {memoizedTracks.map((track, index) => (
-                        <TableRow
-                          key={track.id || index}
-                          onClick={() =>
-                            router.push(
-                              `/Songs/${track.id}?name=${encodeURIComponent(
-                                track.name
-                              )}`
-                            )
-                          }
-                          onMouseEnter={() => setHoveredTrackId(track.id)}
-                          onMouseLeave={() => setHoveredTrackId(null)}
-                          className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
-                        >
-                          <TableCell className="text-center py-3 sm:py-4">
-                            <span className="text-zinc-400 text-xs sm:text-sm font-medium">
-                              {index + 1}
-                            </span>
-                          </TableCell>
-                          <TableCell className="py-3 sm:py-4">
-                            <div className="flex items-center space-x-2 sm:space-x-3">
-                              <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0 group/image">
-                                <Image
-                                  src={
-                                    track.image[0]["#text"] ||
-                                    "/placeholder.svg"
-                                  }
-                                  width={48}
-                                  height={48}
-                                  className="object-cover"
-                                  alt={track.name}
-                                />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handlePlayTrack(
-                                        track.id,
-                                        track.name,
-                                        track.artist.name
-                                      );
-                                    }}
+                      {memoizedTracks.map((track, index) => {
+                        const isThisTrack = currentTrackId === track.id;
+                        return (
+                          <TableRow
+                            key={track.id || index}
+                            onClick={() =>
+                              router.push(
+                                `/Songs/${track.id}?name=${encodeURIComponent(
+                                  track.name
+                                )}`
+                              )
+                            }
+                            onMouseEnter={() => setHoveredTrackId(track.id)}
+                            onMouseLeave={() => setHoveredTrackId(null)}
+                            className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
+                          >
+                            <TableCell className="text-center py-3 sm:py-4">
+                              <span
+                                className={`text-xs sm:text-sm font-medium ${
+                                  isThisTrack
+                                    ? "text-green-400"
+                                    : "text-zinc-400"
+                                }`}
+                              >
+                                {index + 1}
+                              </span>
+                            </TableCell>
+                            <TableCell className="py-3 sm:py-4">
+                              <div className="flex items-center space-x-2 sm:space-x-3">
+                                <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0 group/image">
+                                  <Image
+                                    src={
+                                      track.image[0]["#text"] ||
+                                      "/placeholder.svg"
+                                    }
+                                    width={48}
+                                    height={48}
+                                    className="object-cover"
+                                    alt={track.name}
+                                  />
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handlePlayPauseTrack(
+                                          track.id,
+                                          track.name,
+                                          track.artist.name
+                                        );
+                                      }}
+                                    >
+                                      {isTrackPlaying(track.id) ? (
+                                        <Pause
+                                          className="h-3 w-3 sm:h-4 sm:w-4"
+                                          fill="currentColor"
+                                        />
+                                      ) : (
+                                        <Play
+                                          className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5"
+                                          fill="currentColor"
+                                        />
+                                      )}
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div
+                                    className={`font-medium truncate transition-colors text-sm sm:text-base ${
+                                      isThisTrack
+                                        ? "text-green-400"
+                                        : "text-white hover:text-green-400"
+                                    }`}
                                   >
-                                    <Play
-                                      className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5"
-                                      fill="currentColor"
-                                    />
-                                  </Button>
+                                    {track.name}
+                                  </div>
                                 </div>
                               </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="text-white font-medium truncate hover:text-green-400 transition-colors text-sm sm:text-base">
-                                  {track.name}
-                                </div>
-                                <div className="text-zinc-400 text-xs sm:text-sm">
-                                  Track
-                                </div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell py-3 sm:py-4">
+                              <div
+                                className="text-zinc-400 hover:text-white hover:underline cursor-pointer truncate text-sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push(
+                                    `/Artists/${
+                                      track.artist.id
+                                    }?name=${encodeURIComponent(
+                                      track.artist.name
+                                    )}`
+                                  );
+                                }}
+                              >
+                                {track.artist.name}
                               </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell py-3 sm:py-4">
-                            <div
-                              className="text-zinc-400 hover:text-white hover:underline cursor-pointer truncate text-sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                router.push(
-                                  `/Artists/${
-                                    track.artist.id
-                                  }?name=${encodeURIComponent(
-                                    track.artist.name
-                                  )}`
-                                );
-                              }}
-                            >
-                              {track.artist.name}
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden lg:table-cell text-right py-3 sm:py-4">
-                            <NumberTicker
-                              value={track.listeners}
-                              className="text-zinc-400 text-sm"
-                            />
-                          </TableCell>
-                          <TableCell className="hidden lg:table-cell text-right py-3 sm:py-4">
-                            <NumberTicker
-                              value={track.playcount}
-                              className="text-zinc-400 text-sm"
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell text-right py-3 sm:py-4">
+                              <NumberTicker
+                                value={track.listeners}
+                                className="text-zinc-400 text-sm"
+                              />
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell text-right py-3 sm:py-4">
+                              <NumberTicker
+                                value={track.playcount}
+                                className="text-zinc-400 text-sm"
+                              />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
