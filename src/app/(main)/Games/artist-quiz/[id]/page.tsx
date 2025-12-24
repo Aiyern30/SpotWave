@@ -1,0 +1,342 @@
+"use client";
+
+import React, { useEffect, useState, useRef } from "react";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  Play,
+  Pause,
+  SkipForward,
+  CheckCircle2,
+  XCircle,
+  Music,
+  Volume2,
+  HelpCircle,
+  Loader2,
+} from "lucide-react";
+import { Button, Input, Card, CardContent, Badge } from "@/components/ui";
+import { fetchArtistTopTracks } from "@/utils/Tracks/fetchArtistTopTracks";
+import ReactPlayer from "react-player";
+
+// Helper to normalize strings for comparison
+const normalizeString = (str: string) => {
+  return str
+    .toLowerCase()
+    .replace(/\(.*\)/g, "") // Remove content in parentheses e.g. (feat. X)
+    .replace(/-.*$/g, "") // Remove content after hyphen e.g. - Remastered
+    .replace(/[^a-z0-9]/g, "") // Remove non-alphanumeric
+    .trim();
+};
+
+const ArtistQuizGame = () => {
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const artistId = params.id as string;
+  const artistName = searchParams.get("name") || "Unknown Artist";
+
+  const [tracks, setTracks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [score, setScore] = useState(0);
+  const [guess, setGuess] = useState("");
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  // Game state
+  const [gameTracks, setGameTracks] = useState<any[]>([]);
+  const [isGameOver, setIsGameOver] = useState(false);
+
+  useEffect(() => {
+    const initGame = async () => {
+      setLoading(true);
+      const fetchedTracks = await fetchArtistTopTracks(artistId);
+
+      // Filter tracks with preview_url
+      const playableTracks = fetchedTracks.filter((t: any) => t.preview_url);
+
+      // Shuffle tracks
+      const shuffled = playableTracks.sort(() => Math.random() - 0.5);
+
+      setTracks(shuffled);
+      setGameTracks(shuffled.slice(0, 10)); // Top 10 rounds
+      setLoading(false);
+    };
+
+    if (artistId) {
+      initGame();
+    }
+  }, [artistId]);
+
+  const currentTrack = gameTracks[currentTrackIndex];
+
+  // Handle guess submission
+  const checkGuess = () => {
+    if (!currentTrack || showAnswer) return;
+
+    const normalizedGuess = normalizeString(guess);
+    const normalizedAnswer = normalizeString(currentTrack.name);
+
+    if (normalizedGuess === normalizedAnswer) {
+      setFeedback("correct");
+      setScore((s) => s + 100);
+      setShowAnswer(true);
+      setIsPlaying(false);
+    } else {
+      setFeedback("wrong");
+    }
+  };
+
+  const handleNext = () => {
+    if (currentTrackIndex >= gameTracks.length - 1) {
+      setIsGameOver(true);
+    } else {
+      setCurrentTrackIndex((prev) => prev + 1);
+      setGuess("");
+      setFeedback(null);
+      setShowAnswer(false);
+      setIsPlaying(false); // Auto-play handled by effect or manual? Let's auto-play next maybe?
+      // Better to let user start
+    }
+  };
+
+  const handleGiveUp = () => {
+    setShowAnswer(true);
+    setIsPlaying(false);
+    setFeedback(null);
+  };
+
+  const progressPercentage = (currentTrackIndex / gameTracks.length) * 100;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 text-green-500 animate-spin mx-auto" />
+          <p className="text-zinc-400">Loading tracks for {artistName}...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (gameTracks.length === 0) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center space-y-6">
+        <Music className="w-20 h-20 text-zinc-600" />
+        <h2 className="text-2xl font-bold text-white">
+          No Playable Tracks Found
+        </h2>
+        <p className="text-zinc-400 max-w-md">
+          Sorry, we couldn't find enough tracks with audio previews for{" "}
+          {artistName} to create a quiz.
+        </p>
+        <Button
+          onClick={() => router.back()}
+          className="bg-white text-black hover:bg-zinc-200"
+        >
+          Go Back
+        </Button>
+      </div>
+    );
+  }
+
+  if (isGameOver) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center space-y-8 animate-in fade-in duration-500">
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold text-green-500">Quiz Complete!</h1>
+          <p className="text-xl text-white">You scored {score} points</p>
+        </div>
+
+        <Card className="w-full max-w-md bg-zinc-900 border-zinc-800">
+          <CardContent className="p-8 space-y-6">
+            <div className="text-6xl font-black text-white">
+              {Math.round((score / (gameTracks.length * 100)) * 100)}%
+            </div>
+            <p className="text-zinc-400">
+              Accuracy on {gameTracks.length} songs by {artistName}
+            </p>
+            <div className="flex gap-4 justify-center">
+              <Button
+                onClick={() => window.location.reload()}
+                variant="outline"
+                className="border-zinc-700 text-white hover:bg-zinc-800"
+              >
+                Play Again
+              </Button>
+              <Button
+                onClick={() => router.push("/Games")}
+                className="bg-green-500 hover:bg-green-600 text-black"
+              >
+                More Games
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-black to-black flex flex-col items-center p-4 md:p-8">
+      {/* Header */}
+      <div className="w-full max-w-3xl flex items-center justify-between mb-8">
+        <Button
+          variant="ghost"
+          onClick={() => router.back()}
+          className="text-zinc-400 hover:text-white"
+        >
+          <ArrowLeft className="w-5 h-5 mr-2" />
+          Quit
+        </Button>
+        <div className="flex flex-col items-center">
+          <h2 className="text-white font-bold text-lg">{artistName}</h2>
+          <span className="text-green-500 font-mono text-sm">
+            Score: {score}
+          </span>
+        </div>
+        <div className="w-20 text-right text-zinc-500 text-sm">
+          {currentTrackIndex + 1} / {gameTracks.length}
+        </div>
+      </div>
+
+      {/* Game Card */}
+      <Card className="w-full max-w-2xl bg-zinc-900/50 border-zinc-800 backdrop-blur-sm shadow-2xl overflow-hidden relative">
+        <div className="absolute top-0 left-0 w-full h-1 bg-zinc-800">
+          <div
+            className="h-full bg-green-500 transition-all duration-500"
+            style={{ width: `${progressPercentage}%` }}
+          />
+        </div>
+
+        <CardContent className="p-8 md:p-12 flex flex-col items-center space-y-10">
+          {/* Visualizer / Icon */}
+          <div
+            className={`relative w-48 h-48 rounded-full flex items-center justify-center transition-all duration-500 ${
+              isPlaying ? "bg-green-500/10 scale-105" : "bg-zinc-800/50"
+            }`}
+          >
+            <div
+              className={`absolute inset-0 rounded-full border-4 border-green-500/20 ${
+                isPlaying ? "animate-ping opacity-20" : "opacity-0"
+              }`}
+            />
+            {isPlaying ? (
+              <Volume2 className="w-20 h-20 text-green-500 animate-pulse" />
+            ) : (
+              <Music className="w-20 h-20 text-zinc-600" />
+            )}
+          </div>
+
+          {/* Player Helper */}
+          <ReactPlayer
+            url={currentTrack.preview_url}
+            playing={isPlaying}
+            width="0"
+            height="0"
+            onEnded={() => setIsPlaying(false)}
+            volume={0.5}
+          />
+
+          {/* Controls */}
+          <div className="flex flex-col items-center space-y-6 w-full max-w-md">
+            {!showAnswer && (
+              <Button
+                size="lg"
+                className={`rounded-full w-16 h-16 p-0 transition-transform hover:scale-105 ${
+                  isPlaying
+                    ? "bg-zinc-800 hover:bg-zinc-700"
+                    : "bg-green-500 hover:bg-green-400 text-black"
+                }`}
+                onClick={() => setIsPlaying(!isPlaying)}
+              >
+                {isPlaying ? (
+                  <Pause className="w-8 h-8 text-white" />
+                ) : (
+                  <Play className="w-8 h-8 ml-1" />
+                )}
+              </Button>
+            )}
+
+            {showAnswer ? (
+              <div className="text-center space-y-4 animate-in zoom-in duration-300">
+                <div className="flex flex-col items-center gap-2">
+                  <Badge
+                    className={`${
+                      feedback === "correct"
+                        ? "bg-green-500 text-black"
+                        : "bg-red-500 text-white"
+                    } px-4 py-1 text-lg`}
+                  >
+                    {feedback === "correct" ? "Correct!" : "Missed it!"}
+                  </Badge>
+                  <h3 className="text-2xl font-bold text-white mt-4">
+                    {currentTrack.name}
+                  </h3>
+                  <p className="text-zinc-400">{currentTrack.album.name}</p>
+                </div>
+                <Button
+                  onClick={handleNext}
+                  className="mt-8 bg-white text-black hover:bg-zinc-200 min-w-[200px]"
+                  size="lg"
+                >
+                  Next Song <SkipForward className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            ) : (
+              <div className="w-full space-y-4">
+                <div className="relative">
+                  <Input
+                    autoFocus
+                    placeholder="Type song name..."
+                    value={guess}
+                    onChange={(e) => {
+                      setGuess(e.target.value);
+                      setFeedback(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") checkGuess();
+                    }}
+                    className={`h-14 pl-6 text-lg bg-black/50 border-zinc-700 text-white rounded-xl focus:ring-green-500 focus:border-green-500 transition-all ${
+                      feedback === "wrong" ? "border-red-500 text-red-500" : ""
+                    }`}
+                  />
+                  {feedback === "wrong" && (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500 animate-in fade-in slide-in-from-left-2">
+                      <XCircle className="w-6 h-6" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <Button
+                    variant="outline"
+                    className="h-12 border-zinc-700 hover:bg-zinc-800 text-zinc-300"
+                    onClick={handleGiveUp}
+                  >
+                    <HelpCircle className="w-4 h-4 mr-2" /> Give Up
+                  </Button>
+                  <Button
+                    className="h-12 bg-green-500 hover:bg-green-600 text-black font-semibold"
+                    onClick={checkGuess}
+                  >
+                    Submit <CheckCircle2 className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Instructions / Footer */}
+      <div className="mt-8 text-zinc-500 text-sm">
+        <p>Listen to the preview and guess the song title.</p>
+      </div>
+    </div>
+  );
+};
+
+export default ArtistQuizGame;
