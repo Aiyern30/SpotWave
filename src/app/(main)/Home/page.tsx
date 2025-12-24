@@ -39,8 +39,9 @@ const Page = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [creating, setCreating] = useState<boolean>(false);
   const [imageError, setImageError] = useState<Record<string, boolean>>({});
+  const [currentPlaylistUri, setCurrentPlaylistUri] = useState<string | null>(null);
   const router = useRouter();
-  const { playPlaylist, pauseTrack, currentTrack, isPlaying } = usePlayer();
+  const { playPlaylist, pauseTrack, resumeTrack, currentTrack, isPlaying } = usePlayer();
 
   const handleClick = (id: string, name: string) => {
     router.push(`/Home/${id}?name=${encodeURIComponent(name)}`);
@@ -84,16 +85,40 @@ const Page = () => {
     async (playlistId?: string) => {
       if (!playlistId) return;
       
-      try {
-        // Play the entire playlist using Spotify URI
-        const playlistUri = `spotify:playlist:${playlistId}`;
-        playPlaylist(playlistUri);
-      } catch (error) {
-        console.error("Error playing playlist:", error);
+      const playlistUri = `spotify:playlist:${playlistId}`;
+      
+      // Check if this playlist is currently playing
+      if (currentPlaylistUri === playlistUri) {
+        // Same playlist - just toggle play/pause
+        if (isPlaying) {
+          pauseTrack();
+        } else {
+          // Resume the current track instead of restarting
+          resumeTrack();
+        }
+      } else {
+        // Different playlist - play it from the beginning
+        try {
+          playPlaylist(playlistUri);
+          setCurrentPlaylistUri(playlistUri);
+        } catch (error) {
+          console.error("Error playing playlist:", error);
+        }
       }
     },
-    [playPlaylist]
+    [playPlaylist, pauseTrack, resumeTrack, currentPlaylistUri, isPlaying]
   );
+
+  // Update current playlist URI when track changes
+  useEffect(() => {
+    if (currentTrack?.uri) {
+      // Extract playlist URI from context
+      const contextUri = currentTrack.uri.split(':').slice(0, 3).join(':');
+      if (contextUri.startsWith('spotify:playlist:')) {
+        setCurrentPlaylistUri(contextUri);
+      }
+    }
+  }, [currentTrack]);
 
   useEffect(() => {
     const storedToken = localStorage.getItem("Token");
@@ -176,19 +201,24 @@ const Page = () => {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
             <CreatePlaylistCard />
-            {memoizedPlaylists.map((playlist) => (
-              <PlaylistCard
-                key={playlist.id}
-                id={playlist.id}
-                image={playlist.image}
-                title={playlist.title}
-                description={playlist.description}
-                isPlaying={currentTrack?.album?.id === playlist.id && isPlaying}
-                onPlay={handlePlayPlaylist}
-                onPause={pauseTrack}
-                onClick={handleClick}
-              />
-            ))}
+            {memoizedPlaylists.map((playlist) => {
+              const playlistUri = `spotify:playlist:${playlist.id}`;
+              const isThisPlaylistPlaying = currentPlaylistUri === playlistUri && isPlaying;
+              
+              return (
+                <PlaylistCard
+                  key={playlist.id}
+                  id={playlist.id}
+                  image={playlist.image}
+                  title={playlist.title}
+                  description={playlist.description}
+                  isPlaying={isThisPlaylistPlaying}
+                  onPlay={handlePlayPlaylist}
+                  onPause={pauseTrack}
+                  onClick={handleClick}
+                />
+              );
+            })}
           </div>
         )}
 
