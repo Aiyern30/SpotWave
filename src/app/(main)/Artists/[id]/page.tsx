@@ -434,7 +434,7 @@ const ArtistProfilePage = () => {
             </Avatar>
 
             <div className="flex-1 text-center md:text-left space-y-4">
-              <h1 className="text-4xl md:text-6xl font-bold">
+              <h1 className="text-4xl md:text-6xl font-bold text-white">
                 {artistProfile.name}
               </h1>
 
@@ -508,7 +508,7 @@ const ArtistProfilePage = () => {
           {/* Top Tracks Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-bold">Top Tracks</h2>
+              <h2 className="text-3xl font-bold text-white">Top Tracks</h2>
               <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
                 <Button
                   variant="ghost"
@@ -749,7 +749,7 @@ const ArtistProfilePage = () => {
           {/* Albums Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-bold">Albums</h2>
+              <h2 className="text-3xl font-bold text-white">Albums</h2>
               <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
                 <Button
                   variant="ghost"
@@ -955,7 +955,7 @@ const ArtistProfilePage = () => {
           {/* About Section */}
           {artistDetails?.bio.content && (
             <div className="space-y-4">
-              <h2 className="text-3xl font-bold">About</h2>
+              <h2 className="text-3xl font-bold text-white">About</h2>
               <div className="bg-zinc-900/30 rounded-lg p-6 border border-zinc-800/50">
                 <div className="text-zinc-300 leading-relaxed max-w-none prose prose-invert">
                   {parse(sanitizedBio, { replace: transform })}
@@ -967,7 +967,9 @@ const ArtistProfilePage = () => {
           {/* Similar Artists Section */}
           {artistDetails?.similar.artist.length !== 0 && (
             <div className="space-y-4">
-              <h3 className="text-2xl font-semibold">Similar Artists</h3>
+              <h3 className="text-2xl font-semibold text-white">
+                Similar Artists
+              </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 {artistDetails?.similar.artist.map((similarArtist) => (
                   <TooltipProvider key={similarArtist.id}>

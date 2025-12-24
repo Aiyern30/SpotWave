@@ -274,7 +274,9 @@ const SongPage = () => {
                 <div className="text-sm text-zinc-400 uppercase tracking-wide">
                   Song
                 </div>
-                <h1 className="text-4xl md:text-6xl font-bold">{track.name}</h1>
+                <h1 className="text-4xl md:text-6xl font-bold text-white">
+                  {track.name}
+                </h1>
               </div>
 
               <div className="flex flex-wrap justify-center md:justify-start gap-4 text-zinc-300">
@@ -429,7 +431,7 @@ const SongPage = () => {
             {/* Audio Preview */}
             <Card className="bg-zinc-900/30 border-zinc-800/50">
               <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-4 flex items-center">
+                <h3 className="text-xl font-semibold mb-4 flex items-center text-white">
                   <Play className="h-5 w-5 mr-2" />
                   Audio Preview
                 </h3>
@@ -462,7 +464,7 @@ const SongPage = () => {
             {/* Track Information */}
             <Card className="bg-zinc-900/30 border-zinc-800/50">
               <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-4 flex items-center">
+                <h3 className="text-xl font-semibold mb-4 flex items-center text-white">
                   <Music className="h-5 w-5 mr-2" />
                   Track Information
                 </h3>
@@ -512,7 +514,7 @@ const SongPage = () => {
           {/* Album Information */}
           <Card className="bg-zinc-900/30 border-zinc-800/50">
             <CardContent className="p-6">
-              <h3 className="text-xl font-semibold mb-4 flex items-center">
+              <h3 className="text-xl font-semibold mb-4 flex items-center text-white">
                 <Music className="h-5 w-5 mr-2" />
                 Album Information
               </h3>
