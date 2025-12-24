@@ -274,9 +274,7 @@ const SongPage = () => {
                 <div className="text-sm text-zinc-400 uppercase tracking-wide">
                   Song
                 </div>
-                <h1 className="text-4xl md:text-6xl font-bold">
-                  {track.name}
-                </h1>
+                <h1 className="text-4xl md:text-6xl font-bold">{track.name}</h1>
               </div>
 
               <div className="flex flex-wrap justify-center md:justify-start gap-4 text-zinc-300">
