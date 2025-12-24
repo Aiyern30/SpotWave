@@ -558,102 +558,109 @@ export const MusicPlayer = ({
 
         {/* Right Section - Additional Controls */}
         <div className="flex items-center justify-end gap-2 min-w-[240px] w-[30%]">
-          <Sheet open={isLyricsSheetOpen} onOpenChange={setIsLyricsSheetOpen}>
-            <SheetTrigger asChild>
+          {!pathname?.includes("/Games/artist-quiz/") && (
+            <>
+              <Sheet
+                open={isLyricsSheetOpen}
+                onOpenChange={setIsLyricsSheetOpen}
+              >
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 hidden lg:flex transition-all"
+                    onClick={handleLyricsClick}
+                    disabled={!currentTrack}
+                  >
+                    <Mic2 className="h-4 w-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent className="w-[400px] sm:w-[540px] bg-zinc-900 border-zinc-800 flex flex-col overflow-hidden">
+                  <SheetHeader className="space-y-4 flex-shrink-0">
+                    {currentTrack && (
+                      <div className="flex items-center space-x-3">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden">
+                          <Image
+                            src={
+                              currentTrack.album?.images[0]?.url ||
+                              "/default-artist.png"
+                            }
+                            width={64}
+                            height={64}
+                            className="object-cover"
+                            alt={currentTrack.name}
+                          />
+                        </div>
+                        <div>
+                          <SheetTitle className="text-white text-lg font-semibold">
+                            {currentTrack.name}
+                          </SheetTitle>
+                          <p className="text-zinc-400 text-sm">
+                            by{" "}
+                            {currentTrack.artists
+                              .map((artist) => artist.name)
+                              .join(", ")}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </SheetHeader>
+                  <div className="flex-1 overflow-hidden mt-6">
+                    {loadingLyrics ? (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="animate-spin rounded-full h-8 w-8 border-2 border-green-500 border-t-transparent"></div>
+                        <span className="ml-3 text-zinc-400">
+                          Loading lyrics...
+                        </span>
+                      </div>
+                    ) : syncedLyrics && syncedLyrics.length > 0 ? (
+                      <div
+                        ref={lyricsContainerRef}
+                        className="bg-zinc-800/30 rounded-lg p-4 h-full overflow-y-auto scroll-smooth"
+                        style={{ maxHeight: "calc(100vh - 200px)" }}
+                      >
+                        <div className="space-y-3 pb-32">
+                          {syncedLyrics.map((line, index) => (
+                            <div
+                              key={index}
+                              data-index={index}
+                              className={`text-sm leading-relaxed transition-all duration-300 py-1 ${
+                                index === currentLyricIndex
+                                  ? "text-green-400 font-semibold text-lg scale-105"
+                                  : index < currentLyricIndex
+                                  ? "text-zinc-500"
+                                  : "text-zinc-300"
+                              }`}
+                            >
+                              {line.text}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className="bg-zinc-800/30 rounded-lg p-4 h-full overflow-y-auto"
+                        style={{ maxHeight: "calc(100vh - 200px)" }}
+                      >
+                        <pre className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap font-sans">
+                          {lyrics}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                </SheetContent>
+              </Sheet>
+
               <Button
                 variant="ghost"
                 size="icon"
                 className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 hidden lg:flex transition-all"
-                onClick={handleLyricsClick}
-                disabled={!currentTrack}
+                onClick={handleQueueClick}
               >
-                <Mic2 className="h-4 w-4" />
+                <List className="h-4 w-4" />
               </Button>
-            </SheetTrigger>
-            <SheetContent className="w-[400px] sm:w-[540px] bg-zinc-900 border-zinc-800 flex flex-col overflow-hidden">
-              <SheetHeader className="space-y-4 flex-shrink-0">
-                {currentTrack && (
-                  <div className="flex items-center space-x-3">
-                    <div className="w-16 h-16 rounded-lg overflow-hidden">
-                      <Image
-                        src={
-                          currentTrack.album?.images[0]?.url ||
-                          "/default-artist.png"
-                        }
-                        width={64}
-                        height={64}
-                        className="object-cover"
-                        alt={currentTrack.name}
-                      />
-                    </div>
-                    <div>
-                      <SheetTitle className="text-white text-lg font-semibold">
-                        {currentTrack.name}
-                      </SheetTitle>
-                      <p className="text-zinc-400 text-sm">
-                        by{" "}
-                        {currentTrack.artists
-                          .map((artist) => artist.name)
-                          .join(", ")}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </SheetHeader>
-              <div className="flex-1 overflow-hidden mt-6">
-                {loadingLyrics ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="animate-spin rounded-full h-8 w-8 border-2 border-green-500 border-t-transparent"></div>
-                    <span className="ml-3 text-zinc-400">
-                      Loading lyrics...
-                    </span>
-                  </div>
-                ) : syncedLyrics && syncedLyrics.length > 0 ? (
-                  <div
-                    ref={lyricsContainerRef}
-                    className="bg-zinc-800/30 rounded-lg p-4 h-full overflow-y-auto scroll-smooth"
-                    style={{ maxHeight: "calc(100vh - 200px)" }}
-                  >
-                    <div className="space-y-3 pb-32">
-                      {syncedLyrics.map((line, index) => (
-                        <div
-                          key={index}
-                          data-index={index}
-                          className={`text-sm leading-relaxed transition-all duration-300 py-1 ${
-                            index === currentLyricIndex
-                              ? "text-green-400 font-semibold text-lg scale-105"
-                              : index < currentLyricIndex
-                              ? "text-zinc-500"
-                              : "text-zinc-300"
-                          }`}
-                        >
-                          {line.text}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    className="bg-zinc-800/30 rounded-lg p-4 h-full overflow-y-auto"
-                    style={{ maxHeight: "calc(100vh - 200px)" }}
-                  >
-                    <pre className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap font-sans">
-                      {lyrics}
-                    </pre>
-                  </div>
-                )}
-              </div>
-            </SheetContent>
-          </Sheet>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 hidden lg:flex transition-all"
-            onClick={handleQueueClick}
-          >
-            <List className="h-4 w-4" />
-          </Button>
+            </>
+          )}
 
           <Button
             variant="ghost"
