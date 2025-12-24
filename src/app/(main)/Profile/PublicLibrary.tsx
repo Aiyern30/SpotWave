@@ -227,7 +227,8 @@ const PublicLibrary = () => {
                             <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0 group/image">
                               <Image
                                 src={
-                                  playlist.images?.[0]?.url || "/placeholder.svg"
+                                  playlist.images?.[0]?.url ||
+                                  "/placeholder.svg"
                                 }
                                 width={48}
                                 height={48}
@@ -245,9 +246,15 @@ const PublicLibrary = () => {
                                   }}
                                 >
                                   {isThisPlaylist && isPlaying ? (
-                                    <Pause className="h-3 w-3 sm:h-4 sm:w-4" fill="currentColor" />
+                                    <Pause
+                                      className="h-3 w-3 sm:h-4 sm:w-4"
+                                      fill="currentColor"
+                                    />
                                   ) : (
-                                    <Play className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5" fill="currentColor" />
+                                    <Play
+                                      className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5"
+                                      fill="currentColor"
+                                    />
                                   )}
                                 </Button>
                               </div>
