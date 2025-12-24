@@ -218,9 +218,7 @@ const AlbumsIDPage = () => {
                 <Disc3 className="w-3 h-3 mr-1" />
                 {album.album_type}
               </Badge>
-              <h1 className="text-4xl md:text-6xl font-bold">
-                {album.name}
-              </h1>
+              <h1 className="text-4xl md:text-6xl font-bold">{album.name}</h1>
             </div>
 
             <div className="flex flex-wrap justify-center md:justify-start gap-4 text-zinc-300">
@@ -241,9 +239,7 @@ const AlbumsIDPage = () => {
                     <Button
                       variant="link"
                       className="text-white hover:text-green-400 p-0 h-auto font-medium text-lg transition-colors"
-                      onClick={() =>
-                        handleArtistClick(artist.id, artist.name)
-                      }
+                      onClick={() => handleArtistClick(artist.id, artist.name)}
                     >
                       {artist.name}
                     </Button>
@@ -298,9 +294,13 @@ const AlbumsIDPage = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="border-zinc-800 hover:bg-transparent">
-                    <TableHead className="w-12 text-center text-zinc-400">#</TableHead>
+                    <TableHead className="w-12 text-center text-zinc-400">
+                      #
+                    </TableHead>
                     <TableHead className="text-zinc-400">Title</TableHead>
-                    <TableHead className="hidden lg:table-cell text-center text-zinc-400">Action</TableHead>
+                    <TableHead className="hidden lg:table-cell text-center text-zinc-400">
+                      Action
+                    </TableHead>
                     <TableHead className="hidden md:table-cell text-right text-zinc-400">
                       <Clock className="w-4 h-4 ml-auto" />
                     </TableHead>
@@ -422,9 +422,7 @@ const AlbumsIDPage = () => {
                   className="group bg-zinc-900/50 border-zinc-800 hover:bg-zinc-800/50 transition-all duration-300 cursor-pointer relative overflow-hidden"
                   onClick={() =>
                     router.push(
-                      `/Songs/${item.id}?name=${encodeURIComponent(
-                        item.name
-                      )}`
+                      `/Songs/${item.id}?name=${encodeURIComponent(item.name)}`
                     )
                   }
                 >
