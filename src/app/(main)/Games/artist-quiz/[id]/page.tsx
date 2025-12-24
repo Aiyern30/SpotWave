@@ -14,6 +14,7 @@ import {
   HelpCircle,
   Loader2,
   Music,
+  Lightbulb,
 } from "lucide-react";
 import { Button, Input, Card, CardContent, Badge } from "@/components/ui";
 import { fetchArtistTopTracks } from "@/utils/Tracks/fetchArtistTopTracks";
@@ -27,6 +28,19 @@ const normalizeString = (str: string) => {
     .replace(/-.*$/g, "") // Remove content after hyphen e.g. - Remastered
     .replace(/[^a-z0-9]/g, "") // Remove non-alphanumeric
     .trim();
+};
+
+const maskText = (text: string) => {
+  return text
+    .split(" ")
+    .map((word) => {
+      // Keep first letter, replace rest with *
+      // If word is short (1-2 chars), keep it fully or just mask 2nd char?
+      // Let's simple: first char + * for rest
+      if (word.length <= 1) return word;
+      return word[0] + "*".repeat(word.length - 1);
+    })
+    .join(" ");
 };
 
 const ArtistQuizGame = () => {
@@ -54,6 +68,7 @@ const ArtistQuizGame = () => {
   const [guess, setGuess] = useState("");
   const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [showHint, setShowHint] = useState(false);
 
   // Game state
   const [gameTracks, setGameTracks] = useState<any[]>([]);
@@ -123,6 +138,7 @@ const ArtistQuizGame = () => {
       setGuess("");
       setFeedback(null);
       setShowAnswer(false);
+      setShowHint(false);
     }
   };
 
@@ -380,6 +396,30 @@ const ArtistQuizGame = () => {
               </div>
             ) : (
               <div className="w-full space-y-4">
+                {/* Hint Button & Display */}
+                <div className="flex flex-col items-center gap-2">
+                  {!showHint ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-zinc-400 hover:text-yellow-400 transition-colors"
+                      onClick={() => setShowHint(true)}
+                    >
+                      <Lightbulb className="w-4 h-4 mr-2" />
+                      Need a Hint?
+                    </Button>
+                  ) : (
+                    <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 px-4 py-2 rounded-lg text-sm font-medium animate-in fade-in slide-in-from-bottom-2 duration-300 flex items-center">
+                      <Lightbulb className="w-4 h-4 mr-2 fill-yellow-500" />
+                      {currentTrack.album.name === currentTrack.name
+                        ? `Released in ${
+                            currentTrack.album.release_date.split("-")[0]
+                          }`
+                        : `Album: ${maskText(currentTrack.album.name)}`}
+                    </div>
+                  )}
+                </div>
+
                 <div className="relative">
                   <Input
                     autoFocus
