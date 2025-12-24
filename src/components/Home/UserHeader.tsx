@@ -79,10 +79,12 @@ export default function UserHeader({
   const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
   const [aiSummary, setAiSummary] = useState<any>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [inputWidth, setInputWidth] = useState<number>(0);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const hiddenSpanRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -121,6 +123,14 @@ export default function UserHeader({
         .finally(() => setSummaryLoading(false));
     }
   }, [summaryDialogOpen, aiSummary, playlist.tracks.items, token]);
+
+  // Calculate input width based on text content
+  useEffect(() => {
+    if (hiddenSpanRef.current) {
+      const width = hiddenSpanRef.current.offsetWidth;
+      setInputWidth(Math.max(width + 40, 200)); // Add padding and set minimum width
+    }
+  }, [inputValue, nameEditing]);
 
   const updatePlaylistDetails = async () => {
     if (!id || !playlist.id || !token) return;
@@ -312,6 +322,15 @@ export default function UserHeader({
 
   return (
     <div className="space-y-6">
+      {/* Hidden span for measuring text width */}
+      <span
+        ref={hiddenSpanRef}
+        className="absolute opacity-0 pointer-events-none text-4xl lg:text-6xl font-bold whitespace-nowrap"
+        aria-hidden="true"
+      >
+        {inputValue}
+      </span>
+
       {/* Enhanced Playlist Header */}
       <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-zinc-900/90 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm border border-zinc-800/50">
         {/* Background Pattern */}
@@ -455,7 +474,7 @@ export default function UserHeader({
               {/* Enhanced Editable Title */}
               <div className="relative">
                 {nameEditing ? (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center justify-center lg:justify-start space-x-2">
                     <Input
                       ref={nameInputRef}
                       type="text"
@@ -464,10 +483,11 @@ export default function UserHeader({
                       onKeyDown={(e: React.KeyboardEvent<Element>) =>
                         handleKeyPress(e, "name")
                       }
-                      className="text-4xl lg:text-6xl font-bold bg-transparent border-2 border-green-500/50 focus:border-green-500 text-white p-2 rounded-lg"
+                      style={{ width: `${inputWidth}px` }}
+                      className="text-4xl lg:text-6xl font-bold bg-transparent border-2 border-green-500/50 focus:border-green-500 text-white p-2 rounded-lg transition-all"
                       disabled={updating}
                     />
-                    <div className="flex space-x-1">
+                    <div className="flex space-x-1 flex-shrink-0">
                       <Button
                         size="sm"
                         onClick={() => {
@@ -497,7 +517,7 @@ export default function UserHeader({
                     </div>
                   </div>
                 ) : (
-                  <div className="group flex items-center space-x-3">
+                  <div className="group flex items-center justify-center lg:justify-start space-x-3">
                     <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight">
                       {inputValue}
                     </h1>
@@ -509,7 +529,7 @@ export default function UserHeader({
                               variant="ghost"
                               size="sm"
                               onClick={() => setNameEditing(true)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-white hover:bg-zinc-800/50 flex-shrink-0"
                             >
                               <Edit3 className="h-4 w-4" />
                             </Button>

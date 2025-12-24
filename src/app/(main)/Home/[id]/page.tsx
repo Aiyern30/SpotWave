@@ -495,7 +495,8 @@ const PlaylistPage = () => {
                                   >
                                     {artist.name}
                                   </button>
-                                  {artistIndex < track.artists.length - 1 && ", "}
+                                  {artistIndex < track.artists.length - 1 &&
+                                    ", "}
                                 </span>
                               ))}
                             </div>
@@ -517,7 +518,9 @@ const PlaylistPage = () => {
 
                       <TableCell className="hidden md:table-cell py-3 sm:py-4">
                         <span className="text-zinc-400 text-sm">
-                          {new Date(playlistTrack.added_at).toLocaleDateString()}
+                          {new Date(
+                            playlistTrack.added_at
+                          ).toLocaleDateString()}
                         </span>
                       </TableCell>
 
