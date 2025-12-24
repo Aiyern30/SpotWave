@@ -1,6 +1,5 @@
 "use client";
 
-import Sidebar from "@/components/Sidebar";
 import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -407,475 +406,450 @@ const ArtistProfilePage = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-black">
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen((prev) => !prev)}
-      />
-      <div
-        className={`flex-1 transition-all ml-16 duration-300 text-white ${
-          sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
-        }`}
-      >
-        <div className="p-4 space-y-6 overflow-auto">
-          <Header />
+    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8 overflow-auto">
+      <Header />
 
-          {artistProfile ? (
-            <div className="space-y-8">
-              {/* Artist Header */}
-              <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-lg p-8">
-                <Avatar className="flex-shrink-0">
-                  <AvatarImage
-                    src={artistProfile.images[0]?.url || "/default-artist.png"}
-                    className="w-48 h-48 rounded-full object-cover shadow-2xl"
-                  />
-                  <AvatarFallback className="w-48 h-48 rounded-full bg-zinc-700 text-white text-4xl flex items-center justify-center">
-                    {artistProfile.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
+      {artistProfile ? (
+        <div className="space-y-8">
+          {/* Artist Header */}
+          <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-lg p-8">
+            <Avatar className="flex-shrink-0">
+              <AvatarImage
+                src={artistProfile.images[0]?.url || "/default-artist.png"}
+                className="w-48 h-48 rounded-full object-cover shadow-2xl"
+              />
+              <AvatarFallback className="w-48 h-48 rounded-full bg-zinc-700 text-white text-4xl flex items-center justify-center">
+                {artistProfile.name.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
 
-                <div className="flex-1 text-center md:text-left space-y-4">
-                  <h1 className="text-4xl md:text-6xl font-bold">
-                    {artistProfile.name}
-                  </h1>
+            <div className="flex-1 text-center md:text-left space-y-4">
+              <h1 className="text-4xl md:text-6xl font-bold">
+                {artistProfile.name}
+              </h1>
 
-                  <div className="flex flex-wrap justify-center md:justify-start gap-4 text-zinc-300">
-                    <div className="flex items-center space-x-2">
-                      <Users className="h-4 w-4" />
-                      <span>
-                        {artistProfile.followers.total.toLocaleString()}{" "}
-                        followers
-                      </span>
-                    </div>
-                    {artistProfile.genres.length > 0 && (
-                      <div className="flex items-center space-x-2">
-                        <Music className="h-4 w-4" />
-                        <span>
-                          {artistProfile.genres.slice(0, 3).join(", ")}
-                        </span>
-                      </div>
-                    )}
+              <div className="flex flex-wrap justify-center md:justify-start gap-4 text-zinc-300">
+                <div className="flex items-center space-x-2">
+                  <Users className="h-4 w-4" />
+                  <span>
+                    {artistProfile.followers.total.toLocaleString()} followers
+                  </span>
+                </div>
+                {artistProfile.genres.length > 0 && (
+                  <div className="flex items-center space-x-2">
+                    <Music className="h-4 w-4" />
+                    <span>{artistProfile.genres.slice(0, 3).join(", ")}</span>
                   </div>
+                )}
+              </div>
 
-                  <div className="flex justify-center md:justify-start">
-                    {isFollowing ? (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="bg-transparent border-white text-white hover:bg-white hover:text-black"
-                          >
-                            Following
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="bg-zinc-900 border-zinc-700">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="text-white">
-                              Are you absolutely sure?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription className="text-zinc-400">
-                              This action cannot be undone. This will
-                              permanently unfollow this artist.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel className="bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700">
-                              Cancel
-                            </AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => {
-                                handleUnfollowArtist(artistProfile.id);
-                                setIsFollowing(false);
-                              }}
-                              className="bg-red-600 hover:bg-red-700"
-                            >
-                              Unfollow
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    ) : (
+              <div className="flex justify-center md:justify-start">
+                {isFollowing ? (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
                       <Button
-                        onClick={() => {
-                          handleFollowArtist(artistProfile.id);
-                          setIsFollowing(true);
-                        }}
-                        className="bg-green-500 hover:bg-green-600 text-black font-semibold"
+                        variant="outline"
+                        className="bg-transparent border-white text-white hover:bg-white hover:text-black"
                       >
-                        Follow
+                        Following
                       </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Top Tracks Section */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-3xl font-bold">Top Tracks</h2>
-                  <div className="flex items-center space-x-3">
-                    <PiTable
-                      size={35}
-                      onClick={() => setTracksDisplayUI("Table")}
-                      className={`cursor-pointer transition-colors ${
-                        tracksDisplayUI === "Table"
-                          ? "text-white"
-                          : "text-[#707070] hover:text-white"
-                      }`}
-                    />
-                    <LuLayoutGrid
-                      size={30}
-                      onClick={() => setTracksDisplayUI("Grid")}
-                      className={`cursor-pointer transition-colors ${
-                        tracksDisplayUI === "Grid"
-                          ? "text-white"
-                          : "text-[#707070] hover:text-white"
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                {tracksDisplayUI === "Table" ? (
-                  <div className="bg-zinc-900/30 rounded-lg border border-zinc-800/50">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
-                          <TableHead className="w-[60px] text-center text-zinc-400 font-medium">
-                            #
-                          </TableHead>
-                          <TableHead className="text-zinc-400 font-medium">
-                            Title
-                          </TableHead>
-                          <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
-                            Album
-                          </TableHead>
-                          <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium">
-                            Duration
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {topTracks.map((track, index) => (
-                          <TableRow
-                            key={track.id}
-                            className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors group cursor-pointer"
-                            onClick={() =>
-                              handleSongClick(track.id, track.name)
-                            }
-                            onMouseEnter={() => setHoveredTrackId(track.id)}
-                            onMouseLeave={() => setHoveredTrackId(null)}
-                          >
-                            <TableCell className="text-center">
-                              <span className="text-zinc-400 text-sm">
-                                {index + 1}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center space-x-3">
-                                <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0 group/image">
-                                  <Image
-                                    src={
-                                      track.album.images[0]?.url ||
-                                      "/default-artist.png"
-                                    }
-                                    width={48}
-                                    height={48}
-                                    className="object-cover"
-                                    alt={track.name}
-                                  />
-                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handlePlayTrack(track);
-                                      }}
-                                    >
-                                      <Play
-                                        className="h-4 w-4 ml-0.5"
-                                        fill="currentColor"
-                                      />
-                                    </Button>
-                                  </div>
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="text-white font-medium truncate hover:text-green-400 transition-colors">
-                                    {track.name}
-                                  </div>
-                                  <div className="text-zinc-400 text-sm truncate">
-                                    <span
-                                      className="hover:underline hover:text-white transition-colors cursor-pointer"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleArtistClick(
-                                          artistProfile.id,
-                                          artistProfile.name
-                                        );
-                                      }}
-                                    >
-                                      {artistProfile.name}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              <div
-                                className="text-zinc-400 hover:text-white hover:underline cursor-pointer truncate"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleAlbumClick(
-                                    track.album.id,
-                                    track.album.name
-                                  );
-                                }}
-                              >
-                                {track.album.name}
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell text-right">
-                              <span className="text-zinc-400 text-sm">
-                                {formatSongDuration(track.duration_ms)}
-                              </span>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
-                    {topTracks.map((track) => (
-                      <PlaylistCard
-                        key={track.id}
-                        id={track.id}
-                        image={
-                          track.album.images[0]?.url || "/default-artist.png"
-                        }
-                        title={track.name}
-                        description={artistProfile.name}
-                        onPlay={() => handlePlayTrack(track)}
-                        onClick={(id, name) => handleSongClick(id, name)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Albums Section */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-3xl font-bold">Albums</h2>
-                  <div className="flex items-center space-x-3">
-                    <PiTable
-                      size={35}
-                      onClick={() => setAlbumsDisplayUI("Table")}
-                      className={`cursor-pointer transition-colors ${
-                        albumsDisplayUI === "Table"
-                          ? "text-white"
-                          : "text-[#707070] hover:text-white"
-                      }`}
-                    />
-                    <LuLayoutGrid
-                      size={30}
-                      onClick={() => setAlbumsDisplayUI("Grid")}
-                      className={`cursor-pointer transition-colors ${
-                        albumsDisplayUI === "Grid"
-                          ? "text-white"
-                          : "text-[#707070] hover:text-white"
-                      }`}
-                    />
-                  </div>
-                </div>
-
-                {albumsDisplayUI === "Table" ? (
-                  <div className="bg-zinc-900/30 rounded-lg border border-zinc-800/50">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
-                          <TableHead className="text-zinc-400 font-medium">
-                            Album
-                          </TableHead>
-                          <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
-                            Type
-                          </TableHead>
-                          <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
-                            Release Date
-                          </TableHead>
-                          <TableHead className="hidden lg:table-cell text-right text-zinc-400 font-medium">
-                            Tracks
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {albums.map((album) => (
-                          <TableRow
-                            key={album.id}
-                            className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer"
-                            onClick={() =>
-                              handleAlbumClick(album.id, album.name)
-                            }
-                          >
-                            <TableCell>
-                              <div className="flex items-center space-x-3">
-                                <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
-                                  <Image
-                                    src={
-                                      album.images[0]?.url ||
-                                      "/default-artist.png"
-                                    }
-                                    width={48}
-                                    height={48}
-                                    className="object-cover"
-                                    alt={album.name}
-                                  />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="text-white font-medium truncate hover:text-green-400 transition-colors">
-                                    {album.name}
-                                  </div>
-                                  <div className="text-zinc-400 text-sm truncate">
-                                    <span
-                                      className="hover:underline hover:text-white transition-colors cursor-pointer"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleArtistClick(
-                                          artistProfile.id,
-                                          artistProfile.name
-                                        );
-                                      }}
-                                    >
-                                      {artistProfile.name}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              <span className="text-zinc-400 capitalize">
-                                {album.album_type}
-                              </span>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">
-                              <span className="text-zinc-400">
-                                {album.release_date}
-                              </span>
-                            </TableCell>
-                            <TableCell className="hidden lg:table-cell text-right">
-                              <span className="text-zinc-400 text-sm">
-                                {album.total_tracks} tracks
-                              </span>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
-                    {albums.map((album) => (
-                      <PlaylistCard
-                        key={album.id}
-                        id={album.id}
-                        image={album.images[0]?.url || "/default-artist.png"}
-                        title={album.name}
-                        description={`${album.release_date.split("-")[0]} • ${
-                          album.total_tracks
-                        } tracks`}
-                        onPlay={() => handlePlayAlbum(album.id)}
-                        onClick={(id, name) => handleAlbumClick(id, name)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* About Section */}
-              {artistDetails?.bio.content && (
-                <div className="space-y-4">
-                  <h2 className="text-3xl font-bold">About</h2>
-                  <div className="bg-zinc-900/30 rounded-lg p-6 border border-zinc-800/50">
-                    <div className="text-zinc-300 leading-relaxed max-w-none prose prose-invert">
-                      {parse(sanitizedBio, { replace: transform })}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Similar Artists Section */}
-              {artistDetails?.similar.artist.length !== 0 && (
-                <div className="space-y-4">
-                  <h3 className="text-2xl font-semibold">Similar Artists</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {artistDetails?.similar.artist.map((similarArtist) => (
-                      <TooltipProvider key={similarArtist.id}>
-                        <div
-                          className="flex flex-col items-center p-4 rounded-lg bg-zinc-900/30 hover:bg-zinc-800/50 transition-all duration-300 cursor-pointer group"
-                          onClick={() =>
-                            handleArtistClick(
-                              similarArtist.id,
-                              similarArtist.name
-                            )
-                          }
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="bg-zinc-900 border-zinc-700">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-white">
+                          Are you absolutely sure?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-zinc-400">
+                          This action cannot be undone. This will permanently
+                          unfollow this artist.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel className="bg-zinc-800 border-zinc-700 text-white hover:bg-zinc-700">
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            handleUnfollowArtist(artistProfile.id);
+                            setIsFollowing(false);
+                          }}
+                          className="bg-red-600 hover:bg-red-700"
                         >
-                          <Avatar className="w-20 h-20 mb-3">
-                            <AvatarImage
-                              src={similarArtist.image || "/default-artist.png"}
-                              className="rounded-full object-cover"
-                            />
-                            <AvatarFallback className="bg-zinc-700 text-white rounded-full">
-                              {similarArtist.name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="text-center text-sm font-medium text-white group-hover:text-green-400 transition-colors line-clamp-2">
-                                {similarArtist.name}
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>{similarArtist.name}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                      </TooltipProvider>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-8">
-              {/* Loading Skeleton */}
-              <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-lg p-8">
-                <Skeleton className="w-48 h-48 rounded-full" />
-                <div className="flex-1 space-y-4">
-                  <Skeleton className="h-12 w-64" />
-                  <Skeleton className="h-6 w-48" />
-                  <Skeleton className="h-10 w-32" />
-                </div>
+                          Unfollow
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                ) : (
+                  <Button
+                    onClick={() => {
+                      handleFollowArtist(artistProfile.id);
+                      setIsFollowing(true);
+                    }}
+                    className="bg-green-500 hover:bg-green-600 text-black font-semibold"
+                  >
+                    Follow
+                  </Button>
+                )}
               </div>
+            </div>
+          </div>
 
-              <div className="space-y-4">
-                <Skeleton className="h-8 w-48" />
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5">
-                  {Array(6)
-                    .fill(0)
-                    .map((_, index) => (
-                      <div key={index} className="space-y-3">
-                        <Skeleton className="w-[200px] h-[170px] rounded-lg" />
-                        <Skeleton className="h-5 w-36" />
-                        <Skeleton className="h-4 w-24" />
-                      </div>
+          {/* Top Tracks Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-3xl font-bold">Top Tracks</h2>
+              <div className="flex items-center space-x-3">
+                <PiTable
+                  size={35}
+                  onClick={() => setTracksDisplayUI("Table")}
+                  className={`cursor-pointer transition-colors ${
+                    tracksDisplayUI === "Table"
+                      ? "text-white"
+                      : "text-[#707070] hover:text-white"
+                  }`}
+                />
+                <LuLayoutGrid
+                  size={30}
+                  onClick={() => setTracksDisplayUI("Grid")}
+                  className={`cursor-pointer transition-colors ${
+                    tracksDisplayUI === "Grid"
+                      ? "text-white"
+                      : "text-[#707070] hover:text-white"
+                  }`}
+                />
+              </div>
+            </div>
+
+            {tracksDisplayUI === "Table" ? (
+              <div className="bg-zinc-900/30 rounded-lg border border-zinc-800/50">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
+                      <TableHead className="w-[60px] text-center text-zinc-400 font-medium">
+                        #
+                      </TableHead>
+                      <TableHead className="text-zinc-400 font-medium">
+                        Title
+                      </TableHead>
+                      <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
+                        Album
+                      </TableHead>
+                      <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium">
+                        Duration
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {topTracks.map((track, index) => (
+                      <TableRow
+                        key={track.id}
+                        className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors group cursor-pointer"
+                        onClick={() => handleSongClick(track.id, track.name)}
+                        onMouseEnter={() => setHoveredTrackId(track.id)}
+                        onMouseLeave={() => setHoveredTrackId(null)}
+                      >
+                        <TableCell className="text-center">
+                          <span className="text-zinc-400 text-sm">
+                            {index + 1}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-3">
+                            <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0 group/image">
+                              <Image
+                                src={
+                                  track.album.images[0]?.url ||
+                                  "/default-artist.png"
+                                }
+                                width={48}
+                                height={48}
+                                className="object-cover"
+                                alt={track.name}
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePlayTrack(track);
+                                  }}
+                                >
+                                  <Play
+                                    className="h-4 w-4 ml-0.5"
+                                    fill="currentColor"
+                                  />
+                                </Button>
+                              </div>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-white font-medium truncate hover:text-green-400 transition-colors">
+                                {track.name}
+                              </div>
+                              <div className="text-zinc-400 text-sm truncate">
+                                <span
+                                  className="hover:underline hover:text-white transition-colors cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleArtistClick(
+                                      artistProfile.id,
+                                      artistProfile.name
+                                    );
+                                  }}
+                                >
+                                  {artistProfile.name}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <div
+                            className="text-zinc-400 hover:text-white hover:underline cursor-pointer truncate"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAlbumClick(
+                                track.album.id,
+                                track.album.name
+                              );
+                            }}
+                          >
+                            {track.album.name}
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-right">
+                          <span className="text-zinc-400 text-sm">
+                            {formatSongDuration(track.duration_ms)}
+                          </span>
+                        </TableCell>
+                      </TableRow>
                     ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+                {topTracks.map((track) => (
+                  <PlaylistCard
+                    key={track.id}
+                    id={track.id}
+                    image={track.album.images[0]?.url || "/default-artist.png"}
+                    title={track.name}
+                    description={artistProfile.name}
+                    onPlay={() => handlePlayTrack(track)}
+                    onClick={(id, name) => handleSongClick(id, name)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Albums Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-3xl font-bold">Albums</h2>
+              <div className="flex items-center space-x-3">
+                <PiTable
+                  size={35}
+                  onClick={() => setAlbumsDisplayUI("Table")}
+                  className={`cursor-pointer transition-colors ${
+                    albumsDisplayUI === "Table"
+                      ? "text-white"
+                      : "text-[#707070] hover:text-white"
+                  }`}
+                />
+                <LuLayoutGrid
+                  size={30}
+                  onClick={() => setAlbumsDisplayUI("Grid")}
+                  className={`cursor-pointer transition-colors ${
+                    albumsDisplayUI === "Grid"
+                      ? "text-white"
+                      : "text-[#707070] hover:text-white"
+                  }`}
+                />
+              </div>
+            </div>
+
+            {albumsDisplayUI === "Table" ? (
+              <div className="bg-zinc-900/30 rounded-lg border border-zinc-800/50">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
+                      <TableHead className="text-zinc-400 font-medium">
+                        Album
+                      </TableHead>
+                      <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
+                        Type
+                      </TableHead>
+                      <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
+                        Release Date
+                      </TableHead>
+                      <TableHead className="hidden lg:table-cell text-right text-zinc-400 font-medium">
+                        Tracks
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {albums.map((album) => (
+                      <TableRow
+                        key={album.id}
+                        className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer"
+                        onClick={() => handleAlbumClick(album.id, album.name)}
+                      >
+                        <TableCell>
+                          <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
+                              <Image
+                                src={
+                                  album.images[0]?.url || "/default-artist.png"
+                                }
+                                width={48}
+                                height={48}
+                                className="object-cover"
+                                alt={album.name}
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-white font-medium truncate hover:text-green-400 transition-colors">
+                                {album.name}
+                              </div>
+                              <div className="text-zinc-400 text-sm truncate">
+                                <span
+                                  className="hover:underline hover:text-white transition-colors cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleArtistClick(
+                                      artistProfile.id,
+                                      artistProfile.name
+                                    );
+                                  }}
+                                >
+                                  {artistProfile.name}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <span className="text-zinc-400 capitalize">
+                            {album.album_type}
+                          </span>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <span className="text-zinc-400">
+                            {album.release_date}
+                          </span>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-right">
+                          <span className="text-zinc-400 text-sm">
+                            {album.total_tracks} tracks
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+                {albums.map((album) => (
+                  <PlaylistCard
+                    key={album.id}
+                    id={album.id}
+                    image={album.images[0]?.url || "/default-artist.png"}
+                    title={album.name}
+                    description={`${album.release_date.split("-")[0]} • ${
+                      album.total_tracks
+                    } tracks`}
+                    onPlay={() => handlePlayAlbum(album.id)}
+                    onClick={(id, name) => handleAlbumClick(id, name)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* About Section */}
+          {artistDetails?.bio.content && (
+            <div className="space-y-4">
+              <h2 className="text-3xl font-bold">About</h2>
+              <div className="bg-zinc-900/30 rounded-lg p-6 border border-zinc-800/50">
+                <div className="text-zinc-300 leading-relaxed max-w-none prose prose-invert">
+                  {parse(sanitizedBio, { replace: transform })}
                 </div>
               </div>
             </div>
           )}
+
+          {/* Similar Artists Section */}
+          {artistDetails?.similar.artist.length !== 0 && (
+            <div className="space-y-4">
+              <h3 className="text-2xl font-semibold">Similar Artists</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {artistDetails?.similar.artist.map((similarArtist) => (
+                  <TooltipProvider key={similarArtist.id}>
+                    <div
+                      className="flex flex-col items-center p-4 rounded-lg bg-zinc-900/30 hover:bg-zinc-800/50 transition-all duration-300 cursor-pointer group"
+                      onClick={() =>
+                        handleArtistClick(similarArtist.id, similarArtist.name)
+                      }
+                    >
+                      <Avatar className="w-20 h-20 mb-3">
+                        <AvatarImage
+                          src={similarArtist.image || "/default-artist.png"}
+                          className="rounded-full object-cover"
+                        />
+                        <AvatarFallback className="bg-zinc-700 text-white rounded-full">
+                          {similarArtist.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="text-center text-sm font-medium text-white group-hover:text-green-400 transition-colors line-clamp-2">
+                            {similarArtist.name}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{similarArtist.name}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </TooltipProvider>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      ) : (
+        <div className="space-y-8">
+          {/* Loading Skeleton */}
+          <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-lg p-8">
+            <Skeleton className="w-48 h-48 rounded-full" />
+            <div className="flex-1 space-y-4">
+              <Skeleton className="h-12 w-64" />
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-10 w-32" />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-48" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5">
+              {Array(6)
+                .fill(0)
+                .map((_, index) => (
+                  <div key={index} className="space-y-3">
+                    <Skeleton className="w-[200px] h-[170px] rounded-lg" />
+                    <Skeleton className="h-5 w-36" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
