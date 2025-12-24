@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   ArrowLeft,
   Play,
@@ -130,14 +131,20 @@ const ArtistQuizGame = () => {
 
   const progressPercentage = (currentTrackIndex / gameTracks.length) * 100;
 
-  // Determine if the current song is playing based on global state
-  const isCurrentSongPlaying =
-    isGlobalPlaying && globalTrack?.id === currentTrack?.id;
+  // Determine if the current song is currently playing in the global player
+  const isCurrentTrackLoaded = globalTrack?.id === currentTrack?.id;
+  const isCurrentSongPlaying = isGlobalPlaying && isCurrentTrackLoaded;
 
   const togglePlayback = () => {
-    if (isCurrentSongPlaying) {
-      pauseTrack();
+    if (isCurrentTrackLoaded) {
+      // If loaded, toggle play/pause
+      if (isGlobalPlaying) {
+        pauseTrack();
+      } else {
+        resumeTrack();
+      }
     } else {
+      // If not loaded or different track, play from start
       playTrack(currentTrack);
     }
   };
@@ -246,23 +253,47 @@ const ArtistQuizGame = () => {
 
         <CardContent className="p-8 md:p-12 flex flex-col items-center space-y-10">
           {/* Visualizer / Icon */}
+          {/* Visualizer / Album Art */}
           <div
-            className={`relative w-48 h-48 rounded-full flex items-center justify-center transition-all duration-500 ${
+            className={`relative w-48 h-48 rounded-full flex items-center justify-center overflow-hidden border-4 ${
               isCurrentSongPlaying
-                ? "bg-green-500/10 scale-105"
-                : "bg-zinc-800/50"
-            }`}
+                ? "border-green-500 scale-105"
+                : "border-zinc-700"
+            } transition-all duration-500 shadow-2xl`}
           >
-            <div
-              className={`absolute inset-0 rounded-full border-4 border-green-500/20 ${
-                isCurrentSongPlaying ? "animate-ping opacity-20" : "opacity-0"
-              }`}
-            />
-            {isCurrentSongPlaying ? (
-              <Volume2 className="w-20 h-20 text-green-500 animate-pulse" />
+            {/* Album Art */}
+            {currentTrack?.album?.images?.[0]?.url ? (
+              <div
+                className={`relative w-full h-full ${
+                  !showAnswer ? "blur-xl scale-125" : ""
+                } transition-all duration-700`}
+              >
+                <Image
+                  src={currentTrack.album.images[0].url}
+                  alt="Album Art"
+                  fill
+                  className="object-cover"
+                />
+              </div>
             ) : (
-              <Music className="w-20 h-20 text-zinc-600" />
+              <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                <Music className="w-20 h-20 text-zinc-600" />
+              </div>
             )}
+
+            {/* Play/Pause Overlay Icon for better UX */}
+            <div
+              className={`absolute inset-0 flex items-center justify-center z-10 ${
+                showAnswer ? "bg-black/20" : "bg-black/10"
+              }`}
+            >
+              {!showAnswer &&
+                (isCurrentSongPlaying ? (
+                  <div className="bg-black/40 p-3 rounded-full backdrop-blur-sm">
+                    <Volume2 className="w-8 h-8 text-green-500 animate-pulse" />
+                  </div>
+                ) : null)}
+            </div>
           </div>
 
           {/* Controls */}
@@ -337,8 +368,8 @@ const ArtistQuizGame = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <Button
-                    variant="outline"
-                    className="h-12 border-zinc-700 hover:bg-zinc-800 text-zinc-300"
+                    variant="destructive"
+                    className="h-12 "
                     onClick={handleGiveUp}
                   >
                     <HelpCircle className="w-4 h-4 mr-2" /> Give Up
