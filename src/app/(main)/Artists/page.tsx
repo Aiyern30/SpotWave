@@ -33,7 +33,7 @@ import {
 import { useRouter } from "next/navigation";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
-import { Play, MoreHorizontal } from "lucide-react";
+import { Play, MoreHorizontal, Pause } from "lucide-react";
 import type {
   ArtistsResponseLASTFM,
   DisplayUIProps,
@@ -282,6 +282,29 @@ const Page = () => {
     </div>
   );
 
+  const handlePlayPauseArtist = useCallback(
+    async (artistId: string) => {
+      // Check if this artist's music is currently playing
+      if (currentArtistId === artistId) {
+        // Same artist - toggle play/pause
+        if (isPlaying) {
+          pauseTrack();
+        } else {
+          resumeTrack();
+        }
+      } else {
+        // Different artist - play their top track
+        await handlePlayArtist(artistId);
+      }
+    },
+    [currentArtistId, isPlaying, pauseTrack, resumeTrack, handlePlayArtist]
+  );
+
+  // Helper function to check if artist is currently playing
+  const isArtistPlaying = (artistId: string) => {
+    return currentArtistId === artistId && isPlaying;
+  };
+
   return (
     <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8">
       <Header />
@@ -381,7 +404,11 @@ const Page = () => {
                             className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
                           >
                             <TableCell className="text-center py-3 sm:py-4">
-                              <span className="text-zinc-400 text-xs sm:text-sm font-medium">
+                              <span
+                                className={`text-xs sm:text-sm font-medium ${
+                                  isThisArtist ? "text-green-400" : "text-zinc-400"
+                                }`}
+                              >
                                 {index + 1}
                               </span>
                             </TableCell>
@@ -405,18 +432,31 @@ const Page = () => {
                                       className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        handlePlayArtist(artist.id);
+                                        handlePlayPauseArtist(artist.id);
                                       }}
                                     >
-                                      <Play
-                                        className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5"
-                                        fill="currentColor"
-                                      />
+                                      {isArtistPlaying(artist.id) ? (
+                                        <Pause
+                                          className="h-3 w-3 sm:h-4 sm:w-4"
+                                          fill="currentColor"
+                                        />
+                                      ) : (
+                                        <Play
+                                          className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5"
+                                          fill="currentColor"
+                                        />
+                                      )}
                                     </Button>
                                   </div>
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <div className="text-white font-medium truncate hover:text-green-400 transition-colors text-sm sm:text-base">
+                                  <div
+                                    className={`font-medium truncate transition-colors text-sm sm:text-base ${
+                                      isThisArtist
+                                        ? "text-green-400"
+                                        : "text-white hover:text-green-400"
+                                    }`}
+                                  >
                                     {artist.name}
                                   </div>
                                   <div className="text-zinc-400 text-xs sm:text-sm">
