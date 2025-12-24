@@ -417,7 +417,9 @@ const Page = () => {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 router.push(
-                                  `/Artists/${track.artist.id}?name=${encodeURIComponent(
+                                  `/Artists/${
+                                    track.artist.id
+                                  }?name=${encodeURIComponent(
                                     track.artist.name
                                   )}`
                                 );
