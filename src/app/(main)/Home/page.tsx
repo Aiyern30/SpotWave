@@ -40,7 +40,7 @@ const Page = () => {
   const [creating, setCreating] = useState<boolean>(false);
   const [imageError, setImageError] = useState<Record<string, boolean>>({});
   const router = useRouter();
-  const { playPlaylist } = usePlayer();
+  const { playPlaylist, pauseTrack, currentTrack, isPlaying } = usePlayer();
 
   const handleClick = (id: string, name: string) => {
     router.push(`/Home/${id}?name=${encodeURIComponent(name)}`);
@@ -178,7 +178,9 @@ const Page = () => {
                 image={playlist.image}
                 title={playlist.title}
                 description={playlist.description}
+                isPlaying={currentTrack?.album?.id === playlist.id && isPlaying}
                 onPlay={handlePlayPlaylist}
+                onPause={pauseTrack}
                 onClick={handleClick}
               />
             ))}
