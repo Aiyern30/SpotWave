@@ -42,6 +42,7 @@ import Image from "next/image";
 import { formatSongDuration } from "@/utils/function";
 import { fetchAlbumDetails } from "@/utils/fetchAlbumDetails";
 import type { Album } from "@/lib/types";
+import { usePlayer } from "@/contexts/PlayerContext";
 
 const itemsPerPage = 10;
 
@@ -50,6 +51,7 @@ const AlbumsIDPage = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { playTrack } = usePlayer();
 
   const segments = pathname.split("/");
   const id = segments[segments.length - 1];
@@ -128,21 +130,36 @@ const AlbumsIDPage = () => {
     fetchAndSetAlbum();
   }, [id, token]);
 
-  const playPreview = (url: string | null | undefined, trackId: string) => {
-    if (audio) {
-      audio.pause();
-      setPlayingTrack(null);
-    }
-
-    // Handle undefined by converting to null
-    const previewUrl = url ?? null;
-
-    if (previewUrl) {
-      const newAudio = new Audio(previewUrl);
-      setAudio(newAudio);
-      setPlayingTrack(trackId);
-      newAudio.play();
-      newAudio.onended = () => setPlayingTrack(null);
+  const handlePlayTrack = (item: any) => {
+    try {
+      playTrack({
+        id: item.id,
+        name: item.name,
+        artists: item.artists.map((artist: any) => ({
+          name: artist.name,
+          id: artist.id,
+        })),
+        album: {
+          name: item.album?.name || album?.name || "",
+          images: item.album?.images || album?.images || [],
+          id: item.album?.id || album?.id || "",
+          artists: item.artists,
+          release_date: item.album?.release_date || album?.release_date || "",
+          total_tracks: item.album?.total_tracks || album?.total_tracks || 0,
+        },
+        duration_ms: item.duration_ms,
+        explicit: item.explicit || false,
+        external_urls: {
+          spotify: `https://open.spotify.com/track/${item.id}`,
+        },
+        popularity: 0,
+        preview_url: item.preview_url || null,
+        track_number: item.track_number || 0,
+        disc_number: item.disc_number || 1,
+        uri: item.uri,
+      });
+    } catch (error) {
+      console.error("Error playing track:", error);
     }
   };
 
@@ -218,7 +235,9 @@ const AlbumsIDPage = () => {
                 <Disc3 className="w-3 h-3 mr-1" />
                 {album.album_type}
               </Badge>
-              <h1 className="text-4xl md:text-6xl font-bold">{album.name}</h1>
+              <h1 className="text-4xl md:text-6xl font-bold text-white">
+                {album.name}
+              </h1>
             </div>
 
             <div className="flex flex-wrap justify-center md:justify-start gap-4 text-zinc-300">
@@ -329,7 +348,7 @@ const AlbumsIDPage = () => {
                             className="w-8 h-8 p-0 rounded-full hover:bg-green-500 hover:text-black"
                             onClick={(e) => {
                               e.stopPropagation();
-                              playPreview(item.preview_url, item.id);
+                              handlePlayTrack(item);
                             }}
                           >
                             <Play className="w-3 h-3" fill="currentColor" />
@@ -449,7 +468,7 @@ const AlbumsIDPage = () => {
                           className="bg-green-500 hover:bg-green-400 text-black rounded-full w-12 h-12 p-0"
                           onClick={(e) => {
                             e.stopPropagation();
-                            playPreview(item.preview_url, item.id);
+                            handlePlayTrack(item);
                           }}
                         >
                           <Play className="w-5 h-5" fill="currentColor" />
