@@ -23,6 +23,11 @@ import {
   TableHeader,
   TableRow,
   Skeleton,
+  Badge,
+  Card,
+  CardHeader,
+  CardContent,
+  CardTitle,
 } from "@/components/ui";
 import {
   Tooltip,
@@ -39,7 +44,7 @@ import { fetchFollowedArtists } from "@/utils/Artist/fetchFollowedArtists";
 import type { Artist } from "@/lib/types";
 import parse from "html-react-parser";
 import DOMPurify from "dompurify";
-import { Play, MoreHorizontal, Music, Users } from "lucide-react";
+import { Play, MoreHorizontal, Music, Users, Clock, ExternalLink } from "lucide-react";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
 import { usePlayer } from "@/contexts/PlayerContext";
@@ -125,9 +130,7 @@ const ArtistProfilePage = () => {
   const name = searchParams.get("name");
   const [token, setToken] = useState<string>("");
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
-  const [currentlyPlayingUrl, setCurrentlyPlayingUrl] = useState<string | null>(
-    null
-  );
+  const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
   const { toast } = useToast();
   const [isFollowing, setIsFollowing] = useState(false);
   const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
@@ -331,17 +334,17 @@ const ArtistProfilePage = () => {
     }
   };
 
-  const handlePlay = (url: string | null) => {
+  const handlePlay = (url: string | null, trackId: string) => {
     if (audio) {
       audio.pause();
-      setCurrentlyPlayingUrl(null);
+      setPlayingTrackId(null);
     }
     if (url) {
       const newAudio = new Audio(url);
       setAudio(newAudio);
-      setCurrentlyPlayingUrl(url);
+      setPlayingTrackId(trackId);
       newAudio.play();
-      newAudio.onended = () => setCurrentlyPlayingUrl(null);
+      newAudio.onended = () => setPlayingTrackId(null);
     }
   };
 
@@ -499,44 +502,47 @@ const ArtistProfilePage = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-3xl font-bold">Top Tracks</h2>
-              <div className="flex items-center space-x-3">
-                <PiTable
-                  size={35}
+              <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setTracksDisplayUI("Table")}
-                  className={`cursor-pointer transition-colors ${
+                  className={`h-9 px-3 transition-all ${
                     tracksDisplayUI === "Table"
-                      ? "text-white"
-                      : "text-[#707070] hover:text-white"
+                      ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                      : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                   }`}
-                />
-                <LuLayoutGrid
-                  size={30}
+                >
+                  <PiTable className="h-5 w-5 sm:mr-2" />
+                  <span className="hidden sm:inline">Table</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setTracksDisplayUI("Grid")}
-                  className={`cursor-pointer transition-colors ${
+                  className={`h-9 px-3 transition-all ${
                     tracksDisplayUI === "Grid"
-                      ? "text-white"
-                      : "text-[#707070] hover:text-white"
+                      ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                      : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                   }`}
-                />
+                >
+                  <LuLayoutGrid className="h-5 w-5 sm:mr-2" />
+                  <span className="hidden sm:inline">Grid</span>
+                </Button>
               </div>
             </div>
 
             {tracksDisplayUI === "Table" ? (
-              <div className="bg-zinc-900/30 rounded-lg border border-zinc-800/50">
+              <div className="bg-zinc-900/50 rounded-xl overflow-hidden border border-zinc-800/50">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
-                      <TableHead className="w-[60px] text-center text-zinc-400 font-medium">
-                        #
-                      </TableHead>
-                      <TableHead className="text-zinc-400 font-medium">
-                        Title
-                      </TableHead>
-                      <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
-                        Album
-                      </TableHead>
-                      <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium">
-                        Duration
+                    <TableRow className="border-zinc-800 hover:bg-transparent">
+                      <TableHead className="w-12 text-center text-zinc-400">#</TableHead>
+                      <TableHead className="text-zinc-400">Title</TableHead>
+                      <TableHead className="hidden md:table-cell text-zinc-400">Album</TableHead>
+                      <TableHead className="hidden lg:table-cell text-center text-zinc-400">Action</TableHead>
+                      <TableHead className="hidden md:table-cell text-right text-zinc-400">
+                        <Clock className="w-4 h-4 ml-auto" />
                       </TableHead>
                     </TableRow>
                   </TableHeader>
@@ -544,19 +550,33 @@ const ArtistProfilePage = () => {
                     {topTracks.map((track, index) => (
                       <TableRow
                         key={track.id}
-                        className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors group cursor-pointer"
+                        className="border-zinc-800 hover:bg-zinc-800/50 transition-colors cursor-pointer group"
                         onClick={() => handleSongClick(track.id, track.name)}
                         onMouseEnter={() => setHoveredTrackId(track.id)}
                         onMouseLeave={() => setHoveredTrackId(null)}
                       >
                         <TableCell className="text-center">
-                          <span className="text-zinc-400 text-sm">
-                            {index + 1}
-                          </span>
+                          {hoveredTrackId === track.id ? (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="w-8 h-8 p-0 rounded-full hover:bg-green-500 hover:text-black"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePlay(track.preview_url, track.id);
+                              }}
+                            >
+                              <Play className="w-3 h-3" fill="currentColor" />
+                            </Button>
+                          ) : (
+                            <span className="text-zinc-400 text-sm">
+                              {index + 1}
+                            </span>
+                          )}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-3">
-                            <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0 group/image">
+                            <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
                               <Image
                                 src={
                                   track.album.images[0]?.url ||
@@ -567,25 +587,9 @@ const ArtistProfilePage = () => {
                                 className="object-cover"
                                 alt={track.name}
                               />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePlayTrack(track);
-                                  }}
-                                >
-                                  <Play
-                                    className="h-4 w-4 ml-0.5"
-                                    fill="currentColor"
-                                  />
-                                </Button>
-                              </div>
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="text-white font-medium truncate hover:text-green-400 transition-colors">
+                              <div className="text-white font-medium truncate group-hover:text-green-400 transition-colors">
                                 {track.name}
                               </div>
                               <div className="text-zinc-400 text-sm truncate">
@@ -619,10 +623,25 @@ const ArtistProfilePage = () => {
                             {track.album.name}
                           </div>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell text-right">
-                          <span className="text-zinc-400 text-sm">
-                            {formatSongDuration(track.duration_ms)}
-                          </span>
+                        <TableCell className="hidden lg:table-cell text-center">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-zinc-700 hover:border-green-500 hover:text-green-500"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(
+                                `https://open.spotify.com/track/${track.id}`,
+                                "_blank"
+                              );
+                            }}
+                          >
+                            <ExternalLink className="w-3 h-3 mr-1" />
+                            Spotify
+                          </Button>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-right text-zinc-400 text-sm">
+                          {formatSongDuration(track.duration_ms)}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -630,17 +649,85 @@ const ArtistProfilePage = () => {
                 </Table>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
-                {topTracks.map((track) => (
-                  <PlaylistCard
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6">
+                {topTracks.map((track, index) => (
+                  <Card
                     key={track.id}
-                    id={track.id}
-                    image={track.album.images[0]?.url || "/default-artist.png"}
-                    title={track.name}
-                    description={artistProfile.name}
-                    onPlay={() => handlePlayTrack(track)}
-                    onClick={(id, name) => handleSongClick(id, name)}
-                  />
+                    className="group bg-zinc-900/50 border-zinc-800 hover:bg-zinc-800/50 transition-all duration-300 cursor-pointer relative overflow-hidden"
+                    onClick={() => handleSongClick(track.id, track.name)}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="relative">
+                        <Image
+                          src={
+                            track.album.images[0]?.url || "/default-artist.png"
+                          }
+                          width={200}
+                          height={200}
+                          alt={track.name}
+                          className="w-full aspect-square object-cover rounded-lg"
+                        />
+                        
+                        {/* Play Button Overlay */}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
+                          <Button
+                            size="sm"
+                            className="bg-green-500 hover:bg-green-400 text-black rounded-full w-12 h-12 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePlayTrack(track);
+                            }}
+                          >
+                            <Play className="w-5 h-5" fill="currentColor" />
+                          </Button>
+                        </div>
+
+                        {/* Track Number Badge */}
+                        <Badge className="absolute top-2 left-2 bg-black/70 text-white">
+                          #{index + 1}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="pt-0">
+                      <CardTitle className="text-base font-semibold text-white truncate mb-2 group-hover:text-green-400 transition-colors">
+                        {track.name}
+                      </CardTitle>
+
+                      <div className="space-y-2">
+                        <div
+                          className="text-sm text-zinc-400 truncate hover:underline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleArtistClick(
+                              artistProfile.id,
+                              artistProfile.name
+                            );
+                          }}
+                        >
+                          {artistProfile.name}
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs text-zinc-500">
+                          <span>{formatSongDuration(track.duration_ms)}</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 px-2 text-xs hover:text-green-400"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(
+                                `https://open.spotify.com/track/${track.id}`,
+                                "_blank"
+                              );
+                            }}
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}
@@ -650,52 +737,53 @@ const ArtistProfilePage = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-3xl font-bold">Albums</h2>
-              <div className="flex items-center space-x-3">
-                <PiTable
-                  size={35}
+              <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setAlbumsDisplayUI("Table")}
-                  className={`cursor-pointer transition-colors ${
+                  className={`h-9 px-3 transition-all ${
                     albumsDisplayUI === "Table"
-                      ? "text-white"
-                      : "text-[#707070] hover:text-white"
+                      ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                      : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                   }`}
-                />
-                <LuLayoutGrid
-                  size={30}
+                >
+                  <PiTable className="h-5 w-5 sm:mr-2" />
+                  <span className="hidden sm:inline">Table</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setAlbumsDisplayUI("Grid")}
-                  className={`cursor-pointer transition-colors ${
+                  className={`h-9 px-3 transition-all ${
                     albumsDisplayUI === "Grid"
-                      ? "text-white"
-                      : "text-[#707070] hover:text-white"
+                      ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                      : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                   }`}
-                />
+                >
+                  <LuLayoutGrid className="h-5 w-5 sm:mr-2" />
+                  <span className="hidden sm:inline">Grid</span>
+                </Button>
               </div>
             </div>
 
             {albumsDisplayUI === "Table" ? (
-              <div className="bg-zinc-900/30 rounded-lg border border-zinc-800/50">
+              <div className="bg-zinc-900/50 rounded-xl overflow-hidden border border-zinc-800/50">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
-                      <TableHead className="text-zinc-400 font-medium">
-                        Album
-                      </TableHead>
-                      <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
-                        Type
-                      </TableHead>
-                      <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
-                        Release Date
-                      </TableHead>
-                      <TableHead className="hidden lg:table-cell text-right text-zinc-400 font-medium">
-                        Tracks
-                      </TableHead>
+                    <TableRow className="border-zinc-800 hover:bg-transparent">
+                      <TableHead className="text-zinc-400">Album</TableHead>
+                      <TableHead className="hidden md:table-cell text-zinc-400">Type</TableHead>
+                      <TableHead className="hidden md:table-cell text-zinc-400">Release Date</TableHead>
+                      <TableHead className="hidden lg:table-cell text-center text-zinc-400">Action</TableHead>
+                      <TableHead className="hidden lg:table-cell text-right text-zinc-400">Tracks</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {albums.map((album) => (
                       <TableRow
                         key={album.id}
-                        className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer"
+                        className="border-zinc-800 hover:bg-zinc-800/50 transition-colors cursor-pointer group"
                         onClick={() => handleAlbumClick(album.id, album.name)}
                       >
                         <TableCell>
@@ -712,7 +800,7 @@ const ArtistProfilePage = () => {
                               />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="text-white font-medium truncate hover:text-green-400 transition-colors">
+                              <div className="text-white font-medium truncate group-hover:text-green-400 transition-colors">
                                 {album.name}
                               </div>
                               <div className="text-zinc-400 text-sm truncate">
@@ -733,14 +821,31 @@ const ArtistProfilePage = () => {
                           </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
-                          <span className="text-zinc-400 capitalize">
+                          <Badge variant="secondary" className="capitalize">
                             {album.album_type}
-                          </span>
+                          </Badge>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           <span className="text-zinc-400">
-                            {album.release_date}
+                            {new Date(album.release_date).getFullYear()}
                           </span>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-center">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-zinc-700 hover:border-green-500 hover:text-green-500"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(
+                                `https://open.spotify.com/album/${album.id}`,
+                                "_blank"
+                              );
+                            }}
+                          >
+                            <ExternalLink className="w-3 h-3 mr-1" />
+                            Spotify
+                          </Button>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell text-right">
                           <span className="text-zinc-400 text-sm">
@@ -753,19 +858,74 @@ const ArtistProfilePage = () => {
                 </Table>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6">
                 {albums.map((album) => (
-                  <PlaylistCard
+                  <Card
                     key={album.id}
-                    id={album.id}
-                    image={album.images[0]?.url || "/default-artist.png"}
-                    title={album.name}
-                    description={`${album.release_date.split("-")[0]} • ${
-                      album.total_tracks
-                    } tracks`}
-                    onPlay={() => handlePlayAlbum(album.id)}
-                    onClick={(id, name) => handleAlbumClick(id, name)}
-                  />
+                    className="group bg-zinc-900/50 border-zinc-800 hover:bg-zinc-800/50 transition-all duration-300 cursor-pointer relative overflow-hidden"
+                    onClick={() => handleAlbumClick(album.id, album.name)}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="relative">
+                        <Image
+                          src={album.images[0]?.url || "/default-artist.png"}
+                          width={200}
+                          height={200}
+                          alt={album.name}
+                          className="w-full aspect-square object-cover rounded-lg"
+                        />
+                        
+                        {/* Play Button Overlay */}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
+                          <Button
+                            size="sm"
+                            className="bg-green-500 hover:bg-green-400 text-black rounded-full w-12 h-12 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePlayAlbum(album.id);
+                            }}
+                          >
+                            <Play className="w-5 h-5" fill="currentColor" />
+                          </Button>
+                        </div>
+
+                        {/* Album Type Badge */}
+                        <Badge className="absolute top-2 left-2 bg-black/70 text-white capitalize">
+                          {album.album_type}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="pt-0">
+                      <CardTitle className="text-base font-semibold text-white truncate mb-2 group-hover:text-green-400 transition-colors">
+                        {album.name}
+                      </CardTitle>
+
+                      <div className="space-y-2">
+                        <div className="text-sm text-zinc-400 truncate">
+                          {new Date(album.release_date).getFullYear()}
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs text-zinc-500">
+                          <span>{album.total_tracks} tracks</span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 px-2 text-xs hover:text-green-400"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(
+                                `https://open.spotify.com/album/${album.id}`,
+                                "_blank"
+                              );
+                            }}
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}
