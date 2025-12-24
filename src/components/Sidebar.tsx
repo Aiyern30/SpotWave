@@ -9,6 +9,7 @@ import {
   BiSolidAlbum,
   BiSolidCompass,
   BiLogOut,
+  BiJoystick,
 } from "react-icons/bi";
 import { RiUserVoiceFill } from "react-icons/ri";
 import { IoTicket } from "react-icons/io5";
@@ -311,6 +312,7 @@ const items = [
   { title: "Artists", Icon: RiUserVoiceFill, href: "/Artists" },
   { title: "Songs", Icon: BiSolidMusic, href: "/Songs" },
   { title: "Events", Icon: IoTicket, href: "/Events" },
+  { title: "Games", Icon: BiJoystick, href: "/Games" },
   { title: "Profile", Icon: FaUserCircle, href: "/Profile" },
 ];
 
