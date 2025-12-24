@@ -24,8 +24,11 @@ const Page = () => {
   const [favoriteArtists, setFavoriteArtists] = useState<Artist[]>([]);
   const [recentTracks, setRecentTracks] = useState<RecentTracksProps[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentArtistId, setCurrentArtistId] = useState<string | null>(null);
+  const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const router = useRouter();
-  const { playTrack, pauseTrack, currentTrack, isPlaying } = usePlayer();
+  const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } =
+    usePlayer();
 
   const [openAccordions, setOpenAccordions] = useState<string[]>([
     "item-1",
@@ -82,6 +85,17 @@ const Page = () => {
     );
   }, []);
 
+  // Update current artist/track when track changes
+  useEffect(() => {
+    if (currentTrack) {
+      setCurrentTrackId(currentTrack.id);
+      // Check if track is from an artist (set when playing artist)
+      if (currentTrack.artists?.[0]?.id) {
+        setCurrentArtistId(currentTrack.artists[0].id);
+      }
+    }
+  }, [currentTrack]);
+
   const handlePlayArtist = useCallback(
     async (artistId?: string) => {
       if (!artistId) return;
@@ -129,6 +143,7 @@ const Page = () => {
             disc_number: track.disc_number || 1,
             uri: track.uri,
           });
+          setCurrentArtistId(artistId);
         }
       } catch (error) {
         console.error("Error playing artist:", error);
@@ -145,6 +160,8 @@ const Page = () => {
       const track = memoizedRecentTracks.find((t) => t.track.id === trackId);
       if (track) {
         handlePlayTrack(track.track);
+        setCurrentTrackId(trackId);
+        setCurrentArtistId(null); // Clear artist context when playing individual track
       }
     },
     [memoizedRecentTracks]
@@ -246,26 +263,28 @@ const Page = () => {
                 />
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
-                  {memoizedFollowedArtists.map((artist) => (
-                    <PlaylistCard
-                      key={artist.id}
-                      id={artist.id}
-                      image={artist.image || "/default-artist.png"}
-                      title={artist.name}
-                      description={artist.genres?.join(", ")}
-                      isPlaying={
-                        currentTrack?.artists?.some((a) => a.id === artist.id) &&
-                        isPlaying
-                      }
-                      onPlay={handlePlayArtist}
-                      onPause={pauseTrack}
-                      onClick={(id, name) =>
-                        router.push(
-                          `/Artists/${id}?name=${encodeURIComponent(name)}`
-                        )
-                      }
-                    />
-                  ))}
+                  {memoizedFollowedArtists.map((artist) => {
+                    const isThisArtist = currentArtistId === artist.id;
+                    return (
+                      <PlaylistCard
+                        key={artist.id}
+                        id={artist.id}
+                        image={artist.image || "/default-artist.png"}
+                        title={artist.name}
+                        description={artist.genres?.join(", ")}
+                        isPlaying={isThisArtist && isPlaying}
+                        isPaused={isThisArtist && !isPlaying}
+                        onPlay={handlePlayArtist}
+                        onPause={pauseTrack}
+                        onResume={resumeTrack}
+                        onClick={(id, name) =>
+                          router.push(
+                            `/Artists/${id}?name=${encodeURIComponent(name)}`
+                          )
+                        }
+                      />
+                    );
+                  })}
                 </div>
               )}
             </AccordionContent>
@@ -294,26 +313,28 @@ const Page = () => {
                 />
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
-                  {memoizedFavoriteArtists.map((artist) => (
-                    <PlaylistCard
-                      key={artist.id}
-                      id={artist.id}
-                      image={artist.image || "/default-artist.png"}
-                      title={artist.name}
-                      description={artist.genres?.join(", ")}
-                      isPlaying={
-                        currentTrack?.artists?.some((a) => a.id === artist.id) &&
-                        isPlaying
-                      }
-                      onPlay={handlePlayArtist}
-                      onPause={pauseTrack}
-                      onClick={(id, name) =>
-                        router.push(
-                          `/Artists/${id}?name=${encodeURIComponent(name)}`
-                        )
-                      }
-                    />
-                  ))}
+                  {memoizedFavoriteArtists.map((artist) => {
+                    const isThisArtist = currentArtistId === artist.id;
+                    return (
+                      <PlaylistCard
+                        key={artist.id}
+                        id={artist.id}
+                        image={artist.image || "/default-artist.png"}
+                        title={artist.name}
+                        description={artist.genres?.join(", ")}
+                        isPlaying={isThisArtist && isPlaying}
+                        isPaused={isThisArtist && !isPlaying}
+                        onPlay={handlePlayArtist}
+                        onPause={pauseTrack}
+                        onResume={resumeTrack}
+                        onClick={(id, name) =>
+                          router.push(
+                            `/Artists/${id}?name=${encodeURIComponent(name)}`
+                          )
+                        }
+                      />
+                    );
+                  })}
                 </div>
               )}
             </AccordionContent>
@@ -342,34 +363,37 @@ const Page = () => {
                 />
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
-                  {memoizedRecentTracks.map((tracks, index) => (
-                    <PlaylistCard
-                      key={`${tracks.track.id}-${index}`}
-                      id={tracks.track.id}
-                      image={
-                        tracks.track.album.images[0]?.url ||
-                        "/default-artist.png"
-                      }
-                      title={tracks.track.name}
-                      description={`${tracks.track.album.artists
-                        .map((a) => a.name)
-                        .join(", ")} • ${tracks.track.album.release_date}`}
-                      isPlaying={
-                        currentTrack?.id === tracks.track.id && isPlaying
-                      }
-                      onPlay={handlePlayRecentTrack}
-                      onPause={pauseTrack}
-                      onClick={(id) => {
-                        if (tracks.track.album.artists.length > 0) {
-                          router.push(
-                            `/Artists/${tracks.track.album.artists[0].id}?name=${encodeURIComponent(
-                              tracks.track.album.artists[0].name
-                            )}`
-                          );
+                  {memoizedRecentTracks.map((tracks, index) => {
+                    const isThisTrack = currentTrackId === tracks.track.id;
+                    return (
+                      <PlaylistCard
+                        key={`${tracks.track.id}-${index}`}
+                        id={tracks.track.id}
+                        image={
+                          tracks.track.album.images[0]?.url ||
+                          "/default-artist.png"
                         }
-                      }}
-                    />
-                  ))}
+                        title={tracks.track.name}
+                        description={`${tracks.track.album.artists
+                          .map((a) => a.name)
+                          .join(", ")} • ${tracks.track.album.release_date}`}
+                        isPlaying={isThisTrack && isPlaying}
+                        isPaused={isThisTrack && !isPlaying}
+                        onPlay={handlePlayRecentTrack}
+                        onPause={pauseTrack}
+                        onResume={resumeTrack}
+                        onClick={(id) => {
+                          if (tracks.track.album.artists.length > 0) {
+                            router.push(
+                              `/Artists/${tracks.track.album.artists[0].id}?name=${encodeURIComponent(
+                                tracks.track.album.artists[0].name
+                              )}`
+                            );
+                          }
+                        }}
+                      />
+                    );
+                  })}
                 </div>
               )}
             </AccordionContent>
