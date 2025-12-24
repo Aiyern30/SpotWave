@@ -203,7 +203,7 @@ const Page = () => {
             <CreatePlaylistCard />
             {memoizedPlaylists.map((playlist) => {
               const playlistUri = `spotify:playlist:${playlist.id}`;
-              const isThisPlaylistPlaying = currentPlaylistUri === playlistUri && isPlaying;
+              const isThisPlaylist = currentPlaylistUri === playlistUri;
               
               return (
                 <PlaylistCard
@@ -212,9 +212,11 @@ const Page = () => {
                   image={playlist.image}
                   title={playlist.title}
                   description={playlist.description}
-                  isPlaying={isThisPlaylistPlaying}
+                  isPlaying={isThisPlaylist && isPlaying}
+                  isPaused={isThisPlaylist && !isPlaying}
                   onPlay={handlePlayPlaylist}
                   onPause={pauseTrack}
+                  onResume={resumeTrack}
                   onClick={handleClick}
                 />
               );

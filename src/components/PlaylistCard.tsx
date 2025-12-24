@@ -28,8 +28,10 @@ interface PlaylistCardProps {
   duration?: string;
   externalUrl?: string;
   isPlaying?: boolean;
-  onPlay?: (id?: string) => void; // Make id optional
+  isPaused?: boolean; // Add isPaused prop to differentiate between paused and stopped
+  onPlay?: (id?: string) => void;
   onPause?: () => void;
+  onResume?: () => void; // Add onResume prop
   onClick?: (id: string, title: string) => void;
 }
 
@@ -42,8 +44,10 @@ export default function PlaylistCard({
   duration,
   externalUrl,
   isPlaying = false,
+  isPaused = false,
   onPlay,
   onPause,
+  onResume,
   onClick,
 }: PlaylistCardProps) {
   const [imageError, setImageError] = useState(false);
@@ -59,11 +63,15 @@ export default function PlaylistCard({
 
   const handlePlayPauseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+
     if (isPlaying && onPause) {
-      // If currently playing, pause it
+      // Currently playing - pause it
       onPause();
+    } else if (isPaused && onResume) {
+      // Currently paused - resume it
+      onResume();
     } else if (onPlay) {
-      // If not playing (or paused), play/resume it
+      // Not playing - play it
       onPlay(id);
     }
   };
@@ -74,6 +82,9 @@ export default function PlaylistCard({
       window.open(externalUrl, "_blank");
     }
   };
+
+  // Determine if the card represents the current track (playing or paused)
+  const isCurrentTrack = isPlaying || isPaused;
 
   return (
     <TooltipProvider>
@@ -101,7 +112,7 @@ export default function PlaylistCard({
             )}
 
             {/* Play/Pause Button Overlay */}
-            {(onPlay || onPause) && (
+            {(onPlay || onPause || onResume) && (
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
                 <Button
                   size="sm"
@@ -124,10 +135,15 @@ export default function PlaylistCard({
               </Badge>
             )}
 
-            {/* Currently Playing Indicator */}
+            {/* Currently Playing/Paused Indicator */}
             {isPlaying && (
               <Badge className="absolute top-2 right-2 bg-green-500 text-black text-xs font-bold animate-pulse">
                 Playing
+              </Badge>
+            )}
+            {isPaused && (
+              <Badge className="absolute top-2 right-2 bg-yellow-500 text-black text-xs font-bold">
+                Paused
               </Badge>
             )}
           </div>
@@ -138,7 +154,7 @@ export default function PlaylistCard({
             <TooltipTrigger asChild>
               <CardTitle
                 className={`text-base font-semibold truncate transition-colors ${
-                  isPlaying
+                  isCurrentTrack
                     ? "text-green-400"
                     : "text-white group-hover:text-green-400"
                 }`}
