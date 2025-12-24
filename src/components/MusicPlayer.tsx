@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { usePlayer } from "@/contexts/PlayerContext";
 import {
   Button,
@@ -66,6 +66,7 @@ export const MusicPlayer = ({
   onToggleFullScreen,
 }: MusicPlayerProps = {}) => {
   const router = useRouter();
+  const pathname = usePathname();
   const {
     currentTrack,
     isPlaying,
@@ -347,14 +348,13 @@ export const MusicPlayer = ({
     }
   };
 
-  const handleArtistClick = (artistId: string, artistName: string) => (
-    e: React.MouseEvent
-  ) => {
-    e.stopPropagation();
-    router.push(
-      `/Artists/${artistId}?name=${encodeURIComponent(artistName)}`
-    );
-  };
+  const handleArtistClick =
+    (artistId: string, artistName: string) => (e: React.MouseEvent) => {
+      e.stopPropagation();
+      router.push(
+        `/Artists/${artistId}?name=${encodeURIComponent(artistName)}`
+      );
+    };
 
   const handleQueueClick = () => {
     if (onToggleQueue) {
@@ -403,29 +403,43 @@ export const MusicPlayer = ({
 
           <div className="min-w-0 flex-1">
             {currentTrack ? (
-              <>
-                <h4
-                  className="text-white text-sm font-medium truncate hover:underline cursor-pointer"
-                  onClick={handleTrackClick}
-                >
-                  {currentTrack.name}
-                </h4>
-                <div className="text-zinc-400 text-xs truncate flex items-center gap-1">
-                  {currentTrack.artists.map((artist, index) => (
-                    <span key={artist.id} className="inline-flex items-center">
+              pathname?.includes("/Games/artist-quiz/") ? (
+                <>
+                  <h4 className="text-white text-sm font-medium truncate">
+                    Guess the Song!
+                  </h4>
+                  <div className="text-zinc-400 text-xs truncate">
+                    Playing from Quiz
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h4
+                    className="text-white text-sm font-medium truncate hover:underline cursor-pointer"
+                    onClick={handleTrackClick}
+                  >
+                    {currentTrack.name}
+                  </h4>
+                  <div className="text-zinc-400 text-xs truncate flex items-center gap-1">
+                    {currentTrack.artists.map((artist, index) => (
                       <span
-                        className="hover:underline hover:text-white cursor-pointer transition-colors"
-                        onClick={handleArtistClick(artist.id, artist.name)}
+                        key={artist.id}
+                        className="inline-flex items-center"
                       >
-                        {artist.name}
+                        <span
+                          className="hover:underline hover:text-white cursor-pointer transition-colors"
+                          onClick={handleArtistClick(artist.id, artist.name)}
+                        >
+                          {artist.name}
+                        </span>
+                        {index < currentTrack.artists.length - 1 && (
+                          <span className="mx-1">,</span>
+                        )}
                       </span>
-                      {index < currentTrack.artists.length - 1 && (
-                        <span className="mx-1">,</span>
-                      )}
-                    </span>
-                  ))}
-                </div>
-              </>
+                    ))}
+                  </div>
+                </>
+              )
             ) : (
               <>
                 <h4 className="text-white text-sm font-medium">
