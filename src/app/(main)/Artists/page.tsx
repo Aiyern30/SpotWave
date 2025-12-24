@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
-import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import PlaylistCard from "@/components/PlaylistCard";
 import {
@@ -206,169 +205,155 @@ const Page = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-black">
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen((prev) => !prev)}
-      />
-      <div
-        className={`flex-1 transition-all ml-16 duration-300 ${
-          sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
-        }`}
-      >
-        <div className="p-4 space-y-4">
-          <Header />
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Select onValueChange={handleSelectChange}>
-                <SelectTrigger className="w-48 bg-zinc-800/50 border-zinc-700 text-zinc-300">
-                  <SelectValue placeholder="Select number of artists" />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700">
-                  <SelectItem value="10">Top 10</SelectItem>
-                  <SelectItem value="20">Top 20</SelectItem>
-                  <SelectItem value="30">Top 30</SelectItem>
-                  <SelectItem value="40">Top 40</SelectItem>
-                  <SelectItem value="50">Top 50</SelectItem>
-                </SelectContent>
-              </Select>
-              <h1 className="text-2xl font-bold text-white">Top Artists</h1>
-            </div>
-            <div className="flex items-center space-x-3">
-              <PiTable
-                size={35}
-                onClick={() => setDisplayUI("Table")}
-                className={`cursor-pointer transition-colors ${
-                  displayUI === "Table"
-                    ? "text-white"
-                    : "text-[#707070] hover:text-white"
-                }`}
-              />
-              <LuLayoutGrid
-                size={30}
-                onClick={() => setDisplayUI("Grid")}
-                className={`cursor-pointer transition-colors ${
-                  displayUI === "Grid"
-                    ? "text-white"
-                    : "text-[#707070] hover:text-white"
-                }`}
-              />
-            </div>
-          </div>
-
-          {displayUI === "Table" && (
-            <div className="overflow-x-auto container">
-              <div className="bg-zinc-900/30 rounded-lg border border-zinc-800/50">
-                <Table>
-                  <TableCaption className="text-zinc-400">
-                    A list of top artists from Last.fm
-                  </TableCaption>
-                  <TableHeader>
-                    <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
-                      <TableHead className="w-[60px] text-center text-zinc-400 font-medium">
-                        #
-                      </TableHead>
-                      <TableHead className="text-zinc-400 font-medium">
-                        Artist
-                      </TableHead>
-                      <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium">
-                        Playcount
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {memoizedArtists.map((artist, index) => {
-                      const imageUrl = artist.image[0]["#text"];
-
-                      return (
-                        <TableRow
-                          key={artist.id || index}
-                          onClick={() => handleClick(artist.id, artist.name)}
-                          onMouseEnter={() => setHoveredArtistId(artist.id)}
-                          onMouseLeave={() => setHoveredArtistId(null)}
-                          className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
-                        >
-                          <TableCell className="text-center">
-                            <span className="text-zinc-400 text-sm">
-                              {index + 1}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-3">
-                              <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 group/image">
-                                <Avatar className="w-12 h-12">
-                                  <AvatarImage
-                                    src={imageUrl || "/placeholder.svg"}
-                                    alt={artist.name}
-                                    className="object-cover"
-                                  />
-                                  <AvatarFallback className="bg-zinc-700 text-white">
-                                    {artist.name[0]}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handlePlayArtist(artist.id);
-                                    }}
-                                  >
-                                    <Play
-                                      className="h-4 w-4 ml-0.5"
-                                      fill="currentColor"
-                                    />
-                                  </Button>
-                                </div>
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="text-white font-medium truncate hover:text-green-400 transition-colors">
-                                  {artist.name}
-                                </div>
-                                <div className="text-zinc-400 text-sm">
-                                  Artist
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell text-right">
-                            <NumberTicker
-                              value={artist.playcount}
-                              className="text-zinc-400 text-sm"
-                            />
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          )}
-
-          {displayUI === "Grid" && (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
-              {memoizedArtists.map((artist, index) => {
-                const imageUrl = artist.image[0]["#text"];
-
-                return (
-                  <PlaylistCard
-                    key={artist.id || index}
-                    id={artist.id}
-                    image={imageUrl || "/placeholder.svg"}
-                    title={artist.name}
-                    description={`${artist.playcount.toLocaleString()} plays`}
-                    onPlay={handlePlayArtist}
-                    onClick={handleClick}
-                  />
-                );
-              })}
-            </div>
-          )}
+    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8">
+      <Header />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Select onValueChange={handleSelectChange}>
+            <SelectTrigger className="w-48 bg-zinc-800/50 border-zinc-700 text-zinc-300">
+              <SelectValue placeholder="Select number of artists" />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-800 border-zinc-700">
+              <SelectItem value="10">Top 10</SelectItem>
+              <SelectItem value="20">Top 20</SelectItem>
+              <SelectItem value="30">Top 30</SelectItem>
+              <SelectItem value="40">Top 40</SelectItem>
+              <SelectItem value="50">Top 50</SelectItem>
+            </SelectContent>
+          </Select>
+          <h1 className="text-2xl font-bold text-white">Top Artists</h1>
+        </div>
+        <div className="flex items-center space-x-3">
+          <PiTable
+            size={35}
+            onClick={() => setDisplayUI("Table")}
+            className={`cursor-pointer transition-colors ${
+              displayUI === "Table"
+                ? "text-white"
+                : "text-[#707070] hover:text-white"
+            }`}
+          />
+          <LuLayoutGrid
+            size={30}
+            onClick={() => setDisplayUI("Grid")}
+            className={`cursor-pointer transition-colors ${
+              displayUI === "Grid"
+                ? "text-white"
+                : "text-[#707070] hover:text-white"
+            }`}
+          />
         </div>
       </div>
+
+      {displayUI === "Table" && (
+        <div className="overflow-x-auto container">
+          <div className="bg-zinc-900/30 rounded-lg border border-zinc-800/50">
+            <Table>
+              <TableCaption className="text-zinc-400">
+                A list of top artists from Last.fm
+              </TableCaption>
+              <TableHeader>
+                <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
+                  <TableHead className="w-[60px] text-center text-zinc-400 font-medium">
+                    #
+                  </TableHead>
+                  <TableHead className="text-zinc-400 font-medium">
+                    Artist
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium">
+                    Playcount
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {memoizedArtists.map((artist, index) => {
+                  const imageUrl = artist.image[0]["#text"];
+
+                  return (
+                    <TableRow
+                      key={artist.id || index}
+                      onClick={() => handleClick(artist.id, artist.name)}
+                      onMouseEnter={() => setHoveredArtistId(artist.id)}
+                      onMouseLeave={() => setHoveredArtistId(null)}
+                      className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
+                    >
+                      <TableCell className="text-center">
+                        <span className="text-zinc-400 text-sm">
+                          {index + 1}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 group/image">
+                            <Avatar className="w-12 h-12">
+                              <AvatarImage
+                                src={imageUrl || "/placeholder.svg"}
+                                alt={artist.name}
+                                className="object-cover"
+                              />
+                              <AvatarFallback className="bg-zinc-700 text-white">
+                                {artist.name[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePlayArtist(artist.id);
+                                }}
+                              >
+                                <Play
+                                  className="h-4 w-4 ml-0.5"
+                                  fill="currentColor"
+                                />
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-white font-medium truncate hover:text-green-400 transition-colors">
+                              {artist.name}
+                            </div>
+                            <div className="text-zinc-400 text-sm">Artist</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-right">
+                        <NumberTicker
+                          value={artist.playcount}
+                          className="text-zinc-400 text-sm"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
+
+      {displayUI === "Grid" && (
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+          {memoizedArtists.map((artist, index) => {
+            const imageUrl = artist.image[0]["#text"];
+
+            return (
+              <PlaylistCard
+                key={artist.id || index}
+                id={artist.id}
+                image={imageUrl || "/placeholder.svg"}
+                title={artist.name}
+                description={`${artist.playcount.toLocaleString()} plays`}
+                onPlay={handlePlayArtist}
+                onClick={handleClick}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
