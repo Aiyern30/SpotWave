@@ -25,7 +25,7 @@ import type { PlaylistProps, User } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { fetchUserProfile } from "@/utils/fetchProfile";
 import { fetchSpotifyPlaylists } from "@/utils/fetchAllPlaylist";
-import { Play, MoreHorizontal, Music } from "lucide-react";
+import { Play, MoreHorizontal, Music, Pause } from "lucide-react";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
 import Image from "next/image";
@@ -34,12 +34,16 @@ import { usePlayer } from "@/contexts/PlayerContext";
 
 const PublicLibrary = () => {
   const router = useRouter();
-  const { playPlaylist } = usePlayer();
+  const { playPlaylist, pauseTrack, resumeTrack, currentTrack, isPlaying } =
+    usePlayer();
   const [publicPlaylists, setPublicPlaylists] = useState<PlaylistProps[]>([]);
   const [token, setToken] = useState<string>("");
   const [myProfile, setMyProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [displayUI, setDisplayUI] = useState<string>("Grid");
+  const [currentPlaylistUri, setCurrentPlaylistUri] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     const storedToken = localStorage.getItem("Token");
@@ -88,14 +92,43 @@ const PublicLibrary = () => {
     router.push(`/Home/${id}?name=${encodeURIComponent(name)}`);
   };
 
-  const handlePlayPlaylist = async (playlistId: string) => {
-    try {
+  const handlePlayPausePlaylist = useCallback(
+    async (playlistId?: string) => {
+      if (!playlistId) return;
+
       const playlistUri = `spotify:playlist:${playlistId}`;
-      playPlaylist(playlistUri);
-    } catch (error) {
-      console.error("Error playing playlist:", error);
+
+      // Check if this playlist is currently playing
+      if (currentPlaylistUri === playlistUri) {
+        // Same playlist - just toggle play/pause
+        if (isPlaying) {
+          pauseTrack();
+        } else {
+          resumeTrack();
+        }
+      } else {
+        // Different playlist - play it from the beginning
+        try {
+          playPlaylist(playlistUri);
+          setCurrentPlaylistUri(playlistUri);
+        } catch (error) {
+          console.error("Error playing playlist:", error);
+        }
+      }
+    },
+    [playPlaylist, pauseTrack, resumeTrack, currentPlaylistUri, isPlaying]
+  );
+
+  // Update current playlist URI when track changes
+  useEffect(() => {
+    if (currentTrack?.uri) {
+      // Extract playlist URI from context
+      const contextUri = currentTrack.uri.split(":").slice(0, 3).join(":");
+      if (contextUri.startsWith("spotify:playlist:")) {
+        setCurrentPlaylistUri(contextUri);
+      }
     }
-  };
+  }, [currentTrack]);
 
   useEffect(() => {
     if (token) {
@@ -179,47 +212,75 @@ const PublicLibrary = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {publicPlaylists.map((playlist) => (
-                    <TableRow
-                      key={playlist.id}
-                      onClick={() => handleClick(playlist.id, playlist.name)}
-                      className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
-                    >
-                      <TableCell>
-                        <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
-                            <Image
-                              src={
-                                playlist.images?.[0]?.url || "/placeholder.svg"
-                              }
-                              width={48}
-                              height={48}
-                              className="object-cover"
-                              alt={playlist.name}
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-white font-medium truncate hover:text-green-400 transition-colors">
-                              {playlist.name}
+                  {publicPlaylists.map((playlist) => {
+                    const playlistUri = `spotify:playlist:${playlist.id}`;
+                    const isThisPlaylist = currentPlaylistUri === playlistUri;
+
+                    return (
+                      <TableRow
+                        key={playlist.id}
+                        onClick={() => handleClick(playlist.id, playlist.name)}
+                        className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
+                      >
+                        <TableCell>
+                          <div className="flex items-center space-x-3">
+                            <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0 group/image">
+                              <Image
+                                src={
+                                  playlist.images?.[0]?.url || "/placeholder.svg"
+                                }
+                                width={48}
+                                height={48}
+                                className="object-cover"
+                                alt={playlist.name}
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePlayPausePlaylist(playlist.id);
+                                  }}
+                                >
+                                  {isThisPlaylist && isPlaying ? (
+                                    <Pause className="h-3 w-3 sm:h-4 sm:w-4" fill="currentColor" />
+                                  ) : (
+                                    <Play className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5" fill="currentColor" />
+                                  )}
+                                </Button>
+                              </div>
                             </div>
-                            <div className="text-zinc-400 text-sm">
-                              Playlist
+                            <div className="min-w-0 flex-1">
+                              <div
+                                className={`font-medium truncate transition-colors ${
+                                  isThisPlaylist
+                                    ? "text-green-400"
+                                    : "text-white hover:text-green-400"
+                                }`}
+                              >
+                                {playlist.name}
+                              </div>
+                              <div className="text-zinc-400 text-sm">
+                                Playlist
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <div className="text-zinc-400 truncate max-w-xs">
-                          {playlist.description || "No description"}
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-right">
-                        <span className="text-zinc-400 text-sm">
-                          {playlist.tracks?.total || 0} tracks
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <div className="text-zinc-400 truncate max-w-xs">
+                            {playlist.description || "No description"}
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-right">
+                          <span className="text-zinc-400 text-sm">
+                            {playlist.tracks?.total || 0} tracks
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -255,17 +316,26 @@ const PublicLibrary = () => {
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
-              {publicPlaylists.map((playlist) => (
-                <PlaylistCard
-                  key={playlist.id}
-                  id={playlist.id}
-                  image={playlist.images?.[0]?.url || ""}
-                  title={playlist.name}
-                  description={playlist.description || ""}
-                  onPlay={handlePlayPlaylist}
-                  onClick={handleClick}
-                />
-              ))}
+              {publicPlaylists.map((playlist) => {
+                const playlistUri = `spotify:playlist:${playlist.id}`;
+                const isThisPlaylist = currentPlaylistUri === playlistUri;
+
+                return (
+                  <PlaylistCard
+                    key={playlist.id}
+                    id={playlist.id}
+                    image={playlist.images?.[0]?.url || ""}
+                    title={playlist.name}
+                    description={playlist.description || ""}
+                    isPlaying={isThisPlaylist && isPlaying}
+                    isPaused={isThisPlaylist && !isPlaying}
+                    onPlay={handlePlayPausePlaylist}
+                    onPause={pauseTrack}
+                    onResume={resumeTrack}
+                    onClick={handleClick}
+                  />
+                );
+              })}
             </div>
           )}
         </div>

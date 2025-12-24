@@ -24,7 +24,7 @@ import type { Artist } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { fetchFollowedArtists } from "@/utils/Artist/fetchFollowedArtists";
-import { Play, MoreHorizontal, Users } from "lucide-react";
+import { Play, MoreHorizontal, Users, Pause } from "lucide-react";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
 import Image from "next/image";
@@ -33,11 +33,12 @@ import { usePlayer } from "@/contexts/PlayerContext";
 
 const FollowingArtists = () => {
   const router = useRouter();
-  const { playTrack } = usePlayer();
+  const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } = usePlayer();
   const [token, setToken] = useState<string>("");
   const [followedArtists, setFollowedArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
   const [displayUI, setDisplayUI] = useState<string>("Grid");
+  const [currentArtistId, setCurrentArtistId] = useState<string | null>(null);
 
   useEffect(() => {
     const storedToken = localStorage.getItem("Token");
@@ -58,13 +59,22 @@ const FollowingArtists = () => {
     fetchArtists();
   }, [token]);
 
+  // Update current artist ID when track changes
+  useEffect(() => {
+    if (currentTrack?.artists?.[0]?.id) {
+      setCurrentArtistId(currentTrack.artists[0].id);
+    }
+  }, [currentTrack]);
+
   const memoizedFollowedArtists = useMemo(
     () => followedArtists,
     [followedArtists]
   );
 
   // Handler to play artist's top tracks
-  const handlePlayArtist = async (artistId: string) => {
+  const handlePlayArtist = async (artistId?: string) => {
+    if (!artistId) return;
+
     try {
       // Fetch artist's top tracks
       const response = await fetch(
@@ -108,9 +118,27 @@ const FollowingArtists = () => {
           disc_number: track.disc_number || 1,
           uri: track.uri,
         });
+        setCurrentArtistId(artistId);
       }
     } catch (error) {
       console.error("Error playing artist:", error);
+    }
+  };
+
+  const handlePlayPauseArtist = async (artistId?: string) => {
+    if (!artistId) return;
+
+    // Check if this artist is currently playing
+    if (currentArtistId === artistId) {
+      // Same artist - toggle play/pause
+      if (isPlaying) {
+        pauseTrack();
+      } else {
+        resumeTrack();
+      }
+    } else {
+      // Different artist - play their top track
+      await handlePlayArtist(artistId);
     }
   };
 
@@ -193,46 +221,69 @@ const FollowingArtists = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {memoizedFollowedArtists.map((artist) => (
-                    <TableRow
-                      key={artist.id}
-                      onClick={() =>
-                        router.push(
-                          `/Artists/${artist.id}?name=${encodeURIComponent(
-                            artist.name
-                          )}`
-                        )
-                      }
-                      className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
-                    >
-                      <TableCell className="py-3 sm:py-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex-shrink-0">
-                            <Image
-                              src={artist.image || "/placeholder.svg"}
-                              width={48}
-                              height={48}
-                              className="object-cover rounded-full"
-                              alt={artist.name}
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-white font-medium truncate hover:text-green-400 transition-colors text-sm sm:text-base">
-                              {artist.name}
+                  {memoizedFollowedArtists.map((artist) => {
+                    const isThisArtist = currentArtistId === artist.id;
+                    
+                    return (
+                      <TableRow
+                        key={artist.id}
+                        onClick={() =>
+                          router.push(
+                            `/Artists/${artist.id}?name=${encodeURIComponent(
+                              artist.name
+                            )}`
+                          )
+                        }
+                        className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
+                      >
+                        <TableCell className="py-3 sm:py-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex-shrink-0 group/image">
+                              <Image
+                                src={artist.image || "/placeholder.svg"}
+                                width={48}
+                                height={48}
+                                className="object-cover rounded-full"
+                                alt={artist.name}
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center rounded-full">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePlayPauseArtist(artist.id);
+                                  }}
+                                >
+                                  {isThisArtist && isPlaying ? (
+                                    <Pause className="h-3 w-3 sm:h-4 sm:w-4" fill="currentColor" />
+                                  ) : (
+                                    <Play className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5" fill="currentColor" />
+                                  )}
+                                </Button>
+                              </div>
                             </div>
-                            <div className="text-zinc-400 text-xs sm:text-sm">
-                              Artist
+                            <div className="min-w-0 flex-1">
+                              <div className={`font-medium truncate transition-colors text-sm sm:text-base ${
+                                isThisArtist ? "text-green-400" : "text-white hover:text-green-400"
+                              }`}>
+                                {artist.name}
+                              </div>
+                              <div className="text-zinc-400 text-xs sm:text-sm">
+                                Artist
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell py-3 sm:py-4">
-                        <div className="text-zinc-400 truncate max-w-xs text-sm">
-                          {artist.genres?.join(", ") || "No genres"}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell py-3 sm:py-4">
+                          <div className="text-zinc-400 truncate max-w-xs text-sm">
+                            {artist.genres?.join(", ") || "No genres"}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -268,17 +319,25 @@ const FollowingArtists = () => {
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
-              {memoizedFollowedArtists.map((artist) => (
-                <PlaylistCard
-                  key={artist.id}
-                  id={artist.id}
-                  image={artist.image || "/placeholder.svg"}
-                  title={artist.name}
-                  description={artist.genres?.join(", ") || "Artist"}
-                  onPlay={handlePlayArtist}
-                  onClick={handleClick}
-                />
-              ))}
+              {memoizedFollowedArtists.map((artist) => {
+                const isThisArtist = currentArtistId === artist.id;
+                
+                return (
+                  <PlaylistCard
+                    key={artist.id}
+                    id={artist.id}
+                    image={artist.image || "/placeholder.svg"}
+                    title={artist.name}
+                    description={artist.genres?.join(", ") || "Artist"}
+                    isPlaying={isThisArtist && isPlaying}
+                    isPaused={isThisArtist && !isPlaying}
+                    onPlay={handlePlayPauseArtist}
+                    onPause={pauseTrack}
+                    onResume={resumeTrack}
+                    onClick={handleClick}
+                  />
+                );
+              })}
             </div>
           )}
         </div>
