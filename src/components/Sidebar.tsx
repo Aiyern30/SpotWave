@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/Alert-dialog";
 import { IoIosHome } from "react-icons/io";
 import { FaUserCircle } from "react-icons/fa";
+import Link from "next/link";
 
 const Sidebar = ({
   isOpen,
@@ -132,7 +133,7 @@ const Sidebar = ({
                   const isActive = activeItem === href;
                   return (
                     <li key={title}>
-                      <a
+                      <Link
                         href={href}
                         onClick={() => handleItemClick(href)}
                         className={`flex items-center gap-5 p-5 transition-all border-b-2 border-zinc-800 text-white ${
@@ -149,7 +150,7 @@ const Sidebar = ({
                             {title}
                           </motion.span>
                         )}
-                      </a>
+                      </Link>
                     </li>
                   );
                 })}
@@ -162,7 +163,11 @@ const Sidebar = ({
               >
                 <AlertDialogTrigger asChild>
                   <a
-                    onClick={() => setShowLogoutDialog(true)}
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowLogoutDialog(true);
+                    }}
                     className={`flex items-center gap-5 p-5 transition-all border-b-2 border-zinc-800 text-white hover:bg-primary-background ${
                       isCompact ? "justify-center" : ""
                     }`}
@@ -229,7 +234,7 @@ const Sidebar = ({
                   const isActive = activeItem === href;
                   return (
                     <li key={href} className="flex flex-col items-center p-3">
-                      <a
+                      <Link
                         href={href}
                         onClick={() => handleItemClick(href)}
                         className={`text-white ${
@@ -239,7 +244,7 @@ const Sidebar = ({
                         } p-3 rounded-lg`}
                       >
                         <Icon className="text-2xl" />
-                      </a>
+                      </Link>
                     </li>
                   );
                 })}
@@ -252,7 +257,11 @@ const Sidebar = ({
               >
                 <AlertDialogTrigger asChild>
                   <a
-                    onClick={() => setShowLogoutDialog(true)}
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowLogoutDialog(true);
+                    }}
                     className="flex items-center gap-5 p-3 rounded-lg text-white hover:bg-primary-background"
                   >
                     <BiLogOut className="text-2xl" />
