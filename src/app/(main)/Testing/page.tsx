@@ -45,20 +45,37 @@ export default function AudioRippleVisualizer() {
     };
   }, []);
 
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+
   const startListening = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+        },
+      });
       streamRef.current = stream;
 
       const audioContext = new (window.AudioContext ||
         (window as any).webkitAudioContext)();
+
+      // Resume context if suspended (common browser policy)
+      if (audioContext.state === "suspended") {
+        await audioContext.resume();
+      }
+
       audioContextRef.current = audioContext;
 
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
       analyserRef.current = analyser;
 
+      // Create source and assign to ref to prevent Garbage Collection
       const source = audioContext.createMediaStreamSource(stream);
+      sourceRef.current = source; // IMPORTANT: Keep reference
       source.connect(analyser);
 
       const bufferLength = analyser.frequencyBinCount;
@@ -68,8 +85,10 @@ export default function AudioRippleVisualizer() {
       setIsListening(true);
       animate();
     } catch (err) {
-      console.error("Error accessing microphone:", err);
-      alert("Could not access microphone. Please grant permission.");
+      console.error("Error setting up audio:", err);
+      alert(
+        "Could not access microphone. Please grant permission and ensure no other app is using it."
+      );
     }
   };
 
@@ -78,12 +97,19 @@ export default function AudioRippleVisualizer() {
       cancelAnimationFrame(animationRef.current);
     }
 
+    if (sourceRef.current) {
+      sourceRef.current.disconnect();
+      sourceRef.current = null;
+    }
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     }
 
     if (audioContextRef.current) {
       audioContextRef.current.close();
+      audioContextRef.current = null;
     }
 
     setIsListening(false);
@@ -180,6 +206,38 @@ export default function AudioRippleVisualizer() {
     ctx.lineWidth = 2;
     ctx.stroke();
 
+    // Create ripples based on bass intensity
+    const bassThreshold = 50 * (2 / sensitivity); // Dynamic based on sensitivity
+    if (bass > bassThreshold && ripplesRef.current.length < rippleCount) {
+      const angle = Math.random() * Math.PI * 2;
+      const distance = dynamicRadius + 20 + Math.random() * 50;
+      ripplesRef.current.push({
+        x: centerX + Math.cos(angle) * distance,
+        y: centerY + Math.sin(angle) * distance,
+        radius: 0,
+        maxRadius: 100 + (bass / 255) * 100,
+        alpha: 1,
+        color: `rgba(255, 255, 255, ${0.3 + (bass / 255) * 0.4})`,
+        speed: 2 + (bass / 255) * 2,
+      });
+    }
+
+    // Update and draw ripples
+    ripplesRef.current = ripplesRef.current.filter((ripple) => {
+      ripple.radius += ripple.speed;
+      ripple.alpha = 1 - ripple.radius / ripple.maxRadius;
+
+      if (ripple.alpha > 0) {
+        ctx.beginPath();
+        ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = ripple.color.replace(/[\d.]+\)$/, `${ripple.alpha})`);
+        ctx.lineWidth = 2 + (1 - ripple.alpha) * 3;
+        ctx.stroke();
+        return true;
+      }
+      return false;
+    });
+
     // Optional: Draw some "stars" or particles if high energy
     if (bass > 180) {
       const x = Math.random() * canvas.width;
@@ -257,6 +315,12 @@ export default function AudioRippleVisualizer() {
             />
           </div>
         </div>
+
+        {isListening && (
+          <div className="text-center mt-4 text-green-500 text-xs animate-pulse">
+            Microphone Active - Play music out loud
+          </div>
+        )}
       </div>
 
       <div className="flex-1 relative">
