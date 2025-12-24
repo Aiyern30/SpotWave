@@ -33,7 +33,8 @@ import { usePlayer } from "@/contexts/PlayerContext";
 
 const FollowingArtists = () => {
   const router = useRouter();
-  const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } = usePlayer();
+  const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } =
+    usePlayer();
   const [token, setToken] = useState<string>("");
   const [followedArtists, setFollowedArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
@@ -223,7 +224,7 @@ const FollowingArtists = () => {
                 <TableBody>
                   {memoizedFollowedArtists.map((artist) => {
                     const isThisArtist = currentArtistId === artist.id;
-                    
+
                     return (
                       <TableRow
                         key={artist.id}
@@ -257,17 +258,27 @@ const FollowingArtists = () => {
                                   }}
                                 >
                                   {isThisArtist && isPlaying ? (
-                                    <Pause className="h-3 w-3 sm:h-4 sm:w-4" fill="currentColor" />
+                                    <Pause
+                                      className="h-3 w-3 sm:h-4 sm:w-4"
+                                      fill="currentColor"
+                                    />
                                   ) : (
-                                    <Play className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5" fill="currentColor" />
+                                    <Play
+                                      className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5"
+                                      fill="currentColor"
+                                    />
                                   )}
                                 </Button>
                               </div>
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className={`font-medium truncate transition-colors text-sm sm:text-base ${
-                                isThisArtist ? "text-green-400" : "text-white hover:text-green-400"
-                              }`}>
+                              <div
+                                className={`font-medium truncate transition-colors text-sm sm:text-base ${
+                                  isThisArtist
+                                    ? "text-green-400"
+                                    : "text-white hover:text-green-400"
+                                }`}
+                              >
                                 {artist.name}
                               </div>
                               <div className="text-zinc-400 text-xs sm:text-sm">
@@ -321,7 +332,7 @@ const FollowingArtists = () => {
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
               {memoizedFollowedArtists.map((artist) => {
                 const isThisArtist = currentArtistId === artist.id;
-                
+
                 return (
                   <PlaylistCard
                     key={artist.id}
