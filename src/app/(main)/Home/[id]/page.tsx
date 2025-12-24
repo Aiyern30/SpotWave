@@ -46,7 +46,8 @@ const PlaylistPage = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { playTrack, pauseTrack, currentTrack, isPlaying } = usePlayer();
+  const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } =
+    usePlayer();
 
   const segments = pathname.split("/");
   const playlistId = segments[segments.length - 1];
@@ -105,30 +106,7 @@ const PlaylistPage = () => {
         pauseTrack();
       } else if (currentTrack?.id === track.id && !isPlaying) {
         // If it's the same track but paused, resume it (don't restart)
-        // The resumeTrack function will continue from where it left off
-        playTrack({
-          id: track.id,
-          name: track.name,
-          artists: track.artists,
-          album: {
-            name: track.album.name,
-            images: track.album.images,
-            id: track.album.id,
-            artists: track.artists,
-            release_date: "",
-            total_tracks: 0,
-          },
-          duration_ms: track.duration_ms,
-          explicit: false,
-          external_urls: {
-            spotify: `https://open.spotify.com/track/${track.id}`,
-          },
-          popularity: 0,
-          preview_url: track.preview_url || null,
-          track_number: 0,
-          disc_number: 1,
-          uri: track.uri,
-        });
+        resumeTrack();
       } else {
         // Different track, play it from the beginning
         playTrack({
@@ -156,7 +134,7 @@ const PlaylistPage = () => {
         });
       }
     },
-    [playTrack, pauseTrack, currentTrack, isPlaying]
+    [playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying]
   );
 
   const handleArtistClick = (artistId: string, artistName: string) => {
@@ -334,9 +312,15 @@ const PlaylistPage = () => {
                             }}
                           >
                             {isCurrentlyPlaying ? (
-                              <Pause className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" />
+                              <Pause
+                                className="w-3 h-3 sm:w-4 sm:h-4"
+                                fill="currentColor"
+                              />
                             ) : (
-                              <Play className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" />
+                              <Play
+                                className="w-3 h-3 sm:w-4 sm:h-4"
+                                fill="currentColor"
+                              />
                             )}
                           </Button>
                         ) : (
@@ -446,7 +430,9 @@ const PlaylistPage = () => {
                 onPause={pauseTrack}
                 onClick={(id) => {
                   // Navigate to song details
-                  router.push(`/Songs/${id}?name=${encodeURIComponent(track.name)}`);
+                  router.push(
+                    `/Songs/${id}?name=${encodeURIComponent(track.name)}`
+                  );
                 }}
               />
             );
