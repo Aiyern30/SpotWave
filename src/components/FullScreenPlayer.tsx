@@ -65,11 +65,20 @@ interface TopTrack {
   id: string;
   name: string;
   duration_ms: number;
-  popularity: number;
   preview_url: string | null;
-  uri: string;
+  popularity: number;
+  album: {
+    id: string;
+    name: string;
+    images: {
+      url: string;
+    }[];
+    artists: {
+      id: string;
+      name: string;
+    }[];
+  };
 }
-
 const formatTime = (ms: number) => {
   const seconds = Math.floor(ms / 1000);
   const minutes = Math.floor(seconds / 60);
@@ -743,6 +752,9 @@ export const FullScreenPlayer = ({
                     <TableHead className="w-8 sm:w-12 text-center text-zinc-400 text-xs sm:text-sm">
                       #
                     </TableHead>
+                    <TableHead className="w-16 text-center text-zinc-400 text-xs sm:text-sm">
+                      {/* Image */}
+                    </TableHead>
                     <TableHead className="text-zinc-400 text-xs sm:text-sm">
                       Title
                     </TableHead>
@@ -757,48 +769,62 @@ export const FullScreenPlayer = ({
                 <TableBody>
                   {topTracks.map((track, index) => {
                     const isThisTrack = currentPlayingTrackId === track.id;
+                    const isHovered = hoveredTrackId === track.id;
                     return (
                       <TableRow
                         key={track.id}
-                        className="border-zinc-800 hover:bg-zinc-800/50 transition-colors cursor-pointer group"
+                        className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
                         onClick={() => handlePlayPauseTopTrack(track)}
                         onMouseEnter={() => setHoveredTrackId(track.id)}
                         onMouseLeave={() => setHoveredTrackId(null)}
                       >
-                        <TableCell className="text-center py-2 sm:py-3">
-                          {hoveredTrackId === track.id ? (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="w-6 h-6 sm:w-8 sm:h-8 p-0 rounded-full hover:bg-green-500 hover:text-black"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handlePlayPauseTopTrack(track);
-                              }}
-                            >
-                              {isTrackPlaying(track.id) ? (
-                                <Pause
-                                  className="w-2 h-2 sm:w-3 sm:h-3"
-                                  fill="currentColor"
-                                />
-                              ) : (
-                                <Play
-                                  className="w-2 h-2 sm:w-3 sm:h-3"
-                                  fill="currentColor"
-                                />
-                              )}
-                            </Button>
-                          ) : (
-                            <span
-                              className={`text-xs sm:text-sm ${
-                                isThisTrack ? "text-green-400" : "text-zinc-400"
-                              }`}
-                            >
-                              {index + 1}
-                            </span>
-                          )}
+                        <TableCell className="text-center py-2 sm:py-3 align-middle">
+                          <span
+                            className={`text-xs sm:text-sm font-medium ${
+                              isThisTrack ? "text-green-400" : "text-zinc-400"
+                            }`}
+                          >
+                            {index + 1}
+                          </span>
                         </TableCell>
-                        <TableCell className="py-2 sm:py-3">
+                        <TableCell className="text-center py-2 sm:py-3 align-middle">
+                          <div className="relative w-10 h-10 sm:w-12 sm:h-12 mx-auto rounded-md overflow-hidden group/image">
+                            <Image
+                              src={
+                                track.album?.images[0]?.url ||
+                                "/default-artist.png"
+                              }
+                              width={48}
+                              height={48}
+                              className="object-cover w-10 h-10 sm:w-12 sm:h-12 rounded-md"
+                              alt={track.name}
+                            />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center rounded-md">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePlayPauseTopTrack(track);
+                                }}
+                              >
+                                {isTrackPlaying(track.id) ? (
+                                  <Pause
+                                    className="h-3 w-3 sm:h-4 sm:w-4"
+                                    fill="currentColor"
+                                  />
+                                ) : (
+                                  <Play
+                                    className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5"
+                                    fill="currentColor"
+                                  />
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-2 sm:py-3 align-middle">
                           <div
                             className={`font-medium truncate transition-colors text-xs sm:text-sm ${
                               isThisTrack
@@ -809,7 +835,7 @@ export const FullScreenPlayer = ({
                             {track.name}
                           </div>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell text-center py-2 sm:py-3">
+                        <TableCell className="hidden md:table-cell text-center py-2 sm:py-3 align-middle">
                           <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                             <TrendingUp className="h-3 w-3 text-zinc-400" />
                             <span className="text-zinc-400 text-xs sm:text-sm">
@@ -817,7 +843,7 @@ export const FullScreenPlayer = ({
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden sm:table-cell text-right text-zinc-400 text-xs sm:text-sm py-2 sm:py-3">
+                        <TableCell className="hidden sm:table-cell text-right text-zinc-400 text-xs sm:text-sm py-2 sm:py-3 align-middle">
                           {formatTime(track.duration_ms)}
                         </TableCell>
                       </TableRow>
@@ -834,9 +860,7 @@ export const FullScreenPlayer = ({
                   <PlaylistCard
                     key={track.id}
                     id={track.id}
-                    image={
-                      currentTrack.album.images[0]?.url || "/default-artist.png"
-                    }
+                    image={track.album?.images[0]?.url || "/default-artist.png"}
                     title={track.name}
                     description={`Popularity: ${track.popularity}/100`}
                     badge={`#${index + 1}`}
@@ -846,6 +870,13 @@ export const FullScreenPlayer = ({
                     onPlay={handlePlayTopTrackWrapper}
                     onPause={pauseTrack}
                     onResume={resumeTrack}
+                    onClick={() =>
+                      router.push(
+                        `/Albums/${track.album.id}?name=${encodeURIComponent(
+                          track.name
+                        )}`
+                      )
+                    }
                   />
                 );
               })}
