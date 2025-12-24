@@ -43,6 +43,8 @@ const ArtistQuizGame = () => {
     resumeTrack,
     isPlaying: isGlobalPlaying,
     currentTrack: globalTrack,
+    position,
+    duration,
   } = usePlayer();
 
   const [tracks, setTracks] = useState<any[]>([]);
@@ -254,45 +256,80 @@ const ArtistQuizGame = () => {
         <CardContent className="p-8 md:p-12 flex flex-col items-center space-y-10">
           {/* Visualizer / Icon */}
           {/* Visualizer / Album Art */}
-          <div
-            className={`relative w-48 h-48 rounded-full flex items-center justify-center overflow-hidden border-4 ${
-              isCurrentSongPlaying
-                ? "border-green-500 scale-105"
-                : "border-zinc-700"
-            } transition-all duration-500 shadow-2xl`}
-          >
-            {/* Album Art */}
-            {currentTrack?.album?.images?.[0]?.url ? (
-              <div
-                className={`relative w-full h-full ${
-                  !showAnswer ? "blur-xl scale-125" : ""
-                } transition-all duration-700`}
-              >
-                <Image
-                  src={currentTrack.album.images[0].url}
-                  alt="Album Art"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            ) : (
-              <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                <Music className="w-20 h-20 text-zinc-600" />
-              </div>
-            )}
-
-            {/* Play/Pause Overlay Icon for better UX */}
-            <div
-              className={`absolute inset-0 flex items-center justify-center z-10 ${
-                showAnswer ? "bg-black/20" : "bg-black/10"
-              }`}
+          {/* Visualizer / Album Art with Circular Progress */}
+          <div className="relative w-64 h-64 flex items-center justify-center">
+            {/* Circular Progress SVG */}
+            <svg
+              className="absolute inset-0 w-full h-full -rotate-90 transform"
+              viewBox="0 0 100 100"
             >
-              {!showAnswer &&
-                (isCurrentSongPlaying ? (
-                  <div className="bg-black/40 p-3 rounded-full backdrop-blur-sm">
-                    <Volume2 className="w-8 h-8 text-green-500 animate-pulse" />
-                  </div>
-                ) : null)}
+              {/* Background Circle */}
+              <circle
+                className="text-zinc-800"
+                strokeWidth="4"
+                stroke="currentColor"
+                fill="transparent"
+                r="46"
+                cx="50"
+                cy="50"
+              />
+              {/* Progress Circle */}
+              <circle
+                className={`text-green-500 transition-all duration-1000 ease-linear ${
+                  isCurrentSongPlaying ? "opacity-100" : "opacity-0"
+                }`}
+                strokeWidth="4"
+                strokeDasharray={289.027} // 2 * PI * 46
+                strokeDashoffset={
+                  289.027 - (duration > 0 ? position / duration : 0) * 289.027
+                }
+                strokeLinecap="round"
+                stroke="currentColor"
+                fill="transparent"
+                r="46"
+                cx="50"
+                cy="50"
+              />
+            </svg>
+
+            <div
+              className={`relative w-48 h-48 rounded-full flex items-center justify-center overflow-hidden border-4 ${
+                !isCurrentSongPlaying ? "border-zinc-700" : "border-transparent"
+              } transition-all duration-500 shadow-2xl z-10`}
+            >
+              {/* Album Art */}
+              {currentTrack?.album?.images?.[0]?.url ? (
+                <div
+                  className={`relative w-full h-full ${
+                    !showAnswer ? "blur-xl scale-125" : ""
+                  } transition-all duration-700`}
+                >
+                  <Image
+                    src={currentTrack.album.images[0].url}
+                    alt="Album Art"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                  <Music className="w-20 h-20 text-zinc-600" />
+                </div>
+              )}
+
+              {/* Play/Pause Overlay Icon for better UX */}
+              <div
+                className={`absolute inset-0 flex items-center justify-center z-10 ${
+                  showAnswer ? "bg-black/20" : "bg-black/10"
+                }`}
+              >
+                {!showAnswer &&
+                  (isCurrentSongPlaying ? (
+                    <div className="bg-black/40 p-3 rounded-full backdrop-blur-sm">
+                      <Volume2 className="w-8 h-8 text-green-500 animate-pulse" />
+                    </div>
+                  ) : null)}
+              </div>
             </div>
           </div>
 
