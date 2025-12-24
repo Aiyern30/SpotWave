@@ -52,7 +52,8 @@ const Page = () => {
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
 
   const router = useRouter();
-  const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } = usePlayer();
+  const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } =
+    usePlayer();
 
   const LASTFM_API_KEY = process.env.NEXT_PUBLIC_LASTFM_API_KEY;
 

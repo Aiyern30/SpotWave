@@ -50,7 +50,8 @@ const Page = () => {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [displayUI, setDisplayUI] = useState<DisplayUIProps | string>("Table");
   const router = useRouter();
-  const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } = usePlayer();
+  const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } =
+    usePlayer();
   const [hoveredArtistId, setHoveredArtistId] = useState<string | null>(null);
   const [currentArtistId, setCurrentArtistId] = useState<string | null>(null);
 
