@@ -350,6 +350,15 @@ export const FullScreenPlayer = ({
     }
   };
 
+  const handleArtistClick = (artistId: string, artistName: string) => (
+    e: React.MouseEvent
+  ) => {
+    e.stopPropagation();
+    router.push(
+      `/Artists/${artistId}?name=${encodeURIComponent(artistName)}`
+    );
+  };
+
   if (!isOpen || !currentTrack) return null;
 
   return (
@@ -477,16 +486,21 @@ export const FullScreenPlayer = ({
         {/* Track Info */}
         <div className="text-center space-y-2 pt-4">
           <h1 className="text-4xl font-bold text-white">{currentTrack.name}</h1>
-          <p
-            className="text-xl text-zinc-400 hover:underline cursor-pointer"
-            onClick={() =>
-              router.push(
-                `/Artists/${currentTrack.artists[0].id}?name=${currentTrack.artists[0].name}`
-              )
-            }
-          >
-            {currentTrack.artists.map((artist) => artist.name).join(", ")}
-          </p>
+          <div className="text-xl text-zinc-400 flex items-center justify-center flex-wrap gap-2">
+            {currentTrack.artists.map((artist, index) => (
+              <span key={artist.id} className="inline-flex items-center">
+                <span
+                  className="hover:underline hover:text-white cursor-pointer transition-colors"
+                  onClick={handleArtistClick(artist.id, artist.name)}
+                >
+                  {artist.name}
+                </span>
+                {index < currentTrack.artists.length - 1 && (
+                  <span className="mx-1">,</span>
+                )}
+              </span>
+            ))}
+          </div>
         </div>
 
         {/* Progress Bar */}
