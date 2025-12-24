@@ -347,15 +347,13 @@ export const MusicPlayer = ({
     }
   };
 
-  const handleArtistClick = (e: React.MouseEvent) => {
+  const handleArtistClick = (artistId: string, artistName: string) => (
+    e: React.MouseEvent
+  ) => {
     e.stopPropagation();
-    if (currentTrack?.artists?.[0]) {
-      router.push(
-        `/Artists/${currentTrack.artists[0].id}?name=${encodeURIComponent(
-          currentTrack.artists[0].name
-        )}`
-      );
-    }
+    router.push(
+      `/Artists/${artistId}?name=${encodeURIComponent(artistName)}`
+    );
   };
 
   const handleQueueClick = () => {
@@ -412,12 +410,21 @@ export const MusicPlayer = ({
                 >
                   {currentTrack.name}
                 </h4>
-                <p
-                  className="text-zinc-400 text-xs truncate hover:underline cursor-pointer"
-                  onClick={handleArtistClick}
-                >
-                  {currentTrack.artists.map((artist) => artist.name).join(", ")}
-                </p>
+                <div className="text-zinc-400 text-xs truncate flex items-center gap-1">
+                  {currentTrack.artists.map((artist, index) => (
+                    <span key={artist.id} className="inline-flex items-center">
+                      <span
+                        className="hover:underline hover:text-white cursor-pointer transition-colors"
+                        onClick={handleArtistClick(artist.id, artist.name)}
+                      >
+                        {artist.name}
+                      </span>
+                      {index < currentTrack.artists.length - 1 && (
+                        <span className="mx-1">,</span>
+                      )}
+                    </span>
+                  ))}
+                </div>
               </>
             ) : (
               <>
