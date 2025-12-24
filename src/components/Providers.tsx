@@ -15,7 +15,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
       <PlayerProvider>
-        {children}
+        {/* MusicPlayer and overlays here */}
         <MusicPlayer
           onToggleQueue={() => setIsQueueOpen((prev) => !prev)}
           onToggleFullScreen={() => setIsFullScreenOpen((prev) => !prev)}
@@ -29,6 +29,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           onClose={() => setIsQueueOpen(false)}
         />
         <Toaster />
+        {children}
       </PlayerProvider>
     </AuthProvider>
   );
