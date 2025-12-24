@@ -607,7 +607,7 @@ const ArtistProfilePage = () => {
                               </div>
                               <div className="text-zinc-400 text-sm truncate">
                                 <span
-                                  className="hover:underline hover:text-white transition-colors cursor-pointer"
+                                  className="hover:underline hover:text-green-400 transition-colors cursor-pointer"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleArtistClick(
@@ -640,7 +640,7 @@ const ArtistProfilePage = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="border-zinc-700 hover:border-green-500 hover:text-green-500"
+                            className="border-zinc-700 text-green-500 hover:bg-green-500/10 hover:border-green-500 hover:text-green-400 transition-all"
                             onClick={(e) => {
                               e.stopPropagation();
                               window.open(
@@ -826,7 +826,7 @@ const ArtistProfilePage = () => {
                               </div>
                               <div className="text-zinc-400 text-sm truncate">
                                 <span
-                                  className="hover:underline hover:text-white transition-colors cursor-pointer"
+                                  className="hover:underline hover:text-green-400 transition-colors cursor-pointer"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleArtistClick(
@@ -855,7 +855,7 @@ const ArtistProfilePage = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="border-zinc-700 hover:border-green-500 hover:text-green-500"
+                            className="border-zinc-700 text-green-500 hover:bg-green-500/10 hover:border-green-500 hover:text-green-400 transition-all"
                             onClick={(e) => {
                               e.stopPropagation();
                               window.open(

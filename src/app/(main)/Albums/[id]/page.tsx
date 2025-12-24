@@ -390,7 +390,7 @@ const AlbumsIDPage = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="border-zinc-700 hover:border-green-500 hover:text-green-500"
+                          className="border-zinc-700 text-green-500 hover:bg-green-500/10 hover:border-green-500 hover:text-green-400 transition-all"
                           onClick={(e) => {
                             e.stopPropagation();
                             window.open(
