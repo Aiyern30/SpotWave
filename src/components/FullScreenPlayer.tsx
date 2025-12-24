@@ -39,6 +39,17 @@ import {
   saveTracksForUser,
   removeTracksFromUser,
 } from "@/lib/spotify";
+import { PiTable } from "react-icons/pi";
+import { LuLayoutGrid } from "react-icons/lu";
+import PlaylistCard from "@/components/PlaylistCard";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui";
 
 interface FullScreenPlayerProps {
   isOpen: boolean;
@@ -110,6 +121,12 @@ export const FullScreenPlayer = ({
   const [currentLyricIndex, setCurrentLyricIndex] = useState<number>(-1);
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
 
+  // Add display mode and current artist tracking
+  const [topTracksDisplayUI, setTopTracksDisplayUI] = useState<"Table" | "Grid">("Table");
+  const [currentArtistId, setCurrentArtistId] = useState<string | null>(null);
+  const [currentPlayingTrackId, setCurrentPlayingTrackId] = useState<string | null>(null);
+  const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
+
   useEffect(() => {
     setLocalVolume(volume);
   }, [volume]);
@@ -157,15 +174,21 @@ export const FullScreenPlayer = ({
   // Fetch top tracks when opening
   useEffect(() => {
     if (isOpen && currentTrack?.artists[0]?.id) {
-      fetchTopTracks(currentTrack.artists[0].id);
-      fetchLyrics(
-        currentTrack.artists[0].name,
-        currentTrack.name,
-        currentTrack.album.name,
-        currentTrack.duration_ms
-      );
+      const artistId = currentTrack.artists[0].id;
+      
+      // Only fetch if artist changed or no tracks loaded
+      if (artistId !== currentArtistId || topTracks.length === 0) {
+        setCurrentArtistId(artistId);
+        fetchTopTracks(artistId);
+        fetchLyrics(
+          currentTrack.artists[0].name,
+          currentTrack.name,
+          currentTrack.album.name,
+          currentTrack.duration_ms
+        );
+      }
     }
-  }, [isOpen, currentTrack]);
+  }, [isOpen, currentTrack?.artists[0]?.id]); // Remove currentTrack from dependencies
 
   // Sync lyrics
   useEffect(() => {
@@ -307,6 +330,21 @@ export const FullScreenPlayer = ({
     }
   };
 
+  const handlePlayPauseTopTrack = async (track: TopTrack) => {
+    // Check if this track is currently playing
+    if (currentPlayingTrackId === track.id) {
+      // Same track - toggle play/pause
+      if (isPlaying) {
+        pauseTrack();
+      } else {
+        resumeTrack();
+      }
+    } else {
+      // Different track - play it
+      await handlePlayTopTrack(track);
+    }
+  };
+
   const handlePlayTopTrack = async (track: TopTrack) => {
     setIsLoadingTrack(true);
     try {
@@ -341,6 +379,7 @@ export const FullScreenPlayer = ({
         uri: trackData.uri,
       });
 
+      setCurrentPlayingTrackId(trackData.id);
       // Wait a bit for the track to start loading
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
@@ -350,14 +389,34 @@ export const FullScreenPlayer = ({
     }
   };
 
-  const handleArtistClick = (artistId: string, artistName: string) => (
-    e: React.MouseEvent
-  ) => {
-    e.stopPropagation();
-    router.push(
-      `/Artists/${artistId}?name=${encodeURIComponent(artistName)}`
-    );
+  // Update current playing track ID when track changes
+  useEffect(() => {
+    if (currentTrack?.id) {
+      setCurrentPlayingTrackId(currentTrack.id);
+    }
+  }, [currentTrack]);
+
+  // Helper function to check if track is currently playing
+  const isTrackPlaying = (trackId: string) => {
+    return currentPlayingTrackId === trackId && isPlaying;
   };
+
+  // Wrapper for PlaylistCard compatibility
+  const handlePlayTopTrackWrapper = (trackId?: string) => {
+    if (!trackId) return;
+    const track = topTracks.find((t) => t.id === trackId);
+    if (track) {
+      handlePlayPauseTopTrack(track);
+    }
+  };
+
+  const handleArtistClick =
+    (artistId: string, artistName: string) => (e: React.MouseEvent) => {
+      e.stopPropagation();
+      router.push(
+        `/Artists/${artistId}?name=${encodeURIComponent(artistName)}`
+      );
+    };
 
   if (!isOpen || !currentTrack) return null;
 
@@ -628,50 +687,148 @@ export const FullScreenPlayer = ({
           </div>
         </div>
 
-        {/* Top Tracks Section */}
+        {/* Top Tracks Section with Table/Grid Toggle */}
         <div className="pt-8">
-          <h2 className="text-2xl font-semibold text-white mb-6">
-            Popular tracks by {currentTrack.artists[0]?.name}
-          </h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-semibold text-white">
+              Popular tracks by {currentTrack.artists[0]?.name}
+            </h2>
+            <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTopTracksDisplayUI("Table")}
+                className={`h-9 px-3 transition-all ${
+                  topTracksDisplayUI === "Table"
+                    ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                    : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                }`}
+              >
+                <PiTable className="h-5 w-5 sm:mr-2" />
+                <span className="hidden sm:inline">Table</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTopTracksDisplayUI("Grid")}
+                className={`h-9 px-3 transition-all ${
+                  topTracksDisplayUI === "Grid"
+                    ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                    : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                }`}
+              >
+                <LuLayoutGrid className="h-5 w-5 sm:mr-2" />
+                <span className="hidden sm:inline">Grid</span>
+              </Button>
+            </div>
+          </div>
+
           {loadingTopTracks ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-green-500" />
             </div>
+          ) : topTracksDisplayUI === "Table" ? (
+            <div className="bg-zinc-900/50 rounded-xl overflow-hidden border border-zinc-800/50">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-zinc-800 hover:bg-transparent">
+                    <TableHead className="w-12 text-center text-zinc-400">#</TableHead>
+                    <TableHead className="text-zinc-400">Title</TableHead>
+                    <TableHead className="hidden md:table-cell text-center text-zinc-400">
+                      Popularity
+                    </TableHead>
+                    <TableHead className="hidden md:table-cell text-right text-zinc-400">
+                      <Clock className="w-4 h-4 ml-auto" />
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {topTracks.map((track, index) => {
+                    const isThisTrack = currentPlayingTrackId === track.id;
+                    return (
+                      <TableRow
+                        key={track.id}
+                        className="border-zinc-800 hover:bg-zinc-800/50 transition-colors cursor-pointer group"
+                        onClick={() => handlePlayPauseTopTrack(track)}
+                        onMouseEnter={() => setHoveredTrackId(track.id)}
+                        onMouseLeave={() => setHoveredTrackId(null)}
+                      >
+                        <TableCell className="text-center">
+                          {hoveredTrackId === track.id ? (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="w-8 h-8 p-0 rounded-full hover:bg-green-500 hover:text-black"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePlayPauseTopTrack(track);
+                              }}
+                            >
+                              {isTrackPlaying(track.id) ? (
+                                <Pause className="w-3 h-3" fill="currentColor" />
+                              ) : (
+                                <Play className="w-3 h-3" fill="currentColor" />
+                              )}
+                            </Button>
+                          ) : (
+                            <span
+                              className={`text-sm ${
+                                isThisTrack ? "text-green-400" : "text-zinc-400"
+                              }`}
+                            >
+                              {index + 1}
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div
+                            className={`font-medium truncate transition-colors ${
+                              isThisTrack
+                                ? "text-green-400"
+                                : "text-white group-hover:text-green-400"
+                            }`}
+                          >
+                            {track.name}
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-center">
+                          <div className="flex items-center justify-center space-x-2">
+                            <TrendingUp className="h-3 w-3 text-zinc-400" />
+                            <span className="text-zinc-400 text-sm">
+                              {track.popularity}/100
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-right text-zinc-400 text-sm">
+                          {formatTime(track.duration_ms)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
-            <div className="space-y-2 overflow-x-hidden">
-              {topTracks.map((track, index) => (
-                <div
-                  key={track.id}
-                  className="flex items-center space-x-4 p-4 rounded-lg hover:bg-zinc-800/50 transition-colors group cursor-pointer"
-                  onClick={() => handlePlayTopTrack(track)}
-                >
-                  <span className="text-zinc-400 text-sm w-8 text-center flex-shrink-0">
-                    {index + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-white font-medium truncate text-base">
-                      {track.name}
-                    </div>
-                    <div className="text-zinc-400 text-sm flex items-center space-x-3 flex-wrap">
-                      <div className="flex items-center space-x-1">
-                        <TrendingUp className="h-3 w-3 flex-shrink-0" />
-                        <span>{track.popularity}/100</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Clock className="h-3 w-3 flex-shrink-0" />
-                        <span>{formatTime(track.duration_ms)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="opacity-0 group-hover:opacity-100 h-10 w-10 rounded-full bg-green-500 hover:bg-green-400 text-black flex-shrink-0 transition-all"
-                  >
-                    <Play className="h-5 w-5 ml-0.5" fill="currentColor" />
-                  </Button>
-                </div>
-              ))}
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {topTracks.map((track, index) => {
+                const isThisTrack = currentPlayingTrackId === track.id;
+                return (
+                  <PlaylistCard
+                    key={track.id}
+                    id={track.id}
+                    image={currentTrack.album.images[0]?.url || "/default-artist.png"}
+                    title={track.name}
+                    description={`Popularity: ${track.popularity}/100`}
+                    badge={`#${index + 1}`}
+                    duration={formatTime(track.duration_ms)}
+                    isPlaying={isThisTrack && isPlaying}
+                    isPaused={isThisTrack && !isPlaying}
+                    onPlay={handlePlayTopTrackWrapper}
+                    onPause={pauseTrack}
+                    onResume={resumeTrack}
+                  />
+                );
+              })}
             </div>
           )}
         </div>
