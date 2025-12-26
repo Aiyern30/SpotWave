@@ -35,15 +35,7 @@ const AiGeneratedPage = () => {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen w-full bg-black/50 p-6 md:p-12 space-y-8">
-      <Link
-        href="/Games"
-        className="text-zinc-400 hover:text-white flex items-center gap-2 w-fit transition-colors"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        Back to Games
-      </Link>
-
+    <div className="w-full space-y-8 animate-in fade-in duration-500">
       <div className="max-w-4xl mx-auto w-full space-y-8">
         {/* Input Section */}
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-8 space-y-6 text-center">

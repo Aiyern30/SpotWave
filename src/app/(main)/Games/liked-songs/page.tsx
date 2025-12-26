@@ -266,7 +266,7 @@ const LikedSongsQuiz = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-black to-black flex flex-col items-center p-4 md:p-8 pb-32">
+    <div className="w-full flex flex-col items-center animate-in fade-in duration-500">
       <div className="w-full max-w-3xl flex items-center justify-between mb-8">
         <Button
           variant="ghost"
@@ -274,7 +274,7 @@ const LikedSongsQuiz = () => {
             pauseTrack();
             router.back();
           }}
-          className="text-zinc-400 hover:text-white"
+          className="text-green-500 hover:text-green-400 hover:bg-green-500/10 font-medium"
         >
           <ArrowLeft className="w-5 h-5 mr-2" /> Quit
         </Button>
