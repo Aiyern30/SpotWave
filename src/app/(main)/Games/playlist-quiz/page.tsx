@@ -9,10 +9,12 @@ import {
   Globe,
   User,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -32,10 +34,50 @@ const PlaylistQuizPage = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [token, setToken] = useState<string | null>(null);
 
+  // AI State
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiPlaylists, setAiPlaylists] = useState<PlaylistProps[]>([]);
+
   useEffect(() => {
     const storedToken = localStorage.getItem("Token");
     setToken(storedToken);
   }, []);
+
+  const handleAiRecommendation = async () => {
+    if (!token) return;
+    setIsAiLoading(true);
+    try {
+      const response = await fetch("/api/ai-recommendations", {
+        method: "POST",
+        body: JSON.stringify({
+          type: "playlist",
+          context:
+            myPlaylists.length > 0
+              ? `I enjoy playlists like ${myPlaylists
+                  .slice(0, 3)
+                  .map((p) => p.name)
+                  .join(", ")}`
+              : "Popular Mandopop, K-Pop, and Global hits",
+        }),
+      });
+
+      const { recommendations, error } = await response.json();
+      if (error) throw new Error(error);
+
+      const fetchedAiPlaylists: PlaylistProps[] = [];
+      for (const name of recommendations) {
+        const results = await searchPlaylists(name, token, 1);
+        if (results && results[0]) {
+          fetchedAiPlaylists.push(results[0]);
+        }
+      }
+      setAiPlaylists(fetchedAiPlaylists);
+    } catch (err) {
+      console.error("AI Error:", err);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
 
   // Fetch My Playlists
   useEffect(() => {
@@ -166,6 +208,80 @@ const PlaylistQuizPage = () => {
                 </div>
               )}
             </div>
+          )}
+        </div>
+
+        {/* AI Recommendations Section */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 text-2xl font-semibold text-white">
+              <Sparkles className="w-6 h-6 text-yellow-400" />
+              <h2>AI Playlist Suggestions</h2>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleAiRecommendation}
+              disabled={isAiLoading}
+              className="border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 gap-2"
+            >
+              {isAiLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4" />
+              )}
+              {aiPlaylists.length > 0 ? "Refresh Picks" : "Get AI Suggestions"}
+            </Button>
+          </div>
+
+          {aiPlaylists.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {aiPlaylists.map((playlist) => (
+                <Card
+                  key={playlist.id}
+                  onClick={() => handlePlaylistClick(playlist)}
+                  className="bg-zinc-900/40 border-zinc-800 overflow-hidden hover:bg-zinc-800 transition-all cursor-pointer group hover:scale-[1.02]"
+                >
+                  <CardContent className="p-0">
+                    <div className="aspect-square w-full bg-zinc-800 relative">
+                      {playlist.images?.[0]?.url ? (
+                        <div
+                          className="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                          style={{
+                            backgroundImage: `url(${playlist.images[0].url})`,
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-zinc-800">
+                          <ListMusic className="w-16 h-16 text-zinc-600" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Badge className="bg-green-500 text-black">Play</Badge>
+                      </div>
+                    </div>
+                    <div className="p-4 space-y-1">
+                      <h3 className="font-bold text-white truncate group-hover:text-green-400 transition-colors">
+                        {playlist.name}
+                      </h3>
+                      <p className="text-xs text-zinc-500">
+                        {playlist.tracks?.total || 0} Tracks
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            !isAiLoading && (
+              <div className="p-12 text-center bg-zinc-900/20 rounded-2xl border border-dashed border-zinc-800">
+                <Sparkles className="w-10 h-10 text-zinc-800 mx-auto mb-3" />
+                <p className="text-zinc-500">
+                  Ask AI to discover some unique playlist themes for your next
+                  quiz!
+                </p>
+              </div>
+            )
           )}
         </div>
 

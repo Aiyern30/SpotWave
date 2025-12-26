@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Search, User, ArrowLeft, Loader2, Music } from "lucide-react";
+import {
+  Search,
+  User,
+  ArrowLeft,
+  Loader2,
+  Music,
+  Sparkles,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -15,6 +22,7 @@ import {
   Avatar,
   AvatarImage,
   AvatarFallback,
+  Badge,
 } from "@/components/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -33,6 +41,10 @@ const ArtistQuizPage = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
+  // AI State
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiArtists, setAiArtists] = useState<Artist[]>([]);
+
   // Initialize Token
   useEffect(() => {
     const storedToken = localStorage.getItem("Token");
@@ -40,6 +52,59 @@ const ArtistQuizPage = () => {
       setToken(storedToken);
     }
   }, []);
+
+  const handleAiRecommendation = async () => {
+    if (!token) return;
+    setIsAiLoading(true);
+    try {
+      // 1. Get names from Gemini
+      const response = await fetch("/api/ai-recommendations", {
+        method: "POST",
+        body: JSON.stringify({
+          type: "artist",
+          context:
+            followedArtists.length > 0
+              ? `I like artists like ${followedArtists
+                  .slice(0, 3)
+                  .map((a) => a.name)
+                  .join(", ")}`
+              : "Popular global and local hits",
+        }),
+      });
+
+      const { recommendations, error } = await response.json();
+      if (error) throw new Error(error);
+
+      // 2. Search each on Spotify to get real objects
+      const fetchedAiArtists: Artist[] = [];
+      for (const name of recommendations) {
+        const searchRes = await fetch(
+          `https://api.spotify.com/v1/search?q=${encodeURIComponent(
+            name
+          )}&type=artist&limit=1`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (searchRes.ok) {
+          const data = await searchRes.json();
+          const artist = data.artists.items[0];
+          if (artist) {
+            fetchedAiArtists.push({
+              id: artist.id,
+              name: artist.name,
+              image: artist.images?.[0]?.url,
+              genres: artist.genres,
+              followers: artist.followers?.total,
+            });
+          }
+        }
+      }
+      setAiArtists(fetchedAiArtists);
+    } catch (err) {
+      console.error("AI Error:", err);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
 
   // Fetch Followed Artists
   useEffect(() => {
@@ -190,6 +255,69 @@ const ArtistQuizPage = () => {
                 )}
               </div>
             )}
+        </div>
+
+        {/* AI Recommendations Section */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between px-4 md:px-0">
+            <div className="flex items-center gap-3 text-2xl font-semibold text-white">
+              <Sparkles className="w-6 h-6 text-yellow-400 group-hover:animate-pulse" />
+              <h2>AI Picks For You</h2>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleAiRecommendation}
+              disabled={isAiLoading}
+              className="border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 gap-2"
+            >
+              {isAiLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4" />
+              )}
+              {aiArtists.length > 0 ? "Refresh Picks" : "Get AI Suggestions"}
+            </Button>
+          </div>
+
+          {aiArtists.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {aiArtists.map((artist) => (
+                <Card
+                  key={artist.id}
+                  onClick={() => handleArtistSelect(artist)}
+                  className="bg-zinc-900/40 border-zinc-800 hover:bg-zinc-800/80 transition-all cursor-pointer group/ai overflow-hidden"
+                >
+                  <CardContent className="p-4 flex flex-col items-center gap-3">
+                    <div className="relative w-full aspect-square rounded-full overflow-hidden">
+                      <Avatar className="w-full h-full">
+                        <AvatarImage
+                          src={artist.image}
+                          className="object-cover"
+                        />
+                        <AvatarFallback>{artist.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/ai:opacity-100 transition-opacity flex items-center justify-center">
+                        <Badge className="bg-green-500 text-black">Play</Badge>
+                      </div>
+                    </div>
+                    <h3 className="font-bold text-white text-center truncate w-full group-hover/ai:text-green-400">
+                      {artist.name}
+                    </h3>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            !isAiLoading && (
+              <div className="p-12 text-center bg-zinc-900/20 rounded-2xl border border-dashed border-zinc-800">
+                <Sparkles className="w-10 h-10 text-zinc-800 mx-auto mb-3" />
+                <p className="text-zinc-500">
+                  Let AI suggest some artists for your next quiz!
+                </p>
+              </div>
+            )
+          )}
         </div>
 
         {/* Following Artists Carousel */}
