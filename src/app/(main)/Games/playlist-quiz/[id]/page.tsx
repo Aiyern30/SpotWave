@@ -21,6 +21,7 @@ import { Button, Input, Card, CardContent, Badge } from "@/components/ui";
 import { fetchPlaylistDetails } from "@/utils/fetchPlaylist";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { Converter } from "opencc-js";
+import { QuizResultView } from "@/components/Games/QuizResultView";
 
 // Initialize converter: Traditional (HK) -> Simplified (CN)
 const convertToSimp = Converter({ from: "hk", to: "cn" });
@@ -76,6 +77,7 @@ const PlaylistQuizGame = () => {
 
   const [gameTracks, setGameTracks] = useState<any[]>([]);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [answerRevealTime, setAnswerRevealTime] = useState<number>(0);
 
   useEffect(() => {
     const initGame = async () => {
@@ -129,6 +131,7 @@ const PlaylistQuizGame = () => {
       setFeedback("correct");
       setScore((s) => s + 100);
       setShowAnswer(true);
+      setAnswerRevealTime(Date.now());
     } else {
       setFeedback("wrong");
       const newRevealed = new Set(revealedIndices);
@@ -155,6 +158,7 @@ const PlaylistQuizGame = () => {
       setShowAnswer(false);
       setShowHint(false);
       setRevealedIndices(new Set());
+      setAnswerRevealTime(0);
     }
   };
 
@@ -162,17 +166,21 @@ const PlaylistQuizGame = () => {
     if (!showAnswer) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter") {
-        e.preventDefault();
-        handleNext();
+        const timeSinceReveal = Date.now() - answerRevealTime;
+        if (timeSinceReveal >= 800) {
+          e.preventDefault();
+          handleNext();
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showAnswer, currentTrackIndex, gameTracks.length]);
+  }, [showAnswer, currentTrackIndex, gameTracks.length, answerRevealTime]);
 
   const handleGiveUp = () => {
     setShowAnswer(true);
     setFeedback(null);
+    setAnswerRevealTime(Date.now());
   };
 
   const progressPercentage = (currentTrackIndex / gameTracks.length) * 100;
@@ -333,58 +341,13 @@ const PlaylistQuizGame = () => {
             {/* Quiz / Result Views */}
             <AnimatePresence mode="wait">
               {showAnswer ? (
-                <motion.div
-                  key="result"
-                  initial={{ opacity: 0, scale: 0.95, rotateY: 90 }}
-                  animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, rotateY: -90 }}
-                  transition={{ duration: 0.5, type: "spring" }}
-                  className="w-full flex flex-col items-center space-y-10"
-                >
-                  {/* Result Image */}
-                  <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
-                    {currentTrack?.album?.images?.[0]?.url ? (
-                      <Image
-                        src={currentTrack.album.images[0].url}
-                        alt="Album Art"
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                        <Music className="w-20 h-20 text-zinc-600" />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col items-center gap-2 w-full">
-                    <Badge
-                      className={`${
-                        feedback === "correct"
-                          ? "bg-green-500 text-black shadow-[0_0_20px_rgba(34,197,94,0.4)]"
-                          : "bg-[#EF4444] text-white"
-                      } px-6 py-1.5 text-sm font-bold rounded-md mb-2 border-0 animate-bounce`}
-                    >
-                      {feedback === "correct" ? "Correct!" : "Missed it!"}
-                    </Badge>
-                    <div className="space-y-1 text-center">
-                      <h3 className="text-3xl font-bold text-white tracking-tight">
-                        {currentTrack.name}
-                      </h3>
-                      <p className="text-zinc-400 text-lg font-medium">
-                        {currentTrack.artists[0].name}
-                      </p>
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={handleNext}
-                    className="bg-white text-black hover:bg-zinc-100 w-full h-14 rounded-xl font-bold text-lg transition-all shadow-xl hover:scale-[1.02]"
-                  >
-                    Next Song{" "}
-                    <SkipForward className="w-6 h-6 ml-2 fill-current" />
-                  </Button>
-                </motion.div>
+                <QuizResultView
+                  track={currentTrack}
+                  feedback={feedback}
+                  onNext={handleNext}
+                  revealTime={answerRevealTime}
+                  subtitle={currentTrack.artists[0].name}
+                />
               ) : (
                 <motion.div
                   key="quiz"
