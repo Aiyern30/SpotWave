@@ -66,7 +66,10 @@ export const Breadcrumbs = () => {
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
 
-  const isQuizPage = pathname?.startsWith("/Games/") && pathname !== "/Games";
+  const isQuizPage =
+    pathname?.startsWith("/Games/artist-quiz/") ||
+    pathname === "/Games/liked-songs" ||
+    pathname?.startsWith("/Games/playlist-quiz/");
 
   const handleNavigation = (e: React.MouseEvent, href: string) => {
     if (isQuizPage) {
