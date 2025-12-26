@@ -334,8 +334,8 @@ const AlbumsIDPage = () => {
           </div>
 
           {displayUI === "Table" ? (
-            <div className="bg-zinc-900/50 rounded-xl overflow-hidden border border-zinc-800/50">
-              <Table>
+            <div className="overflow-x-auto rounded-lg border border-zinc-800">
+              <Table className="table-layout-fixed">
                 <TableHeader>
                   <TableRow className="border-zinc-800 hover:bg-transparent">
                     <TableHead className="w-12 text-center text-zinc-400">
@@ -395,8 +395,8 @@ const AlbumsIDPage = () => {
                         )}
                       </TableCell>
 
-                      <TableCell>
-                        <div className="flex items-center space-x-3">
+                      <TableCell className="max-w-0">
+                        <div className="flex items-center space-x-3 min-w-0">
                           {item.album?.images?.[0]?.url && (
                             <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
                               <Image
