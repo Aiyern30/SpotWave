@@ -358,232 +358,259 @@ const ArtistQuizGame = () => {
             {/* Visualizer / Icon */}
             {/* Visualizer / Album Art */}
             {/* Visualizer / Album Art with Circular Progress */}
-            <div className="relative w-64 h-64 flex items-center justify-center">
-              {/* Circular Progress SVG */}
-              <svg
-                className="absolute inset-0 w-full h-full -rotate-90 transform"
-                viewBox="0 0 100 100"
-              >
-                {/* Background Circle */}
-                <circle
-                  className="text-zinc-800"
-                  strokeWidth="4"
-                  stroke="currentColor"
-                  fill="transparent"
-                  r="46"
-                  cx="50"
-                  cy="50"
-                />
-                {/* Progress Circle */}
-                <circle
-                  className={`text-green-500 transition-all duration-1000 ease-linear ${
-                    isCurrentSongPlaying ? "opacity-100" : "opacity-0"
-                  }`}
-                  strokeWidth="4"
-                  strokeDasharray={289.027} // 2 * PI * 46
-                  strokeDashoffset={
-                    289.027 - (duration > 0 ? position / duration : 0) * 289.027
-                  }
-                  strokeLinecap="round"
-                  stroke="currentColor"
-                  fill="transparent"
-                  r="46"
-                  cx="50"
-                  cy="50"
-                />
-              </svg>
-
-              <div
-                className={`relative w-48 h-48 rounded-full flex items-center justify-center overflow-hidden border-4 ${
-                  !isCurrentSongPlaying
-                    ? "border-zinc-700"
-                    : "border-transparent"
-                } transition-all duration-500 shadow-2xl z-10`}
-              >
-                {/* Album Art */}
-                {currentTrack?.album?.images?.[0]?.url ? (
-                  <div
-                    className={`relative w-full h-full ${
-                      !showAnswer ? "blur-xl scale-125" : ""
-                    } transition-all duration-700`}
-                  >
-                    <Image
-                      src={currentTrack.album.images[0].url}
-                      alt="Album Art"
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                    <Music className="w-20 h-20 text-zinc-600" />
-                  </div>
-                )}
-
-                {/* Play/Pause Overlay Icon for better UX */}
-                <div
-                  className={`absolute inset-0 flex items-center justify-center z-10 ${
-                    showAnswer ? "bg-black/20" : "bg-black/10"
-                  }`}
-                >
-                  {!showAnswer &&
-                    (isCurrentSongPlaying ? (
-                      <div className="bg-black/40 p-3 rounded-full backdrop-blur-sm">
-                        <Volume2 className="w-8 h-8 text-green-500 animate-pulse" />
-                      </div>
-                    ) : null)}
-                </div>
-              </div>
-            </div>
-
-            {/* Controls */}
-            <div className="flex flex-col items-center space-y-6 w-full max-w-md">
-              {!showAnswer && (
-                <Button
-                  size="lg"
-                  className={`rounded-full w-16 h-16 p-0 transition-transform hover:scale-105 ${
-                    isCurrentSongPlaying
-                      ? "bg-zinc-800 hover:bg-zinc-700"
-                      : "bg-green-500 hover:bg-green-400 text-black"
-                  }`}
-                  onClick={togglePlayback}
-                >
-                  {isCurrentSongPlaying ? (
-                    <Pause className="w-8 h-8 text-white" />
-                  ) : (
-                    <Play className="w-8 h-8 ml-1" />
-                  )}
-                </Button>
-              )}
-
+            {/* Quiz / Result Views */}
+            <AnimatePresence mode="wait">
               {showAnswer ? (
-                <div className="text-center space-y-4 animate-in zoom-in duration-300 w-full">
-                  <div className="flex flex-col items-center gap-2">
+                <motion.div
+                  key="result"
+                  initial={{ opacity: 0, scale: 0.95, rotateY: 90 }}
+                  animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, rotateY: -90 }}
+                  transition={{ duration: 0.5, type: "spring" }}
+                  className="w-full flex flex-col items-center space-y-10"
+                >
+                  {/* Result Image */}
+                  <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
+                    {currentTrack?.album?.images?.[0]?.url ? (
+                      <Image
+                        src={currentTrack.album.images[0].url}
+                        alt="Album Art"
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                        <Music className="w-20 h-20 text-zinc-600" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col items-center gap-2 w-full">
                     <Badge
                       className={`${
                         feedback === "correct"
-                          ? "bg-green-500 text-black"
-                          : "bg-red-500 text-white"
-                      } px-4 py-1 text-lg mb-2`}
+                          ? "bg-green-500 text-black shadow-[0_0_20px_rgba(34,197,94,0.4)]"
+                          : "bg-[#EF4444] text-white"
+                      } px-6 py-1.5 text-sm font-bold rounded-md mb-2 border-0 animate-bounce`}
                     >
                       {feedback === "correct" ? "Correct!" : "Missed it!"}
                     </Badge>
-                    <h3 className="text-2xl font-bold text-white mt-2">
-                      {currentTrack.name}
-                    </h3>
-                    <p className="text-zinc-400">{currentTrack.album.name}</p>
+                    <div className="space-y-1 text-center">
+                      <h3 className="text-3xl font-bold text-white tracking-tight">
+                        {currentTrack.name}
+                      </h3>
+                      <p className="text-zinc-400 text-lg font-medium">
+                        {currentTrack.album.name}
+                      </p>
+                    </div>
                   </div>
+
                   <Button
                     onClick={handleNext}
-                    className="mt-8 bg-white text-black hover:bg-zinc-200 w-full"
-                    size="lg"
+                    className="bg-white text-black hover:bg-zinc-100 w-full h-14 rounded-xl font-bold text-lg transition-all shadow-xl hover:scale-[1.02]"
                   >
-                    Next Song <SkipForward className="w-4 h-4 ml-2" />
+                    Next Song{" "}
+                    <SkipForward className="w-6 h-6 ml-2 fill-current" />
                   </Button>
-                </div>
+                </motion.div>
               ) : (
-                <div className="w-full space-y-4">
-                  {/* Hint Button & Display */}
-                  <div className="flex flex-col items-center gap-2">
-                    {!showHint ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-zinc-400 hover:text-yellow-400 transition-colors"
-                        onClick={() => setShowHint(true)}
+                <motion.div
+                  key="quiz"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="w-full flex flex-col items-center space-y-6"
+                >
+                  {/* Quiz Image (Blurred) */}
+                  <div className="relative w-64 h-64 flex items-center justify-center">
+                    {/* Circular Progress SVG */}
+                    <svg
+                      className="absolute inset-0 w-full h-full -rotate-90 transform"
+                      viewBox="0 0 100 100"
+                    >
+                      {/* Background Circle */}
+                      <circle
+                        className="text-zinc-800"
+                        strokeWidth="4"
+                        stroke="currentColor"
+                        fill="transparent"
+                        r="46"
+                        cx="50"
+                        cy="50"
+                      />
+                      {/* Progress Circle */}
+                      <circle
+                        className={`text-green-500 transition-all duration-1000 ease-linear ${
+                          isCurrentSongPlaying ? "opacity-100" : "opacity-0"
+                        }`}
+                        strokeWidth="4"
+                        strokeDasharray={289.027} // 2 * PI * 46
+                        strokeDashoffset={
+                          289.027 -
+                          (duration > 0 ? position / duration : 0) * 289.027
+                        }
+                        strokeLinecap="round"
+                        stroke="currentColor"
+                        fill="transparent"
+                        r="46"
+                        cx="50"
+                        cy="50"
+                      />
+                    </svg>
+
+                    <div
+                      className={`relative w-48 h-48 rounded-full flex items-center justify-center overflow-hidden border-4 ${
+                        !isCurrentSongPlaying
+                          ? "border-zinc-700"
+                          : "border-transparent"
+                      } transition-all duration-500 shadow-2xl z-10`}
+                    >
+                      {/* Album Art */}
+                      {currentTrack?.album?.images?.[0]?.url ? (
+                        <div className="relative w-full h-full blur-2xl scale-150">
+                          <Image
+                            src={currentTrack.album.images[0].url}
+                            alt="Blurred Art"
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                          <Music className="w-20 h-20 text-zinc-600" />
+                        </div>
+                      )}
+
+                      {/* Play/Pause Overlay Icon for better UX */}
+                      <div
+                        className={`absolute inset-0 flex items-center justify-center z-10 bg-black/10`}
                       >
-                        <Lightbulb className="w-4 h-4 mr-2" />
-                        Need a Hint?
-                      </Button>
-                    ) : (
-                      <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 px-4 py-2 rounded-lg text-sm font-medium animate-in fade-in slide-in-from-bottom-2 duration-300 flex items-center">
-                        <Lightbulb className="w-4 h-4 mr-2 fill-yellow-500" />
-                        {currentTrack.album.name === currentTrack.name
-                          ? `Released in ${
-                              currentTrack.album.release_date.split("-")[0]
-                            }`
-                          : `Album: ${maskText(currentTrack.album.name)}`}
+                        {isCurrentSongPlaying ? (
+                          <div className="bg-black/40 p-3 rounded-full backdrop-blur-sm">
+                            <Volume2 className="w-8 h-8 text-green-500 animate-pulse" />
+                          </div>
+                        ) : null}
                       </div>
-                    )}
+                    </div>
                   </div>
 
-                  <div className="flex flex-wrap justify-center gap-1.5 mb-8 min-h-[3rem] px-2">
-                    {currentTrack.name
-                      .split("")
-                      .map((char: string, index: number) => {
-                        const isContent = /[\p{L}\p{N}]/u.test(char);
-                        const isRevealed =
-                          revealedIndices.has(index) ||
-                          !isContent ||
-                          showAnswer;
+                  {/* Play Controls */}
+                  <Button
+                    size="lg"
+                    className={`rounded-full w-16 h-16 p-0 transition-transform hover:scale-105 ${
+                      isCurrentSongPlaying
+                        ? "bg-zinc-800 hover:bg-zinc-700"
+                        : "bg-green-500 hover:bg-green-400 text-black"
+                    }`}
+                    onClick={togglePlayback}
+                  >
+                    {isCurrentSongPlaying ? (
+                      <Pause className="w-8 h-8 text-white" />
+                    ) : (
+                      <Play className="w-8 h-8 ml-1" />
+                    )}
+                  </Button>
 
-                        return (
-                          <div
-                            key={index}
-                            className={`flex flex-col items-center justify-end w-8 h-10 border-b-2 transition-all duration-300 ${
-                              isRevealed
-                                ? "border-green-500/50"
-                                : "border-zinc-700"
-                            }`}
-                          >
-                            <span
-                              className={`text-xl font-bold select-none ${
+                  <div className="w-full space-y-4">
+                    {/* Hint Button & Display */}
+                    <div className="flex flex-col items-center gap-2">
+                      {!showHint ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-zinc-400 hover:text-yellow-400 transition-colors"
+                          onClick={() => setShowHint(true)}
+                        >
+                          <Lightbulb className="w-4 h-4 mr-2" />
+                          Need a Hint?
+                        </Button>
+                      ) : (
+                        <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 px-4 py-2 rounded-lg text-sm font-medium animate-in fade-in slide-in-from-bottom-2 duration-300 flex items-center">
+                          <Lightbulb className="w-4 h-4 mr-2 fill-yellow-500" />
+                          {currentTrack.album.name === currentTrack.name
+                            ? `Released in ${
+                                currentTrack.album.release_date.split("-")[0]
+                              }`
+                            : `Album: ${maskText(currentTrack.album.name)}`}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap justify-center gap-1.5 mb-8 min-h-[3rem] px-2">
+                      {currentTrack.name
+                        .split("")
+                        .map((char: string, index: number) => {
+                          const isContent = /[\p{L}\p{N}]/u.test(char);
+                          const isRevealed =
+                            revealedIndices.has(index) || !isContent;
+
+                          return (
+                            <div
+                              key={index}
+                              className={`flex flex-col items-center justify-end w-8 h-10 border-b-2 transition-all duration-300 ${
                                 isRevealed
-                                  ? "text-white animate-in zoom-in"
-                                  : "text-transparent"
+                                  ? "border-green-500/50"
+                                  : "border-zinc-700"
                               }`}
                             >
-                              {char}
-                            </span>
-                          </div>
-                        );
-                      })}
-                  </div>
+                              <span
+                                className={`text-xl font-bold select-none ${
+                                  isRevealed
+                                    ? "text-white animate-in zoom-in"
+                                    : "text-transparent"
+                                }`}
+                              >
+                                {char}
+                              </span>
+                            </div>
+                          );
+                        })}
+                    </div>
 
-                  <div className="relative">
-                    <Input
-                      autoFocus
-                      placeholder="Type song name..."
-                      value={guess}
-                      onChange={(e) => {
-                        setGuess(e.target.value);
-                        // Don't clear feedback immediately to allow user to see "Wrong" from last submit
-                        if (feedback === "correct") setFeedback(null);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") checkGuess();
-                      }}
-                      className={`h-14 pl-6 text-lg bg-black/50 border-zinc-700 text-white rounded-xl focus:ring-green-500 focus:border-green-500 transition-all ${
-                        feedback === "wrong"
-                          ? "border-red-500 text-red-500"
-                          : ""
-                      }`}
-                    />
-                    {feedback === "wrong" && (
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500 animate-in fade-in slide-in-from-left-2">
-                        <XCircle className="w-6 h-6" />
-                      </div>
-                    )}
-                  </div>
+                    <div className="relative">
+                      <Input
+                        autoFocus
+                        placeholder="Type song name..."
+                        value={guess}
+                        onChange={(e) => {
+                          setGuess(e.target.value);
+                          if (feedback === "correct") setFeedback(null);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") checkGuess();
+                        }}
+                        className={`h-14 pl-6 text-lg bg-black/50 border-zinc-700 text-white rounded-xl focus:ring-green-500 focus:border-green-500 transition-all ${
+                          feedback === "wrong"
+                            ? "border-red-500 text-red-500"
+                            : ""
+                        }`}
+                      />
+                      {feedback === "wrong" && (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500 animate-in fade-in slide-in-from-left-2">
+                          <XCircle className="w-6 h-6" />
+                        </div>
+                      )}
+                    </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <Button
-                      variant="destructive"
-                      className="h-12 "
-                      onClick={handleGiveUp}
-                    >
-                      <HelpCircle className="w-4 h-4 mr-2" /> Give Up
-                    </Button>
-                    <Button
-                      className="h-12 bg-green-500 hover:bg-green-600 text-black font-semibold"
-                      onClick={checkGuess}
-                    >
-                      Submit <CheckCircle2 className="w-4 h-4 ml-2" />
-                    </Button>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Button
+                        variant="destructive"
+                        className="h-12"
+                        onClick={handleGiveUp}
+                      >
+                        <HelpCircle className="w-4 h-4 mr-2" /> Give Up
+                      </Button>
+                      <Button
+                        className="h-12 bg-green-500 hover:bg-green-600 text-black font-semibold"
+                        onClick={checkGuess}
+                      >
+                        Submit <CheckCircle2 className="w-4 h-4 ml-2" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                </motion.div>
               )}
-            </div>
+            </AnimatePresence>
           </CardContent>
         </Card>
       </motion.div>
