@@ -102,33 +102,23 @@ const Sidebar = ({
       {/* Mobile Toggle Button - Floating Logo */}
       <button
         onClick={onClose}
-        className="fixed top-5 left-5 z-[60] lg:hidden group transition-transform active:scale-95"
+        className={`fixed top-5 left-5 z-[60] lg:hidden group transition-all duration-300 active:scale-95 ${
+          isOpen
+            ? "opacity-0 pointer-events-none translate-x-[-20px]"
+            : "opacity-100 translate-x-0"
+        }`}
         aria-label="toggle sidebar"
       >
         <div className="relative">
-          <div
-            className={`p-1 rounded-full bg-black/40 backdrop-blur-md border-2 transition-all duration-300 ${
-              isOpen
-                ? "border-green-500 scale-110 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
-                : "border-zinc-800 hover:border-zinc-600 shadow-xl"
-            }`}
-          >
+          <div className="p-1 rounded-full bg-black/40 backdrop-blur-md border border-zinc-800 shadow-xl">
             <img
               src="/Logo.png"
               alt="SpotWave Logo"
               className="w-10 h-10 rounded-full"
             />
           </div>
-          <div
-            className={`absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1 border border-black shadow-lg transition-transform duration-300 ${
-              isOpen ? "rotate-180 bg-red-500" : "rotate-0"
-            }`}
-          >
-            {isOpen ? (
-              <AiOutlineRollback className="text-[10px] text-white" />
-            ) : (
-              <GiHamburgerMenu className="text-[10px] text-white" />
-            )}
+          <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1 border border-black shadow-lg">
+            <GiHamburgerMenu className="text-[10px] text-white" />
           </div>
         </div>
       </button>
@@ -167,17 +157,24 @@ const Sidebar = ({
             onClick={isCompact ? onClose : undefined}
           >
             {!isCompact ? (
-              <div className="flex items-center gap-3 text-white">
-                <div className="relative">
+              <div
+                className="flex items-center gap-5 text-white cursor-pointer group/logo"
+                onClick={onClose}
+              >
+                <div className="relative w-11 h-11 flex-shrink-0">
+                  <div className="absolute inset-0 rounded-full bg-green-500/10 animate-pulse group-hover/logo:bg-green-500/20" />
                   <img
                     src="/Logo.png"
                     alt="SpotWave Logo"
-                    className="w-10 h-10 rounded-full ring-2 ring-green-500/20"
+                    className="w-full h-full rounded-full ring-2 ring-green-500/20 z-10 relative transition-transform group-hover/logo:scale-105"
                   />
-                  <div className="absolute inset-0 rounded-full bg-green-500/10 animate-pulse" />
+                  {/* Show a small back icon on mobile header logo hover */}
+                  <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 border border-black z-20 opacity-0 group-hover/logo:opacity-100 transition-opacity lg:hidden">
+                    <AiOutlineRollback className="text-[8px] text-white" />
+                  </div>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xl font-bold tracking-tight">
+                  <span className="text-xl font-bold tracking-tight whitespace-nowrap">
                     SpotWave
                   </span>
                   <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest -mt-1">
@@ -196,16 +193,6 @@ const Sidebar = ({
                   <div className="absolute inset-0 rounded-full bg-green-500/0 group-hover/header:bg-green-500/5 transition-colors duration-500" />
                 </div>
               </div>
-            )}
-
-            {!isCompact && (
-              <button
-                onClick={onClose}
-                className="p-2.5 hover:bg-zinc-800 rounded-xl transition-colors border border-zinc-800/50 group"
-                aria-label="close sidebar"
-              >
-                <AiOutlineRollback className="text-lg text-zinc-400 group-hover:text-white transition-colors" />
-              </button>
             )}
           </div>
 
@@ -235,7 +222,7 @@ const Sidebar = ({
                           } 
                           ${isCompact ? "justify-center px-0" : ""}`}
                       >
-                        {isActive && (
+                        {isActive && !isCompact && (
                           <motion.div
                             layoutId="active-indicator"
                             className="absolute left-0 w-1 h-6 bg-green-500 rounded-r-full shadow-[0_0_10px_rgba(34,197,94,0.5)]"
