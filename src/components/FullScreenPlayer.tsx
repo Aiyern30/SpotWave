@@ -219,16 +219,22 @@ export const FullScreenPlayer = ({
 
     if (newIndex !== currentLyricIndex) {
       setCurrentLyricIndex(newIndex);
-      // Scroll both desktop and mobile containers
+      // Scroll both desktop and mobile containers internally
       [lyricsContainerRef, mobileLyricsContainerRef].forEach((ref) => {
         if (ref.current && newIndex >= 0) {
           const activeElement = ref.current.querySelector(
             `[data-index="${newIndex}"]`
-          );
+          ) as HTMLElement;
           if (activeElement) {
-            activeElement.scrollIntoView({
+            // Use internal scrollTo instead of scrollIntoView to prevent page jumping
+            const container = ref.current;
+            const targetScroll =
+              activeElement.offsetTop -
+              container.clientHeight / 2 +
+              activeElement.clientHeight / 2;
+            container.scrollTo({
+              top: targetScroll,
               behavior: "smooth",
-              block: "center",
             });
           }
         }
@@ -441,7 +447,16 @@ export const FullScreenPlayer = ({
   if (!isOpen || !currentTrack) return null;
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-b from-zinc-900 via-zinc-800 to-black z-50 overflow-y-auto overflow-x-hidden lg:pl-16 px-4 py-4 sm:py-6 space-y-4 sm:space-y-8">
+    <div className="fixed inset-0 bg-gradient-to-b from-zinc-900 via-zinc-800 to-black z-50 overflow-y-auto overflow-x-hidden lg:pl-16 px-4 py-4 sm:py-6 space-y-4 sm:space-y-8 no-scrollbar">
+      <style jsx global>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
       {/* Header with View Toggle (Desktop Only) and Close Button */}
       <div className="fixed top-2 sm:top-4 right-2 sm:right-4 flex items-center gap-1 sm:gap-2 z-10">
         <div className="hidden lg:flex items-center gap-1 sm:gap-2">
@@ -510,28 +525,8 @@ export const FullScreenPlayer = ({
               ) : syncedLyrics && syncedLyrics.length > 0 ? (
                 <div
                   ref={lyricsContainerRef}
-                  className="h-[400px] sm:h-[600px] overflow-y-auto overflow-x-hidden scroll-smooth space-y-3 sm:space-y-4 pr-2 sm:pr-4"
-                  style={{
-                    scrollbarWidth: "thin",
-                    scrollbarColor: "#3b82f6 #27272a",
-                  }}
+                  className="h-[400px] sm:h-[600px] overflow-y-auto overflow-x-hidden scroll-smooth space-y-3 sm:space-y-4 pr-2 sm:pr-4 no-scrollbar"
                 >
-                  <style jsx>{`
-                    div::-webkit-scrollbar {
-                      width: 8px;
-                    }
-                    div::-webkit-scrollbar-track {
-                      background: #27272a;
-                      border-radius: 10px;
-                    }
-                    div::-webkit-scrollbar-thumb {
-                      background: #3b82f6;
-                      border-radius: 10px;
-                    }
-                    div::-webkit-scrollbar-thumb:hover {
-                      background: #2563eb;
-                    }
-                  `}</style>
                   {syncedLyrics.map((line, index) => (
                     <div
                       key={index}
@@ -728,7 +723,7 @@ export const FullScreenPlayer = ({
             ) : syncedLyrics && syncedLyrics.length > 0 ? (
               <div
                 ref={mobileLyricsContainerRef}
-                className="h-[400px] overflow-y-auto overflow-x-hidden scroll-smooth space-y-4 pr-2"
+                className="h-[400px] overflow-y-auto overflow-x-hidden scroll-smooth space-y-4 pr-2 no-scrollbar"
               >
                 {syncedLyrics.map((line, index) => (
                   <div
