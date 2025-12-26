@@ -1,22 +1,77 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
-import { Sparkles, Loader2, Music, Lightbulb, User } from "lucide-react";
+import {
+  Sparkles,
+  Loader2,
+  Music,
+  Lightbulb,
+  User,
+  ArrowLeft,
+  XCircle,
+  Play,
+  Pause,
+  Volume2,
+  HelpCircle,
+  CheckCircle2,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
+import { Input } from "@/components/ui/Input";
+import { motion, AnimatePresence } from "framer-motion";
+import { usePlayer } from "@/contexts/PlayerContext";
+import { Converter } from "opencc-js";
+import { QuizResultView } from "@/components/Games/QuizResultView";
+import Image from "next/image";
 
 interface Suggestion {
   title: string;
   description: string;
 }
 
+const convertToSimp = Converter({ from: "hk", to: "cn" });
+
+const normalizeString = (str: string) => {
+  const simplified = convertToSimp(str);
+  return simplified
+    .toLowerCase()
+    .replace(/\(.*\)/g, "")
+    .replace(/-.*$/g, "")
+    .replace(/[^\p{L}\p{N}]/gu, "")
+    .trim();
+};
+
 const AiGeneratedPage = () => {
+  const {
+    playTrack,
+    pauseTrack,
+    resumeTrack,
+    isPlaying: isGlobalPlaying,
+    currentTrack: globalTrack,
+    position,
+    duration,
+  } = usePlayer();
+
   const [prompt, setPrompt] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // Quiz Mode State
+  const [isQuizMode, setIsQuizMode] = useState(false);
+  const [gameTracks, setGameTracks] = useState<any[]>([]);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [score, setScore] = useState(0);
+  const [guess, setGuess] = useState("");
+  const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+  const [revealedIndices, setRevealedIndices] = useState<Set<number>>(
+    new Set()
+  );
+  const [isGameOver, setIsGameOver] = useState(false);
+  const [answerRevealTime, setAnswerRevealTime] = useState<number>(0);
 
   const [contexts, setContexts] = useState<{
     topArtists: string;
@@ -39,7 +94,6 @@ const AiGeneratedPage = () => {
 
       try {
         setIsAiLoading(true);
-
         // Parallel fetching for performance
         const [artistRes, topTrackRes, recentRes, playlistRes] =
           await Promise.all([
@@ -51,9 +105,7 @@ const AiGeneratedPage = () => {
             }),
             fetch(
               "https://api.spotify.com/v1/me/player/recently-played?limit=10",
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              }
+              { headers: { Authorization: `Bearer ${token}` } }
             ),
             fetch("https://api.spotify.com/v1/me/playlists?limit=5", {
               headers: { Authorization: `Bearer ${token}` },
@@ -136,7 +188,6 @@ const AiGeneratedPage = () => {
 
       const data = await response.json();
       const { recommendations, error, _error } = data;
-
       if (_error) console.warn("🤖 AI Provider Error:", _error);
       if (error) throw new Error(error);
 
@@ -150,12 +201,114 @@ const AiGeneratedPage = () => {
     }
   };
 
-  const handleGenerateQuiz = () => {
+  const handleGenerateQuiz = async () => {
     if (!prompt.trim()) return;
     setIsGeneratingQuiz(true);
-    setTimeout(() => {
+    const token = localStorage.getItem("Token");
+
+    try {
+      // 1. Get track names from AI
+      const aiResponse = await fetch("/api/ai-recommendations", {
+        method: "POST",
+        body: JSON.stringify({ type: "quiz-tracks", context: prompt }),
+      });
+      const { recommendations } = await aiResponse.json();
+
+      // 2. Search each on Spotify to get real tracks
+      const fetchedTracks: any[] = [];
+      for (const item of recommendations) {
+        const query = `${item.song} ${item.artist}`;
+        const searchRes = await fetch(
+          `https://api.spotify.com/v1/search?q=${encodeURIComponent(
+            query
+          )}&type=track&limit=1`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (searchRes.ok) {
+          const data = await searchRes.json();
+          const track = data.tracks.items[0];
+          if (track) fetchedTracks.push(track);
+        }
+      }
+
+      if (fetchedTracks.length > 0) {
+        setGameTracks(fetchedTracks);
+        setIsQuizMode(true);
+        setCurrentTrackIndex(0);
+        setScore(0);
+        setIsGameOver(false);
+      } else {
+        alert(
+          "Could not find enough tracks for this theme. Try a different prompt!"
+        );
+      }
+    } catch (err) {
+      console.error("Generate Quiz Error:", err);
+    } finally {
       setIsGeneratingQuiz(false);
-    }, 2000);
+    }
+  };
+
+  const currentTrack = gameTracks[currentTrackIndex];
+
+  useEffect(() => {
+    if (isQuizMode && currentTrack && !showAnswer && !isGameOver) {
+      const timer = setTimeout(() => {
+        playTrack({
+          ...currentTrack,
+          album: {
+            ...currentTrack.album,
+            images: currentTrack.album.images || [],
+          },
+          duration_ms: currentTrack.duration_ms || 0,
+        });
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isQuizMode, currentTrack, showAnswer, isGameOver, playTrack]);
+
+  const checkGuess = () => {
+    if (!currentTrack || showAnswer) return;
+    const normalizedGuess = normalizeString(guess);
+    const normalizedAnswer = normalizeString(currentTrack.name);
+
+    if (normalizedGuess === normalizedAnswer) {
+      setFeedback("correct");
+      setScore((s) => s + 100);
+      setShowAnswer(true);
+      setAnswerRevealTime(Date.now());
+    } else {
+      setFeedback("wrong");
+      const newRevealed = new Set(revealedIndices);
+      const answerStr = currentTrack.name.toLowerCase();
+      const guessStr = guess.toLowerCase();
+      for (let i = 0; i < Math.min(answerStr.length, guessStr.length); i++) {
+        if (convertToSimp(answerStr[i]) === convertToSimp(guessStr[i]))
+          newRevealed.add(i);
+      }
+      setRevealedIndices(newRevealed);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentTrackIndex >= gameTracks.length - 1) {
+      setIsGameOver(true);
+      pauseTrack();
+    } else {
+      setCurrentTrackIndex((prev) => prev + 1);
+      setGuess("");
+      setFeedback(null);
+      setShowAnswer(false);
+      setShowHint(false);
+      setRevealedIndices(new Set());
+      setAnswerRevealTime(0);
+    }
+  };
+
+  const handleGiveUp = () => {
+    setShowAnswer(true);
+    setFeedback(null);
+    setAnswerRevealTime(Date.now());
   };
 
   const handleApplySuggestion = (suggestion: Suggestion) => {
@@ -179,6 +332,14 @@ const AiGeneratedPage = () => {
     handleGetAiSuggestions(ctx);
   };
 
+  const togglePlayback = () => {
+    const isCurrentTrackLoaded = globalTrack?.id === currentTrack?.id;
+    if (isCurrentTrackLoaded) {
+      if (isGlobalPlaying) pauseTrack();
+      else resumeTrack();
+    } else playTrack(currentTrack);
+  };
+
   const SkeletonCard = () => (
     <Card className="bg-zinc-900/40 border-zinc-800/80 rounded-2xl overflow-hidden border-2 animate-pulse h-[140px]">
       <div className="p-6 space-y-4">
@@ -191,10 +352,258 @@ const AiGeneratedPage = () => {
     </Card>
   );
 
+  if (isQuizMode) {
+    if (isGameOver) {
+      return (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center space-y-8"
+        >
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold text-green-500">
+              Quiz Complete!
+            </h1>
+            <p className="text-xl text-white">You scored {score} points</p>
+          </div>
+          <Card className="bg-zinc-900 border-zinc-800 w-full max-w-md">
+            <CardContent className="p-8 space-y-6">
+              <div className="text-6xl font-black text-white">
+                {Math.round((score / (gameTracks.length * 100)) * 100)}%
+              </div>
+              <p className="text-zinc-400">
+                Accuracy on {gameTracks.length} AI-selected songs
+              </p>
+              <div className="flex gap-4 justify-center">
+                <Button
+                  onClick={() => setIsQuizMode(false)}
+                  className="bg-white text-black hover:bg-zinc-200 font-semibold"
+                >
+                  Generate New
+                </Button>
+                <Button
+                  onClick={() => handleGenerateQuiz()}
+                  className="bg-green-500 hover:bg-green-600 text-black font-semibold"
+                >
+                  Retry This
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      );
+    }
+
+    const progressPercentage = (currentTrackIndex / gameTracks.length) * 100;
+    const isCurrentSongPlaying =
+      isGlobalPlaying && globalTrack?.id === currentTrack?.id;
+
+    return (
+      <div className="w-full flex flex-col items-center animate-in fade-in duration-500 pb-12">
+        <div className="w-full max-w-3xl flex items-center justify-between mb-8">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              pauseTrack();
+              setIsQuizMode(false);
+            }}
+            className="text-green-500 hover:text-green-400 hover:bg-green-500/10 font-medium"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" /> Exit Quiz
+          </Button>
+          <div className="flex flex-col items-center">
+            <h2 className="text-white font-bold text-lg">AI Genre Quiz</h2>
+            <span className="text-green-500 font-mono text-sm">
+              Score: {score}
+            </span>
+          </div>
+          <div className="w-20 text-right text-zinc-500 text-sm">
+            {currentTrackIndex + 1} / {gameTracks.length}
+          </div>
+        </div>
+
+        <motion.div
+          key={currentTrack?.id}
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="w-full max-w-2xl"
+        >
+          <Card className="bg-zinc-900/50 border-zinc-800 backdrop-blur-sm shadow-2xl overflow-hidden relative border-2">
+            <div className="absolute top-0 left-0 w-full h-1 bg-zinc-800">
+              <div
+                className="h-full bg-green-500 transition-all duration-500"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+            <CardContent className="p-8 md:p-12 flex flex-col items-center space-y-10">
+              <AnimatePresence mode="wait">
+                {showAnswer ? (
+                  <QuizResultView
+                    track={currentTrack}
+                    feedback={feedback}
+                    onNext={handleNext}
+                    revealTime={answerRevealTime}
+                    subtitle={currentTrack.artists[0].name}
+                  />
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="w-full flex flex-col items-center space-y-6"
+                  >
+                    <div className="relative w-64 h-64 flex items-center justify-center">
+                      <svg
+                        className="absolute inset-0 w-full h-full -rotate-90 transform"
+                        viewBox="0 0 100 100"
+                      >
+                        <circle
+                          className="text-zinc-800"
+                          strokeWidth="4"
+                          stroke="currentColor"
+                          fill="transparent"
+                          r="46"
+                          cx="50"
+                          cy="50"
+                        />
+                        <circle
+                          className={`text-green-500 transition-all duration-1000 ease-linear ${
+                            isCurrentSongPlaying ? "opacity-100" : "opacity-0"
+                          }`}
+                          strokeWidth="4"
+                          strokeDasharray={289.027}
+                          strokeDashoffset={
+                            289.027 -
+                            (duration > 0 ? position / duration : 0) * 289.027
+                          }
+                          strokeLinecap="round"
+                          stroke="currentColor"
+                          fill="transparent"
+                          r="46"
+                          cx="50"
+                          cy="50"
+                        />
+                      </svg>
+                      <div className="relative w-48 h-48 rounded-full flex items-center justify-center overflow-hidden border-4 border-zinc-700 shadow-2xl z-10">
+                        {currentTrack?.album?.images?.[0]?.url ? (
+                          <div className="relative w-full h-full blur-2xl scale-150">
+                            <Image
+                              src={currentTrack.album.images[0].url}
+                              alt="Blurred Art"
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                            <Music className="w-20 h-20 text-zinc-600" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/10">
+                          {isCurrentSongPlaying && (
+                            <div className="bg-black/40 p-3 rounded-full backdrop-blur-sm">
+                              <Volume2 className="w-8 h-8 text-green-500 animate-pulse" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      size="lg"
+                      className={`rounded-full w-16 h-16 p-0 transition-transform hover:scale-105 ${
+                        isCurrentSongPlaying
+                          ? "bg-zinc-800"
+                          : "bg-green-500 text-black"
+                      }`}
+                      onClick={togglePlayback}
+                    >
+                      {isCurrentSongPlaying ? (
+                        <Pause className="w-8 h-8 text-white" />
+                      ) : (
+                        <Play className="w-8 h-8 ml-1" />
+                      )}
+                    </Button>
+                    <div className="w-full space-y-4 text-center">
+                      <h3 className="text-zinc-400 text-sm font-medium uppercase tracking-widest">
+                        Artist: {currentTrack.artists[0].name}
+                      </h3>
+                      <div className="flex flex-wrap justify-center gap-1.5 mb-8 min-h-[3rem] px-2">
+                        {currentTrack.name
+                          .split("")
+                          .map((char: string, index: number) => {
+                            const isContent = /[\p{L}\p{N}]/u.test(char);
+                            const isRevealed =
+                              revealedIndices.has(index) || !isContent;
+                            return (
+                              <div
+                                key={index}
+                                className={`flex flex-col items-center justify-end w-8 h-10 border-b-2 transition-all duration-300 ${
+                                  isRevealed
+                                    ? "border-green-500/50"
+                                    : "border-zinc-700"
+                                }`}
+                              >
+                                <span
+                                  className={`text-xl font-bold select-none ${
+                                    isRevealed
+                                      ? "text-white animate-in zoom-in"
+                                      : "text-transparent"
+                                  }`}
+                                >
+                                  {char}
+                                </span>
+                              </div>
+                            );
+                          })}
+                      </div>
+                      <div className="relative">
+                        <Input
+                          autoFocus
+                          placeholder="Type song name..."
+                          value={guess}
+                          onChange={(e) => setGuess(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && checkGuess()}
+                          className={`h-14 pl-6 text-lg bg-black/50 border-zinc-700 text-white rounded-xl focus:ring-green-500 transition-all ${
+                            feedback === "wrong"
+                              ? "border-red-500 text-red-500"
+                              : ""
+                          }`}
+                        />
+                        {feedback === "wrong" && (
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500">
+                            <XCircle className="w-6 h-6" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Button
+                          variant="destructive"
+                          className="h-12"
+                          onClick={handleGiveUp}
+                        >
+                          <HelpCircle className="w-4 h-4 mr-2" /> Give Up
+                        </Button>
+                        <Button
+                          className="h-12 bg-green-500 hover:bg-green-600 text-black font-semibold"
+                          onClick={checkGuess}
+                        >
+                          Submit <CheckCircle2 className="w-4 h-4 ml-2" />
+                        </Button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full space-y-8 animate-in fade-in duration-500 pb-12">
       <div className="max-w-4xl mx-auto w-full space-y-12 px-4 sm:px-0">
-        {/* Main Input Section */}
         <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6 md:p-10 space-y-8 shadow-2xl backdrop-blur-sm relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
             <Sparkles className="w-32 h-32 text-green-500 rotate-12" />
@@ -289,15 +698,13 @@ const AiGeneratedPage = () => {
                 <Loader2 className="w-8 h-8 animate-spin" />
               ) : (
                 <>
-                  <Sparkles className="w-7 h-7 mr-4" />
-                  Generate My Quiz
+                  <Sparkles className="w-7 h-7 mr-4" /> Generate My Quiz
                 </>
               )}
             </Button>
           </div>
         </div>
 
-        {/* AI Suggestions Grid */}
         <div className="space-y-8 items-center flex flex-col">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 w-full px-2">
             <div className="flex items-center gap-3 text-2xl font-bold text-white">
@@ -306,7 +713,6 @@ const AiGeneratedPage = () => {
               </div>
               <h2>AI Playlist Ideas</h2>
             </div>
-
             <Button
               variant="outline"
               size="lg"
@@ -318,7 +724,7 @@ const AiGeneratedPage = () => {
                 <Loader2 className="w-4 h-4 animate-spin text-green-500" />
               ) : (
                 <Sparkles className="w-4 h-4" />
-              )}
+              )}{" "}
               Get New Suggestions
             </Button>
           </div>

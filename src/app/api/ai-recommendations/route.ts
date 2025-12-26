@@ -35,17 +35,21 @@ export async function POST(req: Request) {
       prompt = `${systemInstruction} Suggest 4 creative music playlist ideas for a song guessing quiz with a 'title' and a brief 'description' (mentioning example artists). Context: ${
         context || "General popular music"
       }. Example: [{"title": "Classic Hits", "description": "Hits from Queen and ABBA"}]`;
+    } else if (type === "quiz-tracks") {
+      prompt = `${systemInstruction} Suggest 10 specific and diverse songs for a song guessing quiz based on this theme: ${
+        context || "General popular music"
+      }. Return ONLY a JSON array of objects with 'song' and 'artist' keys. Example: [{"song": "Bohemian Rhapsody", "artist": "Queen"}]`;
     } else {
       prompt = `${systemInstruction} Suggest 5 ideas for a music quiz. Context: ${
         context || "General popular music"
       }`;
     }
 
-    // Use stable 1.5 models first, then try 2.5 if available
+    // Try v1beta for 1.5 models as v1 might return 404 in some regions/projects
     const attempts = [
-      { version: "v1", model: "gemini-1.5-flash" },
-      { version: "v1", model: "gemini-2.5-flash" },
-      { version: "v1", model: "gemini-1.5-pro" },
+      { version: "v1beta", model: "gemini-1.5-flash" },
+      { version: "v1beta", model: "gemini-1.5-pro" },
+      { version: "v1", model: "gemini-2.5-flash" }, // 2.5 might be on v1 but has strict quotas
     ];
 
     let lastError = "";
@@ -119,7 +123,10 @@ export async function POST(req: Request) {
         recommendations:
           type === "ideas"
             ? fallbackSuggestions
-            : ["Jay Chou", "Taylor Swift", "Queen"],
+            : [
+                { song: "Bohemian Rhapsody", artist: "Queen" },
+                { song: "Better Now", artist: "Post Malone" },
+              ],
         _error: lastError, // Adding hint for debugging
       });
     }
