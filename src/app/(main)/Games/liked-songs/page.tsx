@@ -170,12 +170,27 @@ const LikedSongsQuiz = () => {
   };
 
   const progressPercentage = (currentTrackIndex / gameTracks.length) * 100;
-  const isCurrentTrackLoaded = globalTrack?.id === currentTrack?.id;
+
+  // More robust track matching using both ID and URI
+  const isCurrentTrackLoaded =
+    (globalTrack?.id &&
+      currentTrack?.id &&
+      globalTrack.id === currentTrack.id) ||
+    (globalTrack?.uri &&
+      currentTrack?.uri &&
+      globalTrack.uri === currentTrack.uri) ||
+    (globalTrack?.name === currentTrack?.name &&
+      globalTrack?.artists?.[0]?.name === currentTrack?.artists?.[0]?.name);
+
   const isCurrentSongPlaying = isGlobalPlaying && isCurrentTrackLoaded;
 
   const togglePlayback = () => {
     if (isCurrentTrackLoaded) {
-      isGlobalPlaying ? pauseTrack() : resumeTrack();
+      if (isGlobalPlaying) {
+        pauseTrack();
+      } else {
+        resumeTrack();
+      }
     } else {
       playTrack(currentTrack);
     }
