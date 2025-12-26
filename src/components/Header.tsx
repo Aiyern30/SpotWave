@@ -9,6 +9,7 @@ import React, {
   useEffect,
 } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -59,10 +60,10 @@ export const Breadcrumbs = () => {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink
-              href="/Home"
+              asChild
               className="text-zinc-400 hover:text-white transition-colors"
             >
-              Home
+              <Link href="/Home">Home</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           {breadcrumbSegments.map((segment, index) => {
@@ -81,10 +82,12 @@ export const Breadcrumbs = () => {
                     </BreadcrumbPage>
                   ) : (
                     <BreadcrumbLink
-                      href={href}
+                      asChild
                       className="text-zinc-400 hover:text-white transition-colors capitalize"
                     >
-                      {segment.charAt(0).toUpperCase() + segment.slice(1)}
+                      <Link href={href}>
+                        {segment.charAt(0).toUpperCase() + segment.slice(1)}
+                      </Link>
                     </BreadcrumbLink>
                   )}
                 </BreadcrumbItem>
