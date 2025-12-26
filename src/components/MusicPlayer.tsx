@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { usePlayer } from "@/contexts/PlayerContext";
 import {
   Button,
@@ -75,6 +75,7 @@ export const MusicPlayer = ({
 }: MusicPlayerProps = {}) => {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const {
     currentTrack,
     isPlaying,
@@ -114,7 +115,8 @@ export const MusicPlayer = ({
   const isQuizPage =
     pathname?.startsWith("/Games/artist-quiz/") ||
     pathname === "/Games/liked-songs" ||
-    pathname?.startsWith("/Games/playlist-quiz/");
+    pathname?.startsWith("/Games/playlist-quiz/") ||
+    (pathname === "/Games/ai-generated" && searchParams.get("mode") === "quiz");
 
   useEffect(() => {
     setIsVisible(!!currentTrack || isConnecting);
