@@ -661,6 +661,16 @@ export const MusicPlayer = ({
               >
                 <List className="h-4 w-4" />
               </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 hidden lg:flex transition-all"
+                onClick={handleFullScreenClick}
+                disabled={!currentTrack}
+              >
+                <Maximize2 className="h-4 w-4" />
+              </Button>
             </>
           )}
 
@@ -686,16 +696,6 @@ export const MusicPlayer = ({
             className="w-24 cursor-pointer hidden lg:flex"
             disabled={!isReady}
           />
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 hidden lg:flex transition-all"
-            onClick={handleFullScreenClick}
-            disabled={!currentTrack}
-          >
-            <Maximize2 className="h-4 w-4" />
-          </Button>
         </div>
       </div>
 
