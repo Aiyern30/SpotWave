@@ -15,111 +15,115 @@ const AiGeneratedPage = () => {
   const [prompt, setPrompt] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([
-    {
-      title: "Melodies of Love",
-      description:
-        "Romantic ballads from J.Sheon, Leehom Wang, and Khalil Fong",
-    },
-    {
-      title: "Taipei Nights",
-      description:
-        "Chill tracks featuring 高爾宣 OSN and Ryan.B, perfect for a cozy evening",
-    },
-    {
-      title: "2000s Pop Rock Vibes",
-      description:
-        "A nostalgic collection of hits from Imagine Dragons and similar artists",
-    },
-    {
-      title: "Mandopop Classics",
-      description:
-        "Timeless songs from Jay Chou, David Tao, and more from the early 2000s",
-    },
-  ]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const [contexts, setContexts] = useState<{
-    artists: string;
-    tracks: string;
+    topArtists: string;
+    topTracks: string;
+    recentTracks: string;
     playlists: string;
-  }>({ artists: "", tracks: "", playlists: "" });
+  }>({ topArtists: "", topTracks: "", recentTracks: "", playlists: "" });
 
   const [activeContextType, setActiveContextType] = useState<
-    "none" | "artists" | "tracks" | "playlists"
+    "none" | "favorites" | "recent" | "mostPlayed" | "playlists"
   >("none");
 
   useEffect(() => {
-    const fetchAllContexts = async () => {
+    const fetchAllContextsAndSeed = async () => {
       const token = localStorage.getItem("Token");
-      if (!token) return;
+      if (!token) {
+        setIsInitialLoad(false);
+        return;
+      }
 
       try {
-        // Fetch Top Artists
-        const artistRes = await fetch(
-          "https://api.spotify.com/v1/me/top/artists?limit=10",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        setIsAiLoading(true);
+
+        // Parallel fetching for performance
+        const [artistRes, topTrackRes, recentRes, playlistRes] =
+          await Promise.all([
+            fetch("https://api.spotify.com/v1/me/top/artists?limit=8", {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            fetch("https://api.spotify.com/v1/me/top/tracks?limit=10", {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            fetch(
+              "https://api.spotify.com/v1/me/player/recently-played?limit=10",
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            ),
+            fetch("https://api.spotify.com/v1/me/playlists?limit=5", {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+          ]);
+
+        let combinedContextStrings: string[] = [];
+
         if (artistRes.ok) {
           const data = await artistRes.json();
-          setContexts((prev) => ({
-            ...prev,
-            artists: data.items.map((a: any) => a.name).join(", "),
-          }));
+          const artists = data.items.map((a: any) => a.name).join(", ");
+          setContexts((prev) => ({ ...prev, topArtists: artists }));
+          combinedContextStrings.push(`Top Artists: ${artists}`);
         }
 
-        // Fetch Top Tracks
-        const trackRes = await fetch(
-          "https://api.spotify.com/v1/me/top/tracks?limit=10",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        if (trackRes.ok) {
-          const data = await trackRes.json();
-          setContexts((prev) => ({
-            ...prev,
-            tracks: data.items.map((t: any) => t.name).join(", "),
-          }));
+        if (topTrackRes.ok) {
+          const data = await topTrackRes.json();
+          const tracks = data.items
+            .map((t: any) => `${t.name} by ${t.artists[0].name}`)
+            .join(", ");
+          setContexts((prev) => ({ ...prev, topTracks: tracks }));
+          combinedContextStrings.push(`Most Played: ${tracks}`);
         }
 
-        // Fetch Playlists
-        const playlistRes = await fetch(
-          "https://api.spotify.com/v1/me/playlists?limit=10",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        if (recentRes.ok) {
+          const data = await recentRes.json();
+          const tracks = data.items
+            .map((t: any) => `${t.track.name} by ${t.track.artists[0].name}`)
+            .join(", ");
+          setContexts((prev) => ({ ...prev, recentTracks: tracks }));
+          combinedContextStrings.push(`Recently Played: ${tracks}`);
+        }
+
         if (playlistRes.ok) {
           const data = await playlistRes.json();
-          setContexts((prev) => ({
-            ...prev,
-            playlists: data.items.map((p: any) => p.name).join(", "),
-          }));
+          const playlists = data.items.map((p: any) => p.name).join(", ");
+          setContexts((prev) => ({ ...prev, playlists }));
         }
+
+        // Auto-generate initial recommendations based on combined context
+        const initialContext = combinedContextStrings.join(". ");
+        handleGetAiSuggestions(
+          initialContext || "General popular music and hits"
+        );
       } catch (error) {
         console.error("Error fetching context:", error);
+      } finally {
+        setIsInitialLoad(false);
       }
     };
 
-    fetchAllContexts();
+    fetchAllContextsAndSeed();
   }, []);
 
   const handleGetAiSuggestions = async (overrideContext?: string) => {
     setIsAiLoading(true);
     try {
       let finalContext = prompt;
-      if (!finalContext) {
-        if (activeContextType === "artists")
-          finalContext = `I love these artists: ${contexts.artists}`;
-        else if (activeContextType === "tracks")
-          finalContext = `I love these songs: ${contexts.tracks}`;
+      if (!finalContext && !overrideContext) {
+        if (activeContextType === "favorites")
+          finalContext = `I love these artists: ${contexts.topArtists}`;
+        else if (activeContextType === "recent")
+          finalContext = `I've been listening to: ${contexts.recentTracks}`;
+        else if (activeContextType === "mostPlayed")
+          finalContext = `My all-time top songs are: ${contexts.topTracks}`;
         else if (activeContextType === "playlists")
-          finalContext = `I listen to these playlists: ${contexts.playlists}`;
+          finalContext = `I have these playlist themes: ${contexts.playlists}`;
         else
           finalContext =
-            contexts.artists || contexts.tracks || "General popular music";
+            contexts.topArtists || contexts.topTracks || "General hits";
       }
 
       const response = await fetch("/api/ai-recommendations", {
@@ -156,17 +160,33 @@ const AiGeneratedPage = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleQuickContext = (type: "artists" | "tracks" | "playlists") => {
+  const handleQuickContext = (
+    type: "favorites" | "recent" | "mostPlayed" | "playlists"
+  ) => {
     setActiveContextType(type);
     let ctx = "";
-    if (type === "artists")
-      ctx = `Based on my favorite artists: ${contexts.artists}`;
-    else if (type === "tracks")
-      ctx = `Based on my top tracks: ${contexts.tracks}`;
+    if (type === "favorites")
+      ctx = `Generate 4 quiz ideas based on these top artists I love: ${contexts.topArtists}`;
+    else if (type === "recent")
+      ctx = `Generate 4 quiz ideas based on my most recently played music (current mood): ${contexts.recentTracks}`;
+    else if (type === "mostPlayed")
+      ctx = `Generate 4 quiz ideas based on my all-time most played songs: ${contexts.topTracks}`;
     else if (type === "playlists")
-      ctx = `Based on my playlists: ${contexts.playlists}`;
+      ctx = `Generate 4 quiz ideas based on the themes of my playlists: ${contexts.playlists}`;
     handleGetAiSuggestions(ctx);
   };
+
+  const SkeletonCard = () => (
+    <Card className="bg-zinc-900/40 border-zinc-800/80 rounded-2xl overflow-hidden border-2 animate-pulse h-[140px]">
+      <div className="p-6 space-y-4">
+        <div className="h-6 bg-zinc-800 rounded-md w-3/4" />
+        <div className="space-y-2">
+          <div className="h-4 bg-zinc-800 rounded-md w-full" />
+          <div className="h-4 bg-zinc-800 rounded-md w-5/6" />
+        </div>
+      </div>
+    </Card>
+  );
 
   return (
     <div className="w-full space-y-8 animate-in fade-in duration-500 pb-12">
@@ -193,38 +213,50 @@ const AiGeneratedPage = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleQuickContext("artists")}
-                  className={`rounded-full border border-zinc-800 gap-2 ${
-                    activeContextType === "artists"
+                  onClick={() => handleQuickContext("favorites")}
+                  className={`rounded-full border border-zinc-800 gap-2 h-9 px-4 transition-all ${
+                    activeContextType === "favorites"
                       ? "bg-green-500/10 text-green-400 border-green-500/20"
-                      : "text-zinc-500"
+                      : "text-zinc-500 hover:text-zinc-300"
                   }`}
                 >
-                  <User className="w-3 h-3" /> My Favorites
+                  <User className="w-3.5 h-3.5" /> Favorites
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleQuickContext("tracks")}
-                  className={`rounded-full border border-zinc-800 gap-2 ${
-                    activeContextType === "tracks"
+                  onClick={() => handleQuickContext("recent")}
+                  className={`rounded-full border border-zinc-800 gap-2 h-9 px-4 transition-all ${
+                    activeContextType === "recent"
                       ? "bg-green-500/10 text-green-400 border-green-500/20"
-                      : "text-zinc-500"
+                      : "text-zinc-500 hover:text-zinc-300"
                   }`}
                 >
-                  <Music className="w-3 h-3" /> Recent Listening
+                  <Music className="w-3.5 h-3.5" /> Recent
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleQuickContext("mostPlayed")}
+                  className={`rounded-full border border-zinc-800 gap-2 h-9 px-4 transition-all ${
+                    activeContextType === "mostPlayed"
+                      ? "bg-green-500/10 text-green-400 border-green-500/20"
+                      : "text-zinc-500 hover:text-zinc-300"
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5" /> Most Played
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => handleQuickContext("playlists")}
-                  className={`rounded-full border border-zinc-800 gap-2 ${
+                  className={`rounded-full border border-zinc-800 gap-2 h-9 px-4 transition-all ${
                     activeContextType === "playlists"
                       ? "bg-green-500/10 text-green-400 border-green-500/20"
-                      : "text-zinc-500"
+                      : "text-zinc-500 hover:text-zinc-300"
                   }`}
                 >
-                  <Lightbulb className="w-3 h-3" /> My Playlists
+                  <Lightbulb className="w-3.5 h-3.5" /> Playlists
                 </Button>
               </div>
 
@@ -289,27 +321,36 @@ const AiGeneratedPage = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-            {suggestions.map((item, i) => (
-              <Card
-                key={i}
-                onClick={() => handleApplySuggestion(item)}
-                className="bg-zinc-900/40 border-zinc-800/80 hover:bg-zinc-800/40 hover:border-green-500/30 transition-all cursor-pointer group/card rounded-2xl overflow-hidden relative border-2"
-              >
-                <CardHeader className="p-6 pb-2">
-                  <CardTitle className="text-xl font-bold text-white group-hover/card:text-green-400 transition-colors">
-                    {item.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 pt-2">
-                  <p className="text-zinc-400 leading-relaxed">
-                    {item.description}
-                  </p>
-                  <div className="mt-4 flex items-center text-xs font-semibold text-green-500/0 group-hover/card:text-green-500 transition-all transform translate-y-2 group-hover/card:translate-y-0">
-                    Use this idea <Music className="w-3 h-3 ml-1" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            {isAiLoading && suggestions.length === 0 ? (
+              <>
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+              </>
+            ) : (
+              suggestions.map((item, i) => (
+                <Card
+                  key={i}
+                  onClick={() => handleApplySuggestion(item)}
+                  className="bg-zinc-900/40 border-zinc-800/80 hover:bg-zinc-800/40 hover:border-green-500/30 transition-all cursor-pointer group/card rounded-2xl overflow-hidden relative border-2"
+                >
+                  <CardHeader className="p-6 pb-2">
+                    <CardTitle className="text-xl font-bold text-white group-hover/card:text-green-400 transition-colors">
+                      {item.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6 pt-2">
+                    <p className="text-zinc-400 leading-relaxed">
+                      {item.description}
+                    </p>
+                    <div className="mt-4 flex items-center text-xs font-semibold text-green-500/0 group-hover/card:text-green-500 transition-all transform translate-y-2 group-hover/card:translate-y-0">
+                      Use this idea <Music className="w-3 h-3 ml-1" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </div>
       </div>
