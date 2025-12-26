@@ -101,6 +101,8 @@ export const MusicPlayer = ({
   const lyricsCache = useRef<Map<string, LyricsCache>>(new Map());
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
 
+  const isQuizPage = pathname?.startsWith("/Games/") && pathname !== "/Games";
+
   useEffect(() => {
     setIsVisible(!!currentTrack || isConnecting);
   }, [currentTrack, isConnecting]);
@@ -403,7 +405,7 @@ export const MusicPlayer = ({
 
           <div className="min-w-0 flex-1">
             {currentTrack ? (
-              pathname?.includes("/Games/artist-quiz/") ? (
+              isQuizPage ? (
                 <>
                   <h4 className="text-white text-sm font-medium truncate">
                     Guess the Song!
@@ -558,7 +560,7 @@ export const MusicPlayer = ({
 
         {/* Right Section - Additional Controls */}
         <div className="flex items-center justify-end gap-2 min-w-[240px] w-[30%]">
-          {!pathname?.includes("/Games/artist-quiz/") && (
+          {!isQuizPage && (
             <>
               <Sheet
                 open={isLyricsSheetOpen}
