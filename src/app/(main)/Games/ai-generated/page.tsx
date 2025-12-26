@@ -134,7 +134,10 @@ const AiGeneratedPage = () => {
         }),
       });
 
-      const { recommendations, error } = await response.json();
+      const data = await response.json();
+      const { recommendations, error, _error } = data;
+
+      if (_error) console.warn("🤖 AI Provider Error:", _error);
       if (error) throw new Error(error);
 
       if (recommendations && recommendations.length > 0) {

@@ -41,11 +41,10 @@ export async function POST(req: Request) {
       }`;
     }
 
-    // 2025 Standard models with higher quotas
+    // Use stable 1.5 models first, then try 2.5 if available
     const attempts = [
-      { version: "v1", model: "gemini-2.5-flash" },
-      { version: "v1", model: "gemini-2.5-flash-lite" },
       { version: "v1", model: "gemini-1.5-flash" },
+      { version: "v1", model: "gemini-2.5-flash" },
       { version: "v1", model: "gemini-1.5-pro" },
     ];
 
@@ -80,11 +79,11 @@ export async function POST(req: Request) {
           break;
         } else {
           const err = await response.text();
-          lastError = `${attempt.version}/${attempt.model}: ${err}`;
+          lastError = err;
           console.warn(`⚠️ Gemini AI Failed (${attempt.model}):`, err);
         }
       } catch (e: any) {
-        lastError = `${attempt.model}: ${e.message}`;
+        lastError = e.message;
         console.warn(`⚠️ Exception for ${attempt.model}:`, e.message);
       }
     }
@@ -112,36 +111,26 @@ export async function POST(req: Request) {
     ];
 
     if (!data) {
-      console.warn("⚠️ All models failed, using hardcoded fallbacks.");
+      console.error(
+        "❌ All AI models failed. Last error from provider:",
+        lastError
+      );
       return NextResponse.json({
         recommendations:
           type === "ideas"
             ? fallbackSuggestions
-            : [
-                "Jay Chou",
-                "Taylor Swift",
-                "Queen",
-                "The Beatles",
-                "Linkin Park",
-              ],
+            : ["Jay Chou", "Taylor Swift", "Queen"],
+        _error: lastError, // Adding hint for debugging
       });
     }
 
     let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!text) {
-      console.warn("⚠️ Empty response, using hardcoded fallbacks.");
+      console.warn("⚠️ AI returned empty candidate, using fallbacks.");
       return NextResponse.json({
         recommendations:
-          type === "ideas"
-            ? fallbackSuggestions
-            : [
-                "Jay Chou",
-                "Taylor Swift",
-                "Queen",
-                "The Beatles",
-                "Linkin Park",
-              ],
+          type === "ideas" ? fallbackSuggestions : ["Jay Chou", "Taylor Swift"],
       });
     }
 
