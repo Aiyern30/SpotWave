@@ -526,13 +526,13 @@ const AlbumsIDPage = () => {
                     }`}
                   />
 
-                  <div className="flex items-center gap-4 px-4">
-                    <span className="text-sm text-zinc-400">
-                      Page {currentPage} of {totalPages}
+                  <div className="flex items-center gap-2 sm:gap-4 px-2 sm:px-4">
+                    <span className="text-xs sm:text-sm text-zinc-400 whitespace-nowrap">
+                      {currentPage} / {totalPages}
                     </span>
                     <form
                       onSubmit={handleInputSubmit}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-1 sm:gap-2"
                     >
                       <input
                         type="number"
@@ -541,13 +541,13 @@ const AlbumsIDPage = () => {
                         value={inputPage}
                         onChange={handleInputChange}
                         placeholder={currentPage.toString()}
-                        className="w-16 px-2 py-1 text-sm bg-zinc-800 border border-zinc-700 rounded text-white text-center focus:outline-none focus:border-green-500"
+                        className="w-10 sm:w-16 px-1 sm:px-2 py-1 text-xs bg-zinc-800 border border-zinc-700 rounded text-white text-center focus:outline-none focus:border-green-500"
                       />
                       <Button
                         type="submit"
                         size="sm"
                         variant="outline"
-                        className="text-xs"
+                        className="h-7 px-2 text-[10px] sm:text-xs"
                       >
                         Go
                       </Button>
