@@ -20,9 +20,18 @@ import { Button, Input, Card, CardContent, Badge } from "@/components/ui";
 import { fetchArtistTopTracks } from "@/utils/Tracks/fetchArtistTopTracks";
 import { usePlayer } from "@/contexts/PlayerContext";
 
+import { Converter } from "opencc-js";
+
+// Initialize converter: Traditional (HK) -> Simplified (CN)
+// This handles most cases of Traditional to Simplified conversion
+const convertToSimp = Converter({ from: "hk", to: "cn" });
+
 // Helper to normalize strings for comparison
 const normalizeString = (str: string) => {
-  return str
+  // First convert to simplified Chinese to ensure T=S matching
+  const simplified = convertToSimp(str);
+
+  return simplified
     .toLowerCase()
     .replace(/\(.*\)/g, "") // Remove content in parentheses e.g. (feat. X)
     .replace(/-.*$/g, "") // Remove content after hyphen e.g. - Remastered
@@ -137,7 +146,8 @@ const ArtistQuizGame = () => {
 
       // Check for character matches (index based)
       for (let i = 0; i < Math.min(answerStr.length, guessStr.length); i++) {
-        if (answerStr[i] === guessStr[i]) {
+        // Use converter to treat Traditional and Simplified as same
+        if (convertToSimp(answerStr[i]) === convertToSimp(guessStr[i])) {
           newRevealed.add(i);
         }
       }
