@@ -26,8 +26,8 @@ export default function MainLayout({
         onClose={() => setSidebarOpen((prev) => !prev)}
       />
       <div
-        className={`flex-1 transition-all ml-16 duration-300 ${
-          sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
+        className={`flex-1 transition-all duration-300 pt-20 lg:pt-0 ${
+          sidebarOpen ? "lg:ml-64 ml-0" : "lg:ml-16 ml-0"
         } ${isPlayerVisible ? "pb-[90px]" : ""}`}
       >
         {children}
