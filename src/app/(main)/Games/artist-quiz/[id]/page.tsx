@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,21 +22,17 @@ import { fetchArtistTopTracks } from "@/utils/Tracks/fetchArtistTopTracks";
 import { usePlayer } from "@/contexts/PlayerContext";
 
 import { Converter } from "opencc-js";
+import { QuizResultView } from "@/components/Games/QuizResultView";
 
-// Initialize converter: Traditional (HK) -> Simplified (CN)
-// This handles most cases of Traditional to Simplified conversion
 const convertToSimp = Converter({ from: "hk", to: "cn" });
 
-// Helper to normalize strings for comparison
 const normalizeString = (str: string) => {
-  // First convert to simplified Chinese to ensure T=S matching
   const simplified = convertToSimp(str);
-
   return simplified
     .toLowerCase()
-    .replace(/\(.*\)/g, "") // Remove content in parentheses e.g. (feat. X)
-    .replace(/-.*$/g, "") // Remove content after hyphen e.g. - Remastered
-    .replace(/[^\p{L}\p{N}]/gu, "") // Remove non-alphanumeric but keep all letters/numbers
+    .replace(/\(.*\)/g, "")
+    .replace(/-.*$/g, "")
+    .replace(/[^\p{L}\p{N}]/gu, "")
     .trim();
 };
 
@@ -44,9 +40,6 @@ const maskText = (text: string) => {
   return text
     .split(" ")
     .map((word) => {
-      // Keep first letter, replace rest with *
-      // If word is short (1-2 chars), keep it fully or just mask 2nd char?
-      // Let's simple: first char + * for rest
       if (word.length <= 1) return word;
       return word[0] + "*".repeat(word.length - 1);
     })
@@ -60,7 +53,6 @@ const ArtistQuizGame = () => {
   const artistId = params.id as string;
   const artistName = searchParams.get("name") || "Unknown Artist";
 
-  // Player Context
   const {
     playTrack,
     pauseTrack,
@@ -82,22 +74,19 @@ const ArtistQuizGame = () => {
   const [revealedIndices, setRevealedIndices] = useState<Set<number>>(
     new Set()
   );
-
-  // Game state
   const [gameTracks, setGameTracks] = useState<any[]>([]);
   const [isGameOver, setIsGameOver] = useState(false);
 
-  // Initialize Game
+  // NEW: Track when answer was revealed to prevent immediate Enter advancing
+  const [answerRevealTime, setAnswerRevealTime] = useState<number>(0);
+
   useEffect(() => {
     const initGame = async () => {
       setLoading(true);
       const fetchedTracks = await fetchArtistTopTracks(artistId);
-
-      // Shuffle tracks - Use ALL tracks since we don't need preview_url anymore
       const shuffled = fetchedTracks.sort(() => Math.random() - 0.5);
-
       setTracks(shuffled);
-      setGameTracks(shuffled.slice(0, 10)); // Top 10 rounds
+      setGameTracks(shuffled.slice(0, 10));
       setLoading(false);
     };
 
@@ -108,16 +97,14 @@ const ArtistQuizGame = () => {
 
   const currentTrack = gameTracks[currentTrackIndex];
 
-  // Auto-play current track when round starts
   useEffect(() => {
     if (currentTrack && !showAnswer) {
-      // Small delay to ensure smooth transition
       const timer = setTimeout(() => {
         playTrack({
           ...currentTrack,
           album: {
             ...currentTrack.album,
-            images: currentTrack.album.images || [], // Ensure images exist
+            images: currentTrack.album.images || [],
           },
           duration_ms: currentTrack.duration_ms || 0,
         });
@@ -126,7 +113,6 @@ const ArtistQuizGame = () => {
     }
   }, [currentTrack, showAnswer, playTrack]);
 
-  // Handle guess submission
   const checkGuess = () => {
     if (!currentTrack || showAnswer) return;
 
@@ -137,17 +123,14 @@ const ArtistQuizGame = () => {
       setFeedback("correct");
       setScore((s) => s + 100);
       setShowAnswer(true);
+      setAnswerRevealTime(Date.now()); // Record when answer was revealed
     } else {
       setFeedback("wrong");
-
-      // Reveal matched characters character-by-character
       const newRevealed = new Set(revealedIndices);
       const answerStr = currentTrack.name.toLowerCase();
       const guessStr = guess.toLowerCase();
 
-      // Check for character matches (index based)
       for (let i = 0; i < Math.min(answerStr.length, guessStr.length); i++) {
-        // Use converter to treat Traditional and Simplified as same
         if (convertToSimp(answerStr[i]) === convertToSimp(guessStr[i])) {
           newRevealed.add(i);
         }
@@ -159,7 +142,7 @@ const ArtistQuizGame = () => {
   const handleNext = () => {
     if (currentTrackIndex >= gameTracks.length - 1) {
       setIsGameOver(true);
-      pauseTrack(); // Stop music when game ends
+      pauseTrack();
     } else {
       setCurrentTrackIndex((prev) => prev + 1);
       setGuess("");
@@ -167,45 +150,47 @@ const ArtistQuizGame = () => {
       setShowAnswer(false);
       setShowHint(false);
       setRevealedIndices(new Set());
+      setAnswerRevealTime(0);
     }
   };
 
-  // Allow pressing "Enter" to go to next song when answer is shown
+  // UPDATED: Prevent immediate Enter key advancing (require 800ms delay)
   useEffect(() => {
     if (!showAnswer) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter") {
-        e.preventDefault();
-        handleNext();
+        // Only allow advancing if at least 800ms have passed since answer reveal
+        const timeSinceReveal = Date.now() - answerRevealTime;
+        if (timeSinceReveal >= 800) {
+          e.preventDefault();
+          handleNext();
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showAnswer, currentTrackIndex, gameTracks.length]); // Dependencies for handleNext logic
+  }, [showAnswer, currentTrackIndex, gameTracks.length, answerRevealTime]);
 
   const handleGiveUp = () => {
     setShowAnswer(true);
     setFeedback(null);
+    setAnswerRevealTime(Date.now());
   };
 
   const progressPercentage = (currentTrackIndex / gameTracks.length) * 100;
-
-  // Determine if the current song is currently playing in the global player
   const isCurrentTrackLoaded = globalTrack?.id === currentTrack?.id;
   const isCurrentSongPlaying = isGlobalPlaying && isCurrentTrackLoaded;
 
   const togglePlayback = () => {
     if (isCurrentTrackLoaded) {
-      // If loaded, toggle play/pause
       if (isGlobalPlaying) {
         pauseTrack();
       } else {
         resumeTrack();
       }
     } else {
-      // If not loaded or different track, play from start
       playTrack(currentTrack);
     }
   };
@@ -282,28 +267,18 @@ const ArtistQuizGame = () => {
                 Accuracy on {gameTracks.length} songs by {artistName}
               </p>
               <div className="flex gap-4 justify-center">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                <Button
+                  onClick={() => window.location.reload()}
+                  className="bg-white text-black hover:bg-zinc-200 font-semibold"
                 >
-                  <Button
-                    onClick={() => window.location.reload()}
-                    className="bg-white text-black hover:bg-zinc-200 border-0 font-semibold"
-                  >
-                    Play Again
-                  </Button>
-                </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  Play Again
+                </Button>
+                <Button
+                  onClick={() => router.push("/Games")}
+                  className="bg-green-500 hover:bg-green-600 text-black font-semibold"
                 >
-                  <Button
-                    onClick={() => router.push("/Games")}
-                    className="bg-green-500 hover:bg-green-600 text-black font-semibold"
-                  >
-                    More Games
-                  </Button>
-                </motion.div>
+                  More Games
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -314,7 +289,6 @@ const ArtistQuizGame = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-black to-black flex flex-col items-center p-4 md:p-8 pb-32">
-      {/* Header */}
       <div className="w-full max-w-3xl flex items-center justify-between mb-8">
         <Button
           variant="ghost"
@@ -338,7 +312,6 @@ const ArtistQuizGame = () => {
         </div>
       </div>
 
-      {/* Game Card */}
       <motion.div
         key={currentTrack?.id || "loading"}
         initial={{ y: 20, opacity: 0 }}
@@ -355,64 +328,15 @@ const ArtistQuizGame = () => {
           </div>
 
           <CardContent className="p-8 md:p-12 flex flex-col items-center space-y-10">
-            {/* Visualizer / Icon */}
-            {/* Visualizer / Album Art */}
-            {/* Visualizer / Album Art with Circular Progress */}
-            {/* Quiz / Result Views */}
             <AnimatePresence mode="wait">
               {showAnswer ? (
-                <motion.div
-                  key="result"
-                  initial={{ opacity: 0, scale: 0.95, rotateY: 90 }}
-                  animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, rotateY: -90 }}
-                  transition={{ duration: 0.5, type: "spring" }}
-                  className="w-full flex flex-col items-center space-y-10"
-                >
-                  {/* Result Image */}
-                  <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
-                    {currentTrack?.album?.images?.[0]?.url ? (
-                      <Image
-                        src={currentTrack.album.images[0].url}
-                        alt="Album Art"
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                        <Music className="w-20 h-20 text-zinc-600" />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col items-center gap-2 w-full">
-                    <Badge
-                      className={`${
-                        feedback === "correct"
-                          ? "bg-green-500 text-black shadow-[0_0_20px_rgba(34,197,94,0.4)]"
-                          : "bg-[#EF4444] text-white"
-                      } px-6 py-1.5 text-sm font-bold rounded-md mb-2 border-0 animate-bounce`}
-                    >
-                      {feedback === "correct" ? "Correct!" : "Missed it!"}
-                    </Badge>
-                    <div className="space-y-1 text-center">
-                      <h3 className="text-3xl font-bold text-white tracking-tight">
-                        {currentTrack.name}
-                      </h3>
-                      <p className="text-zinc-400 text-lg font-medium">
-                        {currentTrack.album.name}
-                      </p>
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={handleNext}
-                    className="bg-white text-black hover:bg-zinc-100 w-full h-14 rounded-xl font-bold text-lg transition-all shadow-xl hover:scale-[1.02]"
-                  >
-                    Next Song{" "}
-                    <SkipForward className="w-6 h-6 ml-2 fill-current" />
-                  </Button>
-                </motion.div>
+                <QuizResultView
+                  track={currentTrack}
+                  feedback={feedback}
+                  onNext={handleNext}
+                  revealTime={answerRevealTime}
+                  subtitle={currentTrack.album.name}
+                />
               ) : (
                 <motion.div
                   key="quiz"
@@ -421,14 +345,11 @@ const ArtistQuizGame = () => {
                   exit={{ opacity: 0, scale: 0.95 }}
                   className="w-full flex flex-col items-center space-y-6"
                 >
-                  {/* Quiz Image (Blurred) */}
                   <div className="relative w-64 h-64 flex items-center justify-center">
-                    {/* Circular Progress SVG */}
                     <svg
                       className="absolute inset-0 w-full h-full -rotate-90 transform"
                       viewBox="0 0 100 100"
                     >
-                      {/* Background Circle */}
                       <circle
                         className="text-zinc-800"
                         strokeWidth="4"
@@ -438,13 +359,12 @@ const ArtistQuizGame = () => {
                         cx="50"
                         cy="50"
                       />
-                      {/* Progress Circle */}
                       <circle
                         className={`text-green-500 transition-all duration-1000 ease-linear ${
                           isCurrentSongPlaying ? "opacity-100" : "opacity-0"
                         }`}
                         strokeWidth="4"
-                        strokeDasharray={289.027} // 2 * PI * 46
+                        strokeDasharray={289.027}
                         strokeDashoffset={
                           289.027 -
                           (duration > 0 ? position / duration : 0) * 289.027
@@ -465,7 +385,6 @@ const ArtistQuizGame = () => {
                           : "border-transparent"
                       } transition-all duration-500 shadow-2xl z-10`}
                     >
-                      {/* Album Art */}
                       {currentTrack?.album?.images?.[0]?.url ? (
                         <div className="relative w-full h-full blur-2xl scale-150">
                           <Image
@@ -481,20 +400,16 @@ const ArtistQuizGame = () => {
                         </div>
                       )}
 
-                      {/* Play/Pause Overlay Icon for better UX */}
-                      <div
-                        className={`absolute inset-0 flex items-center justify-center z-10 bg-black/10`}
-                      >
-                        {isCurrentSongPlaying ? (
+                      <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/10">
+                        {isCurrentSongPlaying && (
                           <div className="bg-black/40 p-3 rounded-full backdrop-blur-sm">
                             <Volume2 className="w-8 h-8 text-green-500 animate-pulse" />
                           </div>
-                        ) : null}
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  {/* Play Controls */}
                   <Button
                     size="lg"
                     className={`rounded-full w-16 h-16 p-0 transition-transform hover:scale-105 ${
@@ -512,7 +427,6 @@ const ArtistQuizGame = () => {
                   </Button>
 
                   <div className="w-full space-y-4">
-                    {/* Hint Button & Display */}
                     <div className="flex flex-col items-center gap-2">
                       {!showHint ? (
                         <Button
@@ -615,7 +529,6 @@ const ArtistQuizGame = () => {
         </Card>
       </motion.div>
 
-      {/* Instructions / Footer */}
       <div className="mt-8 text-zinc-500 text-sm">
         <p>
           Listen to the song and guess the title. (Full track playback enabled)
