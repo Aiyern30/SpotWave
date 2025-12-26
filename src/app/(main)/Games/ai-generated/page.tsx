@@ -36,12 +36,14 @@ const AiGeneratedPage = () => {
 
   return (
     <div className="w-full space-y-8 animate-in fade-in duration-500">
-      <div className="max-w-4xl mx-auto w-full space-y-8">
+      <div className="max-w-4xl mx-auto w-full space-y-8 px-4 sm:px-0">
         {/* Input Section */}
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-8 space-y-6 text-center">
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 md:p-8 space-y-6 text-center">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-white">Enter your prompt</h1>
-            <p className="text-zinc-400">
+            <h1 className="text-2xl md:text-3xl font-bold text-white">
+              Enter your prompt
+            </h1>
+            <p className="text-sm text-zinc-400">
               Ask chatGPT to generate your quiz, you can ask about anything.
             </p>
           </div>

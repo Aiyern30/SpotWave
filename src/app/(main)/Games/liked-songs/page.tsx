@@ -267,7 +267,7 @@ const LikedSongsQuiz = () => {
 
   return (
     <div className="w-full flex flex-col items-center animate-in fade-in duration-500">
-      <div className="w-full max-w-3xl flex items-center justify-between mb-8">
+      <div className="w-full max-w-3xl flex items-center justify-between mb-8 px-4 sm:px-0">
         <Button
           variant="ghost"
           onClick={() => {
