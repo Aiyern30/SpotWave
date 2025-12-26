@@ -178,12 +178,12 @@ const ArtistQuizPage = () => {
 
   return (
     <div className="w-full space-y-8 animate-in fade-in duration-500">
-      <div className="max-w-6xl mx-auto w-full space-y-12">
+      <div className="max-w-6xl mx-auto w-full space-y-12 px-4 sm:px-0">
         <div className="text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-green-600">
+          <h1 className="text-3xl md:text-5xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-green-600">
             Artist Quiz
           </h1>
-          <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
+          <p className="text-zinc-400 text-sm md:text-lg max-w-2xl mx-auto">
             Test your knowledge! Select an artist from your library or search
             for anyone to start the challenge.
           </p>
@@ -214,15 +214,15 @@ const ArtistQuizPage = () => {
           {/* Search Dropdown */}
           {showDropdown &&
             (searchQuery.trim().length > 0 || searchResults.length > 0) && (
-              <div className="absolute w-full mt-2 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden max-h-80 overflow-y-auto">
+              <div className="absolute w-full mt-2 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden max-h-80 overflow-y-auto z-50">
                 {searchResults.length > 0 ? (
                   searchResults.map((artist) => (
                     <div
                       key={artist.id}
                       onClick={() => handleArtistSelect(artist)}
-                      className="flex items-center gap-4 p-3 hover:bg-zinc-800 transition-colors cursor-pointer group"
+                      className="flex items-center gap-3 p-3 hover:bg-zinc-800 transition-colors cursor-pointer group"
                     >
-                      <Avatar className="h-12 w-12 rounded-lg">
+                      <Avatar className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg flex-shrink-0">
                         <AvatarImage
                           src={artist.image}
                           className="object-cover"
@@ -231,11 +231,11 @@ const ArtistQuizPage = () => {
                           {artist.name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-1">
-                        <h4 className="text-white font-medium group-hover:text-green-400 transition-colors">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-white font-medium group-hover:text-green-400 transition-colors truncate">
                           {artist.name}
                         </h4>
-                        <p className="text-sm text-zinc-500 capitalize">
+                        <p className="text-xs text-zinc-500 capitalize truncate">
                           {artist.genres?.[0] || "Artist"}
                         </p>
                       </div>
@@ -252,9 +252,9 @@ const ArtistQuizPage = () => {
 
         {/* AI Recommendations Section */}
         <div className="space-y-6">
-          <div className="flex items-center justify-between px-4 md:px-0">
-            <div className="flex items-center gap-3 text-2xl font-semibold text-white">
-              <Sparkles className="w-6 h-6 text-yellow-400" />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-4 sm:px-0">
+            <div className="flex items-center gap-3 text-xl md:text-2xl font-semibold text-white">
+              <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-yellow-400" />
               <h2>AI Picks For You</h2>
             </div>
             <Button
@@ -262,7 +262,7 @@ const ArtistQuizPage = () => {
               size="sm"
               onClick={handleAiRecommendation}
               disabled={isAiLoading}
-              className="border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 gap-2 rounded-full px-4"
+              className="border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 gap-2 rounded-full px-4 w-fit"
             >
               {isAiLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -274,7 +274,7 @@ const ArtistQuizPage = () => {
           </div>
 
           {aiArtists.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
               {aiArtists.map((artist) => (
                 <Card
                   key={artist.id}
@@ -305,9 +305,9 @@ const ArtistQuizPage = () => {
             </div>
           ) : (
             !isAiLoading && (
-              <div className="p-12 text-center bg-zinc-900/20 rounded-2xl border border-dashed border-zinc-800">
-                <Sparkles className="w-10 h-10 text-zinc-800 mx-auto mb-3" />
-                <p className="text-zinc-500">
+              <div className="p-8 md:p-12 text-center bg-zinc-900/20 rounded-2xl border border-dashed border-zinc-800">
+                <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-zinc-800 mx-auto mb-3" />
+                <p className="text-zinc-500 text-sm md:text-base">
                   Let AI suggest some artists for your next quiz!
                 </p>
               </div>
@@ -317,8 +317,8 @@ const ArtistQuizPage = () => {
 
         {/* Following Artists Carousel */}
         <div className="space-y-6">
-          <div className="flex items-center gap-3 text-2xl font-semibold text-white px-4 md:px-0">
-            <Music className="w-6 h-6 text-green-500" />
+          <div className="flex items-center gap-3 text-xl md:text-2xl font-semibold text-white px-4 md:px-0">
+            <Music className="w-5 h-5 md:w-6 md:h-6 text-green-500" />
             <h2>Your Following Artists</h2>
           </div>
 
@@ -327,56 +327,42 @@ const ArtistQuizPage = () => {
               <Loader2 className="h-8 w-8 animate-spin text-green-500" />
             </div>
           ) : followedArtists.length > 0 ? (
-            <Carousel
-              opts={{
-                align: "start",
-                loop: true,
-              }}
-              className="w-full relative group"
-            >
-              <CarouselContent className="-ml-2 md:-ml-4">
-                {followedArtists.map((artist) => (
-                  <CarouselItem
-                    key={artist.id}
-                    className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5"
-                  >
-                    <Card
-                      onClick={() => handleArtistSelect(artist)}
-                      className="bg-zinc-900/50 border-zinc-800/50 hover:bg-zinc-800/80 transition-all duration-300 cursor-pointer group/card h-full overflow-hidden"
-                    >
-                      <CardContent className="p-4 flex flex-col items-center gap-4 h-full">
-                        <div className="relative w-full aspect-square rounded-full overflow-hidden shadow-lg group-hover/card:scale-105 transition-transform duration-500">
-                          <Avatar className="w-full h-full">
-                            <AvatarImage
-                              src={artist.image}
-                              className="object-cover"
-                            />
-                            <AvatarFallback className="bg-zinc-800 text-3xl">
-                              {artist.name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/card:opacity-100 transition-all flex items-center justify-center">
-                            <div className="bg-green-500 text-black p-3 rounded-full shadow-xl transform scale-90 group-hover/card:scale-100 transition-all">
-                              <Play className="w-6 h-6 fill-current" />
-                            </div>
-                          </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+              {followedArtists.map((artist) => (
+                <Card
+                  key={artist.id}
+                  onClick={() => handleArtistSelect(artist)}
+                  className="bg-zinc-900/50 border-zinc-800/50 hover:bg-zinc-800/80 transition-all duration-300 cursor-pointer group/card h-full overflow-hidden"
+                >
+                  <CardContent className="p-4 flex flex-col items-center gap-4 h-full">
+                    <div className="relative w-full aspect-square rounded-full overflow-hidden shadow-lg group-hover/card:scale-105 transition-transform duration-500">
+                      <Avatar className="w-full h-full">
+                        <AvatarImage
+                          src={artist.image}
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="bg-zinc-800 text-3xl">
+                          {artist.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/card:opacity-100 transition-all flex items-center justify-center">
+                        <div className="bg-green-500 text-black p-3 rounded-full shadow-xl transform scale-90 group-hover/card:scale-100 transition-all">
+                          <Play className="w-6 h-6 fill-current" />
                         </div>
-                        <div className="text-center space-y-1">
-                          <h3 className="font-bold text-white truncate w-full group-hover/card:text-green-400 transition-colors">
-                            {artist.name}
-                          </h3>
-                          <p className="text-xs text-zinc-500 truncate w-full max-w-[150px]">
-                            {artist.genres?.[0] || "Artist"}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="hidden md:flex -left-4 bg-black/50 border-none text-white hover:bg-green-500 hover:text-black" />
-              <CarouselNext className="hidden md:flex -right-4 bg-black/50 border-none text-white hover:bg-green-500 hover:text-black" />
-            </Carousel>
+                      </div>
+                    </div>
+                    <div className="text-center space-y-1 w-full">
+                      <h3 className="font-bold text-white truncate w-full group-hover/card:text-green-400 transition-colors px-1">
+                        {artist.name}
+                      </h3>
+                      <p className="text-xs text-zinc-500 truncate w-full px-1">
+                        {artist.genres?.[0] || "Artist"}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           ) : (
             <div className="text-center py-12 bg-zinc-900/30 rounded-xl border border-zinc-800 border-dashed">
               <Music className="w-12 h-12 text-zinc-600 mx-auto mb-4" />

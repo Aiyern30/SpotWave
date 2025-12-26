@@ -132,12 +132,12 @@ const PlaylistQuizPage = () => {
 
   return (
     <div className="w-full space-y-8 animate-in fade-in duration-500">
-      <div className="max-w-6xl mx-auto w-full space-y-12">
+      <div className="max-w-6xl mx-auto w-full space-y-12 px-4 sm:px-0">
         <div className="text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-green-600">
+          <h1 className="text-3xl md:text-5xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-green-600">
             Playlist Quiz
           </h1>
-          <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
+          <p className="text-zinc-400 text-sm md:text-lg max-w-2xl mx-auto">
             Test your ear! Search for any public playlist or select one from
             your library to start.
           </p>
@@ -173,9 +173,9 @@ const PlaylistQuizPage = () => {
                   <div
                     key={playlist.id}
                     onClick={() => handlePlaylistClick(playlist)}
-                    className="flex items-center gap-4 p-3 hover:bg-zinc-800 transition-colors cursor-pointer group"
+                    className="flex items-center gap-3 p-3 hover:bg-zinc-800 transition-colors cursor-pointer group"
                   >
-                    <div className="h-12 w-12 rounded-lg bg-zinc-800 overflow-hidden flex-shrink-0">
+                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-zinc-800 overflow-hidden flex-shrink-0">
                       {playlist.images?.[0]?.url ? (
                         <img
                           src={playlist.images[0].url}
@@ -207,9 +207,9 @@ const PlaylistQuizPage = () => {
 
         {/* AI Recommendations Section */}
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 text-2xl font-semibold text-white">
-              <Sparkles className="w-6 h-6 text-yellow-400" />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-4 sm:px-0">
+            <div className="flex items-center gap-3 text-xl md:text-2xl font-semibold text-white">
+              <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-yellow-400" />
               <h2>AI Playlist Suggestions</h2>
             </div>
             <Button
@@ -217,7 +217,7 @@ const PlaylistQuizPage = () => {
               size="sm"
               onClick={handleAiRecommendation}
               disabled={isAiLoading}
-              className="border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 gap-2 rounded-full px-4"
+              className="border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 gap-2 rounded-full px-4 w-fit"
             >
               {isAiLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -270,9 +270,9 @@ const PlaylistQuizPage = () => {
             </div>
           ) : (
             !isAiLoading && (
-              <div className="p-12 text-center bg-zinc-900/20 rounded-2xl border border-dashed border-zinc-800">
-                <Sparkles className="w-10 h-10 text-zinc-800 mx-auto mb-3" />
-                <p className="text-zinc-500">
+              <div className="p-8 md:p-12 text-center bg-zinc-900/20 rounded-2xl border border-dashed border-zinc-800">
+                <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-zinc-800 mx-auto mb-3" />
+                <p className="text-zinc-500 text-sm md:text-base">
                   Ask AI to discover some unique playlist themes for your next
                   quiz!
                 </p>
@@ -283,8 +283,8 @@ const PlaylistQuizPage = () => {
 
         {/* My Playlists Grid */}
         <div className="space-y-8">
-          <div className="flex items-center gap-3 text-2xl font-semibold text-white">
-            <Music className="w-6 h-6 text-green-500" />
+          <div className="flex items-center gap-3 text-xl md:text-2xl font-semibold text-white px-4 sm:px-0">
+            <Music className="w-5 h-5 md:w-6 md:h-6 text-green-500" />
             <h2>Your Library Playlists</h2>
           </div>
 
