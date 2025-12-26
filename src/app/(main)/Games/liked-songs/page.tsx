@@ -1,85 +1,485 @@
 "use client";
 
-import React, { useState } from "react";
-import { Music, ArrowLeft, Timer, Play } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Switch } from "@/components/ui/Switch";
-import Link from "next/link";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ArrowLeft,
+  Play,
+  Pause,
+  SkipForward,
+  CheckCircle2,
+  XCircle,
+  Volume2,
+  HelpCircle,
+  Loader2,
+  Music,
+  Lightbulb,
+} from "lucide-react";
+import { Button, Input, Card, CardContent, Badge } from "@/components/ui";
+import { usePlayer } from "@/contexts/PlayerContext";
+import { fetchLikedSongs } from "@/utils/Tracks/fetchLikedSongs";
+import { QuizResultView } from "@/components/Games/QuizResultView";
+import { Converter } from "opencc-js";
 
-const LikedSongsPage = () => {
-  const [manualMode, setManualMode] = useState(false);
+const convertToSimp = Converter({ from: "hk", to: "cn" });
 
-  return (
-    <div className="flex flex-col min-h-screen w-full bg-black/50 p-6 md:p-12 space-y-8">
-      <Link
-        href="/Games"
-        className="text-zinc-400 hover:text-white flex items-center gap-2 w-fit transition-colors"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        Back to Games
-      </Link>
+const normalizeString = (str: string) => {
+  const simplified = convertToSimp(str);
+  return simplified
+    .toLowerCase()
+    .replace(/\(.*\)/g, "")
+    .replace(/-.*$/g, "")
+    .replace(/[^\p{L}\p{N}]/gu, "")
+    .trim();
+};
 
-      <div className="flex flex-col items-center justify-center max-w-2xl mx-auto w-full flex-1 min-h-[60vh] space-y-12">
-        <div className="text-center space-y-6">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-green-500 mb-4 shadow-[0_0_40px_-5px_rgba(34,197,94,0.4)]">
-            <Music className="w-12 h-12 text-black fill-current" />
-          </div>
+const maskText = (text: string) => {
+  return text
+    .split(" ")
+    .map((word) => {
+      if (word.length <= 1) return word;
+      return word[0] + "*".repeat(word.length - 1);
+    })
+    .join(" ");
+};
 
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold text-white">Music Quiz</h1>
-            <p className="text-zinc-400 text-xl">
-              Quiz from your 90 Liked Songs
-            </p>
-          </div>
+const LikedSongsQuiz = () => {
+  const router = useRouter();
+  const {
+    playTrack,
+    pauseTrack,
+    resumeTrack,
+    isPlaying: isGlobalPlaying,
+    currentTrack: globalTrack,
+    position,
+    duration,
+  } = usePlayer();
 
-          <div className="max-w-md mx-auto">
-            <p className="text-zinc-300">
-              We found 79 songs, you'll play in rounds of 10 songs.
-              <br />
-              Listen to each and try to guess the title!
-            </p>
-          </div>
-        </div>
+  const [loading, setLoading] = useState(true);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [score, setScore] = useState(0);
+  const [guess, setGuess] = useState("");
+  const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+  const [revealedIndices, setRevealedIndices] = useState<Set<number>>(
+    new Set()
+  );
+  const [gameTracks, setGameTracks] = useState<any[]>([]);
+  const [isGameOver, setIsGameOver] = useState(false);
+  const [answerRevealTime, setAnswerRevealTime] = useState<number>(0);
 
-        <Button className="w-48 h-14 bg-green-500 hover:bg-green-400 text-black font-bold text-lg rounded-full shadow-[0_0_20px_-5px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_-5px_rgba(34,197,94,0.5)] transition-all transform hover:scale-105">
-          Start Quiz
-        </Button>
+  useEffect(() => {
+    const initGame = async () => {
+      const token = localStorage.getItem("Token");
+      if (!token) return;
 
-        <div className="w-full space-y-4">
-          <div className="flex items-center gap-2 text-lg font-semibold text-white justify-center border-t border-zinc-800 pt-8 w-full">
-            <h3>Quiz Settings</h3>
-          </div>
+      setLoading(true);
+      const fetchedTracks = await fetchLikedSongs(token, 50);
 
-          <Card className="bg-zinc-900/50 border-zinc-800">
-            <CardContent className="flex items-center justify-between p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-2 bg-blue-500/10 rounded-full">
-                  <Timer className="w-6 h-6 text-blue-400" />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="font-semibold text-white">Manual Mode</h4>
-                  <p className="text-sm text-zinc-400">
-                    You control when to skip songs
-                  </p>
-                </div>
-              </div>
-              <Switch checked={manualMode} onCheckedChange={setManualMode} />
-            </CardContent>
-          </Card>
+      if (fetchedTracks.length > 0) {
+        const shuffled = fetchedTracks.sort(() => Math.random() - 0.5);
+        setGameTracks(shuffled.slice(0, 10));
+      }
+      setLoading(false);
+    };
 
-          <div className="text-center pt-4">
-            <p className="text-sm text-zinc-500">
-              Chromecast is now only available on the mobile app.{" "}
-              <span className="text-blue-400 hover:underline cursor-pointer">
-                Download here
-              </span>
-            </p>
-          </div>
+    initGame();
+  }, []);
+
+  const currentTrack = gameTracks[currentTrackIndex];
+
+  useEffect(() => {
+    if (currentTrack && !showAnswer) {
+      const timer = setTimeout(() => {
+        playTrack({
+          ...currentTrack,
+          album: {
+            ...currentTrack.album,
+            images: currentTrack.album.images || [],
+          },
+          duration_ms: currentTrack.duration_ms || 0,
+        });
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentTrack, showAnswer, playTrack]);
+
+  const checkGuess = () => {
+    if (!currentTrack || showAnswer) return;
+
+    const normalizedGuess = normalizeString(guess);
+    const normalizedAnswer = normalizeString(currentTrack.name);
+
+    if (normalizedGuess === normalizedAnswer) {
+      setFeedback("correct");
+      setScore((s) => s + 100);
+      setShowAnswer(true);
+      setAnswerRevealTime(Date.now());
+    } else {
+      setFeedback("wrong");
+      const newRevealed = new Set(revealedIndices);
+      const answerStr = currentTrack.name.toLowerCase();
+      const guessStr = guess.toLowerCase();
+
+      for (let i = 0; i < Math.min(answerStr.length, guessStr.length); i++) {
+        if (convertToSimp(answerStr[i]) === convertToSimp(guessStr[i])) {
+          newRevealed.add(i);
+        }
+      }
+      setRevealedIndices(newRevealed);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentTrackIndex >= gameTracks.length - 1) {
+      setIsGameOver(true);
+      pauseTrack();
+    } else {
+      setCurrentTrackIndex((prev) => prev + 1);
+      setGuess("");
+      setFeedback(null);
+      setShowAnswer(false);
+      setShowHint(false);
+      setRevealedIndices(new Set());
+      setAnswerRevealTime(0);
+    }
+  };
+
+  useEffect(() => {
+    if (!showAnswer) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        const timeSinceReveal = Date.now() - answerRevealTime;
+        if (timeSinceReveal >= 800) {
+          e.preventDefault();
+          handleNext();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showAnswer, currentTrackIndex, gameTracks.length, answerRevealTime]);
+
+  const handleGiveUp = () => {
+    setShowAnswer(true);
+    setFeedback(null);
+    setAnswerRevealTime(Date.now());
+  };
+
+  const progressPercentage = (currentTrackIndex / gameTracks.length) * 100;
+  const isCurrentTrackLoaded = globalTrack?.id === currentTrack?.id;
+  const isCurrentSongPlaying = isGlobalPlaying && isCurrentTrackLoaded;
+
+  const togglePlayback = () => {
+    if (isCurrentTrackLoaded) {
+      isGlobalPlaying ? pauseTrack() : resumeTrack();
+    } else {
+      playTrack(currentTrack);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-12 h-12 text-green-500 animate-spin mx-auto" />
+          <p className="text-zinc-400">Loading your liked songs...</p>
         </div>
       </div>
+    );
+  }
+
+  if (gameTracks.length === 0) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center space-y-6">
+        <Music className="w-20 h-20 text-zinc-600" />
+        <h2 className="text-2xl font-bold text-white">No Songs Found</h2>
+        <p className="text-zinc-400 max-w-md">
+          You don't have enough liked songs to start a quiz. Like some songs on
+          Spotify and try again!
+        </p>
+        <Button
+          onClick={() => router.back()}
+          className="bg-white text-black hover:bg-zinc-200"
+        >
+          Go Back
+        </Button>
+      </div>
+    );
+  }
+
+  if (isGameOver) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="min-h-screen bg-black flex flex-col items-center justify-center p-6 text-center space-y-8"
+      >
+        <h1 className="text-4xl font-bold text-green-500">Quiz Complete!</h1>
+        <p className="text-xl text-white">
+          You scored {score} points from your Liked Songs
+        </p>
+        <Card className="bg-zinc-900 border-zinc-800 w-full max-w-md">
+          <CardContent className="p-8 pb-10 space-y-6 flex flex-col items-center">
+            <div className="text-6xl font-black text-white">
+              {Math.round((score / (gameTracks.length * 100)) * 100)}%
+            </div>
+            <p className="text-zinc-400">
+              Accuracy on {gameTracks.length} songs
+            </p>
+            <div className="flex gap-4">
+              <Button
+                onClick={() => window.location.reload()}
+                className="bg-white text-black font-semibold"
+              >
+                Play Again
+              </Button>
+              <Button
+                onClick={() => router.push("/Games")}
+                className="bg-green-500 text-black font-semibold"
+              >
+                More Games
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-black to-black flex flex-col items-center p-4 md:p-8 pb-32">
+      <div className="w-full max-w-3xl flex items-center justify-between mb-8">
+        <Button
+          variant="ghost"
+          onClick={() => {
+            pauseTrack();
+            router.back();
+          }}
+          className="text-zinc-400 hover:text-white"
+        >
+          <ArrowLeft className="w-5 h-5 mr-2" /> Quit
+        </Button>
+        <div className="flex flex-col items-center">
+          <h2 className="text-white font-bold text-lg">Liked Songs Quiz</h2>
+          <span className="text-green-500 font-mono text-sm">
+            Score: {score}
+          </span>
+        </div>
+        <div className="w-20 text-right text-zinc-500 text-sm">
+          {currentTrackIndex + 1} / {gameTracks.length}
+        </div>
+      </div>
+
+      <motion.div
+        key={currentTrack?.id || "loading"}
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.4 }}
+        className="w-full max-w-2xl"
+      >
+        <Card className="bg-zinc-900/50 border-zinc-800 backdrop-blur-sm shadow-2xl overflow-hidden relative">
+          <div className="absolute top-0 left-0 w-full h-1 bg-zinc-800">
+            <div
+              className="h-full bg-green-500 transition-all duration-500"
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
+
+          <CardContent className="p-8 md:p-12 flex flex-col items-center space-y-10">
+            <AnimatePresence mode="wait">
+              {showAnswer ? (
+                <QuizResultView
+                  track={currentTrack}
+                  feedback={feedback}
+                  onNext={handleNext}
+                  revealTime={answerRevealTime}
+                  subtitle={currentTrack.artists[0].name}
+                />
+              ) : (
+                <motion.div
+                  key="quiz"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="w-full flex flex-col items-center space-y-6"
+                >
+                  <div className="relative w-64 h-64 flex items-center justify-center">
+                    <svg
+                      className="absolute inset-0 w-full h-full -rotate-90 transform"
+                      viewBox="0 0 100 100"
+                    >
+                      <circle
+                        className="text-zinc-800"
+                        strokeWidth="4"
+                        stroke="currentColor"
+                        fill="transparent"
+                        r="46"
+                        cx="50"
+                        cy="50"
+                      />
+                      <circle
+                        className={`text-green-500 transition-all duration-1000 ease-linear ${
+                          isCurrentSongPlaying ? "opacity-100" : "opacity-0"
+                        }`}
+                        strokeWidth="4"
+                        strokeDasharray={289.027}
+                        strokeDashoffset={
+                          289.027 -
+                          (duration > 0 ? position / duration : 0) * 289.027
+                        }
+                        strokeLinecap="round"
+                        stroke="currentColor"
+                        fill="transparent"
+                        r="46"
+                        cx="50"
+                        cy="50"
+                      />
+                    </svg>
+                    <div
+                      className={`relative w-48 h-48 rounded-full flex items-center justify-center overflow-hidden border-4 ${
+                        !isCurrentSongPlaying
+                          ? "border-zinc-700"
+                          : "border-transparent"
+                      } transition-all duration-500 shadow-2xl z-10`}
+                    >
+                      <div className="relative w-full h-full blur-2xl scale-150">
+                        {currentTrack?.album?.images?.[0]?.url && (
+                          <Image
+                            src={currentTrack.album.images[0].url}
+                            alt="Blurred Art"
+                            fill
+                            className="object-cover"
+                          />
+                        )}
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/10">
+                        {isCurrentSongPlaying && (
+                          <div className="bg-black/40 p-3 rounded-full backdrop-blur-sm">
+                            <Volume2 className="w-8 h-8 text-green-500 animate-pulse" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    size="lg"
+                    className={`rounded-full w-16 h-16 p-0 transition-transform hover:scale-105 ${
+                      isCurrentSongPlaying
+                        ? "bg-zinc-800 hover:bg-zinc-700"
+                        : "bg-green-500 hover:bg-green-400 text-black"
+                    }`}
+                    onClick={togglePlayback}
+                  >
+                    {isCurrentSongPlaying ? (
+                      <Pause className="w-8 h-8 text-white" />
+                    ) : (
+                      <Play className="w-8 h-8 ml-1" />
+                    )}
+                  </Button>
+
+                  <div className="w-full space-y-4">
+                    <div className="flex flex-col items-center gap-2">
+                      {!showHint ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-zinc-400 hover:text-yellow-400 transition-colors"
+                          onClick={() => setShowHint(true)}
+                        >
+                          <Lightbulb className="w-4 h-4 mr-2" /> Need a Hint?
+                        </Button>
+                      ) : (
+                        <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 px-4 py-2 rounded-lg text-sm font-medium animate-in fade-in slide-in-from-bottom-2 duration-300 flex items-center text-center">
+                          <Lightbulb className="w-4 h-4 flex-shrink-0 mr-2 fill-yellow-500" />
+                          Artist: {maskText(currentTrack.artists[0].name)}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap justify-center gap-1.5 mb-8 min-h-[3rem] px-2">
+                      {currentTrack.name
+                        .split("")
+                        .map((char: string, index: number) => {
+                          const isContent = /[\p{L}\p{N}]/u.test(char);
+                          const isRevealed =
+                            revealedIndices.has(index) || !isContent;
+                          return (
+                            <div
+                              key={index}
+                              className={`flex flex-col items-center justify-end w-8 h-10 border-b-2 transition-all duration-300 ${
+                                isRevealed
+                                  ? "border-green-500/50"
+                                  : "border-zinc-700"
+                              }`}
+                            >
+                              <span
+                                className={`text-xl font-bold select-none ${
+                                  isRevealed
+                                    ? "text-white animate-in zoom-in"
+                                    : "text-transparent"
+                                }`}
+                              >
+                                {char}
+                              </span>
+                            </div>
+                          );
+                        })}
+                    </div>
+
+                    <div className="relative">
+                      <Input
+                        autoFocus
+                        placeholder="Type song name..."
+                        value={guess}
+                        onChange={(e) => {
+                          setGuess(e.target.value);
+                          if (feedback === "correct") setFeedback(null);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") checkGuess();
+                        }}
+                        className={`h-14 pl-6 text-lg bg-black/50 border-zinc-700 text-white rounded-xl focus:ring-green-500 focus:border-green-500 transition-all ${
+                          feedback === "wrong"
+                            ? "border-red-500 text-red-500"
+                            : ""
+                        }`}
+                      />
+                      {feedback === "wrong" && (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500 animate-in fade-in slide-in-from-left-2">
+                          <XCircle className="w-6 h-6" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <Button
+                        variant="destructive"
+                        className="h-12"
+                        onClick={handleGiveUp}
+                      >
+                        <HelpCircle className="w-4 h-4 mr-2" /> Give Up
+                      </Button>
+                      <Button
+                        className="h-12 bg-green-500 hover:bg-green-600 text-black font-semibold"
+                        onClick={checkGuess}
+                      >
+                        Submit <CheckCircle2 className="w-4 h-4 ml-2" />
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 };
 
-export default LikedSongsPage;
+export default LikedSongsQuiz;
