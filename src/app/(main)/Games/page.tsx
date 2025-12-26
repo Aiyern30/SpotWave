@@ -32,7 +32,7 @@ const GamesPage = () => {
   ];
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen w-full p-6 space-y-12 bg-black/50">
+    <div className="flex flex-col items-center justify-center w-full py-12 space-y-12">
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold text-white tracking-tight">
           Choose Your Quiz Type

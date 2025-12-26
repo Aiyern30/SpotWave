@@ -131,15 +131,7 @@ const PlaylistQuizPage = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen w-full bg-black/50 p-6 md:p-12 space-y-8">
-      <Link
-        href="/Games"
-        className="text-zinc-400 hover:text-white flex items-center gap-2 w-fit transition-colors"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        Back to Games
-      </Link>
-
+    <div className="w-full space-y-8 animate-in fade-in duration-500">
       <div className="max-w-6xl mx-auto w-full space-y-12">
         <div className="text-center space-y-4">
           <h1 className="text-4xl md:text-5xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-green-600">
