@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import InQueueWindow from "@/components/InQueueWindow";
 import Sidebar from "@/components/Sidebar";
 import { usePlayer } from "@/contexts/PlayerContext";
+import { Breadcrumbs, SearchSection } from "@/components/Header";
 
 export default function MainLayout({
   children,
@@ -19,6 +20,8 @@ export default function MainLayout({
   // Add state for InQueueWindow
   const [isQueueOpen, setIsQueueOpen] = useState(false);
 
+  const isGamePage = pathname.startsWith("/Games/") && pathname !== "/Games";
+
   return (
     <div className="flex min-h-screen bg-black">
       <Sidebar
@@ -26,11 +29,21 @@ export default function MainLayout({
         onClose={() => setSidebarOpen((prev) => !prev)}
       />
       <div
-        className={`flex-1 transition-all duration-300 pt-20 lg:pt-0 ${
+        className={`flex-1 transition-all duration-300 ${
           sidebarOpen ? "lg:ml-64 ml-0" : "lg:ml-16 ml-0"
         } ${isPlayerVisible ? "pb-[90px]" : ""}`}
       >
-        {children}
+        <Breadcrumbs />
+
+        <div className="px-3 sm:px-6 lg:px-8 pt-20 lg:pt-6 space-y-6 flex flex-col">
+          {!isGamePage && (
+            <div className="animate-in fade-in slide-in-from-top-4 duration-700">
+              <SearchSection />
+            </div>
+          )}
+          <main className="flex-1">{children}</main>
+        </div>
+
         {pathname !== "/Events" && (
           <InQueueWindow
             isOpen={isQueueOpen}

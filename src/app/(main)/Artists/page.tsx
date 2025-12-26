@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
-import Header from "@/components/Header";
 import PlaylistCard from "@/components/PlaylistCard";
 import {
   Avatar,
@@ -47,7 +46,6 @@ const Page = () => {
   const [artists, setArtists] = useState<GlobalArtistPropsLASTFM[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [numArtists, setNumArtists] = useState<number>(10);
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [displayUI, setDisplayUI] = useState<DisplayUIProps | string>("Table");
   const router = useRouter();
   const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } =
@@ -306,9 +304,7 @@ const Page = () => {
   };
 
   return (
-    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8">
-      <Header />
-
+    <div className="space-y-4 sm:space-y-8">
       <div className="space-y-4 sm:space-y-6">
         {/* Enhanced Header Section */}
         <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -406,7 +402,9 @@ const Page = () => {
                             <TableCell className="text-center py-3 sm:py-4">
                               <span
                                 className={`text-xs sm:text-sm font-medium ${
-                                  isThisArtist ? "text-green-400" : "text-zinc-400"
+                                  isThisArtist
+                                    ? "text-green-400"
+                                    : "text-zinc-400"
                                 }`}
                               >
                                 {index + 1}

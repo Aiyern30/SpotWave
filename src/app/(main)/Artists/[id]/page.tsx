@@ -35,7 +35,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/";
-import Header from "@/components/Header";
 import { formatSongDuration, transform } from "@/utils/function";
 import { useToast } from "@/hooks/use-toast";
 import { followArtist } from "@/utils/Artist/followArtist";
@@ -119,7 +118,6 @@ interface AboutProps {
 }
 
 const ArtistProfilePage = () => {
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [artistProfile, setArtistProfile] =
     useState<ArtistProfilePageProps | null>(null);
   const [topTracks, setTopTracks] = useState<TopTrack[]>([]);
@@ -483,9 +481,7 @@ const ArtistProfilePage = () => {
   };
 
   return (
-    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8 overflow-auto">
-      <Header />
-
+    <div className="space-y-4 sm:space-y-8 overflow-auto">
       {artistProfile ? (
         <div className="space-y-8">
           {/* Artist Header */}
