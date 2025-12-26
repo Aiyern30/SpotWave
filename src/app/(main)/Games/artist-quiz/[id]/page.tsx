@@ -26,7 +26,7 @@ const normalizeString = (str: string) => {
     .toLowerCase()
     .replace(/\(.*\)/g, "") // Remove content in parentheses e.g. (feat. X)
     .replace(/-.*$/g, "") // Remove content after hyphen e.g. - Remastered
-    .replace(/[^a-z0-9]/g, "") // Remove non-alphanumeric
+    .replace(/[^\p{L}\p{N}]/gu, "") // Remove non-alphanumeric but keep all letters/numbers
     .trim();
 };
 
@@ -69,6 +69,9 @@ const ArtistQuizGame = () => {
   const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [revealedIndices, setRevealedIndices] = useState<Set<number>>(
+    new Set()
+  );
 
   // Game state
   const [gameTracks, setGameTracks] = useState<any[]>([]);
@@ -126,6 +129,19 @@ const ArtistQuizGame = () => {
       setShowAnswer(true);
     } else {
       setFeedback("wrong");
+
+      // Reveal matched characters character-by-character
+      const newRevealed = new Set(revealedIndices);
+      const answerStr = currentTrack.name.toLowerCase();
+      const guessStr = guess.toLowerCase();
+
+      // Check for character matches (index based)
+      for (let i = 0; i < Math.min(answerStr.length, guessStr.length); i++) {
+        if (answerStr[i] === guessStr[i]) {
+          newRevealed.add(i);
+        }
+      }
+      setRevealedIndices(newRevealed);
     }
   };
 
@@ -139,6 +155,7 @@ const ArtistQuizGame = () => {
       setFeedback(null);
       setShowAnswer(false);
       setShowHint(false);
+      setRevealedIndices(new Set());
     }
   };
 
@@ -420,6 +437,37 @@ const ArtistQuizGame = () => {
                   )}
                 </div>
 
+                <div className="flex flex-wrap justify-center gap-1.5 mb-8 min-h-[3rem] px-2">
+                  {currentTrack.name
+                    .split("")
+                    .map((char: string, index: number) => {
+                      const isContent = /[\p{L}\p{N}]/u.test(char);
+                      const isRevealed =
+                        revealedIndices.has(index) || !isContent || showAnswer;
+
+                      return (
+                        <div
+                          key={index}
+                          className={`flex flex-col items-center justify-end w-8 h-10 border-b-2 transition-all duration-300 ${
+                            isRevealed
+                              ? "border-green-500/50"
+                              : "border-zinc-700"
+                          }`}
+                        >
+                          <span
+                            className={`text-xl font-bold select-none ${
+                              isRevealed
+                                ? "text-white animate-in zoom-in"
+                                : "text-transparent"
+                            }`}
+                          >
+                            {char}
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+
                 <div className="relative">
                   <Input
                     autoFocus
@@ -427,7 +475,8 @@ const ArtistQuizGame = () => {
                     value={guess}
                     onChange={(e) => {
                       setGuess(e.target.value);
-                      setFeedback(null);
+                      // Don't clear feedback immediately to allow user to see "Wrong" from last submit
+                      if (feedback === "correct") setFeedback(null);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") checkGuess();
