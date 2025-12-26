@@ -45,11 +45,15 @@ export async function POST(req: Request) {
       }`;
     }
 
-    // Try v1beta for 1.5 models as v1 might return 404 in some regions/projects
+    // List of models to try based on latest 2025/2026 quotas.
+    // Prioritizing Flash-Lite for its massive 1,000 RPD quota.
     const attempts = [
-      { version: "v1beta", model: "gemini-1.5-flash" },
-      { version: "v1beta", model: "gemini-1.5-pro" },
-      { version: "v1", model: "gemini-2.5-flash" }, // 2.5 might be on v1 but has strict quotas
+      { version: "v1", model: "gemini-2.5-flash-lite" }, // High quota (1,000 RPD)
+      { version: "v1", model: "gemini-3-flash" }, // Newest tech
+      { version: "v1", model: "gemini-2.5-flash" }, // (250 RPD)
+      { version: "v1", model: "gemini-2.5-pro" }, // (100 RPD)
+      { version: "v1", model: "gemini-1.5-flash" }, // Legacy stable
+      { version: "v1", model: "gemini-1.5-pro" }, // Legacy pro
     ];
 
     let lastError = "";
@@ -114,6 +118,19 @@ export async function POST(req: Request) {
       },
     ];
 
+    const fallbackTracks = [
+      { song: "Bohemian Rhapsody", artist: "Queen" },
+      { song: "Shape of You", artist: "Ed Sheeran" },
+      { song: "Blinding Lights", artist: "The Weeknd" },
+      { song: "七里香", artist: "周杰倫" },
+      { song: "Bad Guy", artist: "Billie Eilish" },
+      { song: "Someone Like You", artist: "Adele" },
+      { song: "Stay", artist: "The Kid LAROI & Justin Bieber" },
+      { song: "Dancing Queen", artist: "ABBA" },
+      { song: "Hotel California", artist: "Eagles" },
+      { song: "Sunflower", artist: "Post Malone" },
+    ];
+
     if (!data) {
       console.error(
         "❌ All AI models failed. Last error from provider:",
@@ -121,12 +138,7 @@ export async function POST(req: Request) {
       );
       return NextResponse.json({
         recommendations:
-          type === "ideas"
-            ? fallbackSuggestions
-            : [
-                { song: "Bohemian Rhapsody", artist: "Queen" },
-                { song: "Better Now", artist: "Post Malone" },
-              ],
+          type === "ideas" ? fallbackSuggestions : fallbackTracks,
         _error: lastError, // Adding hint for debugging
       });
     }
