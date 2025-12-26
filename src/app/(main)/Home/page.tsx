@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState, useCallback, useMemo } from "react";
-import Header from "@/components/Header";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import Image from "next/image";
 import PlaylistCard from "@/components/PlaylistCard";
 import {
   Card,
@@ -32,27 +32,40 @@ type PlaylistsProps = {
   description: string;
 };
 
+type UserProfile = {
+  id: string;
+  display_name: string;
+  images: { url: string }[];
+};
+
 const Page = () => {
   const [token, setToken] = useState<string>("");
-  const [userID, setUserID] = useState<string>("");
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [playlists, setPlaylists] = useState<PlaylistsProps[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [creating, setCreating] = useState<boolean>(false);
-  const [imageError, setImageError] = useState<Record<string, boolean>>({});
-  const [currentPlaylistUri, setCurrentPlaylistUri] = useState<string | null>(null);
+  const [currentPlaylistId, setCurrentPlaylistId] = useState<string | null>(
+    null
+  );
+  const [currentPlaylistUri, setCurrentPlaylistUri] = useState<string | null>(
+    null
+  );
   const router = useRouter();
-  const { playPlaylist, pauseTrack, resumeTrack, currentTrack, isPlaying } = usePlayer();
+  const { playPlaylist, pauseTrack, resumeTrack, currentTrack, isPlaying } =
+    usePlayer();
 
   const handleClick = (id: string, name: string) => {
     router.push(`/Home/${id}?name=${encodeURIComponent(name)}`);
   };
 
   const handleFetchUserProfile = useCallback(async () => {
-    const UserProfile = await fetchUserProfile(token);
-    if (UserProfile) {
-      setUserID(UserProfile.id);
+    const profile = await fetchUserProfile(token);
+    if (profile) {
+      setUserProfile(profile);
     }
   }, [token]);
+
+  const userID = userProfile?.id || "";
 
   const handleFetchAllProfilePlaylist = useCallback(async () => {
     setLoading(true);
@@ -84,9 +97,9 @@ const Page = () => {
   const handlePlayPlaylist = useCallback(
     async (playlistId?: string) => {
       if (!playlistId) return;
-      
+
       const playlistUri = `spotify:playlist:${playlistId}`;
-      
+
       // Check if this playlist is currently playing
       if (currentPlaylistUri === playlistUri) {
         // Same playlist - just toggle play/pause
@@ -113,8 +126,8 @@ const Page = () => {
   useEffect(() => {
     if (currentTrack?.uri) {
       // Extract playlist URI from context
-      const contextUri = currentTrack.uri.split(':').slice(0, 3).join(':');
-      if (contextUri.startsWith('spotify:playlist:')) {
+      const contextUri = currentTrack.uri.split(":").slice(0, 3).join(":");
+      if (contextUri.startsWith("spotify:playlist:")) {
         setCurrentPlaylistUri(contextUri);
       }
     }
@@ -135,13 +148,6 @@ const Page = () => {
   }, [token, handleFetchAllProfilePlaylist, playlists.length]);
 
   const memoizedPlaylists = useMemo(() => playlists, [playlists]);
-
-  const handleImageError = (id: string) => {
-    setImageError((prev) => ({
-      ...prev,
-      [id]: true,
-    }));
-  };
 
   const CreatePlaylistCard = () => (
     <Card
@@ -182,9 +188,7 @@ const Page = () => {
   );
 
   return (
-    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8">
-      <Header />
-
+    <div className="space-y-3 sm:space-y-6">
       <div className="space-y-3 sm:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-1 sm:px-2">
           <h1 className="text-xl sm:text-3xl font-bold text-white tracking-tight">
@@ -204,7 +208,7 @@ const Page = () => {
             {memoizedPlaylists.map((playlist) => {
               const playlistUri = `spotify:playlist:${playlist.id}`;
               const isThisPlaylist = currentPlaylistUri === playlistUri;
-              
+
               return (
                 <PlaylistCard
                   key={playlist.id}

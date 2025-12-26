@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
-import Header from "@/components/Header";
 import PlaylistCard from "@/components/PlaylistCard";
 import {
   Table,
@@ -45,7 +44,6 @@ import { fetchArtistTopTracks } from "@/utils/Tracks/fetchArtistTopTracks";
 const Page = () => {
   const [tracks, setTracks] = useState<TrackDataLASTFM[]>([]);
   const [numTracks, setNumTracks] = useState<number>(10);
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [displayUI, setDisplayUI] = useState<DisplayUIProps | string>("Table");
   const [loading, setLoading] = useState<boolean>(false);
   const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
@@ -305,9 +303,7 @@ const Page = () => {
   };
 
   return (
-    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8">
-      <Header />
-
+    <div className="space-y-4 sm:space-y-8">
       <div className="space-y-4 sm:space-y-6">
         {/* Enhanced Header Section */}
         <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between gap-3">

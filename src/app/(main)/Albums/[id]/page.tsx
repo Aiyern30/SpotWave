@@ -38,7 +38,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui";
-import Header from "@/components/Header";
 import Image from "next/image";
 import { formatSongDuration } from "@/utils/function";
 import { fetchAlbumDetails } from "@/utils/fetchAlbumDetails";
@@ -49,11 +48,11 @@ import PlaylistCard from "@/components/PlaylistCard";
 const itemsPerPage = 10;
 
 const AlbumsIDPage = () => {
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } = usePlayer();
+  const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } =
+    usePlayer();
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const segments = pathname.split("/");
   const id = segments[segments.length - 1];
@@ -210,9 +209,7 @@ const AlbumsIDPage = () => {
 
   if (!album) {
     return (
-      <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8">
-        <Header />
-
+      <div className="space-y-4 sm:space-y-8">
         {/* Album Header Skeleton */}
         <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-lg p-8">
           <Skeleton className="w-48 h-48 rounded-lg" />
@@ -222,7 +219,6 @@ const AlbumsIDPage = () => {
             <Skeleton className="h-10 w-32" />
           </div>
         </div>
-
         {/* Controls Skeleton */}
         <div className="flex justify-between items-center">
           <Skeleton className="h-8 w-32" />
@@ -231,7 +227,6 @@ const AlbumsIDPage = () => {
             <Skeleton className="h-10 w-10 rounded" />
           </div>
         </div>
-
         {/* Table Skeleton */}
         <div className="space-y-4">
           {Array.from({ length: 10 }).map((_, i) => (
@@ -244,9 +239,7 @@ const AlbumsIDPage = () => {
 
   return (
     <TooltipProvider>
-      <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8">
-        <Header />
-
+      <div className="space-y-4 sm:space-y-8">
         {/* Enhanced Album Header */}
         <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-lg p-8">
           <div className="relative group flex-shrink-0">
@@ -489,19 +482,29 @@ const AlbumsIDPage = () => {
                   <PlaylistCard
                     key={item.id}
                     id={item.id}
-                    image={item.album?.images?.[0]?.url || album?.images?.[0]?.url || "/placeholder.svg"}
+                    image={
+                      item.album?.images?.[0]?.url ||
+                      album?.images?.[0]?.url ||
+                      "/placeholder.svg"
+                    }
                     title={item.name}
-                    description={item.artists.map((a: any) => a.name).join(", ")}
+                    description={item.artists
+                      .map((a: any) => a.name)
+                      .join(", ")}
                     badge={`#${startIndex + index + 1}`}
                     duration={formatSongDuration(item.duration_ms)}
-                    externalUrl={`https://open.spotify.com/track/${item.uri.split(":").pop()}`}
+                    externalUrl={`https://open.spotify.com/track/${item.uri
+                      .split(":")
+                      .pop()}`}
                     isPlaying={isThisTrack && isPlaying}
                     isPaused={isThisTrack && !isPlaying}
                     onPlay={handlePlayTrackWrapper}
                     onPause={pauseTrack}
                     onResume={resumeTrack}
                     onClick={(id, name) =>
-                      router.push(`/Songs/${id}?name=${encodeURIComponent(name)}`)
+                      router.push(
+                        `/Songs/${id}?name=${encodeURIComponent(name)}`
+                      )
                     }
                   />
                 );

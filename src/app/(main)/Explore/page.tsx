@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
-import Header from "@/components/Header";
 import PlaylistCard from "@/components/PlaylistCard";
 import {
   Accordion,
@@ -217,9 +216,7 @@ const Page = () => {
   );
 
   return (
-    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8">
-      <Header />
-
+    <div className="space-y-4 sm:space-y-8">
       <div className="space-y-3 sm:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-1 sm:px-2">
           <h1 className="text-xl sm:text-3xl font-bold text-white tracking-tight">
@@ -385,7 +382,9 @@ const Page = () => {
                         onClick={(id) => {
                           if (tracks.track.album.artists.length > 0) {
                             router.push(
-                              `/Artists/${tracks.track.album.artists[0].id}?name=${encodeURIComponent(
+                              `/Artists/${
+                                tracks.track.album.artists[0].id
+                              }?name=${encodeURIComponent(
                                 tracks.track.album.artists[0].name
                               )}`
                             );

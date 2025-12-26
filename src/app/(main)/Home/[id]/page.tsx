@@ -4,7 +4,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import Header from "@/components/Header";
 import PlaylistCard from "@/components/PlaylistCard";
 import {
   Card,
@@ -170,8 +169,7 @@ const PlaylistPage = () => {
 
   if (loading) {
     return (
-      <div className="p-4 space-y-6">
-        <Header />
+      <div className="space-y-6">
         <div className="space-y-4">
           <div className="flex items-center space-x-4">
             <Skeleton className="w-48 h-48 rounded-lg" />
@@ -195,8 +193,7 @@ const PlaylistPage = () => {
 
   if (!playlist || !userProfile) {
     return (
-      <div className="p-4 space-y-6">
-        <Header />
+      <div className="space-y-6">
         <div className="flex flex-col items-center justify-center py-16 space-y-4">
           <div className="w-24 h-24 rounded-full bg-zinc-800 flex items-center justify-center">
             <Music className="h-12 w-12 text-zinc-600" />
@@ -216,9 +213,7 @@ const PlaylistPage = () => {
   }
 
   return (
-    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8">
-      <Header />
-
+    <div className="space-y-4 sm:space-y-8">
       {/* Enhanced UserHeader */}
       <UserHeader
         playlist={playlist}

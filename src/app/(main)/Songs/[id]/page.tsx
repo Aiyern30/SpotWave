@@ -15,7 +15,6 @@ import {
   Card,
   CardContent,
 } from "@/components/ui";
-import Header from "@/components/Header";
 import type { Track } from "@/lib/types";
 import { formatLyrics } from "@/utils/function";
 import { usePlayer } from "@/contexts/PlayerContext";
@@ -42,7 +41,6 @@ interface LyricsCache {
 }
 
 const SongPage = () => {
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [track, setTrack] = useState<Track | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [lyrics, setLyrics] = useState<string | null>(null);
@@ -232,29 +230,25 @@ const SongPage = () => {
 
   if (loading) {
     return (
-      <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8">
-        <Header />
-        <div className="space-y-8">
-          <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-lg p-8">
-            <Skeleton className="w-48 h-48 rounded-lg" />
-            <div className="flex-1 space-y-4">
-              <Skeleton className="h-12 w-64" />
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-10 w-32" />
-            </div>
+      <div className="space-y-8">
+        <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-lg p-8">
+          <Skeleton className="w-48 h-48 rounded-lg" />
+          <div className="flex-1 space-y-4">
+            <Skeleton className="h-12 w-64" />
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-10 w-32" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Skeleton className="h-32 w-full rounded-lg" />
-            <Skeleton className="h-32 w-full rounded-lg" />
-          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Skeleton className="h-32 w-full rounded-lg" />
+          <Skeleton className="h-32 w-full rounded-lg" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-8 overflow-auto">
-      <Header />
+    <div className="space-y-4 sm:space-y-8 overflow-auto">
       {track && (
         <div className="space-y-8">
           {/* Track Header */}
