@@ -368,7 +368,7 @@ const Page = () => {
             {displayUI === "Table" ? (
               <div className="overflow-x-auto rounded-lg border border-zinc-800/50">
                 <div className="bg-zinc-900/30">
-                  <Table>
+                  <Table className="table-layout-fixed">
                     <TableCaption className="text-zinc-400 pb-4">
                       A list of top tracks from Last.fm
                     </TableCaption>
@@ -419,8 +419,8 @@ const Page = () => {
                                 {index + 1}
                               </span>
                             </TableCell>
-                            <TableCell className="py-3 sm:py-4">
-                              <div className="flex items-center space-x-2 sm:space-x-3">
+                            <TableCell className="py-3 sm:py-4 max-w-0">
+                              <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
                                 <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0 group/image">
                                   <Image
                                     src={

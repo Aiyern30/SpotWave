@@ -142,6 +142,7 @@ const ArtistProfilePage = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
+  const [isBioExpanded, setIsBioExpanded] = useState(false);
 
   useEffect(() => {
     if (artistProfile?.id && followedArtists.length > 0) {
@@ -603,8 +604,8 @@ const ArtistProfilePage = () => {
             </div>
 
             {tracksDisplayUI === "Table" ? (
-              <div className="bg-zinc-900/50 rounded-xl overflow-hidden border border-zinc-800/50">
-                <Table>
+              <div className="overflow-x-auto bg-zinc-900/50 rounded-xl border border-zinc-800/50">
+                <Table className="table-layout-fixed">
                   <TableHeader>
                     <TableRow className="border-zinc-800 hover:bg-transparent">
                       <TableHead className="w-12 text-center text-zinc-400">
@@ -663,8 +664,8 @@ const ArtistProfilePage = () => {
                             </span>
                           )}
                         </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-3">
+                        <TableCell className="max-w-0">
+                          <div className="flex items-center space-x-3 min-w-0">
                             <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
                               <Image
                                 src={
@@ -892,8 +893,8 @@ const ArtistProfilePage = () => {
             </div>
 
             {albumsDisplayUI === "Table" ? (
-              <div className="bg-zinc-900/50 rounded-xl overflow-hidden border border-zinc-800/50">
-                <Table>
+              <div className="overflow-x-auto bg-zinc-900/50 rounded-xl border border-zinc-800/50">
+                <Table className="table-layout-fixed">
                   <TableHeader>
                     <TableRow className="border-zinc-800 hover:bg-transparent">
                       <TableHead className="text-zinc-400">Album</TableHead>
@@ -918,8 +919,8 @@ const ArtistProfilePage = () => {
                         className="border-zinc-800 hover:bg-zinc-800/50 transition-colors cursor-pointer group"
                         onClick={() => handleAlbumClick(album.id, album.name)}
                       >
-                        <TableCell>
-                          <div className="flex items-center space-x-3">
+                        <TableCell className="max-w-0">
+                          <div className="flex items-center space-x-3 min-w-0">
                             <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
                               <Image
                                 src={
@@ -1067,9 +1068,29 @@ const ArtistProfilePage = () => {
           {artistDetails?.bio.content && (
             <div className="space-y-4">
               <h2 className="text-3xl font-bold text-white">About</h2>
-              <div className="bg-zinc-900/30 rounded-lg p-6 border border-zinc-800/50">
-                <div className="text-zinc-300 leading-relaxed max-w-none prose prose-invert">
+              <div className="bg-zinc-900/30 rounded-lg p-6 border border-zinc-800/50 relative overflow-hidden group">
+                <div
+                  className={`text-zinc-300 leading-relaxed max-w-none prose prose-invert transition-all duration-500 ease-in-out ${
+                    !isBioExpanded
+                      ? "max-h-[300px] sm:max-h-none overflow-hidden"
+                      : ""
+                  }`}
+                >
                   {parse(sanitizedBio, { replace: transform })}
+                </div>
+
+                {!isBioExpanded && (
+                  <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-zinc-900 to-transparent sm:hidden" />
+                )}
+
+                <div className="mt-4 sm:hidden">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setIsBioExpanded(!isBioExpanded)}
+                    className="w-full text-green-500 hover:text-green-400 font-semibold flex items-center justify-center gap-2 group-hover:bg-white/5"
+                  >
+                    {isBioExpanded ? "Read Less" : "Read More"}
+                  </Button>
                 </div>
               </div>
             </div>

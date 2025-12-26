@@ -261,7 +261,7 @@ const PlaylistPage = () => {
       {displayUI === "Table" ? (
         <div className="overflow-x-auto rounded-lg border border-zinc-800/50">
           <div className="bg-zinc-900/30">
-            <Table>
+            <Table className="table-layout-fixed">
               <TableHeader>
                 <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
                   <TableHead className="w-[50px] sm:w-[60px] text-center text-zinc-400 font-medium text-xs sm:text-sm">
@@ -331,8 +331,8 @@ const PlaylistPage = () => {
                         )}
                       </TableCell>
 
-                      <TableCell className="py-3 sm:py-4">
-                        <div className="flex items-center space-x-2 sm:space-x-3">
+                      <TableCell className="py-3 sm:py-4 max-w-0">
+                        <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
                           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0">
                             <Image
                               src={
