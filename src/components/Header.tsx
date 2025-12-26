@@ -21,6 +21,14 @@ import {
   Card,
   CardContent,
   Button,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "./ui";
 import { formatSongDuration } from "@/utils/function";
 import { Search, Music, User, Play, Clock, Disc } from "lucide-react";
@@ -49,10 +57,32 @@ type SearchResult =
   | { type: "artistWithTopTracks"; artist: Artist; topTracks: Track[] };
 
 export const Breadcrumbs = () => {
+  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const name = searchParams.get("name");
   const breadcrumbSegments = pathname.split("/").filter(Boolean);
+
+  const [showExitDialog, setShowExitDialog] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+
+  const isQuizPage = pathname?.startsWith("/Games/") && pathname !== "/Games";
+
+  const handleNavigation = (e: React.MouseEvent, href: string) => {
+    if (isQuizPage) {
+      e.preventDefault();
+      setPendingHref(href);
+      setShowExitDialog(true);
+    }
+  };
+
+  const confirmExit = () => {
+    if (pendingHref) {
+      router.push(pendingHref);
+    }
+    setShowExitDialog(false);
+    setPendingHref(null);
+  };
 
   return (
     <div className="lg:relative fixed top-0 left-0 right-0 z-40 lg:z-auto bg-black/60 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none px-4 lg:px-0 py-4 lg:py-0 border-b border-white/5 lg:border-0 transition-all duration-300 pl-20 lg:pl-0">
@@ -63,7 +93,9 @@ export const Breadcrumbs = () => {
               asChild
               className="text-zinc-400 hover:text-white transition-colors"
             >
-              <Link href="/Home">Home</Link>
+              <Link href="/Home" onClick={(e) => handleNavigation(e, "/Home")}>
+                Home
+              </Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           {breadcrumbSegments.map((segment, index) => {
@@ -85,7 +117,10 @@ export const Breadcrumbs = () => {
                       asChild
                       className="text-zinc-400 hover:text-white transition-colors capitalize"
                     >
-                      <Link href={href}>
+                      <Link
+                        href={href}
+                        onClick={(e) => handleNavigation(e, href)}
+                      >
                         {segment.charAt(0).toUpperCase() + segment.slice(1)}
                       </Link>
                     </BreadcrumbLink>
@@ -96,6 +131,29 @@ export const Breadcrumbs = () => {
           })}
         </BreadcrumbList>
       </Breadcrumb>
+
+      <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+        <AlertDialogContent className="bg-zinc-950 border-zinc-800 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Quite Quiz?</AlertDialogTitle>
+            <AlertDialogDescription className="text-zinc-400">
+              Your current progress in this quiz will be lost. Are you sure you
+              want to leave?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-zinc-700 text-white hover:bg-zinc-800 hover:text-green-500">
+              Continue Quiz
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmExit}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              Exit Anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

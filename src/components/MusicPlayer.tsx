@@ -12,6 +12,14 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui";
 import {
   Play,
@@ -100,6 +108,8 @@ export const MusicPlayer = ({
   const [currentLyricIndex, setCurrentLyricIndex] = useState<number>(-1);
   const lyricsCache = useRef<Map<string, LyricsCache>>(new Map());
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
+  const [showExitDialog, setShowExitDialog] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   const isQuizPage = pathname?.startsWith("/Games/") && pathname !== "/Games";
 
@@ -341,6 +351,7 @@ export const MusicPlayer = ({
   );
 
   const handleTrackClick = () => {
+    if (isQuizPage) return; // Disable clicking during quiz
     if (currentTrack?.album?.id) {
       router.push(
         `/Albums/${currentTrack.album.id}?name=${encodeURIComponent(
@@ -353,10 +364,24 @@ export const MusicPlayer = ({
   const handleArtistClick =
     (artistId: string, artistName: string) => (e: React.MouseEvent) => {
       e.stopPropagation();
+      if (isQuizPage) return; // Disable clicking during quiz
       router.push(
         `/Artists/${artistId}?name=${encodeURIComponent(artistName)}`
       );
     };
+
+  const handleExitQuizNavigation = (href: string) => {
+    setPendingHref(href);
+    setShowExitDialog(true);
+  };
+
+  const confirmExit = () => {
+    if (pendingHref) {
+      router.push(pendingHref);
+    }
+    setShowExitDialog(false);
+    setPendingHref(null);
+  };
 
   const handleQueueClick = () => {
     if (onToggleQueue) {
@@ -768,6 +793,28 @@ export const MusicPlayer = ({
           </div>
         </div>
       )}
+      <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+        <AlertDialogContent className="bg-zinc-950 border-zinc-800 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Quit Quiz?</AlertDialogTitle>
+            <AlertDialogDescription className="text-zinc-400">
+              Your current progress in this quiz will be lost. Are you sure you
+              want to leave?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-zinc-700 text-white hover:bg-zinc-800">
+              Continue Quiz
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmExit}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              Exit Anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
