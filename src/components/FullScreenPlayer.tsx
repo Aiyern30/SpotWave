@@ -434,7 +434,7 @@ export const FullScreenPlayer = ({
   if (!isOpen || !currentTrack) return null;
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-b from-zinc-900 via-zinc-800 to-black z-50 overflow-y-auto overflow-x-hidden pl-16 pr-2 py-4 sm:py-6 space-y-4 sm:space-y-8">
+    <div className="fixed inset-0 bg-gradient-to-b from-zinc-900 via-zinc-800 to-black z-50 overflow-y-auto overflow-x-hidden lg:pl-16 px-4 py-4 sm:py-6 space-y-4 sm:space-y-8">
       {/* Header with View Toggle and Close Button */}
       <div className="fixed top-2 sm:top-4 right-2 sm:right-4 flex items-center gap-1 sm:gap-2 z-10">
         <Button
