@@ -69,7 +69,8 @@ export const Breadcrumbs = () => {
   const isQuizPage =
     pathname?.startsWith("/Games/artist-quiz/") ||
     pathname === "/Games/liked-songs" ||
-    pathname?.startsWith("/Games/playlist-quiz/");
+    pathname?.startsWith("/Games/playlist-quiz/") ||
+    (pathname === "/Games/ai-generated" && searchParams.get("mode") === "quiz");
 
   const handleNavigation = (e: React.MouseEvent, href: string) => {
     if (isQuizPage) {

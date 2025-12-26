@@ -41,6 +41,16 @@ const normalizeString = (str: string) => {
     .trim();
 };
 
+const maskText = (text: string) => {
+  return text
+    .split(" ")
+    .map((word) => {
+      if (word.length <= 1) return word;
+      return word[0] + "*".repeat(word.length - 1);
+    })
+    .join(" ");
+};
+
 const AiGeneratedPage = () => {
   const {
     playTrack,
@@ -234,6 +244,10 @@ const AiGeneratedPage = () => {
       if (fetchedTracks.length > 0) {
         setGameTracks(fetchedTracks);
         setIsQuizMode(true);
+        // Add mode=quiz to URL to trigger global player hiding and exit warning
+        const url = new URL(window.location.href);
+        url.searchParams.set("mode", "quiz");
+        window.history.pushState({}, "", url.toString());
         setCurrentTrackIndex(0);
         setScore(0);
         setIsGameOver(false);
@@ -294,6 +308,10 @@ const AiGeneratedPage = () => {
     if (currentTrackIndex >= gameTracks.length - 1) {
       setIsGameOver(true);
       pauseTrack();
+      // Remove quiz mode from URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete("mode");
+      window.history.pushState({}, "", url.toString());
     } else {
       setCurrentTrackIndex((prev) => prev + 1);
       setGuess("");
@@ -406,6 +424,9 @@ const AiGeneratedPage = () => {
             onClick={() => {
               pauseTrack();
               setIsQuizMode(false);
+              const url = new URL(window.location.href);
+              url.searchParams.delete("mode");
+              window.history.pushState({}, "", url.toString());
             }}
             className="text-green-500 hover:text-green-400 hover:bg-green-500/10 font-medium"
           >
@@ -524,9 +545,23 @@ const AiGeneratedPage = () => {
                       )}
                     </Button>
                     <div className="w-full space-y-4 text-center">
-                      <h3 className="text-zinc-400 text-sm font-medium uppercase tracking-widest">
-                        Artist: {currentTrack.artists[0].name}
-                      </h3>
+                      <div className="flex flex-col items-center gap-2">
+                        {!showHint ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-zinc-500 hover:text-yellow-500 transition-colors"
+                            onClick={() => setShowHint(true)}
+                          >
+                            <Lightbulb className="w-4 h-4 mr-2" /> Need a Hint?
+                          </Button>
+                        ) : (
+                          <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 px-4 py-2 rounded-lg text-sm font-medium animate-in fade-in slide-in-from-bottom-2 duration-300 flex items-center text-center">
+                            <Lightbulb className="w-4 h-4 flex-shrink-0 mr-2 fill-yellow-500" />
+                            Artist: {maskText(currentTrack.artists[0].name)}
+                          </div>
+                        )}
+                      </div>
                       <div className="flex flex-wrap justify-center gap-1.5 mb-8 min-h-[3rem] px-2">
                         {currentTrack.name
                           .split("")
