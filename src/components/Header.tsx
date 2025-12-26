@@ -55,7 +55,7 @@ export const Breadcrumbs = () => {
   const breadcrumbSegments = pathname.split("/").filter(Boolean);
 
   return (
-    <div className="lg:relative fixed top-0 left-0 right-0 z-40 lg:z-auto bg-black/60 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none px-4 lg:px-8 py-4 lg:py-6 border-b border-white/5 lg:border-0 transition-all duration-300 pl-20 lg:pl-0">
+    <div className="lg:relative fixed top-0 left-0 right-0 z-40 lg:z-auto bg-black/60 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none px-4 lg:px-0 py-4 lg:py-0 border-b border-white/5 lg:border-0 transition-all duration-300 pl-20 lg:pl-0">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
