@@ -129,6 +129,7 @@ export const FullScreenPlayer = ({
   const [loadingLyrics, setLoadingLyrics] = useState(false);
   const [currentLyricIndex, setCurrentLyricIndex] = useState<number>(-1);
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
+  const mobileLyricsContainerRef = useRef<HTMLDivElement>(null);
 
   // Add display mode and current artist tracking
   const [topTracksDisplayUI, setTopTracksDisplayUI] = useState<
@@ -218,14 +219,20 @@ export const FullScreenPlayer = ({
 
     if (newIndex !== currentLyricIndex) {
       setCurrentLyricIndex(newIndex);
-      if (lyricsContainerRef.current && newIndex >= 0) {
-        const activeElement = lyricsContainerRef.current.querySelector(
-          `[data-index="${newIndex}"]`
-        );
-        if (activeElement) {
-          activeElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Scroll both desktop and mobile containers
+      [lyricsContainerRef, mobileLyricsContainerRef].forEach((ref) => {
+        if (ref.current && newIndex >= 0) {
+          const activeElement = ref.current.querySelector(
+            `[data-index="${newIndex}"]`
+          );
+          if (activeElement) {
+            activeElement.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          }
         }
-      }
+      });
     }
   }, [position, syncedLyrics, currentLyricIndex, isPlaying]);
 
@@ -435,35 +442,37 @@ export const FullScreenPlayer = ({
 
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-zinc-900 via-zinc-800 to-black z-50 overflow-y-auto overflow-x-hidden lg:pl-16 px-4 py-4 sm:py-6 space-y-4 sm:space-y-8">
-      {/* Header with View Toggle and Close Button */}
+      {/* Header with View Toggle (Desktop Only) and Close Button */}
       <div className="fixed top-2 sm:top-4 right-2 sm:right-4 flex items-center gap-1 sm:gap-2 z-10">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setViewMode("image")}
-          className={`h-8 w-8 sm:h-10 sm:w-10 ${
-            viewMode === "image"
-              ? "text-green-400 bg-zinc-800"
-              : "text-white hover:text-green-400 hover:bg-zinc-800"
-          }`}
-          title="Show Album Art"
-        >
-          <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setViewMode("lyrics")}
-          className={`h-8 w-8 sm:h-10 sm:w-10 ${
-            viewMode === "lyrics"
-              ? "text-green-400 bg-zinc-800"
-              : "text-white hover:text-green-400 hover:bg-zinc-800"
-          }`}
-          title="Show Lyrics"
-        >
-          <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
-        </Button>
-        <div className="w-px h-4 sm:h-6 bg-zinc-700 mx-1" />
+        <div className="hidden lg:flex items-center gap-1 sm:gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setViewMode("image")}
+            className={`h-8 w-8 sm:h-10 sm:w-10 ${
+              viewMode === "image"
+                ? "text-green-400 bg-zinc-800"
+                : "text-white hover:text-green-400 hover:bg-zinc-800"
+            }`}
+            title="Show Album Art"
+          >
+            <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setViewMode("lyrics")}
+            className={`h-8 w-8 sm:h-10 sm:w-10 ${
+              viewMode === "lyrics"
+                ? "text-green-400 bg-zinc-800"
+                : "text-white hover:text-green-400 hover:bg-zinc-800"
+            }`}
+            title="Show Lyrics"
+          >
+            <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
+          </Button>
+          <div className="w-px h-4 sm:h-6 bg-zinc-700 mx-1" />
+        </div>
         <Button
           variant="ghost"
           size="icon"
@@ -478,7 +487,8 @@ export const FullScreenPlayer = ({
       {/* Hero Section - Album Art or Lyrics (max-w-4xl) */}
       <div className="max-w-4xl mx-auto px-4 sm:px-8 py-4 sm:py-8">
         <div className="relative w-full">
-          {viewMode === "image" ? (
+          {/* Desktop logic: Switch between image and lyrics. Mobile: Always show image at top. */}
+          <div className={viewMode === "image" ? "block" : "block lg:hidden"}>
             <div className="relative w-full aspect-square max-w-2xl mx-auto">
               <Image
                 src={currentTrack.album.images[0]?.url || "/default-artist.png"}
@@ -488,7 +498,10 @@ export const FullScreenPlayer = ({
                 priority
               />
             </div>
-          ) : (
+          </div>
+
+          {/* Desktop-only lyrics tab content. Mobile lyrics are rendered below the controls. */}
+          <div className={viewMode === "lyrics" ? "hidden lg:block" : "hidden"}>
             <div className="w-full min-h-[400px] sm:min-h-[600px] bg-zinc-900/50 rounded-2xl p-4 sm:p-8 backdrop-blur-sm overflow-hidden">
               {loadingLyrics ? (
                 <div className="flex justify-center items-center h-[400px] sm:h-[600px]">
@@ -551,7 +564,7 @@ export const FullScreenPlayer = ({
                 </div>
               )}
             </div>
-          )}
+          </div>
         </div>
 
         {/* Track Info */}
@@ -698,6 +711,48 @@ export const FullScreenPlayer = ({
               className="w-20 sm:w-24 cursor-pointer"
               disabled={!isReady}
             />
+          </div>
+        </div>
+
+        {/* Mobile Lyrics Integration (shows after controls) */}
+        <div className="lg:hidden block px-4 pt-4">
+          <div className="w-full bg-zinc-900/50 rounded-2xl p-6 backdrop-blur-sm overflow-hidden border border-zinc-800/50">
+            <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+              <FileText className="h-4 w-4 text-green-500" />
+              Lyrics
+            </h3>
+            {loadingLyrics ? (
+              <div className="flex justify-center items-center h-[300px]">
+                <Loader2 className="h-6 w-6 animate-spin text-green-500" />
+              </div>
+            ) : syncedLyrics && syncedLyrics.length > 0 ? (
+              <div
+                ref={mobileLyricsContainerRef}
+                className="h-[400px] overflow-y-auto overflow-x-hidden scroll-smooth space-y-4 pr-2"
+              >
+                {syncedLyrics.map((line, index) => (
+                  <div
+                    key={index}
+                    data-index={index}
+                    className={`text-lg leading-relaxed transition-all duration-300 py-1 break-words ${
+                      index === currentLyricIndex
+                        ? "text-green-400 font-bold text-xl scale-105 origin-left"
+                        : index < currentLyricIndex
+                        ? "text-zinc-500"
+                        : "text-zinc-300"
+                    }`}
+                  >
+                    {line.text}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-[300px] overflow-y-auto overflow-x-hidden pr-2">
+                <pre className="text-zinc-300 text-base leading-relaxed whitespace-pre-wrap font-sans">
+                  {lyrics}
+                </pre>
+              </div>
+            )}
           </div>
         </div>
       </div>
