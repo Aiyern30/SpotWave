@@ -169,6 +169,21 @@ const ArtistQuizGame = () => {
     }
   };
 
+  // Allow pressing "Enter" to go to next song when answer is shown
+  useEffect(() => {
+    if (!showAnswer) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleNext();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showAnswer, currentTrackIndex, gameTracks.length]); // Dependencies for handleNext logic
+
   const handleGiveUp = () => {
     setShowAnswer(true);
     setFeedback(null);
