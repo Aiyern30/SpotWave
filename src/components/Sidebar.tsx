@@ -44,7 +44,6 @@ const Sidebar = ({
 
   useEffect(() => {
     const storedState = localStorage.getItem("sidebar-compact");
-    // Default to compact only on larger screens if no state found
     setIsCompact(storedState === "true");
   }, []);
 
@@ -53,13 +52,9 @@ const Sidebar = ({
   }, [pathname]);
 
   useEffect(() => {
-    // If we're on mobile and the sidebar is "closed", make it compact
-    // but the CSS will handle hiding it.
-    if (!isOpen) {
-      setIsCompact(true);
-    } else {
-      setIsCompact(false);
-    }
+    // Sync isCompact with the isOpen state from layout
+    // isOpen true = expanded, false = compact (on desktop)
+    setIsCompact(!isOpen);
   }, [isOpen]);
 
   useEffect(() => {
@@ -75,10 +70,6 @@ const Sidebar = ({
     router.push(href);
   };
 
-  const handleToggle = () => {
-    onClose();
-  };
-
   const handleLogout = () => {
     localStorage.removeItem("Token");
     router.push("/");
@@ -86,9 +77,31 @@ const Sidebar = ({
 
   return (
     <>
+      <style jsx global>{`
+        .custom-hide-scrollbar::-webkit-scrollbar {
+          width: 4px;
+          height: 0px;
+        }
+        .custom-hide-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-hide-scrollbar::-webkit-scrollbar-thumb {
+          background: #27272a;
+          border-radius: 10px;
+        }
+        .custom-hide-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #3f3f46;
+        }
+        .custom-hide-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #27272a transparent;
+          -ms-overflow-style: none;
+        }
+      `}</style>
+
       {/* Mobile Toggle Button - Floating Logo */}
       <button
-        onClick={handleToggle}
+        onClick={onClose}
         className="fixed top-5 left-5 z-[60] lg:hidden group transition-transform active:scale-95"
         aria-label="toggle sidebar"
       >
@@ -134,185 +147,194 @@ const Sidebar = ({
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
-        {(isOpen || isCompact) && (
-          <motion.div
-            key="sidebar"
-            initial={isOpen ? { x: -300 } : { x: 0 }}
-            animate={{ x: 0 }}
-            exit={{ x: -300 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className={`fixed top-0 bottom-0 left-0 z-50 transition-all duration-300 
-              ${isCompact ? "w-16 hidden lg:flex" : "w-64 flex"} 
-              border-r border-zinc-800 bg-black/95 backdrop-blur-xl flex-col overflow-hidden`}
-            aria-label="Sidebar"
+        <motion.div
+          key="sidebar"
+          initial={false}
+          animate={{ x: 0 }}
+          className={`fixed top-0 bottom-0 left-0 z-50 transition-all duration-300 
+            ${isCompact ? "w-16" : "w-64"} 
+            ${isOpen ? "flex" : "hidden lg:flex"}
+            border-r border-zinc-800 bg-black/95 backdrop-blur-xl flex-col overflow-hidden`}
+          aria-label="Sidebar"
+        >
+          {/* Sidebar Header */}
+          <div
+            className={`flex items-center justify-between transition-all duration-500 ${
+              isCompact
+                ? "flex-col items-center justify-center py-10 px-0 min-h-[120px] cursor-pointer hover:bg-white/[0.03] group/header"
+                : "p-5 min-h-[90px] border-b border-zinc-800"
+            }`}
+            onClick={isCompact ? onClose : undefined}
           >
-            {/* Sidebar Header */}
-            <div
-              className={`flex items-center justify-between p-5 border-b border-zinc-800 min-h-[90px] ${
-                isCompact ? "flex-col items-center justify-center pt-8" : ""
-              }`}
-            >
-              {!isCompact ? (
-                <div className="flex items-center gap-3 text-white animate-in fade-in slide-in-from-left-4 duration-500">
-                  <div className="relative">
-                    <img
-                      src="/Logo.png"
-                      alt="SpotWave Logo"
-                      className="w-10 h-10 rounded-full ring-2 ring-green-500/20"
-                    />
-                    <div className="absolute inset-0 rounded-full bg-green-500/10 animate-pulse" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-xl font-bold tracking-tight">
-                      SpotWave
-                    </span>
-                    <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest -mt-1">
-                      All Music
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-6">
+            {!isCompact ? (
+              <div className="flex items-center gap-3 text-white">
+                <div className="relative">
                   <img
                     src="/Logo.png"
                     alt="SpotWave Logo"
-                    className="w-8 h-8 rounded-full border border-zinc-800"
+                    className="w-10 h-10 rounded-full ring-2 ring-green-500/20"
                   />
+                  <div className="absolute inset-0 rounded-full bg-green-500/10 animate-pulse" />
                 </div>
-              )}
+                <div className="flex flex-col">
+                  <span className="text-xl font-bold tracking-tight">
+                    SpotWave
+                  </span>
+                  <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest -mt-1">
+                    All Music
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center group-hover/header:scale-110 transition-transform duration-500">
+                <div className="relative">
+                  <img
+                    src="/Logo.png"
+                    alt="SpotWave Logo"
+                    className="w-11 h-11 rounded-full ring-2 ring-white/10 group-hover/header:ring-green-500/40 transition-all duration-500 shadow-2xl"
+                  />
+                  <div className="absolute inset-0 rounded-full bg-green-500/0 group-hover/header:bg-green-500/5 transition-colors duration-500" />
+                </div>
+              </div>
+            )}
 
-              {!isCompact && (
-                <button
-                  onClick={onClose}
-                  className="p-2.5 hover:bg-zinc-800 rounded-xl transition-colors border border-zinc-800/50 group"
-                  aria-label="close sidebar"
-                >
-                  <AiOutlineRollback className="text-lg text-zinc-400 group-hover:text-white transition-colors" />
-                </button>
-              )}
-            </div>
+            {!isCompact && (
+              <button
+                onClick={onClose}
+                className="p-2.5 hover:bg-zinc-800 rounded-xl transition-colors border border-zinc-800/50 group"
+                aria-label="close sidebar"
+              >
+                <AiOutlineRollback className="text-lg text-zinc-400 group-hover:text-white transition-colors" />
+              </button>
+            )}
+          </div>
 
-            {/* Navigation Items */}
-            <div className="flex-grow overflow-y-auto custom-scrollbar pt-4">
-              <nav>
-                <ul className="px-3 space-y-1">
-                  {items.map((item, idx) => {
-                    const { title, href, Icon } = item;
-                    const isActive = pathname === href;
-                    return (
-                      <li key={title}>
-                        <Link
-                          href={href}
-                          onClick={() => handleItemClick(href)}
-                          className={`flex items-center gap-4 p-3.5 rounded-xl transition-all relative group
-                            ${
-                              isActive
-                                ? "bg-green-500/10 text-green-500 border border-green-500/20 shadow-[0_0_20px_rgba(34,197,94,0.05)]"
-                                : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
-                            } 
-                            ${isCompact ? "justify-center px-0" : ""}`}
+          {/* Navigation Items */}
+          <div
+            className={`flex-grow overflow-y-auto overflow-x-hidden custom-hide-scrollbar ${
+              isCompact ? "pt-8" : "pt-4"
+            }`}
+          >
+            <nav>
+              <ul className="px-3 space-y-1">
+                {items.map((item, idx) => {
+                  const { title, href, Icon } = item;
+                  const isActive =
+                    pathname === href ||
+                    (href !== "/Home" && pathname.startsWith(href));
+                  return (
+                    <li key={title}>
+                      <Link
+                        href={href}
+                        onClick={() => handleItemClick(href)}
+                        className={`flex items-center gap-4 p-3.5 rounded-xl transition-all relative group
+                          ${
+                            isActive
+                              ? "bg-green-500/10 text-green-500 border border-green-500/20 shadow-[0_0_20px_rgba(34,197,94,0.05)]"
+                              : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                          } 
+                          ${isCompact ? "justify-center px-0" : ""}`}
+                      >
+                        {isActive && (
+                          <motion.div
+                            layoutId="active-indicator"
+                            className="absolute left-0 w-1 h-6 bg-green-500 rounded-r-full shadow-[0_0_10px_rgba(34,197,94,0.5)]"
+                          />
+                        )}
+                        <div
+                          className={`transition-transform duration-300 ${
+                            isActive ? "scale-110" : "group-hover:scale-110"
+                          }`}
                         >
-                          {isActive && (
-                            <motion.div
-                              layoutId="active-indicator"
-                              className="absolute left-0 w-1 h-6 bg-green-500 rounded-r-full shadow-[0_0_10px_rgba(34,197,94,0.5)]"
-                            />
-                          )}
-                          <div
-                            className={`transition-transform duration-300 ${
-                              isActive ? "scale-110" : "group-hover:scale-110"
+                          <Icon className="text-2xl" />
+                        </div>
+                        {!isCompact && (
+                          <span
+                            className={`text-[15px] font-medium transition-colors ${
+                              isActive ? "text-white" : ""
                             }`}
                           >
-                            <Icon className="text-2xl" />
+                            {title}
+                          </span>
+                        )}
+
+                        {/* Tooltip for compact state */}
+                        {isCompact && (
+                          <div className="absolute left-full ml-4 px-2 py-1 bg-zinc-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-[70] whitespace-nowrap border border-zinc-700">
+                            {title}
                           </div>
-                          {!isCompact && (
-                            <span
-                              className={`text-[15px] font-medium transition-colors ${
-                                isActive ? "text-white" : ""
-                              }`}
-                            >
-                              {title}
-                            </span>
-                          )}
+                        )}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          </div>
 
-                          {/* Tooltip for compact state */}
-                          {isCompact && (
-                            <div className="absolute left-full ml-4 px-2 py-1 bg-zinc-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-[70] whitespace-nowrap border border-zinc-700">
-                              {title}
-                            </div>
-                          )}
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </nav>
-            </div>
-
-            {/* Bottom Section - Logout */}
-            <div
-              className={`p-3 border-t border-zinc-800 ${
-                isCompact ? "flex flex-col items-center py-6" : ""
-              }`}
+          {/* Bottom Section - Logout */}
+          <div
+            className={`p-3 border-t border-zinc-800 ${
+              isCompact ? "flex flex-col items-center py-6" : ""
+            }`}
+          >
+            <AlertDialog
+              open={showLogoutDialog}
+              onOpenChange={setShowLogoutDialog}
             >
-              <AlertDialog
-                open={showLogoutDialog}
-                onOpenChange={setShowLogoutDialog}
-              >
-                <AlertDialogTrigger asChild>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setShowLogoutDialog(true);
-                    }}
-                    className={`w-full flex items-center gap-4 p-3.5 rounded-xl text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-all group
-                      ${isCompact ? "justify-center" : ""}`}
-                  >
-                    <div className="group-hover:rotate-12 transition-transform duration-300">
-                      <BiLogOut className="text-2xl" />
+              <AlertDialogTrigger asChild>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowLogoutDialog(true);
+                  }}
+                  className={`w-full flex items-center gap-4 p-3.5 rounded-xl text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-all group relative
+                    ${isCompact ? "justify-center px-0" : ""}`}
+                >
+                  <div className="group-hover:rotate-12 transition-transform duration-300">
+                    <BiLogOut className="text-2xl" />
+                  </div>
+                  {!isCompact && (
+                    <span className="text-[15px] font-medium">Logout</span>
+                  )}
+                  {isCompact && (
+                    <div className="absolute left-full ml-4 px-2 py-1 bg-red-900/90 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-[70] whitespace-nowrap border border-red-800">
+                      Logout
                     </div>
-                    {!isCompact && (
-                      <span className="text-[15px] font-medium">Logout</span>
-                    )}
-                    {isCompact && (
-                      <div className="absolute left-full ml-4 px-2 py-1 bg-red-900/90 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-[70] whitespace-nowrap border border-red-800">
-                        Logout
-                      </div>
-                    )}
-                  </button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="bg-zinc-950 border-zinc-800 text-white backdrop-blur-3xl">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="text-2xl font-bold">
-                      Sign Out
-                    </AlertDialogTitle>
-                    <AlertDialogDescription className="text-zinc-400">
-                      You're about to leave SpotWave. You can always sign back
-                      in to access your library.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter className="mt-6 gap-3">
-                    <AlertDialogCancel
-                      className="bg-transparent border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-xl px-6"
-                      onClick={() => setShowLogoutDialog(false)}
-                    >
-                      Wait, Keep Me In
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      className="bg-red-500 hover:bg-red-600 text-white border-0 rounded-xl px-8 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-                      onClick={() => {
-                        handleLogout();
-                        setShowLogoutDialog(false);
-                      }}
-                    >
-                      Sign Out
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </motion.div>
-        )}
+                  )}
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-zinc-950 border-zinc-800 text-white backdrop-blur-3xl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-2xl font-bold">
+                    Sign Out
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-zinc-400">
+                    You're about to leave SpotWave. You can always sign back in
+                    to access your library.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="mt-6 gap-3">
+                  <AlertDialogCancel
+                    className="bg-transparent border-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-xl px-6"
+                    onClick={() => setShowLogoutDialog(false)}
+                  >
+                    Wait, Keep Me In
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-red-500 hover:bg-red-600 text-white border-0 rounded-xl px-8 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+                    onClick={() => {
+                      handleLogout();
+                      setShowLogoutDialog(false);
+                    }}
+                  >
+                    Sign Out
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </motion.div>
       </AnimatePresence>
     </>
   );
