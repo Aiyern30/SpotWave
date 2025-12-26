@@ -10,6 +10,8 @@ import {
   User,
   Loader2,
   Sparkles,
+  Play,
+  Music,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -223,7 +225,7 @@ const PlaylistQuizPage = () => {
               size="sm"
               onClick={handleAiRecommendation}
               disabled={isAiLoading}
-              className="border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 gap-2"
+              className="border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 gap-2 rounded-full px-4"
             >
               {isAiLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -256,8 +258,10 @@ const PlaylistQuizPage = () => {
                           <ListMusic className="w-16 h-16 text-zinc-600" />
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Badge className="bg-green-500 text-black">Play</Badge>
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                        <div className="bg-green-500 text-black p-3 rounded-full shadow-xl transform scale-90 group-hover:scale-100 transition-all">
+                          <Play className="w-6 h-6 fill-current" />
+                        </div>
                       </div>
                     </div>
                     <div className="p-4 space-y-1">
@@ -288,7 +292,7 @@ const PlaylistQuizPage = () => {
         {/* My Playlists Grid */}
         <div className="space-y-8">
           <div className="flex items-center gap-3 text-2xl font-semibold text-white">
-            <User className="w-6 h-6 text-green-500" />
+            <Music className="w-6 h-6 text-green-500" />
             <h2>Your Library Playlists</h2>
           </div>
 
@@ -323,10 +327,10 @@ const PlaylistQuizPage = () => {
                           <ListMusic className="w-16 h-16 text-zinc-600" />
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="bg-green-500 text-black font-bold px-4 py-1.5 rounded-full transform scale-90 group-hover:scale-100 transition-all shadow-xl">
-                          Play
-                        </span>
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
+                        <div className="bg-green-500 text-black p-3 rounded-full shadow-xl transform scale-90 group-hover:scale-100 transition-all">
+                          <Play className="w-6 h-6 fill-current" />
+                        </div>
                       </div>
                     </div>
                     <div className="p-4 space-y-1">
