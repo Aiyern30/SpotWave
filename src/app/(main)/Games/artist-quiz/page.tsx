@@ -8,6 +8,7 @@ import {
   Loader2,
   Music,
   Sparkles,
+  Play,
 } from "lucide-react";
 import {
   Card,
@@ -261,7 +262,7 @@ const ArtistQuizPage = () => {
         <div className="space-y-6">
           <div className="flex items-center justify-between px-4 md:px-0">
             <div className="flex items-center gap-3 text-2xl font-semibold text-white">
-              <Sparkles className="w-6 h-6 text-yellow-400 group-hover:animate-pulse" />
+              <Sparkles className="w-6 h-6 text-yellow-400" />
               <h2>AI Picks For You</h2>
             </div>
             <Button
@@ -269,7 +270,7 @@ const ArtistQuizPage = () => {
               size="sm"
               onClick={handleAiRecommendation}
               disabled={isAiLoading}
-              className="border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 gap-2"
+              className="border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 gap-2 rounded-full px-4"
             >
               {isAiLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -297,8 +298,10 @@ const ArtistQuizPage = () => {
                         />
                         <AvatarFallback>{artist.name.charAt(0)}</AvatarFallback>
                       </Avatar>
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/ai:opacity-100 transition-opacity flex items-center justify-center">
-                        <Badge className="bg-green-500 text-black">Play</Badge>
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/ai:opacity-100 transition-all flex items-center justify-center">
+                        <div className="bg-green-500 text-black p-3 rounded-full shadow-xl transform scale-90 group-hover/ai:scale-100 transition-all">
+                          <Play className="w-6 h-6 fill-current" />
+                        </div>
                       </div>
                     </div>
                     <h3 className="font-bold text-white text-center truncate w-full group-hover/ai:text-green-400">
@@ -323,7 +326,7 @@ const ArtistQuizPage = () => {
         {/* Following Artists Carousel */}
         <div className="space-y-6">
           <div className="flex items-center gap-3 text-2xl font-semibold text-white px-4 md:px-0">
-            <User className="w-6 h-6 text-green-500" />
+            <Music className="w-6 h-6 text-green-500" />
             <h2>Your Following Artists</h2>
           </div>
 
@@ -360,10 +363,10 @@ const ArtistQuizPage = () => {
                               {artist.name.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/card:opacity-100 transition-opacity flex items-center justify-center">
-                            <span className="text-white font-semibold bg-green-500 px-4 py-1 rounded-full transform scale-90 group-hover/card:scale-100 transition-transform">
-                              Start Quiz
-                            </span>
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/card:opacity-100 transition-all flex items-center justify-center">
+                            <div className="bg-green-500 text-black p-3 rounded-full shadow-xl transform scale-90 group-hover/card:scale-100 transition-all">
+                              <Play className="w-6 h-6 fill-current" />
+                            </div>
                           </div>
                         </div>
                         <div className="text-center space-y-1">
