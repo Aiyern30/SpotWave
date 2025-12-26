@@ -19,19 +19,34 @@ export async function POST(req: Request) {
       );
     }
 
-    const prompt =
-      type === "artist"
-        ? `Suggest 5 popular music artists for a song guessing quiz. Return ONLY a JSON array of strings (the artist names). Context: ${
-            context || "General popular music"
-          }. Example format: ["Artist 1", "Artist 2", "Artist 3", "Artist 4", "Artist 5"]`
-        : `Suggest 5 popular music playlist themes or specific famous playlists for a song guessing quiz. Return ONLY a JSON array of strings (the playlist names). Context: ${
-            context || "General popular music"
-          }. Example format: ["Playlist 1", "Playlist 2", "Playlist 3", "Playlist 4", "Playlist 5"]`;
+    const systemInstruction =
+      "You are a specialized music quiz assistant. You MUST return ONLY a raw JSON array. Do not include any text before or after the JSON. If you cannot provide a specific recommendation, provide a creative generic music alternative.";
 
-    // Free tier compatible models - using v1 API (not v1beta)
+    let prompt = "";
+    if (type === "artist") {
+      prompt = `${systemInstruction} Suggest 5 popular music artists for a song guessing quiz. Context: ${
+        context || "General popular music"
+      }. Format: ["Artist 1", "Artist 2", "Artist 3", "Artist 4", "Artist 5"]`;
+    } else if (type === "playlist") {
+      prompt = `${systemInstruction} Suggest 5 popular music playlist themes for a song guessing quiz. Context: ${
+        context || "General popular music"
+      }. Format: ["Theme 1", "Theme 2", "Theme 3", "Theme 4", "Theme 5"]`;
+    } else if (type === "ideas") {
+      prompt = `${systemInstruction} Suggest 4 creative music playlist ideas for a song guessing quiz with a 'title' and a brief 'description' (mentioning example artists). Context: ${
+        context || "General popular music"
+      }. Example: [{"title": "Classic Hits", "description": "Hits from Queen and ABBA"}]`;
+    } else {
+      prompt = `${systemInstruction} Suggest 5 ideas for a music quiz. Context: ${
+        context || "General popular music"
+      }`;
+    }
+
+    // 2025 Standard models with higher quotas
     const attempts = [
-      { version: "v1", model: "gemini-1.5-flash" },
       { version: "v1", model: "gemini-2.5-flash" },
+      { version: "v1", model: "gemini-2.5-flash-lite" },
+      { version: "v1", model: "gemini-1.5-flash" },
+      { version: "v1", model: "gemini-1.5-pro" },
     ];
 
     let lastError = "";
@@ -43,22 +58,21 @@ export async function POST(req: Request) {
           `🤖 Attempting Gemini AI: ${attempt.version}/${attempt.model}`
         );
 
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/${attempt.version}/models/${attempt.model}:generateContent?key=${apiKey}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: {
-                temperature: 0.9,
-                topK: 40,
-                topP: 0.95,
-                maxOutputTokens: 1024,
-              },
-            }),
-          }
-        );
+        const url = `https://generativelanguage.googleapis.com/${attempt.version}/models/${attempt.model}:generateContent?key=${apiKey}`;
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.8,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 1024,
+            },
+          }),
+        });
 
         if (response.ok) {
           data = await response.json();
@@ -75,80 +89,133 @@ export async function POST(req: Request) {
       }
     }
 
+    // Default Fallback Suggestions if AI fails completely
+    const fallbackSuggestions = [
+      {
+        title: "Mando-Pop Classics",
+        description: "Timeless hits from Jay Chou, Jolin Tsai, and David Tao.",
+      },
+      {
+        title: "TikTok Trending 2025",
+        description: "The latest viral hits moving the world right now.",
+      },
+      {
+        title: "Golden Era Indie",
+        description:
+          "Atmospheric tracks from No Party For Cao Dong and Deca Joins.",
+      },
+      {
+        title: "80s City Pop Vibes",
+        description:
+          "Japanese and Mandopop city pop classics for a retro feel.",
+      },
+    ];
+
     if (!data) {
-      console.error("❌ All Gemini models failed. Last error:", lastError);
-      throw new Error(`All Gemini models failed. Last error: ${lastError}`);
+      console.warn("⚠️ All models failed, using hardcoded fallbacks.");
+      return NextResponse.json({
+        recommendations:
+          type === "ideas"
+            ? fallbackSuggestions
+            : [
+                "Jay Chou",
+                "Taylor Swift",
+                "Queen",
+                "The Beatles",
+                "Linkin Park",
+              ],
+      });
     }
 
     let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!text) {
-      throw new Error("Empty response from AI");
+      console.warn("⚠️ Empty response, using hardcoded fallbacks.");
+      return NextResponse.json({
+        recommendations:
+          type === "ideas"
+            ? fallbackSuggestions
+            : [
+                "Jay Chou",
+                "Taylor Swift",
+                "Queen",
+                "The Beatles",
+                "Linkin Park",
+              ],
+      });
     }
 
     console.log("📝 Raw AI response:", text);
 
-    // Parse the response - handle various formats
     let recommendations;
     try {
-      // Try direct JSON parse first
-      recommendations = JSON.parse(text);
-    } catch (e) {
-      // Clean up the text - remove markdown code blocks if present
-      let cleanedText = text
+      const cleanedText = text
         .replace(/```json\s*/g, "")
         .replace(/```\s*/g, "")
         .trim();
+      recommendations = JSON.parse(cleanedText);
+    } catch (e) {
+      const firstBracket = text.indexOf("[");
+      const lastBracket = text.lastIndexOf("]");
 
-      // Try to extract JSON array from cleaned text
-      const match = cleanedText.match(/\[[\s\S]*?\]/);
-      if (match) {
+      if (
+        firstBracket !== -1 &&
+        lastBracket !== -1 &&
+        lastBracket > firstBracket
+      ) {
+        const jsonBody = text.substring(firstBracket, lastBracket + 1);
         try {
-          recommendations = JSON.parse(match[0]);
+          recommendations = JSON.parse(jsonBody);
         } catch (parseError) {
-          console.error("Failed to parse extracted JSON:", match[0]);
-          // Fallback: try to extract quoted strings
-          const stringMatches = cleanedText.match(/"([^"]+)"/g);
-          if (stringMatches && stringMatches.length >= 5) {
-            recommendations = stringMatches
-              .slice(0, 5)
-              .map((s: string) => s.replace(/"/g, ""));
-          } else {
-            throw new Error("Could not parse AI response as JSON array");
-          }
+          console.error(
+            "Failed to parse extracted JSON block, using fallbacks."
+          );
+          recommendations =
+            type === "ideas"
+              ? fallbackSuggestions
+              : [
+                  "Jay Chou",
+                  "Taylor Swift",
+                  "Queen",
+                  "The Beatles",
+                  "Linkin Park",
+                ];
         }
       } else {
-        // Last resort: try to extract any quoted strings
-        const stringMatches = text.match(/"([^"]+)"/g);
-        if (stringMatches && stringMatches.length >= 5) {
-          recommendations = stringMatches
-            .slice(0, 5)
-            .map((s: string) => s.replace(/"/g, ""));
-        } else {
-          console.error("No JSON array found in response:", text);
-          throw new Error("Could not find JSON array in AI response");
-        }
+        console.warn("No JSON found in response, using fallbacks.");
+        recommendations =
+          type === "ideas"
+            ? fallbackSuggestions
+            : [
+                "Jay Chou",
+                "Taylor Swift",
+                "Queen",
+                "The Beatles",
+                "Linkin Park",
+              ];
       }
     }
 
-    // Validate the response
+    // Final clean up and validation
     if (!Array.isArray(recommendations)) {
-      throw new Error("AI response is not an array");
+      recommendations =
+        type === "ideas" ? fallbackSuggestions : [recommendations];
     }
 
     if (recommendations.length === 0) {
-      throw new Error("AI returned empty recommendations");
+      recommendations =
+        type === "ideas" ? fallbackSuggestions : ["Jay Chou", "Taylor Swift"];
     }
 
-    // Ensure we have at least 5 recommendations, take first 5 if more
-    recommendations = recommendations.slice(0, 5);
+    // Take specific count based on type
+    const limit = type === "ideas" ? 4 : 5;
+    recommendations = recommendations.slice(0, limit);
 
-    console.log("✅ Returning recommendations:", recommendations);
     return NextResponse.json({ recommendations });
   } catch (error: any) {
-    console.error("❌ AI Recommendation Error:", error);
+    console.error("❌ Critical AI Route Error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to get AI recommendations" },
+      { error: "Something went wrong. Please try again later." },
       { status: 500 }
     );
   }
