@@ -373,13 +373,29 @@ export const MusicPlayer = ({
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 lg:left-16 right-0 bg-black border-t border-zinc-800 z-40">
-      <div className="h-[90px] flex items-center justify-between px-4 gap-4">
+    <div
+      className="fixed bottom-0 left-0 lg:left-16 right-0 bg-black/95 backdrop-blur-xl border-t border-zinc-800 z-40 transition-all duration-300 cursor-pointer lg:cursor-default"
+      onClick={() => {
+        if (window.innerWidth < 1024) handleFullScreenClick();
+      }}
+    >
+      {/* Mobile Top Progress Bar */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-zinc-800 lg:hidden">
+        <div
+          className="h-full bg-green-500 transition-all duration-300"
+          style={{ width: `${(position / duration) * 100}%` }}
+        />
+      </div>
+
+      <div className="h-[72px] lg:h-[90px] flex items-center justify-between px-4 gap-4">
         {/* Left Section - Track Info */}
-        <div className="flex items-center gap-3 min-w-[240px] w-[30%]">
+        <div className="flex items-center gap-3 lg:min-w-[240px] lg:w-[30%] min-w-0 flex-1">
           <div
-            className="w-14 h-14 rounded overflow-hidden flex-shrink-0 group relative cursor-pointer"
-            onClick={handleTrackClick}
+            className="w-12 h-12 lg:w-14 lg:h-14 rounded overflow-hidden flex-shrink-0 group relative cursor-pointer shadow-lg"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleTrackClick();
+            }}
           >
             {currentTrack ? (
               <>
@@ -455,8 +471,11 @@ export const MusicPlayer = ({
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 flex-shrink-0 transition-all duration-200"
-            onClick={handleToggleSave}
+            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 flex-shrink-0 transition-all duration-200 hidden sm:flex"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleSave();
+            }}
             disabled={!currentTrack || isSaving}
           >
             {isSaving ? (
@@ -469,8 +488,8 @@ export const MusicPlayer = ({
           </Button>
         </div>
 
-        {/* Center Section - Player Controls */}
-        <div className="flex flex-col items-center justify-center max-w-[722px] w-[40%]">
+        {/* Center Section - Desktop Player Controls */}
+        <div className="hidden lg:flex flex-col items-center justify-center max-w-[722px] w-[40%]">
           {/* Control Buttons */}
           <div className="flex items-center gap-2 mb-2">
             <Button
@@ -558,8 +577,39 @@ export const MusicPlayer = ({
           </div>
         </div>
 
-        {/* Right Section - Additional Controls */}
-        <div className="flex items-center justify-end gap-2 min-w-[240px] w-[30%]">
+        {/* Right Section - Additional Controls & Mobile Minimal Controls */}
+        <div className="flex items-center justify-end gap-2 lg:min-w-[240px] lg:w-[30%]">
+          {/* Mobile Only Minimal Controls */}
+          <div className="flex lg:hidden items-center gap-1">
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePlayPause();
+              }}
+              size="icon"
+              variant="ghost"
+              className="text-white hover:text-green-400 h-10 w-10"
+              disabled={!isReady}
+            >
+              {isPlaying ? (
+                <Pause className="h-6 w-6 fill-current" />
+              ) : (
+                <Play className="h-6 w-6 ml-0.5 fill-current" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                nextTrack();
+              }}
+              className="text-zinc-400 hover:text-white h-10 w-10"
+              disabled={!isReady}
+            >
+              <SkipForward className="h-5 w-5 fill-current" />
+            </Button>
+          </div>
           {!isQuizPage && (
             <>
               <Sheet
@@ -677,8 +727,11 @@ export const MusicPlayer = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={handleMute}
-            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 transition-all"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleMute();
+            }}
+            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 transition-all hidden lg:flex"
             disabled={!isReady}
           >
             {isMuted || localVolume === 0 ? (
