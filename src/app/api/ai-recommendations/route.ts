@@ -39,6 +39,16 @@ export async function POST(req: Request) {
       prompt = `${systemInstruction} Suggest 10 specific and diverse songs for a song guessing quiz based on this theme: ${
         context || "General popular music"
       }. Return ONLY a JSON array of objects with 'song' and 'artist' keys. Example: [{"song": "Bohemian Rhapsody", "artist": "Queen"}]`;
+    } else if (type === "user-summary") {
+      prompt = `${systemInstruction} Analyze this user's music library based on the following genres and artists. 
+      Context: ${context}.
+      Return ONLY a JSON object with:
+      "genres": [5 most representative genres],
+      "moods": [5 descriptive moods for this music type],
+      "eras": [3-4 music eras represented, e.g. "80s Classics", "Modern Pop"],
+      "artistStyles": [4-5 descriptive styles of the artists they like],
+      "searchTerms": [5 specific search queries they would use to find similar new music]
+      Example: {"genres": ["Pop", "R&B"], "moods": ["Chilly", "Energetic"], "eras": ["Modern"], "artistStyles": ["Polished"], "searchTerms": ["Pop hits"]}`;
     } else {
       prompt = `${systemInstruction} Suggest 5 ideas for a music quiz. Context: ${
         context || "General popular music"
@@ -205,6 +215,10 @@ export async function POST(req: Request) {
     }
 
     // Final clean up and validation
+    if (type === "user-summary") {
+      return NextResponse.json(recommendations);
+    }
+
     if (!Array.isArray(recommendations)) {
       recommendations =
         type === "ideas" ? fallbackSuggestions : [recommendations];

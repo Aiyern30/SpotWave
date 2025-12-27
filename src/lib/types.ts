@@ -34,6 +34,7 @@ export interface PlaylistTrack {
       name: string;
       id: string;
       images: { url: string }[];
+      release_date?: string;
     };
     duration_ms: number;
     uri: string;
