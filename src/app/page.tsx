@@ -29,16 +29,27 @@ function base64encode(input: ArrayBuffer): string {
 
 export default function Home() {
   const CLIENT_ID = "5bf8d69f8aaf4727a4677c0ad2fef6ec";
-  const REDIRECT_URI: string =
-    process.env.NEXT_PUBLIC_REDIRECT_URI || "http://localhost:3000/callback";
-
-  const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
-  const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
-
   const [token, setToken] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [isRedirecting, setIsRedirecting] = useState<boolean>(false);
   const router = useRouter();
+
+  const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize";
+  const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
+
+  const getRedirectUri = () => {
+    if (typeof window !== "undefined") {
+      // For local development, always use 127.0.0.1 to match Spotify developer settings
+      if (
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1"
+      ) {
+        return "http://127.0.0.1:3000/callback";
+      }
+      return `${window.location.origin}/callback`;
+    }
+    return "http://127.0.0.1:3000/callback";
+  };
 
   const validateToken = useCallback(async (token: string) => {
     try {
@@ -60,7 +71,7 @@ export default function Home() {
       client_id: CLIENT_ID,
       grant_type: "authorization_code",
       code: code,
-      redirect_uri: REDIRECT_URI,
+      redirect_uri: getRedirectUri(),
       code_verifier: codeVerifier,
     });
 
@@ -101,6 +112,17 @@ export default function Home() {
 
   // Check for existing token or handle OAuth callback
   useEffect(() => {
+    // Force redirect from localhost to 127.0.0.1 for Spotify compatibility
+    if (
+      typeof window !== "undefined" &&
+      window.location.hostname === "localhost"
+    ) {
+      window.location.replace(
+        window.location.href.replace("localhost", "127.0.0.1")
+      );
+      return;
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get("code");
     const error = urlParams.get("error");
@@ -182,7 +204,7 @@ export default function Home() {
     const authUrl = new URL(AUTH_ENDPOINT);
     authUrl.searchParams.append("client_id", CLIENT_ID);
     authUrl.searchParams.append("response_type", "code");
-    authUrl.searchParams.append("redirect_uri", REDIRECT_URI);
+    authUrl.searchParams.append("redirect_uri", getRedirectUri());
     authUrl.searchParams.append("scope", scopes);
     authUrl.searchParams.append("code_challenge_method", "S256");
     authUrl.searchParams.append("code_challenge", codeChallenge);
