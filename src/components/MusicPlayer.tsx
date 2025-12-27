@@ -404,22 +404,22 @@ export const MusicPlayer = ({
 
   return (
     <div
-      className="fixed bottom-0 left-0 lg:left-16 right-0 bg-black/95 backdrop-blur-xl border-t border-zinc-800 z-40 transition-all duration-300 cursor-pointer lg:cursor-default"
+      className="fixed bottom-0 left-0 md:left-16 right-0 bg-black/95 backdrop-blur-xl border-t border-zinc-800 z-40 transition-all duration-300 cursor-pointer md:cursor-default"
       onClick={() => {
-        if (window.innerWidth < 1024) handleFullScreenClick();
+        if (window.innerWidth < 768) handleFullScreenClick();
       }}
     >
       {/* Mobile Top Progress Bar */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] bg-zinc-800 lg:hidden">
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-zinc-800 md:hidden">
         <div
           className="h-full bg-green-500 transition-all duration-300"
           style={{ width: `${(position / duration) * 100}%` }}
         />
       </div>
 
-      <div className="h-[72px] lg:h-[90px] flex items-center justify-between px-4 gap-4">
+      <div className="h-[72px] md:h-[90px] flex items-center justify-between px-4 gap-4">
         {/* Left Section - Track Info */}
-        <div className="flex items-center gap-3 lg:min-w-[240px] lg:w-[30%] min-w-0 flex-1">
+        <div className="flex items-center gap-3 md:min-w-[240px] md:w-[30%] min-w-0 flex-1">
           <div
             className="w-12 h-12 lg:w-14 lg:h-14 rounded overflow-hidden flex-shrink-0 group relative cursor-pointer shadow-lg"
             onClick={(e) => {
@@ -519,7 +519,7 @@ export const MusicPlayer = ({
         </div>
 
         {/* Center Section - Desktop Player Controls */}
-        <div className="hidden lg:flex flex-col items-center justify-center max-w-[722px] w-[40%]">
+        <div className="hidden md:flex flex-col items-center justify-center max-w-[722px] w-[40%]">
           {/* Control Buttons */}
           <div className="flex items-center gap-2 mb-2">
             <Button
@@ -608,9 +608,9 @@ export const MusicPlayer = ({
         </div>
 
         {/* Right Section - Additional Controls & Mobile Minimal Controls */}
-        <div className="flex items-center justify-end gap-2 lg:min-w-[240px] lg:w-[30%]">
+        <div className="flex items-center justify-end gap-2 md:min-w-[240px] md:w-[30%]">
           {/* Mobile Only Minimal Controls */}
-          <div className="flex lg:hidden items-center gap-1">
+          <div className="flex md:hidden items-center gap-1">
             <Button
               onClick={(e) => {
                 e.stopPropagation();
@@ -736,7 +736,7 @@ export const MusicPlayer = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 hidden lg:flex transition-all"
+                className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 hidden md:flex transition-all"
                 onClick={handleQueueClick}
               >
                 <List className="h-4 w-4" />
@@ -745,7 +745,7 @@ export const MusicPlayer = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 hidden lg:flex transition-all"
+                className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 hidden md:flex transition-all"
                 onClick={handleFullScreenClick}
                 disabled={!currentTrack}
               >
@@ -761,7 +761,7 @@ export const MusicPlayer = ({
               e.stopPropagation();
               handleMute();
             }}
-            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 transition-all hidden lg:flex"
+            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 transition-all hidden md:flex"
             disabled={!isReady}
           >
             {isMuted || localVolume === 0 ? (
@@ -776,7 +776,7 @@ export const MusicPlayer = ({
             max={1}
             step={0.01}
             onValueChange={handleVolumeChange}
-            className="w-24 cursor-pointer hidden lg:flex"
+            className="w-24 cursor-pointer hidden md:flex"
             disabled={!isReady}
           />
         </div>
