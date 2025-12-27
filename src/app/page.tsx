@@ -28,7 +28,7 @@ function base64encode(input: ArrayBuffer): string {
 }
 
 export default function Home() {
-  const CLIENT_ID = "5bf8d69f8aaf4727a4677c0ad2fef6ec";
+  const CLIENT_ID = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID || "";
   const [token, setToken] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [isRedirecting, setIsRedirecting] = useState<boolean>(false);
