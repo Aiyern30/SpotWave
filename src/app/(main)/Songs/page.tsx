@@ -362,16 +362,16 @@ const Page = () => {
             <TableHead className="w-[50px] sm:w-[60px] text-center text-zinc-400 font-medium text-xs sm:text-sm">
               #
             </TableHead>
-            <TableHead className="text-zinc-400 font-medium text-xs sm:text-sm">
+            <TableHead className="w-auto text-zinc-400 font-medium text-xs sm:text-sm">
               Track
             </TableHead>
-            <TableHead className="hidden md:table-cell text-zinc-400 font-medium text-xs sm:text-sm">
+            <TableHead className="hidden md:table-cell w-[25%] lg:w-[20%] text-zinc-400 font-medium text-xs sm:text-sm">
               Artist
             </TableHead>
-            <TableHead className="hidden lg:table-cell text-right text-zinc-400 font-medium text-xs sm:text-sm">
+            <TableHead className="hidden lg:table-cell w-[12%] text-right text-zinc-400 font-medium text-xs sm:text-sm">
               Listeners
             </TableHead>
-            <TableHead className="hidden lg:table-cell text-right text-zinc-400 font-medium text-xs sm:text-sm">
+            <TableHead className="hidden lg:table-cell w-[12%] text-right text-zinc-400 font-medium text-xs sm:text-sm">
               Playcount
             </TableHead>
             <TableHead className="w-[50px]"></TableHead>
@@ -529,18 +529,19 @@ const Page = () => {
                         <TableHead className="w-[50px] sm:w-[60px] text-center text-zinc-400 font-medium text-xs sm:text-sm">
                           #
                         </TableHead>
-                        <TableHead className="text-zinc-400 font-medium text-xs sm:text-sm">
+                        <TableHead className="w-auto text-zinc-400 font-medium text-xs sm:text-sm">
                           Track
                         </TableHead>
-                        <TableHead className="hidden md:table-cell text-zinc-400 font-medium text-xs sm:text-sm">
+                        <TableHead className="hidden md:table-cell w-[25%] lg:w-[20%] text-zinc-400 font-medium text-xs sm:text-sm">
                           Artist
                         </TableHead>
-                        <TableHead className="hidden lg:table-cell text-right text-zinc-400 font-medium text-xs sm:text-sm">
+                        <TableHead className="hidden lg:table-cell w-[12%] text-right text-zinc-400 font-medium text-xs sm:text-sm">
                           Listeners
                         </TableHead>
-                        <TableHead className="hidden lg:table-cell text-right text-zinc-400 font-medium text-xs sm:text-sm">
+                        <TableHead className="hidden lg:table-cell w-[12%] text-right text-zinc-400 font-medium text-xs sm:text-sm">
                           Playcount
                         </TableHead>
+                        <TableHead className="w-[50px]"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
