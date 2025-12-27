@@ -1175,21 +1175,47 @@ const ArtistProfilePage = () => {
                           </span>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell text-center">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-zinc-700 text-green-500 hover:bg-green-500/10 hover:border-green-500 hover:text-green-400 transition-all"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              window.open(
-                                `https://open.spotify.com/album/${album.id}`,
-                                "_blank"
-                              );
-                            }}
-                          >
-                            <ExternalLink className="w-3 h-3 mr-1" />
-                            Spotify
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-zinc-400 hover:text-white"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="end"
+                              className="w-56 bg-zinc-900 border-zinc-800"
+                            >
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAlbumClick(album.id, album.name);
+                                }}
+                                className="text-white hover:bg-green-500/20 hover:text-green-400"
+                              >
+                                <Disc className="mr-2 h-4 w-4" />
+                                Go to album
+                              </DropdownMenuItem>
+
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(
+                                    `https://open.spotify.com/album/${album.id}`,
+                                    "_blank"
+                                  );
+                                }}
+                                className="text-white hover:bg-green-500/20 hover:text-green-400"
+                              >
+                                <ExternalLink className="mr-2 h-4 w-4" />
+                                Open in Spotify
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell text-right">
                           <span className="text-zinc-400 text-sm">
@@ -1204,58 +1230,47 @@ const ArtistProfilePage = () => {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6">
                 {albums.map((album) => (
-                  <Card
+                  <PlaylistCard
                     key={album.id}
-                    className="group bg-zinc-900/50 border-zinc-800 hover:bg-zinc-800/50 transition-all duration-300 cursor-pointer relative overflow-hidden"
+                    id={album.id}
+                    image={album.images[0]?.url || "/default-artist.png"}
+                    title={album.name}
+                    description={`${new Date(
+                      album.release_date
+                    ).getFullYear()} • ${album.total_tracks} tracks`}
+                    badge={album.album_type}
+                    onPlay={() => handlePlayAlbum(album.id)}
+                    onPause={pauseTrack}
+                    onResume={resumeTrack}
                     onClick={() => handleAlbumClick(album.id, album.name)}
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="relative">
-                        <Image
-                          src={album.images[0]?.url || "/default-artist.png"}
-                          width={200}
-                          height={200}
-                          alt={album.name}
-                          className="w-full aspect-square object-cover rounded-lg"
-                        />
-
-                        {/* Play Button Overlay */}
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
+                    menu={
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                           <Button
-                            size="sm"
-                            className="bg-green-500 hover:bg-green-400 text-black rounded-full w-12 h-12 p-0"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 bg-black/60 hover:bg-black/80 text-white rounded-full backdrop-blur-sm shadow-sm"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="w-56 bg-zinc-900 border-zinc-800"
+                        >
+                          <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              handlePlayAlbum(album.id);
+                              handleAlbumClick(album.id, album.name);
                             }}
+                            className="text-white hover:bg-green-500/20 hover:text-green-400"
                           >
-                            <Play className="w-5 h-5" fill="currentColor" />
-                          </Button>
-                        </div>
+                            <Disc className="mr-2 h-4 w-4" />
+                            Go to album
+                          </DropdownMenuItem>
 
-                        {/* Album Type Badge */}
-                        <Badge className="absolute top-2 left-2 bg-black/70 text-white capitalize">
-                          {album.album_type}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-
-                    <CardContent className="pt-0">
-                      <CardTitle className="text-base font-semibold text-white truncate mb-2 group-hover:text-green-400 transition-colors">
-                        {album.name}
-                      </CardTitle>
-
-                      <div className="space-y-2">
-                        <div className="text-sm text-zinc-400 truncate">
-                          {new Date(album.release_date).getFullYear()}
-                        </div>
-
-                        <div className="flex items-center justify-between text-xs text-zinc-500">
-                          <span>{album.total_tracks} tracks</span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 px-2 text-xs hover:text-green-400"
+                          <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
                               window.open(
@@ -1263,13 +1278,15 @@ const ArtistProfilePage = () => {
                                 "_blank"
                               );
                             }}
+                            className="text-white hover:bg-green-500/20 hover:text-green-400"
                           >
-                            <ExternalLink className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            Open in Spotify
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    }
+                  />
                 ))}
               </div>
             )}
