@@ -612,7 +612,7 @@ const PlaylistPage = () => {
                             className="w-56 bg-zinc-900 border-zinc-800"
                           >
                             <DropdownMenuSub>
-                              <DropdownMenuSubTrigger className="text-white hover:bg-zinc-800">
+                              <DropdownMenuSubTrigger className="">
                                 <ListPlus className="mr-2 h-4 w-4" />
                                 Add to playlist
                               </DropdownMenuSubTrigger>
@@ -628,7 +628,7 @@ const PlaylistPage = () => {
                                         pl.name
                                       );
                                     }}
-                                    className="text-white hover:bg-zinc-800"
+                                    className="text-white hover:bg-green-500/20 hover:text-green-400"
                                   >
                                     {pl.name}
                                   </DropdownMenuItem>
@@ -644,7 +644,7 @@ const PlaylistPage = () => {
                                   name: track.name,
                                 });
                               }}
-                              className="text-red-400 hover:bg-zinc-800 hover:text-red-300"
+                              className="text-red-400 hover:bg-red-500/20 hover:text-red-300"
                             >
                               <Ban className="mr-2 h-4 w-4" />
                               Remove from this playlist
@@ -655,7 +655,7 @@ const PlaylistPage = () => {
                                 e.stopPropagation();
                                 handleSaveToLiked(track.id, track.name);
                               }}
-                              className="text-white hover:bg-zinc-800"
+                              className="text-white hover:bg-green-500/20 hover:text-green-400"
                             >
                               <Heart
                                 className={`mr-2 h-4 w-4 ${
@@ -679,7 +679,7 @@ const PlaylistPage = () => {
                                   track.artists[0].name
                                 );
                               }}
-                              className="text-white hover:bg-zinc-800"
+                              className="text-white hover:bg-green-500/20 hover:text-green-400"
                             >
                               <User className="mr-2 h-4 w-4" />
                               Go to artist
@@ -693,7 +693,7 @@ const PlaylistPage = () => {
                                   track.album.name
                                 );
                               }}
-                              className="text-white hover:bg-zinc-800"
+                              className="text-white hover:bg-green-500/20 hover:text-green-400"
                             >
                               <Disc className="mr-2 h-4 w-4" />
                               Go to album
