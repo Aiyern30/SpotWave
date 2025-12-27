@@ -39,6 +39,10 @@ export async function POST(req: Request) {
       prompt = `${systemInstruction} Suggest 10 specific and diverse songs for a song guessing quiz based on this theme: ${
         context || "General popular music"
       }. Return ONLY a JSON array of objects with 'song' and 'artist' keys. Example: [{"song": "Bohemian Rhapsody", "artist": "Queen"}]`;
+    } else if (type === "ai-search") {
+      prompt = `${systemInstruction} Suggest 10 specific songs for a playlist based on this prompt or genre: ${context}. 
+      Return ONLY a JSON array of objects with 'song' and 'artist' keys. 
+      Example: [{"song": "Blinding Lights", "artist": "The Weeknd"}]`;
     } else if (type === "user-summary") {
       prompt = `${systemInstruction} Analyze this user's music library based on the following genres and artists. 
       Context: ${context}.

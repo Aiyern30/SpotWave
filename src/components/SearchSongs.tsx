@@ -12,6 +12,9 @@ import {
   X,
   RefreshCw,
   Sparkles,
+  Wand2,
+  ListMusic,
+  CheckCircle2,
 } from "lucide-react";
 import {
   Avatar,
@@ -32,6 +35,16 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Textarea,
 } from "./ui";
 import { useEffect, useState, useRef, useCallback } from "react";
 import type { Artist, Track } from "@/lib/types";
@@ -57,6 +70,13 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
     useState(false);
   const [existingTrackIds, setExistingTrackIds] = useState<string[]>([]);
   const [recommendationOffset, setRecommendationOffset] = useState(0);
+  const [activeTab, setActiveTab] = useState("search");
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState("");
+  const [genreList, setGenreList] = useState<string[]>([]);
+  const [aiRecTracks, setAiRecTracks] = useState<Track[]>([]);
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
+  const [isAddingAll, setIsAddingAll] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -201,12 +221,132 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
     fetchRecommendations(true);
   };
 
-  // Fetch recommendations when sheet opens
+  // Fetch recommendations and genres when sheet opens
   useEffect(() => {
     if (isSheetOpen && token) {
       fetchRecommendations();
+      fetchGenres();
     }
   }, [isSheetOpen, token, fetchRecommendations]);
+
+  const fetchGenres = async () => {
+    if (!token) return;
+    try {
+      const response = await fetch(
+        "https://api.spotify.com/v1/recommendations/available-genre-seeds",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setGenreList(data.genres);
+      }
+    } catch (error) {
+      console.error("Error fetching genres:", error);
+    }
+  };
+
+  const searchSpotifyTrack = async (song: string, artist: string) => {
+    try {
+      const query = `track:${song} artist:${artist}`;
+      const response = await fetch(
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(
+          query
+        )}&type=track&limit=1`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        return data.tracks.items[0] || null;
+      }
+    } catch (error) {
+      console.error(`Error searching track: ${song} by ${artist}`, error);
+    }
+    return null;
+  };
+
+  const handleAiRecommend = async () => {
+    if (!aiPrompt.trim() && !selectedGenre) {
+      toast.info("Please enter a prompt or select a genre");
+      return;
+    }
+
+    setIsAiProcessing(true);
+    setAiRecTracks([]);
+    try {
+      const promptContext = aiPrompt.trim()
+        ? `${aiPrompt}${selectedGenre ? ` (Genre: ${selectedGenre})` : ""}`
+        : `Genre: ${selectedGenre}`;
+
+      const response = await fetch("/api/ai-recommendations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "ai-search",
+          context: promptContext,
+        }),
+      });
+
+      if (!response.ok) throw new Error("AI request failed");
+
+      const data = await response.json();
+      const recs = data.recommendations || [];
+
+      // Search each recommendation on Spotify
+      const foundTracks: Track[] = [];
+      for (const rec of recs) {
+        const track = await searchSpotifyTrack(rec.song, rec.artist);
+        if (track) foundTracks.push(track);
+      }
+
+      setAiRecTracks(foundTracks);
+      if (foundTracks.length === 0) {
+        toast.info("AI suggested songs but they couldn't be found on Spotify");
+      }
+    } catch (error) {
+      console.error("Error in AI recommendation:", error);
+      toast.error("AI recommendation failed. Please try again.");
+    } finally {
+      setIsAiProcessing(false);
+    }
+  };
+
+  const handleAddAllTracks = async () => {
+    if (aiRecTracks.length === 0) return;
+
+    setIsAddingAll(true);
+    try {
+      const uris = aiRecTracks.map((t) => t.uri);
+      const response = await fetch(
+        `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ uris }),
+        }
+      );
+
+      if (response.ok) {
+        toast.success(`Successfully added ${uris.length} tracks!`);
+        setAiRecTracks([]);
+        setAiPrompt("");
+        refetch(playlistID);
+      } else {
+        throw new Error("Failed to add tracks");
+      }
+    } catch (error) {
+      console.error("Error adding all tracks:", error);
+      toast.error("Failed to add all tracks");
+    } finally {
+      setIsAddingAll(false);
+    }
+  };
 
   const handleAddTrackToPlaylist = async (track: Track) => {
     if (!token) {
@@ -315,322 +455,276 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
               side="right"
               className="w-full sm:w-[500px] bg-zinc-900/95 backdrop-blur-sm border-zinc-700/50 text-white overflow-y-auto"
             >
-              <SheetHeader className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-500/20 rounded-lg">
-                    <Music className="h-5 w-5 text-green-400" />
-                  </div>
-                  <div>
-                    <SheetTitle className="text-white text-xl">
-                      Add Songs
-                    </SheetTitle>
-                    <SheetDescription className="text-zinc-400">
-                      Search and add tracks to your playlist
-                    </SheetDescription>
-                  </div>
-                </div>
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-2 bg-zinc-800/50 p-1 rounded-xl mb-6">
+                  <TabsTrigger
+                    value="search"
+                    className="rounded-lg data-[state=active]:bg-zinc-700 data-[state=active]:text-white flex items-center gap-2"
+                  >
+                    <Search className="h-4 w-4" />
+                    Standard Search
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="ai"
+                    className="rounded-lg data-[state=active]:bg-green-500/20 data-[state=active]:text-green-400 flex items-center gap-2"
+                  >
+                    <Wand2 className="h-4 w-4" />
+                    AI Assistant
+                  </TabsTrigger>
+                </TabsList>
 
-                {/* Search Input */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                  <Input
-                    type="text"
-                    placeholder="Search for songs, artists, or albums..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-10 bg-zinc-800/50 border-zinc-600 text-white placeholder:text-zinc-400 focus:border-green-500 focus:ring-green-500/20"
-                  />
-                  {searchQuery && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={clearSearch}
-                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-zinc-700"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-
-                {searchResults.length > 0 && (
-                  <div className="flex items-center gap-2 text-sm text-zinc-400">
-                    <Music className="h-4 w-4" />
-                    <span>Found {searchResults.length} tracks</span>
-                  </div>
-                )}
-              </SheetHeader>
-
-              <Separator className="my-6 bg-zinc-700/50" />
-
-              <ScrollArea className="flex-1 -mx-6 px-6 h-[calc(100vh-250px)]">
-                {/* Recommended Songs Section */}
-                {!searchQuery.trim() && (
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="p-2 bg-green-500/20 rounded-lg">
-                          <Sparkles className="h-4 w-4 text-green-400" />
-                        </div>
-                        <h4 className="text-green-400 font-semibold text-lg">
-                          Recommended for you
-                        </h4>
+                <TabsContent value="search" className="space-y-6 mt-0">
+                  <SheetHeader className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-500/20 rounded-lg">
+                        <Search className="h-5 w-5 text-green-400" />
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleRefreshRecommendations}
-                        disabled={isLoadingRecommendations}
-                        className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
-                      >
-                        <RefreshCw
-                          className={`h-4 w-4 mr-2 ${
-                            isLoadingRecommendations ? "animate-spin" : ""
-                          }`}
-                        />
-                        Refresh
-                      </Button>
+                      <div>
+                        <SheetTitle className="text-white text-xl">
+                          Smart Search
+                        </SheetTitle>
+                        <SheetDescription className="text-zinc-400">
+                          Search million of tracks on Spotify
+                        </SheetDescription>
+                      </div>
                     </div>
 
-                    {isLoadingRecommendations ? (
-                      <div className="flex items-center justify-center py-12">
-                        <div className="flex flex-col items-center gap-3">
-                          <Loader2 className="h-8 w-8 animate-spin text-green-500" />
-                          <p className="text-sm text-zinc-400">
-                            Finding perfect matches...
-                          </p>
-                        </div>
-                      </div>
-                    ) : recommendedTracks.length > 0 ? (
-                      <div className="space-y-1">
-                        {recommendedTracks.map((track) => (
-                          <div
-                            key={track.id}
-                            className="group flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800/50 transition-all duration-200"
-                          >
-                            <div className="relative">
-                              <Avatar className="h-12 w-12 rounded-md">
-                                <AvatarImage
-                                  src={
-                                    track.album.images[2]?.url ||
-                                    track.album.images[0]?.url
-                                  }
-                                  alt={track.album.name}
-                                />
-                                <AvatarFallback className="bg-zinc-700 text-zinc-300 rounded-md">
-                                  <Disc className="h-5 w-5" />
-                                </AvatarFallback>
-                              </Avatar>
-
-                              {track.preview_url && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() =>
-                                    handlePlayPreview(
-                                      track.preview_url,
-                                      track.id
-                                    )
-                                  }
-                                  className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-md"
-                                >
-                                  <Play
-                                    className={`h-4 w-4 text-white ${
-                                      playingPreview === track.id
-                                        ? "animate-pulse"
-                                        : ""
-                                    }`}
-                                  />
-                                </Button>
-                              )}
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-medium text-white truncate">
-                                  {track.name}
-                                </h4>
-                                {track.explicit && (
-                                  <Badge
-                                    variant="secondary"
-                                    className="text-xs px-1.5 py-0.5"
-                                  >
-                                    E
-                                  </Badge>
-                                )}
-                              </div>
-
-                              <div className="flex items-center gap-1 text-sm text-zinc-400 truncate">
-                                <User className="h-3 w-3 flex-shrink-0" />
-                                <span className="truncate">
-                                  {track.artists
-                                    .map((artist: Artist) => artist.name)
-                                    .join(", ")}
-                                </span>
-                              </div>
-
-                              <div className="flex items-center gap-3 text-xs text-zinc-500">
-                                <span className="truncate">
-                                  {track.album.name}
-                                </span>
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  <span>
-                                    {formatDuration(track.duration_ms)}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <Button
-                              onClick={() => handleAddTrackToPlaylist(track)}
-                              disabled={addingTracks.has(track.id)}
-                              size="sm"
-                              className="bg-green-600 hover:bg-green-700 text-white opacity-0 group-hover:opacity-100 transition-all duration-200"
-                            >
-                              {addingTracks.has(track.id) ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Plus className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <div className="p-4 bg-zinc-800/50 rounded-full mb-4">
-                          <Sparkles className="h-8 w-8 text-zinc-400" />
-                        </div>
-                        <h3 className="text-lg font-medium text-white mb-2">
-                          No recommendations yet
-                        </h3>
-                        <p className="text-sm text-zinc-400 max-w-sm">
-                          We'll find perfect songs based on your playlist. Try
-                          refreshing!
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Search Results */}
-                {searchQuery.trim() && (
-                  <div className="space-y-1">
-                    {isLoading ? (
-                      <div className="flex items-center justify-center py-12">
-                        <div className="flex flex-col items-center gap-3">
-                          <Loader2 className="h-8 w-8 animate-spin text-green-500" />
-                          <p className="text-sm text-zinc-400">
-                            Searching for tracks...
-                          </p>
-                        </div>
-                      </div>
-                    ) : searchResults.length > 0 ? (
-                      searchResults.map((track) => (
-                        <div
-                          key={track.id}
-                          className="group flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800/50 transition-all duration-200"
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                      <Input
+                        type="text"
+                        placeholder="Song, artist, or album..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10 pr-10 bg-zinc-800/50 border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-green-500/50 focus:ring-green-500/20"
+                      />
+                      {searchQuery && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={clearSearch}
+                          className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-zinc-700"
                         >
-                          <div className="relative">
-                            <Avatar className="h-12 w-12 rounded-md">
-                              <AvatarImage
-                                src={
-                                  track.album.images[2]?.url ||
-                                  track.album.images[0]?.url
-                                }
-                                alt={track.album.name}
-                              />
-                              <AvatarFallback className="bg-zinc-700 text-zinc-300 rounded-md">
-                                <Disc className="h-5 w-5" />
-                              </AvatarFallback>
-                            </Avatar>
+                          <X className="h-4 w-4 text-zinc-400" />
+                        </Button>
+                      )}
+                    </div>
+                  </SheetHeader>
 
-                            {track.preview_url && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  handlePlayPreview(track.preview_url, track.id)
-                                }
-                                className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-md"
-                              >
-                                <Play
-                                  className={`h-4 w-4 text-white ${
-                                    playingPreview === track.id
-                                      ? "animate-pulse"
-                                      : ""
-                                  }`}
-                                />
-                              </Button>
-                            )}
+                  <Separator className="bg-zinc-800/50" />
+
+                  <ScrollArea className="h-[calc(100vh-320px)] pr-4 -mr-4">
+                    {/* Standard Search Content */}
+                    {!searchQuery.trim() ? (
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-green-400 font-semibold uppercase tracking-wider text-xs">
+                            <Sparkles className="h-3.5 w-3.5" />
+                            Based on your playlist
                           </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-medium text-white truncate">
-                                {track.name}
-                              </h4>
-                              {track.explicit && (
-                                <Badge
-                                  variant="secondary"
-                                  className="text-xs px-1.5 py-0.5"
-                                >
-                                  E
-                                </Badge>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-1 text-sm text-zinc-400 truncate">
-                              <User className="h-3 w-3 flex-shrink-0" />
-                              <span className="truncate">
-                                {track.artists
-                                  .map((artist: Artist) => artist.name)
-                                  .join(", ")}
-                              </span>
-                            </div>
-
-                            <div className="flex items-center gap-3 text-xs text-zinc-500">
-                              <span className="truncate">
-                                {track.album.name}
-                              </span>
-                              <div className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                <span>{formatDuration(track.duration_ms)}</span>
-                              </div>
-                            </div>
-                          </div>
-
                           <Button
-                            onClick={() => handleAddTrackToPlaylist(track)}
-                            disabled={addingTracks.has(track.id)}
+                            variant="ghost"
                             size="sm"
-                            className="bg-green-600 hover:bg-green-700 text-white opacity-0 group-hover:opacity-100 transition-all duration-200"
+                            onClick={handleRefreshRecommendations}
+                            disabled={isLoadingRecommendations}
+                            className="h-8 text-[10px] text-zinc-400 hover:text-green-400 hover:bg-green-400/10"
                           >
-                            {addingTracks.has(track.id) ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Plus className="h-4 w-4" />
-                            )}
+                            <RefreshCw
+                              className={`h-3 w-3 mr-2 ${
+                                isLoadingRecommendations ? "animate-spin" : ""
+                              }`}
+                            />
+                            Refresh
                           </Button>
                         </div>
-                      ))
+
+                        {isLoadingRecommendations ? (
+                          <div className="grid grid-cols-1 gap-2">
+                            {[1, 2, 3, 4, 5].map((i) => (
+                              <div
+                                key={i}
+                                className="h-16 w-full rounded-lg bg-zinc-800/30 animate-pulse"
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="space-y-1">
+                            {recommendedTracks.map((track) => (
+                              <TrackItem
+                                key={track.id}
+                                track={track}
+                                onAdd={() => handleAddTrackToPlaylist(track)}
+                                isAdding={addingTracks.has(track.id)}
+                                onPreview={() =>
+                                  handlePlayPreview(track.preview_url, track.id)
+                                }
+                                isPlaying={playingPreview === track.id}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     ) : (
-                      <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <div className="p-4 bg-zinc-800/50 rounded-full mb-4">
-                          <Search className="h-8 w-8 text-zinc-400" />
-                        </div>
-                        <h3 className="text-lg font-medium text-white mb-2">
-                          No results found
-                        </h3>
-                        <p className="text-sm text-zinc-400 max-w-sm">
-                          Try searching with different keywords or check your
-                          spelling.
-                        </p>
+                      <div className="space-y-1">
+                        {isLoading ? (
+                          <div className="flex flex-col items-center justify-center py-20 gap-4">
+                            <Loader2 className="h-8 w-8 animate-spin text-green-500" />
+                            <p className="text-zinc-500 text-sm">
+                              Searching Spotify...
+                            </p>
+                          </div>
+                        ) : (
+                          searchResults.map((track) => (
+                            <TrackItem
+                              key={track.id}
+                              track={track}
+                              onAdd={() => handleAddTrackToPlaylist(track)}
+                              isAdding={addingTracks.has(track.id)}
+                              onPreview={() =>
+                                handlePlayPreview(track.preview_url, track.id)
+                              }
+                              isPlaying={playingPreview === track.id}
+                            />
+                          ))
+                        )}
                       </div>
                     )}
+                  </ScrollArea>
+                </TabsContent>
+
+                <TabsContent value="ai" className="space-y-6 mt-0">
+                  <div className="bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-transparent p-6 rounded-2xl border border-green-500/10">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2.5 bg-green-500 rounded-xl shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+                        <Wand2 className="h-5 w-5 text-black" />
+                      </div>
+                      <div>
+                        <h3 className="text-white font-bold text-lg">
+                          AI Discovery
+                        </h3>
+                        <p className="text-zinc-400 text-xs">
+                          Tell AI what vibe you're looking for
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">
+                          Personal Prompt
+                        </label>
+                        <Textarea
+                          placeholder="e.g. 'Upbeat summer songs with 80s synth vibes' or 'Chill acoustic covers of rock hits'"
+                          value={aiPrompt}
+                          onChange={(e) => setAiPrompt(e.target.value)}
+                          className="bg-black/40 border-zinc-800 placeholder:text-zinc-600 focus:border-green-500/50 resize-none h-24"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">
+                          Filter by Genre (Optional)
+                        </label>
+                        <Select
+                          value={selectedGenre}
+                          onValueChange={setSelectedGenre}
+                        >
+                          <SelectTrigger className="bg-black/40 border-zinc-800">
+                            <SelectValue placeholder="Select a genre..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                            {genreList.map((genre) => (
+                              <SelectItem
+                                key={genre}
+                                value={genre}
+                                className="capitalize"
+                              >
+                                {genre.replace("-", " ")}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <Button
+                        className="w-full bg-green-600 hover:bg-green-500 text-black font-bold h-11 transition-all active:scale-95 shadow-lg shadow-green-500/10"
+                        onClick={handleAiRecommend}
+                        disabled={
+                          isAiProcessing || (!aiPrompt.trim() && !selectedGenre)
+                        }
+                      >
+                        {isAiProcessing ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            Gemini is thinking...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4 mr-2" />
+                            Get AI Recommendations
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                )}
-              </ScrollArea>
+
+                  <ScrollArea className="h-[calc(100vh-500px)] pr-4 -mr-4">
+                    {aiRecTracks.length > 0 ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between px-1">
+                          <div className="text-sm text-zinc-400 flex items-center gap-2">
+                            <ListMusic className="h-4 w-4" />
+                            Found {aiRecTracks.length} tracks
+                          </div>
+                          <Button
+                            size="sm"
+                            className="bg-zinc-100 hover:bg-white text-black font-bold h-8 text-xs px-4 rounded-full"
+                            onClick={handleAddAllTracks}
+                            disabled={isAddingAll}
+                          >
+                            {isAddingAll ? (
+                              <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                            ) : (
+                              <CheckCircle2 className="h-3 w-3 mr-2" />
+                            )}
+                            Add All to Playlist
+                          </Button>
+                        </div>
+                        <div className="space-y-1">
+                          {aiRecTracks.map((track) => (
+                            <TrackItem
+                              key={track.id}
+                              track={track}
+                              onAdd={() => handleAddTrackToPlaylist(track)}
+                              isAdding={addingTracks.has(track.id)}
+                              onPreview={() =>
+                                handlePlayPreview(track.preview_url, track.id)
+                              }
+                              isPlaying={playingPreview === track.id}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      !isAiProcessing && (
+                        <div className="flex flex-col items-center justify-center py-10 opacity-30 text-center px-6">
+                          <div className="p-6 rounded-full bg-zinc-800 mb-4">
+                            <Wand2 className="h-10 w-10 text-zinc-500" />
+                          </div>
+                          <p className="text-sm text-zinc-400 font-medium max-w-[200px]">
+                            Your recommendations will appear here after AI
+                            analysis
+                          </p>
+                        </div>
+                      )
+                    )}
+                  </ScrollArea>
+                </TabsContent>
+              </Tabs>
             </SheetContent>
           </Sheet>
         </TooltipTrigger>
@@ -639,5 +733,86 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
+  );
+}
+
+interface TrackItemProps {
+  track: Track;
+  onAdd: () => void;
+  isAdding: boolean;
+  onPreview: () => void;
+  isPlaying: boolean;
+}
+
+function TrackItem({
+  track,
+  onAdd,
+  isAdding,
+  onPreview,
+  isPlaying,
+}: TrackItemProps) {
+  return (
+    <div className="group flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-800/40 transition-all duration-300 border border-transparent hover:border-zinc-800/50">
+      <div className="relative">
+        <Avatar className="h-11 w-11 rounded-lg">
+          <AvatarImage
+            src={track.album.images[2]?.url || track.album.images[0]?.url}
+            alt={track.album.name}
+          />
+          <AvatarFallback className="bg-zinc-800 text-zinc-500 rounded-lg">
+            <Music className="h-4 w-4" />
+          </AvatarFallback>
+        </Avatar>
+
+        {track.preview_url && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onPreview}
+            className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg flex items-center justify-center"
+          >
+            {isPlaying ? (
+              <X className="h-4 w-4 text-white" />
+            ) : (
+              <Play className="h-4 w-4 text-white fill-current" />
+            )}
+          </Button>
+        )}
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <h4
+            className={`font-medium text-sm truncate ${
+              isPlaying ? "text-green-400" : "text-zinc-200"
+            }`}
+          >
+            {track.name}
+          </h4>
+          {track.explicit && (
+            <span className="text-[9px] font-bold bg-zinc-800 text-zinc-500 px-1 rounded-sm border border-zinc-700">
+              E
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-zinc-500 truncate mt-0.5">
+          {track.artists.map((a) => a.name).join(", ")}
+        </p>
+      </div>
+
+      <Button
+        onClick={onAdd}
+        disabled={isAdding}
+        size="icon"
+        variant="ghost"
+        className="h-8 w-8 rounded-full hover:bg-green-500 hover:text-black transition-all"
+      >
+        {isAdding ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Plus className="h-4 w-4" />
+        )}
+      </Button>
+    </div>
   );
 }
