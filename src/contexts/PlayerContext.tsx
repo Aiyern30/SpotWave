@@ -625,6 +625,52 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setQueue((prev) => [...prev, track]);
   }, []);
 
+  // Media Session API Integration
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+
+    if (currentTrack) {
+      // Update metadata
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: currentTrack.name,
+        artist: currentTrack.artists.map((a) => a.name).join(", "),
+        album: currentTrack.album.name,
+        artwork: currentTrack.album.images.map((image: any) => ({
+          src: image.url,
+          sizes: `${image.width || 512}x${image.height || 512}`,
+          type: "image/jpeg",
+        })),
+      });
+
+      // Set action handlers
+      navigator.mediaSession.setActionHandler("play", () => {
+        resumeTrack();
+      });
+      navigator.mediaSession.setActionHandler("pause", () => {
+        pauseTrack();
+      });
+      navigator.mediaSession.setActionHandler("previoustrack", () => {
+        previousTrack();
+      });
+      navigator.mediaSession.setActionHandler("nexttrack", () => {
+        nextTrack();
+      });
+      navigator.mediaSession.setActionHandler("seekto", (details) => {
+        if (details.seekTime && details.fastSeek === undefined) {
+          seekTo(details.seekTime * 1000); // Spotify SDK uses ms
+        }
+      });
+    } else {
+      navigator.mediaSession.metadata = null;
+    }
+  }, [currentTrack, resumeTrack, pauseTrack, previousTrack, nextTrack, seekTo]);
+
+  // Update Media Session playback state
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+    navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+  }, [isPlaying]);
+
   const clearQueue = useCallback(() => {
     setQueue([]);
   }, []);
