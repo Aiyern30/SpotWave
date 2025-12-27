@@ -287,9 +287,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         };
 
         connectPlayer();
-        };
-
-        connectPlayer();
 
         globalPlayerInstance = spotifyPlayer;
         setPlayer(spotifyPlayer);
