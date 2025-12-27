@@ -92,7 +92,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    if (!token || isGloballyInitialized) {
+    if (!token) {
+      return;
+    }
+
+    if (isGloballyInitialized) {
       // If already initialized, use the existing player
       if (globalPlayerInstance && globalDeviceId) {
         setPlayer(globalPlayerInstance);
@@ -254,9 +258,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     };
 
+    // Check if the SDK is already loaded
     if (window.Spotify) {
       initializePlayer();
     } else {
+      // If not loaded, set the callback that Spotify SDK calls
       window.onSpotifyWebPlaybackSDKReady = initializePlayer;
     }
 
