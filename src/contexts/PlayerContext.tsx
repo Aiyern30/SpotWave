@@ -82,6 +82,24 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const trackEndHandlerRef = useRef<boolean>(false);
   const playerRef = useRef<any>(null);
   const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const silentAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize silent audio for metadata hijacking (iOS/Mobile workaround)
+  useEffect(() => {
+    if (typeof Audio !== "undefined") {
+      // Short silent WAV
+      silentAudioRef.current = new Audio(
+        "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAAABmYWN0BAAAAAAAAABkYXRhAAAAAA=="
+      );
+      silentAudioRef.current.loop = true;
+      silentAudioRef.current.volume = 0; // Ensure silence
+
+      // Allow audio to play in background
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "none";
+      }
+    }
+  }, []);
 
   // Initialize Spotify Web Playback SDK
   useEffect(() => {
@@ -414,6 +432,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         } else {
           console.log("Track started successfully");
+          // Try to play silent audio to grab media session focus
+          silentAudioRef.current
+            ?.play()
+            .catch((e) => console.error("Silent audio play failed:", e));
         }
       } catch (error) {
         console.error("Error playing track:", error);
@@ -492,6 +514,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       player.pause().catch((error: any) => {
         console.error("Error pausing track:", error);
       });
+      // Pause silent audio to release focus or sync state
+      silentAudioRef.current?.pause();
     }
   }, [player]);
 
@@ -500,6 +524,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       player.resume().catch((error: any) => {
         console.error("Error resuming track:", error);
       });
+      // Play silent audio to grab focus
+      silentAudioRef.current
+        ?.play()
+        .catch((e) => console.error("Silent audio play failed:", e));
     }
   }, [player]);
 
