@@ -1,21 +1,19 @@
 import type { PlaylistTrack } from "@/lib/types";
 
-// Cache for taste analysis
+// Cache for playlist analysis
 const tasteCache = new Map<string, { analysis: any; timestamp: number }>();
-const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes for taste
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
 
 export async function analyzePlaylistGenres(
   tracks: PlaylistTrack[],
-  token: string,
-  options: { global?: boolean } = {}
+  token: string
 ): Promise<any> {
   try {
-    const cacheKey = options.global
-      ? `global_taste`
-      : `playlist_${tracks
-          .slice(0, 5)
-          .map((t) => t.track.id)
-          .join(",")}`;
+    // Create a cache key from the first 20 track IDs to represent the playlist content
+    const cacheKey = `playlist_${tracks
+      .slice(0, 20)
+      .map((t) => t.track.id)
+      .join(",")}`;
 
     // Check cache
     const cached = tasteCache.get(cacheKey);
@@ -23,49 +21,9 @@ export async function analyzePlaylistGenres(
       return cached.analysis;
     }
 
-    let analyzeTracks = tracks;
-
-    if (options.global) {
-      console.log("Analyzing global user taste...");
-      // Fetch user's top artists and tracks to get a better flavor
-      try {
-        const [topArtistsRes, playlistsRes] = await Promise.all([
-          fetch("https://api.spotify.com/v1/me/top/artists?limit=20", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch("https://api.spotify.com/v1/me/playlists?limit=20", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
-
-        if (topArtistsRes.ok && playlistsRes.ok) {
-          const topArtistsData = await topArtistsRes.json();
-          const playlistsData = await playlistsRes.json();
-
-          // We can collect even more info from playlists if we wanted,
-          // but top artists give us the best genres directly.
-          // Let's also get top tracks to get artist/album/release dates
-          const topTracksRes = await fetch(
-            "https://api.spotify.com/v1/me/top/tracks?limit=20",
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-          const topTracksData = await topTracksRes.json();
-
-          analyzeTracks = topTracksData.items.map((t: any) => ({ track: t }));
-        }
-      } catch (e) {
-        console.warn(
-          "Failed to fetch global taste data, falling back to provided tracks",
-          e
-        );
-      }
-    }
-
-    // Identify unique artists to get more genres
+    // Identify unique artists in this playlist to get accurate genres from Spotify
     const artistIds = Array.from(
-      new Set(analyzeTracks.flatMap((t) => t.track.artists.map((a) => a.id)))
+      new Set(tracks.flatMap((t) => t.track.artists.map((a) => a.id)))
     )
       .filter(Boolean)
       .slice(0, 50);
@@ -85,17 +43,17 @@ export async function analyzePlaylistGenres(
       }
     }
 
-    // Collect era info from release dates
-    const years = analyzeTracks
+    // Collect era info from release dates of songs in this playlist
+    const years = tracks
       .map((t) => {
         const date = (t.track.album as any).release_date;
         return date ? parseInt(date.split("-")[0]) : null;
       })
       .filter(Boolean) as number[];
 
-    // Prepare context for AI
+    // Prepare metadata context for Gemini AI to generate a natural summary
     const context = {
-      topGenres: genres.slice(0, 20),
+      playlistGenres: genres.slice(0, 25),
       sampleArtists: artistData.slice(0, 15).map((a) => ({
         name: a.name,
         genres: a.genres,
@@ -108,13 +66,13 @@ export async function analyzePlaylistGenres(
             if (y >= 2000) return "2000s";
             if (y >= 1990) return "90s";
             if (y >= 1980) return "80s";
-            return "Early Classics";
+            return "Classics";
           })
         ),
       ],
     };
 
-    console.log("Calling AI for taste analysis...");
+    console.log("Calling AI for playlist analysis...");
 
     const aiResponse = await fetch("/api/ai-recommendations", {
       method: "POST",
@@ -131,22 +89,22 @@ export async function analyzePlaylistGenres(
       return result;
     }
 
-    // Fallback if AI fails
+    // Fallback if AI fails: Use direct genre extraction
     const fallback = {
       genres: genres.slice(0, 5),
-      moods: ["Diverse", "Personal"],
-      eras: ["Mixed Eras"],
+      moods: ["Varied", "Musical"],
+      eras: context.eras.slice(0, 3),
       artistStyles: artistData.slice(0, 5).map((a) => a.name),
-      searchTerms: genres.slice(0, 3).map((g) => `${g} music`),
+      searchTerms: genres.slice(0, 3).map((g) => `${g} hits`),
     };
 
     return fallback;
   } catch (error) {
     console.error("Error in analyzePlaylistGenres:", error);
     return {
-      genres: ["Unknown"],
+      genres: ["Pop"],
       moods: ["Unknown"],
-      eras: ["Unknown"],
+      eras: ["Modern"],
       artistStyles: [],
       searchTerms: [],
     };
