@@ -80,7 +80,6 @@ export default function UserHeader({
   const [aiSummary, setAiSummary] = useState<any>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [inputWidth, setInputWidth] = useState<number>(0);
-  const [isGlobalSummary, setIsGlobalSummary] = useState(false);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
@@ -119,9 +118,7 @@ export default function UserHeader({
   useEffect(() => {
     if (summaryDialogOpen && !aiSummary) {
       setSummaryLoading(true);
-      analyzePlaylistGenres(playlist.tracks.items, token, {
-        global: isGlobalSummary,
-      })
+      analyzePlaylistGenres(playlist.tracks.items, token)
         .then((summary) => {
           // If the AI returned nested recommendations (old structure), fix it
           if (summary.recommendations) {
@@ -132,18 +129,7 @@ export default function UserHeader({
         })
         .finally(() => setSummaryLoading(false));
     }
-  }, [
-    summaryDialogOpen,
-    aiSummary,
-    playlist.tracks.items,
-    token,
-    isGlobalSummary,
-  ]);
-
-  const refreshSummary = (global: boolean) => {
-    setIsGlobalSummary(global);
-    setAiSummary(null);
-  };
+  }, [summaryDialogOpen, aiSummary, playlist.tracks.items, token]);
 
   // Calculate input width based on text content
   useEffect(() => {
@@ -708,37 +694,10 @@ export default function UserHeader({
                       <div className="p-2 bg-green-500/10 rounded-lg">
                         <Sparkles className="h-6 w-6 text-green-400" />
                       </div>
-                      AI Music Taste Analysis
+                      AI Playlist Analysis
                     </div>
                   </DialogTitle>
                 </DialogHeader>
-
-                <div className="flex gap-2 p-1 bg-zinc-900/50 rounded-xl border border-zinc-800/50 mb-6 mt-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`flex-1 rounded-lg transition-all duration-300 ${
-                      !isGlobalSummary
-                        ? "bg-zinc-800 text-white shadow-lg"
-                        : "text-zinc-500 hover:text-zinc-300"
-                    }`}
-                    onClick={() => refreshSummary(false)}
-                  >
-                    This Playlist
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={`flex-1 rounded-lg transition-all duration-300 ${
-                      isGlobalSummary
-                        ? "bg-zinc-800 text-white shadow-lg"
-                        : "text-zinc-500 hover:text-zinc-300"
-                    }`}
-                    onClick={() => refreshSummary(true)}
-                  >
-                    My Global Taste
-                  </Button>
-                </div>
 
                 {summaryLoading ? (
                   <div className="flex flex-col items-center justify-center py-16 space-y-4">
