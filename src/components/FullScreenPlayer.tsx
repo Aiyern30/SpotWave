@@ -141,6 +141,24 @@ export const FullScreenPlayer = ({
   >(null);
   const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
 
+  // Sidebar state for responsive layout
+  const [sidebarCompact, setSidebarCompact] = useState(true);
+
+  useEffect(() => {
+    // Initial check
+    const stored = localStorage.getItem("sidebar-compact");
+    setSidebarCompact(stored !== "false"); // Default to true if not set
+
+    // Listen for storage changes (if sidebar updates it)
+    const handleStorage = () => {
+      const updated = localStorage.getItem("sidebar-compact");
+      setSidebarCompact(updated !== "false");
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
   useEffect(() => {
     setLocalVolume(volume);
   }, [volume]);
@@ -447,7 +465,11 @@ export const FullScreenPlayer = ({
   if (!isOpen || !currentTrack) return null;
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-b from-zinc-900 via-zinc-800 to-black z-50 overflow-y-auto overflow-x-hidden lg:pl-16 px-4 py-4 sm:py-6 space-y-4 sm:space-y-8 no-scrollbar">
+    <div
+      className={`fixed inset-0 bg-gradient-to-b from-zinc-900 via-zinc-800 to-black z-50 overflow-y-auto overflow-x-hidden ${
+        sidebarCompact ? "md:pl-16" : "md:pl-64"
+      } px-4 py-4 sm:py-6 space-y-4 sm:space-y-8 no-scrollbar transition-all duration-300`}
+    >
       <style jsx global>{`
         .no-scrollbar::-webkit-scrollbar {
           display: none;
