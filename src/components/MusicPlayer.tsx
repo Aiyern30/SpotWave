@@ -404,7 +404,7 @@ export const MusicPlayer = ({
 
   return (
     <div
-      className="fixed bottom-0 left-0 md:left-16 right-0 bg-black/95 backdrop-blur-xl border-t border-zinc-800 z-40 transition-all duration-300 cursor-pointer md:cursor-default"
+      className="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-zinc-800 z-[60] transition-all duration-300 cursor-pointer md:cursor-default"
       onClick={() => {
         if (window.innerWidth < 768) handleFullScreenClick();
       }}
