@@ -43,6 +43,22 @@ import { fetchFollowedArtists } from "@/utils/Artist/fetchFollowedArtists";
 import type { Artist } from "@/lib/types";
 import parse from "html-react-parser";
 import DOMPurify from "dompurify";
+
+import { PiTable } from "react-icons/pi";
+import { LuLayoutGrid } from "react-icons/lu";
+import { usePlayer } from "@/contexts/PlayerContext";
+import { fetchUserProfile } from "@/utils/fetchProfile";
+import { fetchArtistTopTracks } from "@/utils/Tracks/fetchArtistTopTracks";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui";
 import {
   Play,
   MoreHorizontal,
@@ -51,11 +67,11 @@ import {
   Clock,
   ExternalLink,
   Pause,
+  ListPlus,
+  Heart,
+  Disc,
+  User,
 } from "lucide-react";
-import { PiTable } from "react-icons/pi";
-import { LuLayoutGrid } from "react-icons/lu";
-import { usePlayer } from "@/contexts/PlayerContext";
-import { fetchArtistTopTracks } from "@/utils/Tracks/fetchArtistTopTracks";
 
 interface ArtistProfilePageProps {
   id: string;
@@ -143,6 +159,9 @@ const ArtistProfilePage = () => {
   const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const [isBioExpanded, setIsBioExpanded] = useState(false);
+  const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
+  const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
     if (artistProfile?.id && followedArtists.length > 0) {
@@ -460,6 +479,120 @@ const ArtistProfilePage = () => {
     }
   }, [currentTrack]);
 
+  // Fetch User Profile and User Playlists
+  useEffect(() => {
+    if (token) {
+      fetchUserProfile(token).then(setUserProfile);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (token && userProfile?.id) {
+      const fetchPlaylists = async () => {
+        try {
+          const response = await fetch(
+            `https://api.spotify.com/v1/users/${userProfile.id}/playlists`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setUserPlaylists(data.items);
+          }
+        } catch (error) {
+          console.error("Error fetching user playlists:", error);
+        }
+      };
+      fetchPlaylists();
+    }
+  }, [token, userProfile]);
+
+  // Check Liked Tracks
+  useEffect(() => {
+    if (token && topTracks.length > 0) {
+      const checkLiked = async () => {
+        try {
+          const trackIds = topTracks.map((t) => t.id).join(",");
+          const response = await fetch(
+            `https://api.spotify.com/v1/me/tracks/contains?ids=${trackIds}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (response.ok) {
+            const data = await response.json();
+            const liked = new Set<string>();
+            topTracks.forEach((track, index) => {
+              if (data[index]) liked.add(track.id);
+            });
+            setLikedTracks(liked);
+          }
+        } catch (error) {
+          console.error("Error checking liked tracks:", error);
+        }
+      };
+      checkLiked();
+    }
+  }, [token, topTracks]);
+
+  const handleAddToPlaylist = async (
+    trackUri: string,
+    playlistId: string,
+    playlistName: string
+  ) => {
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ uris: [trackUri] }),
+        }
+      );
+      if (response.ok) {
+        const { toast } = await import("react-toastify");
+        toast.success(`Added to ${playlistName}!`);
+      } else {
+        throw new Error("Failed to add");
+      }
+    } catch (error) {
+      console.error("Error adding to playlist:", error);
+      const { toast } = await import("react-toastify");
+      toast.error("Failed to add to playlist");
+    }
+  };
+
+  const handleSaveToLiked = async (trackId: string, trackName: string) => {
+    const isLiked = likedTracks.has(trackId);
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/me/tracks?ids=${trackId}`,
+        {
+          method: isLiked ? "DELETE" : "PUT",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (response.ok) {
+        const { toast } = await import("react-toastify");
+        if (isLiked) {
+          toast.success(`"${trackName}" removed from Liked Songs`);
+          setLikedTracks((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(trackId);
+            return newSet;
+          });
+        } else {
+          toast.success(`"${trackName}" saved to Liked Songs!`);
+          setLikedTracks((prev) => new Set(prev).add(trackId));
+        }
+      }
+    } catch (error) {
+      console.error("Error saving to liked:", error);
+      const { toast } = await import("react-toastify");
+      toast.error("Failed to update Liked Songs");
+    }
+  };
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedToken = localStorage.getItem("Token");
@@ -720,21 +853,96 @@ const ArtistProfilePage = () => {
                           </div>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell text-center">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-zinc-700 text-green-500 hover:bg-green-500/10 hover:border-green-500 hover:text-green-400 transition-all"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              window.open(
-                                `https://open.spotify.com/track/${track.id}`,
-                                "_blank"
-                              );
-                            }}
-                          >
-                            <ExternalLink className="w-3 h-3 mr-1" />
-                            Spotify
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-zinc-400 hover:text-white"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="end"
+                              className="w-56 bg-zinc-900 border-zinc-800"
+                            >
+                              <DropdownMenuSub>
+                                <DropdownMenuSubTrigger>
+                                  <ListPlus className="mr-2 h-4 w-4" />
+                                  Add to playlist
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuSubContent className="bg-zinc-900 border-zinc-800 max-h-[300px] overflow-y-auto">
+                                  {userPlaylists.map((pl) => (
+                                    <DropdownMenuItem
+                                      key={pl.id}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAddToPlaylist(
+                                          `spotify:track:${track.id}`,
+                                          pl.id,
+                                          pl.name
+                                        );
+                                      }}
+                                      className="text-white hover:bg-green-500/20 hover:text-green-400"
+                                    >
+                                      {pl.name}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuSubContent>
+                              </DropdownMenuSub>
+
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSaveToLiked(track.id, track.name);
+                                }}
+                                className="text-white hover:bg-green-500/20 hover:text-green-400"
+                              >
+                                <Heart
+                                  className={`mr-2 h-4 w-4 ${
+                                    likedTracks.has(track.id)
+                                      ? "fill-green-500 text-green-500"
+                                      : ""
+                                  }`}
+                                />
+                                {likedTracks.has(track.id)
+                                  ? "Remove from Liked Songs"
+                                  : "Save to Liked Songs"}
+                              </DropdownMenuItem>
+
+                              <DropdownMenuSeparator className="bg-zinc-800" />
+
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAlbumClick(
+                                    track.album.id,
+                                    track.album.name
+                                  );
+                                }}
+                                className="text-white hover:bg-green-500/20 hover:text-green-400"
+                              >
+                                <Disc className="mr-2 h-4 w-4" />
+                                Go to album
+                              </DropdownMenuItem>
+
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(
+                                    `https://open.spotify.com/track/${track.id}`,
+                                    "_blank"
+                                  );
+                                }}
+                                className="text-white hover:bg-green-500/20 hover:text-green-400"
+                              >
+                                <ExternalLink className="mr-2 h-4 w-4" />
+                                Open in Spotify
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-right text-zinc-400 text-sm">
                           {formatSongDuration(track.duration_ms)}
@@ -747,97 +955,98 @@ const ArtistProfilePage = () => {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6">
                 {topTracks.map((track, index) => {
-                  const isThisTrack = currentTrackId === track.id;
                   return (
-                    <Card
+                    <PlaylistCard
                       key={track.id}
-                      className="group bg-zinc-900/50 border-zinc-800 hover:bg-zinc-800/50 transition-all duration-300 cursor-pointer relative overflow-hidden"
-                      onClick={() => handleSongClick(track.id, track.name)}
-                    >
-                      <CardHeader className="pb-3">
-                        <div className="relative">
-                          <Image
-                            src={
-                              track.album.images[0]?.url ||
-                              "/default-artist.png"
-                            }
-                            width={200}
-                            height={200}
-                            alt={track.name}
-                            className="w-full aspect-square object-cover rounded-lg"
-                          />
-
-                          {/* Play/Pause Button Overlay */}
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
+                      id={track.id}
+                      image={
+                        track.album.images[0]?.url || "/default-artist.png"
+                      }
+                      title={track.name}
+                      description={track.album.name}
+                      badge={`#${index + 1}`}
+                      duration={formatSongDuration(track.duration_ms)}
+                      isPlaying={currentTrackId === track.id && isPlaying}
+                      onPlay={() => handlePlayPauseTrack(track)}
+                      onPause={pauseTrack}
+                      onClick={(id) => handleSongClick(id, track.name)}
+                      menu={
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
                             <Button
-                              size="sm"
-                              className="bg-green-500 hover:bg-green-400 text-black rounded-full w-12 h-12 p-0"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 bg-black/60 hover:bg-black/80 text-white rounded-full backdrop-blur-sm shadow-sm"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-56 bg-zinc-900 border-zinc-800"
+                          >
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>
+                                <ListPlus className="mr-2 h-4 w-4" />
+                                Add to playlist
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent className="bg-zinc-900 border-zinc-800 max-h-[300px] overflow-y-auto">
+                                {userPlaylists.map((pl) => (
+                                  <DropdownMenuItem
+                                    key={pl.id}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAddToPlaylist(
+                                        `spotify:track:${track.id}`,
+                                        pl.id,
+                                        pl.name
+                                      );
+                                    }}
+                                    className="text-white hover:bg-green-500/20 hover:text-green-400"
+                                  >
+                                    {pl.name}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+
+                            <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handlePlayPauseTrack(track);
+                                handleSaveToLiked(track.id, track.name);
                               }}
+                              className="text-white hover:bg-green-500/20 hover:text-green-400"
                             >
-                              {isThisTrack && isPlaying ? (
-                                <Pause
-                                  className="w-5 h-5"
-                                  fill="currentColor"
-                                />
-                              ) : (
-                                <Play className="w-5 h-5" fill="currentColor" />
-                              )}
-                            </Button>
-                          </div>
+                              <Heart
+                                className={`mr-2 h-4 w-4 ${
+                                  likedTracks.has(track.id)
+                                    ? "fill-green-500 text-green-500"
+                                    : ""
+                                }`}
+                              />
+                              {likedTracks.has(track.id)
+                                ? "Remove from Liked Songs"
+                                : "Save to Liked Songs"}
+                            </DropdownMenuItem>
 
-                          {/* Track Number Badge */}
-                          <Badge className="absolute top-2 left-2 bg-black/70 text-white">
-                            #{index + 1}
-                          </Badge>
+                            <DropdownMenuSeparator className="bg-zinc-800" />
 
-                          {/* Currently Playing Indicator */}
-                          {isThisTrack && isPlaying && (
-                            <Badge className="absolute top-2 right-2 bg-green-500 text-black text-xs font-bold animate-pulse">
-                              Playing
-                            </Badge>
-                          )}
-                          {isThisTrack && !isPlaying && (
-                            <Badge className="absolute top-2 right-2 bg-yellow-500 text-black text-xs font-bold">
-                              Paused
-                            </Badge>
-                          )}
-                        </div>
-                      </CardHeader>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAlbumClick(
+                                  track.album.id,
+                                  track.album.name
+                                );
+                              }}
+                              className="text-white hover:bg-green-500/20 hover:text-green-400"
+                            >
+                              <Disc className="mr-2 h-4 w-4" />
+                              Go to album
+                            </DropdownMenuItem>
 
-                      <CardContent className="pt-0">
-                        <CardTitle
-                          className={`text-base font-semibold truncate mb-2 transition-colors ${
-                            isThisTrack
-                              ? "text-green-400"
-                              : "text-white group-hover:text-green-400"
-                          }`}
-                        >
-                          {track.name}
-                        </CardTitle>
-
-                        <div className="space-y-2">
-                          <div
-                            className="text-sm text-zinc-400 truncate hover:underline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleArtistClick(
-                                artistProfile.id,
-                                artistProfile.name
-                              );
-                            }}
-                          >
-                            {artistProfile.name}
-                          </div>
-
-                          <div className="flex items-center justify-between text-xs text-zinc-500">
-                            <span>{formatSongDuration(track.duration_ms)}</span>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-6 px-2 text-xs hover:text-green-400"
+                            <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
                                 window.open(
@@ -845,13 +1054,15 @@ const ArtistProfilePage = () => {
                                   "_blank"
                                 );
                               }}
+                              className="text-white hover:bg-green-500/20 hover:text-green-400"
                             >
-                              <ExternalLink className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                              <ExternalLink className="mr-2 h-4 w-4" />
+                              Open in Spotify
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      }
+                    />
                   );
                 })}
               </div>
