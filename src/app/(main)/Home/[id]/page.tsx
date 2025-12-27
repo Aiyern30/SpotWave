@@ -18,6 +18,14 @@ import {
   TableRow,
   Button,
   Skeleton,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui";
 import {
   Tooltip,
@@ -64,6 +72,11 @@ const PlaylistPage = () => {
   const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
   const [token, setToken] = useState<string>("");
   const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
+  const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
+  const [trackToRemove, setTrackToRemove] = useState<{
+    uri: string;
+    name: string;
+  } | null>(null);
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -139,6 +152,7 @@ const PlaylistPage = () => {
     if (token) {
       fetchPlaylistDetails();
       fetchUserPlaylists();
+      checkLikedTracks();
     }
   }, [token, fetchPlaylistDetails, fetchUserPlaylists]);
 
@@ -186,7 +200,34 @@ const PlaylistPage = () => {
   };
 
   const handleAlbumClick = (albumId: string, albumName: string) => {
-    router.push(`/Album/${albumId}?name=${encodeURIComponent(albumName)}`);
+    router.push(`/Albums/${albumId}?name=${encodeURIComponent(albumName)}`);
+  };
+
+  const checkLikedTracks = async () => {
+    if (!token || !playlist?.tracks.items) return;
+    try {
+      const trackIds = playlist.tracks.items
+        .map((item) => item.track.id)
+        .join(",");
+      const response = await fetch(
+        `https://api.spotify.com/v1/me/tracks/contains?ids=${trackIds}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        const liked = new Set<string>();
+        playlist.tracks.items.forEach((item, index) => {
+          if (data[index]) {
+            liked.add(item.track.id);
+          }
+        });
+        setLikedTracks(liked);
+      }
+    } catch (error) {
+      console.error("Error checking liked tracks:", error);
+    }
   };
 
   const handleAddToPlaylist = async (
@@ -250,11 +291,13 @@ const PlaylistPage = () => {
   };
 
   const handleSaveToLiked = async (trackId: string, trackName: string) => {
+    const isLiked = likedTracks.has(trackId);
+
     try {
       const response = await fetch(
         `https://api.spotify.com/v1/me/tracks?ids=${trackId}`,
         {
-          method: "PUT",
+          method: isLiked ? "DELETE" : "PUT",
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -262,14 +305,35 @@ const PlaylistPage = () => {
       );
       if (response.ok) {
         const { toast } = await import("react-toastify");
-        toast.success(`"${trackName}" saved to Liked Songs!`);
+        if (isLiked) {
+          toast.success(`"${trackName}" removed from Liked Songs`);
+          setLikedTracks((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(trackId);
+            return newSet;
+          });
+        } else {
+          toast.success(`"${trackName}" saved to Liked Songs!`);
+          setLikedTracks((prev) => new Set(prev).add(trackId));
+        }
       } else {
         throw new Error("Failed to save");
       }
     } catch (error) {
       console.error("Error saving to liked:", error);
       const { toast } = await import("react-toastify");
-      toast.error("Failed to save to Liked Songs");
+      toast.error(
+        isLiked
+          ? "Failed to remove from Liked Songs"
+          : "Failed to save to Liked Songs"
+      );
+    }
+  };
+
+  const confirmRemoveTrack = () => {
+    if (trackToRemove) {
+      handleRemoveFromPlaylist(trackToRemove.uri, trackToRemove.name);
+      setTrackToRemove(null);
     }
   };
 
@@ -575,9 +639,12 @@ const PlaylistPage = () => {
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleRemoveFromPlaylist(track.uri, track.name);
+                                setTrackToRemove({
+                                  uri: track.uri,
+                                  name: track.name,
+                                });
                               }}
-                              className="text-white hover:bg-zinc-800"
+                              className="text-red-400 hover:bg-zinc-800 hover:text-red-300"
                             >
                               <Ban className="mr-2 h-4 w-4" />
                               Remove from this playlist
@@ -590,8 +657,16 @@ const PlaylistPage = () => {
                               }}
                               className="text-white hover:bg-zinc-800"
                             >
-                              <Heart className="mr-2 h-4 w-4" />
-                              Save to Liked Songs
+                              <Heart
+                                className={`mr-2 h-4 w-4 ${
+                                  likedTracks.has(track.id)
+                                    ? "fill-green-500 text-green-500"
+                                    : ""
+                                }`}
+                              />
+                              {likedTracks.has(track.id)
+                                ? "Remove from Liked Songs"
+                                : "Save to Liked Songs"}
                             </DropdownMenuItem>
 
                             <DropdownMenuSeparator className="bg-zinc-800" />
@@ -676,6 +751,35 @@ const PlaylistPage = () => {
           </div>
         </div>
       )}
+
+      {/* Remove Track Confirmation Dialog */}
+      <AlertDialog
+        open={!!trackToRemove}
+        onOpenChange={() => setTrackToRemove(null)}
+      >
+        <AlertDialogContent className="bg-zinc-900 border-zinc-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">
+              Remove from playlist?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-zinc-400">
+              Are you sure you want to remove "{trackToRemove?.name}" from this
+              playlist?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-zinc-800 text-white hover:bg-zinc-700 border-zinc-700">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmRemoveTrack}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
