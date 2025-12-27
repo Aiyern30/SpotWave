@@ -103,7 +103,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAAABmYWN0BAAAAAAAAABkYXRhAAAAAA=="
       );
       silentAudioRef.current.loop = true;
-      silentAudioRef.current.volume = 0; // Ensure silence
+      silentAudioRef.current.volume = 0.01; // Non-zero volume to force OS "Now Playing" recognition
+      (silentAudioRef.current as any).playsInline = true; // Essential for iOS
+      silentAudioRef.current.muted = false;
 
       // Allow audio to play in background
       if ("mediaSession" in navigator) {
@@ -705,17 +707,23 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!("mediaSession" in navigator)) return;
 
     if (currentTrack) {
-      // Update metadata
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: currentTrack.name,
-        artist: currentTrack.artists.map((a) => a.name).join(", "),
-        album: currentTrack.album.name,
-        artwork: currentTrack.album.images.map((image: any) => ({
-          src: image.url,
-          sizes: `${image.width || 512}x${image.height || 512}`,
-          type: "image/jpeg",
-        })),
-      });
+      // Delay metadata update to overwrite Spotify SDK's default "Spotify Embedded Player"
+      // which usually fires immediately on track change.
+      const timer = setTimeout(() => {
+        if (!currentTrack) return;
+
+        // Update metadata
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: currentTrack.name,
+          artist: currentTrack.artists.map((a) => a.name).join(", "),
+          album: currentTrack.album.name,
+          artwork: currentTrack.album.images.map((image: any) => ({
+            src: image.url,
+            sizes: `${image.width || 512}x${image.height || 512}`,
+            type: "image/jpeg",
+          })),
+        });
+      }, 500); // 500ms Delay
 
       // Set action handlers
       navigator.mediaSession.setActionHandler("play", () => {
@@ -735,6 +743,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           seekTo(details.seekTime * 1000); // Spotify SDK uses ms
         }
       });
+
+      return () => clearTimeout(timer);
     } else {
       navigator.mediaSession.metadata = null;
     }
