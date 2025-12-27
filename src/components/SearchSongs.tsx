@@ -77,7 +77,8 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
   const [aiRecTracks, setAiRecTracks] = useState<Track[]>([]);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [isAddingAll, setIsAddingAll] = useState(false);
-  const [discoveryCount, setDiscoveryCount] = useState(20);
+  const [discoveryCount, setDiscoveryCount] = useState(10);
+  const [searchProgress, setSearchProgress] = useState(0);
 
   const VIBE_TAGS = [
     { label: "Pop", value: "pop" },
@@ -249,8 +250,11 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
 
   const searchSpotifyTrack = async (song: string, artist: string) => {
     try {
-      const query = `track:${song} artist:${artist}`;
-      const response = await fetch(
+      console.log(`🔍 Searching: "${song}" by "${artist}"`);
+
+      // Try exact search first
+      let query = `track:${song} artist:${artist}`;
+      let response = await fetch(
         `https://api.spotify.com/v1/search?q=${encodeURIComponent(
           query
         )}&type=track&limit=1`,
@@ -258,10 +262,36 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
       if (response.ok) {
         const data = await response.json();
-        return data.tracks.items[0] || null;
+        if (data.tracks.items[0]) {
+          console.log(`✅ Found: ${data.tracks.items[0].name}`);
+          return data.tracks.items[0];
+        }
       }
+
+      // Fallback: Try broader search with just song and artist name
+      console.log(`⚠️ Exact search failed, trying broader search...`);
+      query = `${song} ${artist}`;
+      response = await fetch(
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(
+          query
+        )}&type=track&limit=1`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.tracks.items[0]) {
+          console.log(`✅ Found (broad): ${data.tracks.items[0].name}`);
+          return data.tracks.items[0];
+        }
+      }
+
+      console.log(`❌ Not found: "${song}" by "${artist}"`);
     } catch (error) {
       console.error(`Error searching track: ${song} by ${artist}`, error);
     }
@@ -276,6 +306,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
 
     setIsAiProcessing(true);
     setAiRecTracks([]);
+    setSearchProgress(0);
     try {
       const promptContext = `count:${discoveryCount} ${aiPrompt.trim()}${
         selectedGenre ? ` (Genre: ${selectedGenre})` : ""
@@ -308,24 +339,33 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
 
         // Filter out nulls and duplicates
         results.forEach((track) => {
-          if (track && !trackIds.has(track.id)) {
+          if (track && track.id && track.name && !trackIds.has(track.id)) {
             trackIds.add(track.id);
             foundTracks.push(track);
           }
         });
+
+        // Update progress
+        setSearchProgress(Math.min(i + batchSize, recs.length));
       }
 
       // Update UI once with all unique tracks
       setAiRecTracks(foundTracks);
+      setSearchProgress(0);
 
       if (foundTracks.length === 0) {
         toast.info("AI suggested songs but they couldn't be found on Spotify");
+      } else {
+        toast.success(
+          `Found ${foundTracks.length} out of ${recs.length} tracks!`
+        );
       }
     } catch (error) {
       console.error("Error in AI recommendation:", error);
       toast.error("AI recommendation failed. Please try again.");
     } finally {
       setIsAiProcessing(false);
+      setSearchProgress(0);
     }
   };
 
@@ -677,9 +717,9 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                         <div className="px-1">
                           <input
                             type="range"
-                            min="10"
-                            max="100"
-                            step="10"
+                            min="5"
+                            max="20"
+                            step="5"
                             value={discoveryCount}
                             onChange={(e) =>
                               setDiscoveryCount(parseInt(e.target.value))
@@ -688,13 +728,16 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                           />
                           <div className="flex justify-between mt-2 px-0.5">
                             <span className="text-[9px] text-zinc-600 font-bold uppercase">
+                              5
+                            </span>
+                            <span className="text-[9px] text-zinc-600 font-bold uppercase">
                               10
                             </span>
                             <span className="text-[9px] text-zinc-600 font-bold uppercase">
-                              50
+                              15
                             </span>
                             <span className="text-[9px] text-zinc-600 font-bold uppercase">
-                              100
+                              20
                             </span>
                           </div>
                         </div>
@@ -710,7 +753,9 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                         {isAiProcessing ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            Gemini is thinking...
+                            {searchProgress > 0
+                              ? `Finding songs... ${searchProgress}/${discoveryCount}`
+                              : "Gemini is thinking..."}
                           </>
                         ) : (
                           <>
