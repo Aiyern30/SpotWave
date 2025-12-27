@@ -374,7 +374,32 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
 
     setIsAddingAll(true);
     try {
-      const uris = aiRecTracks.map((t) => t.uri);
+      // First, fetch current playlist tracks to check for duplicates
+      const playlistRes = await fetch(
+        `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (!playlistRes.ok) {
+        throw new Error("Failed to fetch playlist tracks");
+      }
+
+      const playlistData = await playlistRes.json();
+      const existingTrackIds = new Set(
+        playlistData.items.map((item: any) => item.track.id)
+      );
+
+      // Filter out tracks that already exist in the playlist
+      const newTracks = aiRecTracks.filter(
+        (track) => !existingTrackIds.has(track.id)
+      );
+
+      if (newTracks.length === 0) {
+        toast.info("All tracks are already in the playlist!");
+        return;
+      }
+
+      const uris = newTracks.map((t) => t.uri);
       const response = await fetch(
         `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
         {
@@ -388,7 +413,14 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
       );
 
       if (response.ok) {
-        toast.success(`Successfully added ${uris.length} tracks!`);
+        const skipped = aiRecTracks.length - newTracks.length;
+        if (skipped > 0) {
+          toast.success(
+            `Added ${newTracks.length} new tracks! (${skipped} already in playlist)`
+          );
+        } else {
+          toast.success(`Successfully added ${newTracks.length} tracks!`);
+        }
         setAiRecTracks([]);
         setAiPrompt("");
         refetch(playlistID);
@@ -406,6 +438,12 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
   const handleAddTrackToPlaylist = async (track: Track) => {
     if (!token) {
       toast.error("Authentication required");
+      return;
+    }
+
+    // Check if track already exists in playlist
+    if (existingTrackIds.includes(track.id)) {
+      toast.info(`"${track.name}" is already in this playlist!`);
       return;
     }
 
@@ -435,6 +473,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
 
       // Remove from recommendations after adding
       setRecommendedTracks((prev) => prev.filter((t) => t.id !== track.id));
+      setAiRecTracks((prev) => prev.filter((t) => t.id !== track.id));
     } catch (error) {
       console.error("Error adding track to playlist:", error);
       toast.error("Failed to add track to playlist");

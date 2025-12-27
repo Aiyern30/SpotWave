@@ -238,8 +238,13 @@ export async function POST(req: Request) {
     }
 
     // Take specific count based on type
-    const limit = type === "ideas" ? 4 : 5;
-    recommendations = recommendations.slice(0, limit);
+    // For ai-search and quiz-tracks, don't limit the results
+    if (type === "ideas") {
+      recommendations = recommendations.slice(0, 4);
+    } else if (type !== "ai-search" && type !== "quiz-tracks") {
+      recommendations = recommendations.slice(0, 5);
+    }
+    // ai-search and quiz-tracks return all recommendations
 
     return NextResponse.json({ recommendations });
   } catch (error: any) {
