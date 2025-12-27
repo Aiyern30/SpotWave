@@ -15,6 +15,8 @@ import {
   Heart,
   Copy,
   Check,
+  Globe,
+  Lock,
 } from "lucide-react";
 import {
   Button,
@@ -134,6 +136,42 @@ export default function Settings({ playlistID }: SettingsProps) {
     }
   };
 
+  const togglePlaylistPrivacy = async () => {
+    if (!currentPlaylist) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/playlists/${playlistID}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            public: !currentPlaylist.public,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        toast.success(
+          `Playlist set to ${!currentPlaylist.public ? "Public" : "Private"}`
+        );
+        // Refresh playlist details to get updated state
+        await handleFetchPlaylistDetails();
+      } else {
+        throw new Error("Failed to update playlist privacy");
+      }
+    } catch (error) {
+      console.error("Error updating playlist privacy:", error);
+      toast.error("Failed to update playlist privacy");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const copyToClipboard = async (text: string, type: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -219,12 +257,22 @@ export default function Settings({ playlistID }: SettingsProps) {
                 </div>
                 <DropdownMenuSeparator className="bg-zinc-700/50" />
 
-                <DropdownMenuItem className="text-white hover:bg-zinc-800/50 focus:bg-zinc-800/50">
-                  <Heart className="mr-3 h-4 w-4" />
-                  <span>Add to profile</span>
-                  <Badge variant="secondary" className="ml-auto text-xs">
-                    Pro
-                  </Badge>
+                <DropdownMenuItem
+                  onClick={togglePlaylistPrivacy}
+                  disabled={isLoading}
+                  className="text-white hover:bg-zinc-800/50 focus:bg-zinc-800/50"
+                >
+                  {currentPlaylist?.public ? (
+                    <>
+                      <Lock className="mr-3 h-4 w-4" />
+                      <span>Set to Private</span>
+                    </>
+                  ) : (
+                    <>
+                      <Globe className="mr-3 h-4 w-4" />
+                      <span>Set to Public</span>
+                    </>
+                  )}
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
