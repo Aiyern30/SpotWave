@@ -1180,7 +1180,7 @@ const ArtistProfilePage = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-zinc-400 hover:text-white"
+                                className="h-8 w-8 bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-black rounded-full transition-all"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <MoreHorizontal className="h-4 w-4" />
@@ -1249,7 +1249,7 @@ const ArtistProfilePage = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 bg-black/60 hover:bg-black/80 text-white rounded-full backdrop-blur-sm shadow-sm"
+                            className="h-8 w-8 bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-black rounded-full backdrop-blur-sm shadow-sm transition-all"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MoreHorizontal className="h-4 w-4" />

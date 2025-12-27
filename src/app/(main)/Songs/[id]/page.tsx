@@ -557,7 +557,7 @@ const SongPage = () => {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="bg-transparent border-white text-white hover:bg-zinc-800 hover:text-white transition-all w-10 px-0"
+                      className="bg-green-500/10 border-green-500/20 text-green-500 hover:bg-green-500 hover:text-black transition-all w-10 px-0 rounded-full"
                     >
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
