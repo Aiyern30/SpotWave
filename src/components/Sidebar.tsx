@@ -11,6 +11,7 @@ import {
   BiLogOut,
   BiJoystick,
 } from "react-icons/bi";
+import { usePlayer } from "@/contexts/PlayerContext";
 import { RiUserVoiceFill } from "react-icons/ri";
 import { IoTicket } from "react-icons/io5";
 import { GiHamburgerMenu } from "react-icons/gi";
@@ -41,6 +42,8 @@ const Sidebar = ({
   const [showLogoutDialog, setShowLogoutDialog] = useState<boolean>(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { currentTrack, isConnecting } = usePlayer();
+  const isPlayerVisible = !!currentTrack || isConnecting;
 
   useEffect(() => {
     const storedState = localStorage.getItem("sidebar-compact");
@@ -64,7 +67,7 @@ const Sidebar = ({
   const handleItemClick = (href: string) => {
     setActiveItem(href);
     // On mobile, automatically close after click
-    if (window.innerWidth < 1024) {
+    if (window.innerWidth < 768) {
       onClose();
     }
     router.push(href);
@@ -102,7 +105,7 @@ const Sidebar = ({
       {/* Mobile Toggle Button - Floating Logo */}
       <button
         onClick={onClose}
-        className={`fixed top-5 left-5 z-[60] lg:hidden group transition-all duration-300 active:scale-95 ${
+        className={`fixed top-5 left-5 z-[60] md:hidden group transition-all duration-300 active:scale-95 ${
           isOpen
             ? "opacity-0 pointer-events-none translate-x-[-20px]"
             : "opacity-100 translate-x-0"
@@ -131,7 +134,7 @@ const Sidebar = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[45] lg:hidden"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[45] md:hidden"
           />
         )}
       </AnimatePresence>
@@ -143,7 +146,8 @@ const Sidebar = ({
           animate={{ x: 0 }}
           className={`fixed top-0 bottom-0 left-0 z-50 transition-all duration-300 
             ${isCompact ? "w-16" : "w-64"} 
-            ${isOpen ? "flex" : "hidden lg:flex"}
+            ${isOpen ? "flex" : "hidden md:flex"}
+            ${isPlayerVisible ? "pb-[72px] md:pb-[90px]" : ""}
             border-r border-zinc-800 bg-black/95 backdrop-blur-xl flex-col overflow-hidden`}
           aria-label="Sidebar"
         >
@@ -169,7 +173,7 @@ const Sidebar = ({
                     className="w-full h-full rounded-full ring-2 ring-green-500/20 z-10 relative transition-transform group-hover/logo:scale-105"
                   />
                   {/* Show a small back icon on mobile header logo hover */}
-                  <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 border border-black z-20 opacity-0 group-hover/logo:opacity-100 transition-opacity lg:hidden">
+                  <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 border border-black z-20 opacity-0 group-hover/logo:opacity-100 transition-opacity md:hidden">
                     <AiOutlineRollback className="text-[8px] text-white" />
                   </div>
                 </div>
