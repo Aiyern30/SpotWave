@@ -673,147 +673,150 @@ export default function UserHeader({
           <div className="flex flex-row lg:flex-col space-x-3 lg:space-x-0 lg:space-y-3 items-center lg:items-end justify-center lg:justify-end mt-6 lg:mt-0">
             <Settings playlistID={playlist.id} />
             <SearchSongs playlistID={playlist.id} refetch={refetch} />
-            {/* View Summary Button */}
-            <Dialog
-              open={summaryDialogOpen}
-              onOpenChange={setSummaryDialogOpen}
-            >
-              <DialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-12 w-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 hover:bg-black/30 hover:border-white/20 transition-all duration-200 hover:scale-105"
-                >
-                  <Sparkles className="h-4 w-4 text-white" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-zinc-950/95 border-zinc-800/50 max-w-xl backdrop-blur-2xl shadow-2xl">
-                <DialogHeader>
-                  <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-green-400 via-blue-400 to-purple-400 bg-clip-text text-transparent flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-green-500/10 rounded-lg">
-                        <Sparkles className="h-6 w-6 text-green-400" />
+            {/* View Summary Button - Only show if playlist has tracks */}
+            {playlist.tracks.total > 0 && (
+              <Dialog
+                open={summaryDialogOpen}
+                onOpenChange={setSummaryDialogOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-12 w-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 hover:bg-black/30 hover:border-white/20 transition-all duration-200 hover:scale-105"
+                  >
+                    <Sparkles className="h-4 w-4 text-white" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-zinc-950/95 border-zinc-800/50 max-w-xl backdrop-blur-2xl shadow-2xl">
+                  {/* ... rest of content ... */}
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-green-400 via-blue-400 to-purple-400 bg-clip-text text-transparent flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-green-500/10 rounded-lg">
+                          <Sparkles className="h-6 w-6 text-green-400" />
+                        </div>
+                        AI Playlist Analysis
                       </div>
-                      AI Playlist Analysis
-                    </div>
-                  </DialogTitle>
-                </DialogHeader>
+                    </DialogTitle>
+                  </DialogHeader>
 
-                {summaryLoading ? (
-                  <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                    <div className="relative">
-                      <div className="h-16 w-16 rounded-full border-t-2 border-b-2 border-green-500 animate-spin" />
-                      <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-green-400 animate-pulse" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-lg font-medium text-white">
-                        AI is reading your music vibes...
-                      </p>
-                      <p className="text-sm text-zinc-500">
-                        Analyzing genres, moods, and eras
-                      </p>
-                    </div>
-                  </div>
-                ) : aiSummary ? (
-                  <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2 no-scrollbar">
-                    {/* Genres Section */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-green-400/80 font-semibold tracking-wide uppercase text-xs">
-                        <div className="w-1 h-1 rounded-full bg-green-400" />
-                        Top Genres
+                  {summaryLoading ? (
+                    <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                      <div className="relative">
+                        <div className="h-16 w-16 rounded-full border-t-2 border-b-2 border-green-500 animate-spin" />
+                        <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-green-400 animate-pulse" />
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {aiSummary.genres?.map((g: string) => (
-                          <span
-                            key={g}
-                            className="px-3 py-1.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 text-sm font-medium hover:bg-green-500/20 transition-all cursor-default"
-                          >
-                            {g}
-                          </span>
-                        ))}
+                      <div className="text-center">
+                        <p className="text-lg font-medium text-white">
+                          AI is reading your music vibes...
+                        </p>
+                        <p className="text-sm text-zinc-500">
+                          Analyzing genres, moods, and eras
+                        </p>
                       </div>
                     </div>
+                  ) : aiSummary ? (
+                    <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2 no-scrollbar">
+                      {/* Genres Section */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-green-400/80 font-semibold tracking-wide uppercase text-xs">
+                          <div className="w-1 h-1 rounded-full bg-green-400" />
+                          Top Genres
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {aiSummary.genres?.map((g: string) => (
+                            <span
+                              key={g}
+                              className="px-3 py-1.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 text-sm font-medium hover:bg-green-500/20 transition-all cursor-default"
+                            >
+                              {g}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
 
-                    {/* Moods Section */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-blue-400/80 font-semibold tracking-wide uppercase text-xs">
-                        <div className="w-1 h-1 rounded-full bg-blue-400" />
-                        Dominant Moods
+                      {/* Moods Section */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-blue-400/80 font-semibold tracking-wide uppercase text-xs">
+                          <div className="w-1 h-1 rounded-full bg-blue-400" />
+                          Dominant Moods
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {aiSummary.moods?.map((m: string) => (
+                            <span
+                              key={m}
+                              className="px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-sm font-medium hover:bg-blue-500/20 transition-all cursor-default"
+                            >
+                              {m}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {aiSummary.moods?.map((m: string) => (
-                          <span
-                            key={m}
-                            className="px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-sm font-medium hover:bg-blue-500/20 transition-all cursor-default"
-                          >
-                            {m}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
 
-                    {/* Eras Section */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-purple-400/80 font-semibold tracking-wide uppercase text-xs">
-                        <div className="w-1 h-1 rounded-full bg-purple-400" />
-                        Eras Represented
+                      {/* Eras Section */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-purple-400/80 font-semibold tracking-wide uppercase text-xs">
+                          <div className="w-1 h-1 rounded-full bg-purple-400" />
+                          Eras Represented
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {aiSummary.eras?.map((e: string) => (
+                            <span
+                              key={e}
+                              className="px-3 py-1.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 text-sm font-medium hover:bg-purple-500/20 transition-all cursor-default"
+                            >
+                              {e}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {aiSummary.eras?.map((e: string) => (
-                          <span
-                            key={e}
-                            className="px-3 py-1.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 text-sm font-medium hover:bg-purple-500/20 transition-all cursor-default"
-                          >
-                            {e}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
 
-                    {/* Styles Section */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-yellow-400/80 font-semibold tracking-wide uppercase text-xs">
-                        <div className="w-1 h-1 rounded-full bg-yellow-400" />
-                        Artist Styles
+                      {/* Styles Section */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-yellow-400/80 font-semibold tracking-wide uppercase text-xs">
+                          <div className="w-1 h-1 rounded-full bg-yellow-400" />
+                          Artist Styles
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {aiSummary.artistStyles?.map((a: string) => (
+                            <span
+                              key={a}
+                              className="px-3 py-1.5 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 text-sm font-medium hover:bg-yellow-500/20 transition-all cursor-default"
+                            >
+                              {a}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {aiSummary.artistStyles?.map((a: string) => (
-                          <span
-                            key={a}
-                            className="px-3 py-1.5 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 text-sm font-medium hover:bg-yellow-500/20 transition-all cursor-default"
-                          >
-                            {a}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
 
-                    {/* Search Terms Section */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-pink-400/80 font-semibold tracking-wide uppercase text-xs">
-                        <div className="w-1 h-1 rounded-full bg-pink-400" />
-                        Perfect Search Queries
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {aiSummary.searchTerms?.map((s: string) => (
-                          <span
-                            key={s}
-                            className="px-3 py-1.5 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20 text-sm font-medium hover:bg-pink-500/20 hover:scale-105 transition-all cursor-pointer italic"
-                          >
-                            "{s}"
-                          </span>
-                        ))}
+                      {/* Search Terms Section */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-pink-400/80 font-semibold tracking-wide uppercase text-xs">
+                          <div className="w-1 h-1 rounded-full bg-pink-400" />
+                          Perfect Search Queries
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {aiSummary.searchTerms?.map((s: string) => (
+                            <span
+                              key={s}
+                              className="px-3 py-1.5 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20 text-sm font-medium hover:bg-pink-500/20 hover:scale-105 transition-all cursor-pointer italic"
+                            >
+                              "{s}"
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-16 text-zinc-500 space-y-2">
-                    <Music className="h-12 w-12 opacity-20" />
-                    <p>Analysis failed to load. Please try again.</p>
-                  </div>
-                )}
-              </DialogContent>
-            </Dialog>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-16 text-zinc-500 space-y-2">
+                      <Music className="h-12 w-12 opacity-20" />
+                      <p>Analysis failed to load. Please try again.</p>
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </div>
       </div>
