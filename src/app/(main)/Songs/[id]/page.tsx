@@ -26,7 +26,23 @@ import {
   Users,
   Calendar,
   TrendingUp,
+  MoreHorizontal,
+  ListPlus,
+  Heart,
+  User,
+  Disc,
 } from "lucide-react";
+import { fetchUserProfile } from "@/utils/fetchProfile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui";
 
 interface LyricsLine {
   time: number;
@@ -48,6 +64,10 @@ const SongPage = () => {
   const [loadingLyrics, setLoadingLyrics] = useState<boolean>(false);
   const [currentLyricIndex, setCurrentLyricIndex] = useState<number>(-1);
   const [isSheetOpen, setIsSheetOpen] = useState<boolean>(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
+  const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
+  const [token, setToken] = useState<string>("");
 
   // Cache lyrics to avoid refetching
   const lyricsCache = useRef<Map<string, LyricsCache>>(new Map());
@@ -227,6 +247,120 @@ const SongPage = () => {
   useEffect(() => {
     fetchTrackDetails();
   }, [fetchTrackDetails]);
+
+  useEffect(() => {
+    const t = localStorage.getItem("Token");
+    if (t) setToken(t);
+  }, []);
+
+  useEffect(() => {
+    if (token) {
+      fetchUserProfile(token).then(setUserProfile);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (token && userProfile?.id) {
+      const fetchPlaylists = async () => {
+        try {
+          const response = await fetch(
+            `https://api.spotify.com/v1/users/${userProfile.id}/playlists`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setUserPlaylists(data.items);
+          }
+        } catch (error) {
+          console.error("Error fetching user playlists:", error);
+        }
+      };
+      fetchPlaylists();
+    }
+  }, [token, userProfile]);
+
+  useEffect(() => {
+    if (token && track) {
+      const checkLiked = async () => {
+        try {
+          const response = await fetch(
+            `https://api.spotify.com/v1/me/tracks/contains?ids=${track.id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (response.ok) {
+            const data = await response.json();
+            const liked = new Set<string>();
+            if (data[0]) liked.add(track.id);
+            setLikedTracks(liked);
+          }
+        } catch (error) {
+          console.error("Error checking liked tracks:", error);
+        }
+      };
+      checkLiked();
+    }
+  }, [token, track]);
+
+  const handleAddToPlaylist = async (
+    trackUri: string,
+    playlistId: string,
+    playlistName: string
+  ) => {
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ uris: [trackUri] }),
+        }
+      );
+      if (response.ok) {
+        const { toast } = await import("react-toastify");
+        toast.success(`Added to ${playlistName}!`);
+      } else {
+        throw new Error("Failed to add");
+      }
+    } catch (error) {
+      console.error("Error adding to playlist:", error);
+      const { toast } = await import("react-toastify");
+      toast.error("Failed to add to playlist");
+    }
+  };
+
+  const handleSaveToLiked = async (trackId: string, trackName: string) => {
+    const isLiked = likedTracks.has(trackId);
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/me/tracks?ids=${trackId}`,
+        {
+          method: isLiked ? "DELETE" : "PUT",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (response.ok) {
+        const { toast } = await import("react-toastify");
+        if (isLiked) {
+          toast.success(`"${trackName}" removed from Liked Songs`);
+          setLikedTracks((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(trackId);
+            return newSet;
+          });
+        } else {
+          toast.success(`"${trackName}" saved to Liked Songs!`);
+          setLikedTracks((prev) => new Set(prev).add(trackId));
+        }
+      }
+    } catch (error) {
+      console.error("Error saving to liked:", error);
+      const { toast } = await import("react-toastify");
+      toast.error("Failed to update Liked Songs");
+    }
+  };
 
   if (loading) {
     return (
@@ -416,6 +550,111 @@ const SongPage = () => {
                     </div>
                   </SheetContent>
                 </Sheet>
+
+                {/* Dropdown Menu for More Options */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="bg-transparent border-white text-white hover:bg-zinc-800 hover:text-white transition-all w-10 px-0"
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    className="w-56 bg-zinc-900 border-zinc-800"
+                  >
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <ListPlus className="mr-2 h-4 w-4" />
+                        Add to playlist
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="bg-zinc-900 border-zinc-800 max-h-[300px] overflow-y-auto">
+                        {userPlaylists.map((pl) => (
+                          <DropdownMenuItem
+                            key={pl.id}
+                            onClick={() =>
+                              handleAddToPlaylist(
+                                track.uri || `spotify:track:${track.id}`,
+                                pl.id,
+                                pl.name
+                              )
+                            }
+                            className="text-white hover:bg-green-500/20 hover:text-green-400"
+                          >
+                            {pl.name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+
+                    <DropdownMenuItem
+                      onClick={() => handleSaveToLiked(track.id, track.name)}
+                      className="text-white hover:bg-green-500/20 hover:text-green-400"
+                    >
+                      <Heart
+                        className={`mr-2 h-4 w-4 ${
+                          likedTracks.has(track.id)
+                            ? "fill-green-500 text-green-500"
+                            : ""
+                        }`}
+                      />
+                      {likedTracks.has(track.id)
+                        ? "Remove from Liked Songs"
+                        : "Save to Liked Songs"}
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator className="bg-zinc-800" />
+
+                    <DropdownMenuItem
+                      onClick={() => {
+                        if (track.album && track.album.id) {
+                          router.push(
+                            `/Albums/${
+                              track.album.id
+                            }?name=${encodeURIComponent(track.album.name)}`
+                          );
+                        }
+                      }}
+                      className="text-white hover:bg-green-500/20 hover:text-green-400"
+                    >
+                      <Disc className="mr-2 h-4 w-4" />
+                      Go to album
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() => {
+                        if (
+                          track.artists &&
+                          track.artists[0] &&
+                          track.artists[0].id
+                        ) {
+                          router.push(
+                            `/Artists/${
+                              track.artists[0].id
+                            }?name=${encodeURIComponent(track.artists[0].name)}`
+                          );
+                        }
+                      }}
+                      className="text-white hover:bg-green-500/20 hover:text-green-400"
+                    >
+                      <User className="mr-2 h-4 w-4" />
+                      Go to artist
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() =>
+                        window.open(track.external_urls?.spotify, "_blank")
+                      }
+                      className="text-white hover:bg-green-500/20 hover:text-green-400"
+                    >
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Open in Spotify
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </div>
