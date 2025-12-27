@@ -796,7 +796,7 @@ export default function UserHeader({
                                     variant="outline"
                                     onClick={generatePlaylistNameAndDescription}
                                     disabled={generatingAI}
-                                    className="flex-1 border-zinc-700 text-zinc-300 hover:text-white"
+                                    className="flex-1 border-zinc-700 text-black hover:text-green-500"
                                   >
                                     Try Again
                                   </Button>
