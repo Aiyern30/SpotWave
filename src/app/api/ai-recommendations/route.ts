@@ -198,6 +198,32 @@ export async function POST(req: Request) {
           console.error(
             "Failed to parse extracted JSON block, using fallbacks."
           );
+          if (type === "playlist-naming") {
+            recommendations = {
+              name: "AI Generated Playlist",
+              description: "A specially curated playlist just for you.",
+            };
+          } else {
+            recommendations =
+              type === "ideas"
+                ? fallbackSuggestions
+                : [
+                    "Jay Chou",
+                    "Taylor Swift",
+                    "Queen",
+                    "The Beatles",
+                    "Linkin Park",
+                  ];
+          }
+        }
+      } else {
+        console.warn("No JSON found in response, using fallbacks.");
+        if (type === "playlist-naming") {
+          recommendations = {
+            name: "AI Generated Playlist",
+            description: "A specially curated playlist just for you.",
+          };
+        } else {
           recommendations =
             type === "ideas"
               ? fallbackSuggestions
@@ -209,24 +235,16 @@ export async function POST(req: Request) {
                   "Linkin Park",
                 ];
         }
-      } else {
-        console.warn("No JSON found in response, using fallbacks.");
-        recommendations =
-          type === "ideas"
-            ? fallbackSuggestions
-            : [
-                "Jay Chou",
-                "Taylor Swift",
-                "Queen",
-                "The Beatles",
-                "Linkin Park",
-              ];
       }
     }
 
     // Final clean up and validation
     if (type === "user-summary") {
       return NextResponse.json(recommendations);
+    }
+
+    if (type === "playlist-naming") {
+      return NextResponse.json({ recommendations });
     }
 
     if (!Array.isArray(recommendations)) {
