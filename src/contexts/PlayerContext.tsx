@@ -103,9 +103,13 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAAABmYWN0BAAAAAAAAABkYXRhAAAAAA=="
       );
       silentAudioRef.current.loop = true;
+<<<<<<< HEAD
       silentAudioRef.current.volume = 0.01; // Non-zero volume to force OS "Now Playing" recognition
       (silentAudioRef.current as any).playsInline = true; // Essential for iOS
       silentAudioRef.current.muted = false;
+=======
+      silentAudioRef.current.volume = 0; // Ensure silence
+>>>>>>> ca3a8b3cf7a050e04ed1ec36da34e5795a7054bb
 
       // Allow audio to play in background
       if ("mediaSession" in navigator) {
@@ -233,7 +237,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       });
     };
 
+<<<<<<< HEAD
     // Case 1: Player already exists globally
+=======
+>>>>>>> ca3a8b3cf7a050e04ed1ec36da34e5795a7054bb
     if (globalPlayerInstance) {
       console.log("Attaching listeners to existing global player instance");
       setPlayer(globalPlayerInstance);
@@ -241,13 +248,19 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       attachPlayerListeners(globalPlayerInstance);
 
       if (globalDeviceId) {
+<<<<<<< HEAD
         console.log("Global device ID found immediately:", globalDeviceId);
+=======
+>>>>>>> ca3a8b3cf7a050e04ed1ec36da34e5795a7054bb
         setDeviceId(globalDeviceId);
         setIsReady(true);
         setIsConnecting(false);
       } else {
         // Retry connection if we have an instance but no device ID
+<<<<<<< HEAD
         console.log("Global player exists but no device ID, reconnecting...");
+=======
+>>>>>>> ca3a8b3cf7a050e04ed1ec36da34e5795a7054bb
         globalPlayerInstance.connect();
       }
       return;
@@ -255,11 +268,15 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
     // Case 2: active initialization
     const initializePlayer = () => {
+<<<<<<< HEAD
       // Logic to prevent double init
       if (isGloballyInitialized || globalPlayerInstance) return;
       isGloballyInitialized = true;
 
       if (window.Spotify) {
+=======
+      if (window.Spotify && !globalPlayerInstance) {
+>>>>>>> ca3a8b3cf7a050e04ed1ec36da34e5795a7054bb
         setIsConnecting(true);
         console.log("Initializing Spotify Player (New Instance)...");
 
@@ -274,15 +291,24 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         attachPlayerListeners(spotifyPlayer);
 
         const connectPlayer = async () => {
+<<<<<<< HEAD
           console.log("Connecting to Spotify Player...");
+=======
+>>>>>>> ca3a8b3cf7a050e04ed1ec36da34e5795a7054bb
           const success = await spotifyPlayer.connect();
           if (success) {
             console.log("Successfully connected to Spotify Player!");
           } else {
             console.error(
+<<<<<<< HEAD
               "Failed to connect to Spotify Player, retrying in 500ms..."
             );
             setTimeout(connectPlayer, 500);
+=======
+              "Failed to connect to Spotify Player, retrying in 2s..."
+            );
+            setTimeout(connectPlayer, 2000);
+>>>>>>> ca3a8b3cf7a050e04ed1ec36da34e5795a7054bb
           }
         };
 
@@ -299,6 +325,23 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     } else {
       window.onSpotifyWebPlaybackSDKReady = initializePlayer;
     }
+<<<<<<< HEAD
+=======
+
+    return () => {
+      // NOTE: We do not disconnect the global player on unmount,
+      // but we might want to remove OUR listeners if we added unique ones.
+      // However, Spotify SDK `removeListener` removes ALL listeners for an event name,
+      // which breaks shared instances.
+      // Since we rely on global singleton for PWA/SPA, we accept accumulating listeners
+      // or we just leave them. The state setters from unmounted components won't cause harm
+      // (React ignores updates on unmounted components usually, or better than broken player).
+      // Ideally we would manage a subscription list but for now this fixes the 'Device Not Ready' bug.
+      if (volumeTimeoutRef.current) {
+        clearTimeout(volumeTimeoutRef.current);
+      }
+    };
+>>>>>>> ca3a8b3cf7a050e04ed1ec36da34e5795a7054bb
   }, [token]);
 
   // Add cleanup only on window unload (when user closes tab)
@@ -369,6 +412,12 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             console.log("Device became ready via global ref!");
             setDeviceId(globalDeviceId);
             setIsReady(true);
+<<<<<<< HEAD
+=======
+
+            // Wait for state to sync? No, refs update in effect.
+            // Just resolve active true since global is truth
+>>>>>>> ca3a8b3cf7a050e04ed1ec36da34e5795a7054bb
             clearInterval(checkInterval);
             resolve(true);
           }
@@ -378,6 +427,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             clearInterval(checkInterval);
             resolve(false);
           }
+<<<<<<< HEAD
           // KICK: Aggressive reconnect if taking too long (> 3s)
           else if (Date.now() - startTime > 3000 && !isConnecting) {
             console.warn(
@@ -387,6 +437,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
               playerRef.current.connect();
             }
           }
+=======
+>>>>>>> ca3a8b3cf7a050e04ed1ec36da34e5795a7054bb
         }, 500);
       });
     },
