@@ -78,6 +78,24 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [isAddingAll, setIsAddingAll] = useState(false);
 
+  const VIBE_TAGS = [
+    { label: "Pop", value: "pop" },
+    { label: "Hip Hop", value: "hip-hop" },
+    { label: "Rock", value: "rock" },
+    { label: "Lo-Fi", value: "lo-fi" },
+    { label: "EDM", value: "edm" },
+    { label: "R&B", value: "rainy-day" },
+    { label: "Jazz", value: "jazz" },
+    { label: "Classical", value: "classical" },
+    { label: "Night Drive", value: "synthwave" },
+    { label: "Chill", value: "chill" },
+    { label: "Gym", value: "workout" },
+    { label: "Sadness", value: "sad" },
+    { label: "Party", value: "party" },
+    { label: "Acoustic", value: "acoustic" },
+    { label: "K-Pop", value: "k-pop" },
+  ];
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const lastFetchTimeRef = useRef<number>(0);
@@ -221,31 +239,12 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
     fetchRecommendations(true);
   };
 
-  // Fetch recommendations and genres when sheet opens
+  // Fetch recommendations when sheet opens
   useEffect(() => {
     if (isSheetOpen && token) {
       fetchRecommendations();
-      fetchGenres();
     }
   }, [isSheetOpen, token, fetchRecommendations]);
-
-  const fetchGenres = async () => {
-    if (!token) return;
-    try {
-      const response = await fetch(
-        "https://api.spotify.com/v1/recommendations/available-genre-seeds",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setGenreList(data.genres);
-      }
-    } catch (error) {
-      console.error("Error fetching genres:", error);
-    }
-  };
 
   const searchSpotifyTrack = async (song: string, artist: string) => {
     try {
@@ -625,29 +624,29 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                         />
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">
-                          Filter by Genre (Optional)
+                          Select a Vibe
                         </label>
-                        <Select
-                          value={selectedGenre}
-                          onValueChange={setSelectedGenre}
-                        >
-                          <SelectTrigger className="bg-black/40 border-zinc-800">
-                            <SelectValue placeholder="Select a genre..." />
-                          </SelectTrigger>
-                          <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                            {genreList.map((genre) => (
-                              <SelectItem
-                                key={genre}
-                                value={genre}
-                                className="capitalize"
-                              >
-                                {genre.replace("-", " ")}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="flex flex-wrap gap-2">
+                          {VIBE_TAGS.map((vibe) => (
+                            <button
+                              key={vibe.value}
+                              onClick={() =>
+                                setSelectedGenre(
+                                  selectedGenre === vibe.value ? "" : vibe.value
+                                )
+                              }
+                              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
+                                selectedGenre === vibe.value
+                                  ? "bg-green-500 border-green-500 text-black shadow-[0_0_10px_rgba(34,197,94,0.4)]"
+                                  : "bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+                              }`}
+                            >
+                              {vibe.label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
 
                       <Button
