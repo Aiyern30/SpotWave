@@ -40,6 +40,7 @@ import {
   Loader2,
   Save,
   Sparkles,
+  Wand2,
 } from "lucide-react";
 import { formatDuration } from "@/utils/function";
 import type { PlaylistProps, UserProfile } from "@/lib/types";
@@ -80,6 +81,7 @@ export default function UserHeader({
   const [aiSummary, setAiSummary] = useState<any>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [inputWidth, setInputWidth] = useState<number>(0);
+  const [generatingAI, setGeneratingAI] = useState(false);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
@@ -301,6 +303,57 @@ export default function UserHeader({
         setDescriptionValue(playlist.description || "");
         setDescriptionEditing(false);
       }
+    }
+  };
+
+  const generatePlaylistNameAndDescription = async () => {
+    if (!token || playlist.tracks.items.length === 0) {
+      const { toast } = await import("react-toastify");
+      toast.error("Cannot generate for empty playlist");
+      return;
+    }
+
+    setGeneratingAI(true);
+    try {
+      // Gather playlist context
+      const tracks = playlist.tracks.items.slice(0, 20); // Use first 20 tracks
+      const artists = [
+        ...new Set(tracks.flatMap((t) => t.track.artists.map((a) => a.name))),
+      ];
+      const trackNames = tracks.map((t) => t.track.name);
+
+      const context = `Playlist contains ${
+        playlist.tracks.total
+      } tracks. Sample tracks: ${trackNames
+        .slice(0, 10)
+        .join(", ")}. Artists include: ${artists.slice(0, 10).join(", ")}.`;
+
+      const response = await fetch("/api/ai-recommendations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "playlist-naming",
+          context,
+        }),
+      });
+
+      if (!response.ok) throw new Error("AI generation failed");
+
+      const data = await response.json();
+      const result = data.recommendations;
+
+      if (result?.name && result?.description) {
+        setInputValue(result.name);
+        setDescriptionValue(result.description);
+        const { toast } = await import("react-toastify");
+        toast.success("AI generated playlist name and description!");
+      }
+    } catch (error) {
+      console.error("Error generating playlist details:", error);
+      const { toast } = await import("react-toastify");
+      toast.error("Failed to generate playlist details");
+    } finally {
+      setGeneratingAI(false);
     }
   };
 
@@ -543,6 +596,28 @@ export default function UserHeader({
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>Edit playlist name</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={generatePlaylistNameAndDescription}
+                              disabled={
+                                generatingAI || playlist.tracks.total === 0
+                              }
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-green-400 hover:text-green-300 hover:bg-green-500/10 flex-shrink-0"
+                            >
+                              {generatingAI ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Wand2 className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>AI Generate Name & Description</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
