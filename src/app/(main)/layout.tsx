@@ -30,7 +30,7 @@ export default function MainLayout({
       />
       <div
         className={`flex-1 transition-all duration-300 ${
-          sidebarOpen ? "lg:ml-64 ml-0" : "lg:ml-16 ml-0"
+          sidebarOpen ? "md:ml-64 ml-0" : "md:ml-16 ml-0"
         } ${isPlayerVisible ? "pb-[90px]" : ""}`}
       >
         <div className="px-3 sm:px-6 lg:px-8 pt-20 lg:pt-6 space-y-6 flex flex-col">
