@@ -25,7 +25,29 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/";
-import { Play, Pause, Clock, MoreHorizontal, Music } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui";
+import {
+  Play,
+  Pause,
+  Clock,
+  MoreHorizontal,
+  Music,
+  Heart,
+  ListPlus,
+  Ban,
+  UserPlus,
+  Disc,
+  User,
+} from "lucide-react";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
 import { formatSongDuration } from "@/utils/function";
@@ -41,6 +63,7 @@ const PlaylistPage = () => {
   const [displayUI, setDisplayUI] = useState<string>("Table");
   const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
   const [token, setToken] = useState<string>("");
+  const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -91,11 +114,33 @@ const PlaylistPage = () => {
     }
   }, [token, playlistId]);
 
+  const fetchUserPlaylists = useCallback(async () => {
+    if (!token || !userProfile?.id) return;
+
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/users/${userProfile.id}/playlists`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setUserPlaylists(data.items);
+      } else {
+        console.error("Failed to fetch user playlists:", response.status);
+      }
+    } catch (error) {
+      console.error("Error fetching user playlists:", error);
+    }
+  }, [token, userProfile?.id]);
+
   useEffect(() => {
     if (token) {
       fetchPlaylistDetails();
+      fetchUserPlaylists();
     }
-  }, [token, fetchPlaylistDetails]);
+  }, [token, fetchPlaylistDetails, fetchUserPlaylists]);
 
   const handlePlayPause = useCallback(
     (track: PlaylistTrack["track"]) => {
@@ -141,7 +186,91 @@ const PlaylistPage = () => {
   };
 
   const handleAlbumClick = (albumId: string, albumName: string) => {
-    router.push(`/Albums/${albumId}?name=${encodeURIComponent(albumName)}`);
+    router.push(`/Album/${albumId}?name=${encodeURIComponent(albumName)}`);
+  };
+
+  const handleAddToPlaylist = async (
+    trackUri: string,
+    playlistId: string,
+    playlistName: string
+  ) => {
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ uris: [trackUri] }),
+        }
+      );
+      if (response.ok) {
+        const { toast } = await import("react-toastify");
+        toast.success(`Added to ${playlistName}!`);
+      } else {
+        throw new Error("Failed to add");
+      }
+    } catch (error) {
+      console.error("Error adding to playlist:", error);
+      const { toast } = await import("react-toastify");
+      toast.error("Failed to add to playlist");
+    }
+  };
+
+  const handleRemoveFromPlaylist = async (
+    trackUri: string,
+    trackName: string
+  ) => {
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ tracks: [{ uri: trackUri }] }),
+        }
+      );
+      if (response.ok) {
+        const { toast } = await import("react-toastify");
+        toast.success(`Removed "${trackName}" from playlist`);
+        fetchPlaylistDetails();
+      } else {
+        throw new Error("Failed to remove");
+      }
+    } catch (error) {
+      console.error("Error removing from playlist:", error);
+      const { toast } = await import("react-toastify");
+      toast.error("Failed to remove from playlist");
+    }
+  };
+
+  const handleSaveToLiked = async (trackId: string, trackName: string) => {
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/me/tracks?ids=${trackId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.ok) {
+        const { toast } = await import("react-toastify");
+        toast.success(`"${trackName}" saved to Liked Songs!`);
+      } else {
+        throw new Error("Failed to save");
+      }
+    } catch (error) {
+      console.error("Error saving to liked:", error);
+      const { toast } = await import("react-toastify");
+      toast.error("Failed to save to Liked Songs");
+    }
   };
 
   const memoizedTracks = useMemo(
@@ -279,6 +408,7 @@ const PlaylistPage = () => {
                   <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium text-xs sm:text-sm">
                     <Clock className="h-4 w-4 ml-auto" />
                   </TableHead>
+                  <TableHead className="w-[50px] text-zinc-400 font-medium text-xs sm:text-sm"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -399,6 +529,102 @@ const PlaylistPage = () => {
                         <span className="text-zinc-400 text-sm">
                           {formatSongDuration(track.duration_ms)}
                         </span>
+                      </TableCell>
+
+                      <TableCell className="py-3 sm:py-4 text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreHorizontal className="h-4 w-4 text-zinc-400" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-56 bg-zinc-900 border-zinc-800"
+                          >
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger className="text-white hover:bg-zinc-800">
+                                <ListPlus className="mr-2 h-4 w-4" />
+                                Add to playlist
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent className="bg-zinc-900 border-zinc-800 max-h-[300px] overflow-y-auto">
+                                {userPlaylists.map((pl) => (
+                                  <DropdownMenuItem
+                                    key={pl.id}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAddToPlaylist(
+                                        track.uri,
+                                        pl.id,
+                                        pl.name
+                                      );
+                                    }}
+                                    className="text-white hover:bg-zinc-800"
+                                  >
+                                    {pl.name}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveFromPlaylist(track.uri, track.name);
+                              }}
+                              className="text-white hover:bg-zinc-800"
+                            >
+                              <Ban className="mr-2 h-4 w-4" />
+                              Remove from this playlist
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSaveToLiked(track.id, track.name);
+                              }}
+                              className="text-white hover:bg-zinc-800"
+                            >
+                              <Heart className="mr-2 h-4 w-4" />
+                              Save to Liked Songs
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator className="bg-zinc-800" />
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleArtistClick(
+                                  track.artists[0].id,
+                                  track.artists[0].name
+                                );
+                              }}
+                              className="text-white hover:bg-zinc-800"
+                            >
+                              <User className="mr-2 h-4 w-4" />
+                              Go to artist
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAlbumClick(
+                                  track.album.id,
+                                  track.album.name
+                                );
+                              }}
+                              className="text-white hover:bg-zinc-800"
+                            >
+                              <Disc className="mr-2 h-4 w-4" />
+                              Go to album
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   );
