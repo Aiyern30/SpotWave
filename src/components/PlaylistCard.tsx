@@ -33,6 +33,7 @@ interface PlaylistCardProps {
   onPause?: () => void;
   onResume?: () => void; // Add onResume prop
   onClick?: (id: string, title: string) => void;
+  menu?: React.ReactNode;
 }
 
 export default function PlaylistCard({
@@ -49,6 +50,7 @@ export default function PlaylistCard({
   onPause,
   onResume,
   onClick,
+  menu,
 }: PlaylistCardProps) {
   const [imageError, setImageError] = useState(false);
   const router = useRouter();
@@ -145,6 +147,16 @@ export default function PlaylistCard({
               <Badge className="absolute top-2 right-2 bg-yellow-500 text-black text-xs font-bold">
                 Paused
               </Badge>
+            )}
+
+            {/* Menu Button Overlay */}
+            {menu && (
+              <div
+                className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {menu}
+              </div>
             )}
           </div>
         </CardHeader>

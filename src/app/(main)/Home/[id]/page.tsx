@@ -730,6 +730,105 @@ const PlaylistPage = () => {
                     `/Songs/${id}?name=${encodeURIComponent(track.name)}`
                   );
                 }}
+                menu={
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 bg-black/60 hover:bg-black/80 text-white rounded-full backdrop-blur-sm shadow-sm"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-56 bg-zinc-900 border-zinc-800"
+                    >
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger className="">
+                          <ListPlus className="mr-2 h-4 w-4" />
+                          Add to playlist
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent className="bg-zinc-900 border-zinc-800 max-h-[300px] overflow-y-auto">
+                          {userPlaylists.map((pl) => (
+                            <DropdownMenuItem
+                              key={pl.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddToPlaylist(track.uri, pl.id, pl.name);
+                              }}
+                              className="text-white hover:bg-green-500/20 hover:text-green-400"
+                            >
+                              {pl.name}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTrackToRemove({
+                            uri: track.uri,
+                            name: track.name,
+                          });
+                        }}
+                        className="text-red-400 hover:bg-red-500/20 hover:text-red-300"
+                      >
+                        <Ban className="mr-2 h-4 w-4" />
+                        Remove from this playlist
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSaveToLiked(track.id, track.name);
+                        }}
+                        className="text-white hover:bg-green-500/20 hover:text-green-400"
+                      >
+                        <Heart
+                          className={`mr-2 h-4 w-4 ${
+                            likedTracks.has(track.id)
+                              ? "fill-green-500 text-green-500"
+                              : ""
+                          }`}
+                        />
+                        {likedTracks.has(track.id)
+                          ? "Remove from Liked Songs"
+                          : "Save to Liked Songs"}
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator className="bg-zinc-800" />
+
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleArtistClick(
+                            track.artists[0].id,
+                            track.artists[0].name
+                          );
+                        }}
+                        className="text-white hover:bg-green-500/20 hover:text-green-400"
+                      >
+                        <User className="mr-2 h-4 w-4" />
+                        Go to artist
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAlbumClick(track.album.id, track.album.name);
+                        }}
+                        className="text-white hover:bg-green-500/20 hover:text-green-400"
+                      >
+                        <Disc className="mr-2 h-4 w-4" />
+                        Go to album
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                }
               />
             );
           })}
