@@ -80,6 +80,7 @@ export default function UserHeader({
   const [aiSummary, setAiSummary] = useState<any>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [inputWidth, setInputWidth] = useState<number>(0);
+  const [isGlobalSummary, setIsGlobalSummary] = useState(false);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
@@ -118,11 +119,31 @@ export default function UserHeader({
   useEffect(() => {
     if (summaryDialogOpen && !aiSummary) {
       setSummaryLoading(true);
-      analyzePlaylistGenres(playlist.tracks.items, token)
-        .then((summary) => setAiSummary(summary))
+      analyzePlaylistGenres(playlist.tracks.items, token, {
+        global: isGlobalSummary,
+      })
+        .then((summary) => {
+          // If the AI returned nested recommendations (old structure), fix it
+          if (summary.recommendations) {
+            setAiSummary(summary.recommendations);
+          } else {
+            setAiSummary(summary);
+          }
+        })
         .finally(() => setSummaryLoading(false));
     }
-  }, [summaryDialogOpen, aiSummary, playlist.tracks.items, token]);
+  }, [
+    summaryDialogOpen,
+    aiSummary,
+    playlist.tracks.items,
+    token,
+    isGlobalSummary,
+  ]);
+
+  const refreshSummary = (global: boolean) => {
+    setIsGlobalSummary(global);
+    setAiSummary(null);
+  };
 
   // Calculate input width based on text content
   useEffect(() => {
@@ -680,98 +701,157 @@ export default function UserHeader({
                   <Sparkles className="h-4 w-4 text-white" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-zinc-900 border-zinc-800 max-w-lg">
+              <DialogContent className="bg-zinc-950/95 border-zinc-800/50 max-w-xl backdrop-blur-2xl shadow-2xl">
                 <DialogHeader>
-                  <DialogTitle className="text-green-400 flex items-center gap-2">
-                    <Sparkles className="h-5 w-5" />
-                    AI Playlist Summary
+                  <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-green-400 via-blue-400 to-purple-400 bg-clip-text text-transparent flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-500/10 rounded-lg">
+                        <Sparkles className="h-6 w-6 text-green-400" />
+                      </div>
+                      AI Music Taste Analysis
+                    </div>
                   </DialogTitle>
                 </DialogHeader>
+
+                <div className="flex gap-2 p-1 bg-zinc-900/50 rounded-xl border border-zinc-800/50 mb-6 mt-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`flex-1 rounded-lg transition-all duration-300 ${
+                      !isGlobalSummary
+                        ? "bg-zinc-800 text-white shadow-lg"
+                        : "text-zinc-500 hover:text-zinc-300"
+                    }`}
+                    onClick={() => refreshSummary(false)}
+                  >
+                    This Playlist
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`flex-1 rounded-lg transition-all duration-300 ${
+                      isGlobalSummary
+                        ? "bg-zinc-800 text-white shadow-lg"
+                        : "text-zinc-500 hover:text-zinc-300"
+                    }`}
+                    onClick={() => refreshSummary(true)}
+                  >
+                    My Global Taste
+                  </Button>
+                </div>
+
                 {summaryLoading ? (
-                  <div className="flex flex-col items-center justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-green-400 mb-3" />
-                    <span className="text-zinc-400">Analyzing playlist...</span>
+                  <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                    <div className="relative">
+                      <div className="h-16 w-16 rounded-full border-t-2 border-b-2 border-green-500 animate-spin" />
+                      <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-green-400 animate-pulse" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-lg font-medium text-white">
+                        AI is reading your music vibes...
+                      </p>
+                      <p className="text-sm text-zinc-500">
+                        Analyzing genres, moods, and eras
+                      </p>
+                    </div>
                   </div>
                 ) : aiSummary ? (
-                  <div className="space-y-4">
-                    <div>
-                      <span className="font-semibold text-green-400">
-                        Genres:
-                      </span>
-                      <div className="flex flex-wrap gap-2 mt-1">
+                  <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2 no-scrollbar">
+                    {/* Genres Section */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-green-400/80 font-semibold tracking-wide uppercase text-xs">
+                        <div className="w-1 h-1 rounded-full bg-green-400" />
+                        Top Genres
+                      </div>
+                      <div className="flex flex-wrap gap-2">
                         {aiSummary.genres?.map((g: string) => (
-                          <Badge
+                          <span
                             key={g}
-                            className="bg-green-700/30 text-green-300 border-green-700/40"
+                            className="px-3 py-1.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 text-sm font-medium hover:bg-green-500/20 transition-all cursor-default"
                           >
                             {g}
-                          </Badge>
+                          </span>
                         ))}
                       </div>
                     </div>
-                    <div>
-                      <span className="font-semibold text-blue-400">
-                        Moods:
-                      </span>
-                      <div className="flex flex-wrap gap-2 mt-1">
+
+                    {/* Moods Section */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-blue-400/80 font-semibold tracking-wide uppercase text-xs">
+                        <div className="w-1 h-1 rounded-full bg-blue-400" />
+                        Dominant Moods
+                      </div>
+                      <div className="flex flex-wrap gap-2">
                         {aiSummary.moods?.map((m: string) => (
-                          <Badge
+                          <span
                             key={m}
-                            className="bg-blue-700/30 text-blue-300 border-blue-700/40"
+                            className="px-3 py-1.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 text-sm font-medium hover:bg-blue-500/20 transition-all cursor-default"
                           >
                             {m}
-                          </Badge>
+                          </span>
                         ))}
                       </div>
                     </div>
-                    <div>
-                      <span className="font-semibold text-purple-400">
-                        Eras:
-                      </span>
-                      <div className="flex flex-wrap gap-2 mt-1">
+
+                    {/* Eras Section */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-purple-400/80 font-semibold tracking-wide uppercase text-xs">
+                        <div className="w-1 h-1 rounded-full bg-purple-400" />
+                        Eras Represented
+                      </div>
+                      <div className="flex flex-wrap gap-2">
                         {aiSummary.eras?.map((e: string) => (
-                          <Badge
+                          <span
                             key={e}
-                            className="bg-purple-700/30 text-purple-300 border-purple-700/40"
+                            className="px-3 py-1.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 text-sm font-medium hover:bg-purple-500/20 transition-all cursor-default"
                           >
                             {e}
-                          </Badge>
+                          </span>
                         ))}
                       </div>
                     </div>
-                    <div>
-                      <span className="font-semibold text-yellow-400">
-                        Artist Styles:
-                      </span>
-                      <div className="flex flex-wrap gap-2 mt-1">
+
+                    {/* Styles Section */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-yellow-400/80 font-semibold tracking-wide uppercase text-xs">
+                        <div className="w-1 h-1 rounded-full bg-yellow-400" />
+                        Artist Styles
+                      </div>
+                      <div className="flex flex-wrap gap-2">
                         {aiSummary.artistStyles?.map((a: string) => (
-                          <Badge
+                          <span
                             key={a}
-                            className="bg-yellow-700/30 text-yellow-300 border-yellow-700/40"
+                            className="px-3 py-1.5 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 text-sm font-medium hover:bg-yellow-500/20 transition-all cursor-default"
                           >
                             {a}
-                          </Badge>
+                          </span>
                         ))}
                       </div>
                     </div>
-                    <div>
-                      <span className="font-semibold text-pink-400">
-                        Search Terms:
-                      </span>
-                      <div className="flex flex-wrap gap-2 mt-1">
+
+                    {/* Search Terms Section */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-pink-400/80 font-semibold tracking-wide uppercase text-xs">
+                        <div className="w-1 h-1 rounded-full bg-pink-400" />
+                        Perfect Search Queries
+                      </div>
+                      <div className="flex flex-wrap gap-2">
                         {aiSummary.searchTerms?.map((s: string) => (
-                          <Badge
+                          <span
                             key={s}
-                            className="bg-pink-700/30 text-pink-300 border-pink-700/40"
+                            className="px-3 py-1.5 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20 text-sm font-medium hover:bg-pink-500/20 hover:scale-105 transition-all cursor-pointer italic"
                           >
-                            {s}
-                          </Badge>
+                            "{s}"
+                          </span>
                         ))}
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-zinc-400">No summary available.</div>
+                  <div className="flex flex-col items-center justify-center py-16 text-zinc-500 space-y-2">
+                    <Music className="h-12 w-12 opacity-20" />
+                    <p>Analysis failed to load. Please try again.</p>
+                  </div>
                 )}
               </DialogContent>
             </Dialog>
