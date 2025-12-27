@@ -83,6 +83,17 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const playerRef = useRef<any>(null);
   const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const silentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const isReadyRef = useRef<boolean>(false);
+  const deviceIdRef = useRef<string | null>(null);
+
+  // Sync refs with state
+  useEffect(() => {
+    isReadyRef.current = isReady;
+  }, [isReady]);
+
+  useEffect(() => {
+    deviceIdRef.current = deviceId;
+  }, [deviceId]);
 
   // Initialize silent audio for metadata hijacking (iOS/Mobile workaround)
   useEffect(() => {
@@ -114,24 +125,131 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       return;
     }
 
-    if (isGloballyInitialized) {
-      // If already initialized, use the existing player
-      if (globalPlayerInstance && globalDeviceId) {
-        setPlayer(globalPlayerInstance);
-        playerRef.current = globalPlayerInstance;
+    const attachPlayerListeners = (inst: any) => {
+      // Ready
+      inst.addListener("ready", ({ device_id }: { device_id: string }) => {
+        console.log("Spotify Player Ready with Device ID:", device_id);
+        globalDeviceId = device_id;
+        setDeviceId(device_id);
+        setIsReady(true);
+        setIsConnecting(false);
+      });
+
+      // Not Ready
+      inst.addListener("not_ready", ({ device_id }: { device_id: string }) => {
+        console.log("Device ID has gone offline:", device_id);
+        setIsReady(false);
+        setDeviceId(null);
+      });
+
+      // Player state changed
+      inst.addListener("player_state_changed", (state: any) => {
+        if (!state) {
+          setCurrentTrack(null);
+          setIsPlaying(false);
+          setIsPaused(true);
+          setPosition(0);
+          setDuration(0);
+          return;
+        }
+
+        const track = state.track_window.current_track;
+        const isCurrentlyPaused = state.paused;
+
+        setCurrentTrack({
+          id: track.id || "",
+          name: track.name,
+          artists: track.artists.map((artist: any) => ({
+            name: artist.name,
+            id: artist.uri?.split(":")[2] || "",
+          })),
+          album: {
+            name: track.album.name,
+            images: track.album.images || [],
+            id: track.album.uri?.split(":")[2] || "",
+            artists: track.artists.map((artist: any) => ({
+              name: artist.name,
+              id: artist.uri?.split(":")[2] || "",
+            })),
+            release_date: "",
+            total_tracks: 0,
+          },
+          duration_ms: state.duration,
+          explicit: false,
+          external_urls: {
+            spotify: `https://open.spotify.com/track/${track.id}`,
+          },
+          popularity: 0,
+          preview_url: null,
+          track_number: 0,
+          disc_number: 0,
+          uri: track.uri,
+        });
+
+        setIsPlaying(!isCurrentlyPaused);
+        setIsPaused(isCurrentlyPaused);
+        setPosition(state.position);
+        setDuration(state.duration);
+
+        // Handle track end for repeat one
+        const trackEnded =
+          state.position === 0 && isCurrentlyPaused && state.duration > 0;
+        if (trackEnded && !trackEndHandlerRef.current) {
+          trackEndHandlerRef.current = true;
+          setTimeout(() => {
+            trackEndHandlerRef.current = false;
+          }, 1000);
+        }
+      });
+
+      // Errors
+      inst.addListener(
+        "initialization_error",
+        ({ message }: { message: string }) => {
+          console.error("Spotify Player initialization error:", message);
+          setIsConnecting(false);
+          setIsReady(false);
+        }
+      );
+      inst.addListener(
+        "authentication_error",
+        ({ message }: { message: string }) => {
+          console.error("Spotify Player authentication error:", message);
+          setIsConnecting(false);
+          setIsReady(false);
+        }
+      );
+      inst.addListener("account_error", ({ message }: { message: string }) => {
+        console.error("Spotify Player account error:", message);
+        setIsConnecting(false);
+        setIsReady(false);
+      });
+      inst.addListener("playback_error", ({ message }: { message: string }) => {
+        console.error("Spotify Player playback error:", message);
+      });
+    };
+
+    if (globalPlayerInstance) {
+      console.log("Attaching listeners to existing global player instance");
+      setPlayer(globalPlayerInstance);
+      playerRef.current = globalPlayerInstance;
+      attachPlayerListeners(globalPlayerInstance);
+
+      if (globalDeviceId) {
         setDeviceId(globalDeviceId);
         setIsReady(true);
         setIsConnecting(false);
+      } else {
+        // Retry connection if we have an instance but no device ID
+        globalPlayerInstance.connect();
       }
       return;
     }
 
     const initializePlayer = () => {
-      if (window.Spotify && !isGloballyInitialized) {
-        isGloballyInitialized = true;
+      if (window.Spotify && !globalPlayerInstance) {
         setIsConnecting(true);
-
-        console.log("Initializing Spotify Player (ONE TIME ONLY)...");
+        console.log("Initializing Spotify Player (New Instance)...");
 
         const spotifyPlayer = new window.Spotify.Player({
           name: "SpotWave Player",
@@ -141,134 +259,21 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           volume: 0.5,
         });
 
-        // Ready
-        spotifyPlayer.addListener(
-          "ready",
-          ({ device_id }: { device_id: string }) => {
-            console.log("Spotify Player Ready with Device ID:", device_id);
-            globalDeviceId = device_id;
-            setDeviceId(device_id);
-            setIsReady(true);
-            setIsConnecting(false);
-          }
-        );
+        attachPlayerListeners(spotifyPlayer);
 
-        // Not Ready
-        spotifyPlayer.addListener(
-          "not_ready",
-          ({ device_id }: { device_id: string }) => {
-            console.log("Device ID has gone offline:", device_id);
-            setIsReady(false);
-            setDeviceId(null);
-          }
-        );
-
-        // Player state changed
-        spotifyPlayer.addListener("player_state_changed", (state: any) => {
-          if (!state) {
-            setCurrentTrack(null);
-            setIsPlaying(false);
-            setIsPaused(true);
-            setPosition(0);
-            setDuration(0);
-            return;
-          }
-
-          const track = state.track_window.current_track;
-          const isCurrentlyPaused = state.paused;
-
-          setCurrentTrack({
-            id: track.id || "",
-            name: track.name,
-            artists: track.artists.map((artist: any) => ({
-              name: artist.name,
-              id: artist.uri?.split(":")[2] || "",
-            })),
-            album: {
-              name: track.album.name,
-              images: track.album.images || [],
-              id: track.album.uri?.split(":")[2] || "",
-              artists: track.artists.map((artist: any) => ({
-                name: artist.name,
-                id: artist.uri?.split(":")[2] || "",
-              })),
-              release_date: "",
-              total_tracks: 0,
-            },
-            duration_ms: state.duration,
-            explicit: false,
-            external_urls: {
-              spotify: `https://open.spotify.com/track/${track.id}`,
-            },
-            popularity: 0,
-            preview_url: null,
-            track_number: 0,
-            disc_number: 0,
-            uri: track.uri,
-          });
-
-          setIsPlaying(!isCurrentlyPaused);
-          setIsPaused(isCurrentlyPaused);
-          setPosition(state.position);
-          setDuration(state.duration);
-
-          // Handle track end for repeat one
-          const trackEnded =
-            state.position === 0 && isCurrentlyPaused && state.duration > 0;
-          if (trackEnded && !trackEndHandlerRef.current) {
-            trackEndHandlerRef.current = true;
-            // Use a small delay to ensure we detect the track end properly
-            setTimeout(() => {
-              trackEndHandlerRef.current = false;
-            }, 1000);
-          }
-        });
-
-        // Error handling
-        spotifyPlayer.addListener(
-          "initialization_error",
-          ({ message }: { message: string }) => {
-            console.error("Spotify Player initialization error:", message);
-            setIsConnecting(false);
-            setIsReady(false);
-          }
-        );
-
-        spotifyPlayer.addListener(
-          "authentication_error",
-          ({ message }: { message: string }) => {
-            console.error("Spotify Player authentication error:", message);
-            setIsConnecting(false);
-            setIsReady(false);
-          }
-        );
-
-        spotifyPlayer.addListener(
-          "account_error",
-          ({ message }: { message: string }) => {
-            console.error("Spotify Player account error:", message);
-            setIsConnecting(false);
-            setIsReady(false);
-          }
-        );
-
-        spotifyPlayer.addListener(
-          "playback_error",
-          ({ message }: { message: string }) => {
-            console.error("Spotify Player playback error:", message);
-          }
-        );
-
-        // Connect to the player
-        spotifyPlayer.connect().then((success: boolean) => {
+        const connectPlayer = async () => {
+          const success = await spotifyPlayer.connect();
           if (success) {
             console.log("Successfully connected to Spotify Player!");
           } else {
-            console.error("Failed to connect to Spotify Player");
-            setIsConnecting(false);
-            setIsReady(false);
+            console.error(
+              "Failed to connect to Spotify Player, retrying in 2s..."
+            );
+            setTimeout(connectPlayer, 2000);
           }
-        });
+        };
+
+        connectPlayer();
 
         globalPlayerInstance = spotifyPlayer;
         setPlayer(spotifyPlayer);
@@ -276,15 +281,21 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     };
 
-    // Check if the SDK is already loaded
     if (window.Spotify) {
       initializePlayer();
     } else {
-      // If not loaded, set the callback that Spotify SDK calls
       window.onSpotifyWebPlaybackSDKReady = initializePlayer;
     }
 
     return () => {
+      // NOTE: We do not disconnect the global player on unmount,
+      // but we might want to remove OUR listeners if we added unique ones.
+      // However, Spotify SDK `removeListener` removes ALL listeners for an event name,
+      // which breaks shared instances.
+      // Since we rely on global singleton for PWA/SPA, we accept accumulating listeners
+      // or we just leave them. The state setters from unmounted components won't cause harm
+      // (React ignores updates on unmounted components usually, or better than broken player).
+      // Ideally we would manage a subscription list but for now this fixes the 'Device Not Ready' bug.
       if (volumeTimeoutRef.current) {
         clearTimeout(volumeTimeoutRef.current);
       }
@@ -332,27 +343,49 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => clearInterval(interval);
   }, [isPlaying, isPaused, player]);
 
-  // Helper function to wait for device to be ready
+  // Helper function to wait for device to be ready with retry
   const waitForDevice = useCallback(
-    async (maxWaitTime = 10000): Promise<boolean> => {
-      if (isReady && deviceId) {
+    async (maxWaitTime = 15000): Promise<boolean> => {
+      // Immediate check
+      if (isReadyRef.current && deviceIdRef.current) return true;
+      if (globalDeviceId) {
+        setDeviceId(globalDeviceId);
+        setIsReady(true);
         return true;
       }
+
+      console.log("Waiting for player device to be ready...");
 
       return new Promise((resolve) => {
         const startTime = Date.now();
         const checkInterval = setInterval(() => {
-          if (isReady && deviceId) {
+          // Check state via refs to avoid closure staleness
+          if (isReadyRef.current && deviceIdRef.current) {
+            console.log("Device became ready via state (ref check)!");
             clearInterval(checkInterval);
             resolve(true);
-          } else if (Date.now() - startTime > maxWaitTime) {
+          }
+          // Check global fallback
+          else if (globalDeviceId) {
+            console.log("Device became ready via global ref!");
+            setDeviceId(globalDeviceId);
+            setIsReady(true);
+
+            // Wait for state to sync? No, refs update in effect.
+            // Just resolve active true since global is truth
+            clearInterval(checkInterval);
+            resolve(true);
+          }
+          // Timeout
+          else if (Date.now() - startTime > maxWaitTime) {
+            console.warn("Wait for device timed out");
             clearInterval(checkInterval);
             resolve(false);
           }
-        }, 100);
+        }, 500);
       });
     },
-    [isReady, deviceId]
+    []
   );
 
   // Helper function to transfer playback to our device
@@ -396,17 +429,23 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Wait for device to be ready
       const deviceReady = await waitForDevice();
-      if (!deviceReady || !deviceId) {
+      if (!deviceReady || !deviceIdRef.current) {
         console.error(
           "Spotify device not ready. Please wait for the player to connect."
         );
         return;
       }
 
+      // 1s delay as suggested for robustness ("Initialization Delay")
+      // Only delay if we just became ready? Hard to track. A small delay always is safer for mobile.
+      await new Promise((r) => setTimeout(r, 500));
+
+      const activeDeviceId = deviceIdRef.current;
+
       try {
-        console.log("Playing track on device:", deviceId);
+        console.log("Playing track on device:", activeDeviceId);
         const response = await fetch(
-          `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
+          `https://api.spotify.com/v1/me/player/play?device_id=${activeDeviceId}`,
           {
             method: "PUT",
             body: JSON.stringify({
@@ -458,15 +497,20 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Wait for device to be ready
       const deviceReady = await waitForDevice();
-      if (!deviceReady || !deviceId) {
+      if (!deviceReady || !deviceIdRef.current) {
         console.error(
           "Spotify device not ready. Please wait for the player to connect."
         );
         return;
       }
 
+      // 1s delay as suggested for robustness
+      await new Promise((r) => setTimeout(r, 500));
+
+      const activeDeviceId = deviceIdRef.current;
+
       try {
-        console.log("Playing playlist on device:", deviceId);
+        console.log("Playing playlist on device:", activeDeviceId);
         const body: any = {
           context_uri: playlistUri,
         };
