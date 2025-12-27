@@ -77,6 +77,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
   const [aiRecTracks, setAiRecTracks] = useState<Track[]>([]);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [isAddingAll, setIsAddingAll] = useState(false);
+  const [discoveryCount, setDiscoveryCount] = useState(20);
 
   const VIBE_TAGS = [
     { label: "Pop", value: "pop" },
@@ -276,9 +277,9 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
     setIsAiProcessing(true);
     setAiRecTracks([]);
     try {
-      const promptContext = aiPrompt.trim()
-        ? `${aiPrompt}${selectedGenre ? ` (Genre: ${selectedGenre})` : ""}`
-        : `Genre: ${selectedGenre}`;
+      const promptContext = `count:${discoveryCount} ${aiPrompt.trim()}${
+        selectedGenre ? ` (Genre: ${selectedGenre})` : ""
+      }`;
 
       const response = await fetch("/api/ai-recommendations", {
         method: "POST",
@@ -294,14 +295,29 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
       const data = await response.json();
       const recs = data.recommendations || [];
 
-      // Search each recommendation on Spotify
+      // Search Spotify for tracks in parallel batches of 5 to avoid browser/API strain
       const foundTracks: Track[] = [];
-      for (const rec of recs) {
-        const track = await searchSpotifyTrack(rec.song, rec.artist);
-        if (track) foundTracks.push(track);
+      const trackIds = new Set<string>();
+      const batchSize = 5;
+
+      for (let i = 0; i < recs.length; i += batchSize) {
+        const batch = recs.slice(i, i + batchSize);
+        const results = await Promise.all(
+          batch.map((rec: any) => searchSpotifyTrack(rec.song, rec.artist))
+        );
+
+        // Filter out nulls and duplicates
+        results.forEach((track) => {
+          if (track && !trackIds.has(track.id)) {
+            trackIds.add(track.id);
+            foundTracks.push(track);
+          }
+        });
       }
 
+      // Update UI once with all unique tracks
       setAiRecTracks(foundTracks);
+
       if (foundTracks.length === 0) {
         toast.info("AI suggested songs but they couldn't be found on Spotify");
       }
@@ -649,8 +665,43 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                         </div>
                       </div>
 
+                      <div className="space-y-4 pt-2">
+                        <div className="flex items-center justify-between px-1">
+                          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                            Discovery Amount
+                          </label>
+                          <span className="text-xs font-bold text-green-400 bg-green-400/10 px-2 py-0.5 rounded">
+                            {discoveryCount} Songs
+                          </span>
+                        </div>
+                        <div className="px-1">
+                          <input
+                            type="range"
+                            min="10"
+                            max="100"
+                            step="10"
+                            value={discoveryCount}
+                            onChange={(e) =>
+                              setDiscoveryCount(parseInt(e.target.value))
+                            }
+                            className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-green-500"
+                          />
+                          <div className="flex justify-between mt-2 px-0.5">
+                            <span className="text-[9px] text-zinc-600 font-bold uppercase">
+                              10
+                            </span>
+                            <span className="text-[9px] text-zinc-600 font-bold uppercase">
+                              50
+                            </span>
+                            <span className="text-[9px] text-zinc-600 font-bold uppercase">
+                              100
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
                       <Button
-                        className="w-full bg-green-600 hover:bg-green-500 text-black font-bold h-11 transition-all active:scale-95 shadow-lg shadow-green-500/10"
+                        className="w-full bg-green-600 hover:bg-green-500 text-black font-bold h-11 transition-all active:scale-95 shadow-lg shadow-green-500/10 mt-2"
                         onClick={handleAiRecommend}
                         disabled={
                           isAiProcessing || (!aiPrompt.trim() && !selectedGenre)

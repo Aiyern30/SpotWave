@@ -40,7 +40,11 @@ export async function POST(req: Request) {
         context || "General popular music"
       }. Return ONLY a JSON array of objects with 'song' and 'artist' keys. Example: [{"song": "Bohemian Rhapsody", "artist": "Queen"}]`;
     } else if (type === "ai-search") {
-      prompt = `${systemInstruction} Suggest 10 specific songs for a playlist based on this prompt or genre: ${context}. 
+      const countMatch = context.match(/count:(\d+)/);
+      const count = countMatch ? countMatch[1] : "10";
+      const cleanContext = context.replace(/count:\d+/, "").trim();
+
+      prompt = `${systemInstruction} Suggest exactly ${count} specific and high-quality songs for a playlist based on this prompt or genre: ${cleanContext}. 
       Return ONLY a JSON array of objects with 'song' and 'artist' keys. 
       Example: [{"song": "Blinding Lights", "artist": "The Weeknd"}]`;
     } else if (type === "user-summary") {
