@@ -117,13 +117,15 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     const storedToken = localStorage.getItem("Token");
     if (storedToken) {
       setToken(storedToken);
+      // Optional: Start loading SDK script early if not present?
+      // Next.js handles script loading via layout, so we just set token availability.
     }
   }, []);
 
+  // Use a separate effect to trigger initialization as soon as token is set,
+  // ensuring we don't wait on other unrelated state.
   useEffect(() => {
-    if (!token) {
-      return;
-    }
+    if (!token) return;
 
     const attachPlayerListeners = (inst: any) => {
       // Ready
@@ -229,6 +231,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       });
     };
 
+    // Case 1: Player already exists globally
     if (globalPlayerInstance) {
       console.log("Attaching listeners to existing global player instance");
       setPlayer(globalPlayerInstance);
@@ -236,24 +239,31 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       attachPlayerListeners(globalPlayerInstance);
 
       if (globalDeviceId) {
+        console.log("Global device ID found immediately:", globalDeviceId);
         setDeviceId(globalDeviceId);
         setIsReady(true);
         setIsConnecting(false);
       } else {
         // Retry connection if we have an instance but no device ID
+        console.log("Global player exists but no device ID, reconnecting...");
         globalPlayerInstance.connect();
       }
       return;
     }
 
+    // Case 2: active initialization
     const initializePlayer = () => {
-      if (window.Spotify && !globalPlayerInstance) {
+      // Logic to prevent double init
+      if (isGloballyInitialized || globalPlayerInstance) return;
+      isGloballyInitialized = true;
+
+      if (window.Spotify) {
         setIsConnecting(true);
         console.log("Initializing Spotify Player (New Instance)...");
 
         const spotifyPlayer = new window.Spotify.Player({
           name: "SpotWave Player",
-          getOAuthToken: (cb: (token: string) => void) => {
+          getOAuthToken: (cb: (t: string) => void) => {
             cb(token);
           },
           volume: 0.5,
@@ -262,14 +272,15 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         attachPlayerListeners(spotifyPlayer);
 
         const connectPlayer = async () => {
+          console.log("Connecting to Spotify Player...");
           const success = await spotifyPlayer.connect();
           if (success) {
             console.log("Successfully connected to Spotify Player!");
           } else {
             console.error(
-              "Failed to connect to Spotify Player, retrying in 2s..."
+              "Failed to connect to Spotify Player, retrying in 500ms..."
             );
-            setTimeout(connectPlayer, 2000);
+            setTimeout(connectPlayer, 500);
           }
         };
 
@@ -286,20 +297,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     } else {
       window.onSpotifyWebPlaybackSDKReady = initializePlayer;
     }
-
-    return () => {
-      // NOTE: We do not disconnect the global player on unmount,
-      // but we might want to remove OUR listeners if we added unique ones.
-      // However, Spotify SDK `removeListener` removes ALL listeners for an event name,
-      // which breaks shared instances.
-      // Since we rely on global singleton for PWA/SPA, we accept accumulating listeners
-      // or we just leave them. The state setters from unmounted components won't cause harm
-      // (React ignores updates on unmounted components usually, or better than broken player).
-      // Ideally we would manage a subscription list but for now this fixes the 'Device Not Ready' bug.
-      if (volumeTimeoutRef.current) {
-        clearTimeout(volumeTimeoutRef.current);
-      }
-    };
   }, [token]);
 
   // Add cleanup only on window unload (when user closes tab)
@@ -370,9 +367,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             console.log("Device became ready via global ref!");
             setDeviceId(globalDeviceId);
             setIsReady(true);
-
-            // Wait for state to sync? No, refs update in effect.
-            // Just resolve active true since global is truth
             clearInterval(checkInterval);
             resolve(true);
           }
@@ -381,6 +375,15 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             console.warn("Wait for device timed out");
             clearInterval(checkInterval);
             resolve(false);
+          }
+          // KICK: Aggressive reconnect if taking too long (> 3s)
+          else if (Date.now() - startTime > 3000 && !isConnecting) {
+            console.warn(
+              "Device taking long to ready, kicking connect() again..."
+            );
+            if (playerRef.current) {
+              playerRef.current.connect();
+            }
           }
         }, 500);
       });
