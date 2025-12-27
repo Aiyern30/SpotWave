@@ -345,8 +345,13 @@ export default function UserHeader({
       if (result?.name && result?.description) {
         setInputValue(result.name);
         setDescriptionValue(result.description);
+        // Enable editing mode so user can review and confirm
+        setNameEditing(true);
+        setDescriptionEditing(true);
         const { toast } = await import("react-toastify");
-        toast.success("AI generated playlist name and description!");
+        toast.success(
+          "AI generated playlist name and description! Review and save."
+        );
       }
     } catch (error) {
       console.error("Error generating playlist details:", error);
