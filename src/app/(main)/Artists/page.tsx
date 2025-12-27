@@ -32,7 +32,14 @@ import {
 import { useRouter } from "next/navigation";
 import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
-import { Play, MoreHorizontal, Pause } from "lucide-react";
+import { Play, MoreHorizontal, Pause, ExternalLink, User } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui";
 import type {
   ArtistsResponseLASTFM,
   DisplayUIProps,
@@ -231,6 +238,7 @@ const Page = () => {
             <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium">
               Playcount
             </TableHead>
+            <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -384,6 +392,7 @@ const Page = () => {
                         <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium text-xs sm:text-sm">
                           Playcount
                         </TableHead>
+                        <TableHead className="w-[50px]"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -469,6 +478,49 @@ const Page = () => {
                                 className="text-zinc-400 text-sm"
                               />
                             </TableCell>
+                            <TableCell className="py-3 sm:py-4">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-zinc-400 hover:text-white"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                  align="end"
+                                  className="w-56 bg-zinc-900 border-zinc-800"
+                                >
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleClick(artist.id, artist.name);
+                                    }}
+                                    className="text-white hover:bg-green-500/20 hover:text-green-400"
+                                  >
+                                    <User className="mr-2 h-4 w-4" />
+                                    Go to artist
+                                  </DropdownMenuItem>
+
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      window.open(
+                                        `https://open.spotify.com/artist/${artist.id}`,
+                                        "_blank"
+                                      );
+                                    }}
+                                    className="text-white hover:bg-green-500/20 hover:text-green-400"
+                                  >
+                                    <ExternalLink className="mr-2 h-4 w-4" />
+                                    Open in Spotify
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
                           </TableRow>
                         );
                       })}
@@ -497,6 +549,49 @@ const Page = () => {
                       onPause={pauseTrack}
                       onResume={resumeTrack}
                       onClick={handleClick}
+                      menu={
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 bg-black/60 hover:bg-black/80 text-white rounded-full backdrop-blur-sm shadow-sm"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-56 bg-zinc-900 border-zinc-800"
+                          >
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleClick(artist.id, artist.name);
+                              }}
+                              className="text-white hover:bg-green-500/20 hover:text-green-400"
+                            >
+                              <User className="mr-2 h-4 w-4" />
+                              Go to artist
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(
+                                  `https://open.spotify.com/artist/${artist.id}`,
+                                  "_blank"
+                                );
+                              }}
+                              className="text-white hover:bg-green-500/20 hover:text-green-400"
+                            >
+                              <ExternalLink className="mr-2 h-4 w-4" />
+                              Open in Spotify
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      }
                     />
                   );
                 })}
