@@ -58,7 +58,16 @@ export async function POST(req: Request) {
       "searchTerms": [5 specific search queries they would use to find similar new music]
       Example: {"genres": ["Pop", "R&B"], "moods": ["Chilly", "Energetic"], "eras": ["Modern"], "artistStyles": ["Polished"], "searchTerms": ["Pop hits"]}`;
     } else if (type === "playlist-naming") {
-      prompt = `${systemInstruction} Based on this playlist information: ${context}. Generate a creative and catchy playlist name and a brief description (1-2 sentences). Return ONLY a JSON object with 'name' and 'description' keys. Example: {"name": "Sunset Vibes", "description": "Chill beats and mellow tracks perfect for watching the sunset."}`;
+      const lengthInstruction =
+        context.length === "short"
+          ? "Keep the description very short and punchy (max 10 words)."
+          : "Make the description detailed and expressive (2-3 sentences).";
+
+      const userContext = context.userPrompt
+        ? `User specific vibe request: "${context.userPrompt}".`
+        : "";
+
+      prompt = `${systemInstruction} Based on this playlist information: ${context.playlistInfo}. ${userContext} ${lengthInstruction} Generate a creative and catchy playlist name and a description. Return ONLY a JSON object with 'name' and 'description' keys. Example: {"name": "Sunset Vibes", "description": "Chill beats and mellow tracks perfect for watching the sunset."}`;
     } else {
       prompt = `${systemInstruction} Suggest 5 ideas for a music quiz. Context: ${
         context || "General popular music"

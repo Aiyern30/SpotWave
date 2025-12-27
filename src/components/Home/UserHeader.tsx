@@ -20,6 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/";
 import {
   Tooltip,
@@ -41,6 +43,8 @@ import {
   Save,
   Sparkles,
   Wand2,
+  ListFilter,
+  AlignLeft,
 } from "lucide-react";
 import { formatDuration } from "@/utils/function";
 import type { PlaylistProps, UserProfile } from "@/lib/types";
@@ -82,6 +86,17 @@ export default function UserHeader({
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [inputWidth, setInputWidth] = useState<number>(0);
   const [generatingAI, setGeneratingAI] = useState(false);
+
+  // New AI Generation States
+  const [aiGenIsOpen, setAiGenIsOpen] = useState(false);
+  const [userAiPrompt, setUserAiPrompt] = useState("");
+  const [descriptionLength, setDescriptionLength] = useState<"short" | "long">(
+    "short"
+  );
+  const [generatedContent, setGeneratedContent] = useState<{
+    name: string;
+    description: string;
+  } | null>(null);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
@@ -314,6 +329,8 @@ export default function UserHeader({
     }
 
     setGeneratingAI(true);
+    setGeneratedContent(null);
+
     try {
       // Gather playlist context
       const tracks = playlist.tracks.items.slice(0, 20); // Use first 20 tracks
@@ -322,7 +339,7 @@ export default function UserHeader({
       ];
       const trackNames = tracks.map((t) => t.track.name);
 
-      const context = `Playlist contains ${
+      const playlistInfo = `Playlist contains ${
         playlist.tracks.total
       } tracks. Sample tracks: ${trackNames
         .slice(0, 10)
@@ -333,7 +350,11 @@ export default function UserHeader({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "playlist-naming",
-          context,
+          context: {
+            playlistInfo,
+            userPrompt: userAiPrompt,
+            length: descriptionLength,
+          },
         }),
       });
 
@@ -343,15 +364,9 @@ export default function UserHeader({
       const result = data.recommendations;
 
       if (result?.name && result?.description) {
-        setInputValue(result.name);
-        setDescriptionValue(result.description);
-        // Enable editing mode so user can review and confirm
-        setNameEditing(true);
-        setDescriptionEditing(true);
+        setGeneratedContent(result);
         const { toast } = await import("react-toastify");
-        toast.success(
-          "AI generated playlist name and description! Review and save."
-        );
+        toast.success("Generated! Review and apply.");
       }
     } catch (error) {
       console.error("Error generating playlist details:", error);
@@ -359,6 +374,17 @@ export default function UserHeader({
       toast.error("Failed to generate playlist details");
     } finally {
       setGeneratingAI(false);
+    }
+  };
+
+  const applyGeneratedContent = () => {
+    if (generatedContent) {
+      setInputValue(generatedContent.name);
+      setDescriptionValue(generatedContent.description);
+      setNameEditing(true);
+      setDescriptionEditing(true);
+      setAiGenIsOpen(false);
+      setGeneratedContent(null);
     }
   };
 
@@ -587,45 +613,205 @@ export default function UserHeader({
                       {inputValue}
                     </h1>
                     {isOwner && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setNameEditing(true)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-white hover:bg-zinc-800/50 flex-shrink-0"
-                            >
-                              <Edit3 className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Edit playlist name</p>
-                          </TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={generatePlaylistNameAndDescription}
-                              disabled={
-                                generatingAI || playlist.tracks.total === 0
-                              }
-                              className="opacity-0 group-hover:opacity-100 transition-opacity text-green-400 hover:text-green-300 hover:bg-green-500/10 flex-shrink-0"
-                            >
-                              {generatingAI ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
+                      <>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setNameEditing(true)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-white hover:bg-zinc-800/50 flex-shrink-0"
+                              >
+                                <Edit3 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Edit playlist name</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setAiGenIsOpen(true)}
+                                disabled={
+                                  generatingAI || playlist.tracks.total === 0
+                                }
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-green-400 hover:text-green-300 hover:bg-green-500/10 flex-shrink-0"
+                              >
                                 <Wand2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>AI Generate Name & Description</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
+                        <Dialog
+                          open={aiGenIsOpen}
+                          onOpenChange={(open) => {
+                            setAiGenIsOpen(open);
+                            if (!open) setGeneratedContent(null);
+                          }}
+                        >
+                          <DialogContent className="bg-zinc-900 border-zinc-800 text-white sm:max-w-[425px]">
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-2 text-xl">
+                                <Sparkles className="h-5 w-5 text-green-400" />
+                                AI Magic Renamer
+                              </DialogTitle>
+                              <DialogDescription className="text-zinc-400">
+                                Customize how AI reads your playlist vibes.
+                              </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="grid gap-6 py-4">
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium text-zinc-300">
+                                  Vibe / Context (Optional)
+                                </label>
+                                <Input
+                                  placeholder="e.g. 'Chill late night drive', 'Gym beast mode'"
+                                  value={userAiPrompt}
+                                  onChange={(e) =>
+                                    setUserAiPrompt(e.target.value)
+                                  }
+                                  className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-green-500"
+                                />
+                              </div>
+
+                              <div className="space-y-3">
+                                <label className="text-sm font-medium text-zinc-300">
+                                  Description Length
+                                </label>
+                                <div className="flex gap-4">
+                                  <div
+                                    onClick={() =>
+                                      setDescriptionLength("short")
+                                    }
+                                    className={`flex-1 p-3 rounded-lg border cursor-pointer transition-all ${
+                                      descriptionLength === "short"
+                                        ? "bg-green-500/10 border-green-500 text-green-400"
+                                        : "bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <ListFilter className="h-4 w-4" />
+                                      <span className="font-semibold text-sm">
+                                        Short
+                                      </span>
+                                    </div>
+                                    <p className="text-xs opacity-70">
+                                      Punchy & concise.
+                                    </p>
+                                  </div>
+
+                                  <div
+                                    onClick={() => setDescriptionLength("long")}
+                                    className={`flex-1 p-3 rounded-lg border cursor-pointer transition-all ${
+                                      descriptionLength === "long"
+                                        ? "bg-green-500/10 border-green-500 text-green-400"
+                                        : "bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <AlignLeft className="h-4 w-4" />
+                                      <span className="font-semibold text-sm">
+                                        Detailed
+                                      </span>
+                                    </div>
+                                    <p className="text-xs opacity-70">
+                                      Expressive & full.
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {generatedContent && (
+                                <div className="space-y-4 pt-4 border-t border-zinc-800 animate-in fade-in zoom-in-95 duration-300">
+                                  <div className="space-y-1">
+                                    <label className="text-xs font-medium text-green-400 uppercase tracking-wider">
+                                      Generated Name
+                                    </label>
+                                    <Input
+                                      value={generatedContent.name}
+                                      onChange={(e) =>
+                                        setGeneratedContent((prev) =>
+                                          prev
+                                            ? { ...prev, name: e.target.value }
+                                            : null
+                                        )
+                                      }
+                                      className="bg-zinc-800/50 border-zinc-700 text-white"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-xs font-medium text-green-400 uppercase tracking-wider">
+                                      Generated Description
+                                    </label>
+                                    <Textarea
+                                      value={generatedContent.description}
+                                      onChange={(e) =>
+                                        setGeneratedContent((prev) =>
+                                          prev
+                                            ? {
+                                                ...prev,
+                                                description: e.target.value,
+                                              }
+                                            : null
+                                        )
+                                      }
+                                      className="bg-zinc-800/50 border-zinc-700 text-white h-24  resize-none"
+                                    />
+                                  </div>
+                                </div>
                               )}
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>AI Generate Name & Description</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                            </div>
+
+                            <DialogFooter className="flex-col sm:flex-row gap-2">
+                              {!generatedContent ? (
+                                <Button
+                                  onClick={generatePlaylistNameAndDescription}
+                                  disabled={generatingAI}
+                                  className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold"
+                                >
+                                  {generatingAI ? (
+                                    <>
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      Magic in Progress...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Wand2 className="mr-2 h-4 w-4" />
+                                      Generate
+                                    </>
+                                  )}
+                                </Button>
+                              ) : (
+                                <div className="flex gap-2 w-full">
+                                  <Button
+                                    variant="outline"
+                                    onClick={generatePlaylistNameAndDescription}
+                                    disabled={generatingAI}
+                                    className="flex-1 border-zinc-700 text-zinc-300 hover:text-white"
+                                  >
+                                    Try Again
+                                  </Button>
+                                  <Button
+                                    onClick={applyGeneratedContent}
+                                    className="flex-1 bg-green-500 hover:bg-green-600 text-black font-semibold"
+                                  >
+                                    Apply Changes
+                                  </Button>
+                                </div>
+                              )}
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      </>
                     )}
                   </div>
                 )}
