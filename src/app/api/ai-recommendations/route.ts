@@ -165,6 +165,17 @@ export async function POST(req: Request) {
         "❌ All AI models failed. Last error from provider:",
         lastError
       );
+
+      if (type === "playlist-naming") {
+        return NextResponse.json({
+          recommendations: {
+            name: "AI Generated Playlist",
+            description: "A specially curated playlist just for you.",
+          },
+          _error: lastError,
+        });
+      }
+
       return NextResponse.json({
         recommendations:
           type === "ideas" ? fallbackSuggestions : fallbackTracks,
