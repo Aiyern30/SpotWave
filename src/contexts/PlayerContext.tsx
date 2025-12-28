@@ -708,12 +708,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!("mediaSession" in navigator)) return;
 
     if (currentTrack) {
-      // Delay metadata update to overwrite Spotify SDK's default "Spotify Embedded Player"
-      // which usually fires immediately on track change.
-      const timer = setTimeout(() => {
+      const updateMetadata = () => {
         if (!currentTrack) return;
 
-        // Update metadata
         navigator.mediaSession.metadata = new MediaMetadata({
           title: currentTrack.name,
           artist: currentTrack.artists.map((a) => a.name).join(", "),
@@ -724,7 +721,17 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             type: "image/jpeg",
           })),
         });
-      }, 500); // 500ms Delay
+      };
+
+      // Update immediately
+      updateMetadata();
+
+      // Retry updates to fight against Spotify SDK overwriting our metadata
+      // We do this every 500ms for 3 seconds after track change
+      const interval = setInterval(updateMetadata, 500);
+      const timeout = setTimeout(() => {
+        clearInterval(interval);
+      }, 3000);
 
       // Set action handlers
       navigator.mediaSession.setActionHandler("play", () => {
@@ -745,7 +752,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       });
 
-      return () => clearTimeout(timer);
+      return () => {
+        clearInterval(interval);
+        clearTimeout(timeout);
+      };
     } else {
       navigator.mediaSession.metadata = null;
     }
@@ -755,7 +765,14 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (!("mediaSession" in navigator)) return;
     navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
-  }, [isPlaying]);
+
+    // Force silent audio to play to ensure we own the media session
+    if (isPlaying && silentAudioRef.current) {
+      silentAudioRef.current
+        .play()
+        .catch((e) => console.error("Silent audio ensure-play failed:", e));
+    }
+  }, [isPlaying, currentTrack]);
 
   const clearQueue = useCallback(() => {
     setQueue([]);
