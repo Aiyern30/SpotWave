@@ -76,7 +76,10 @@ if ($audioFiles.Count -gt 0) {
     # Create ZIP filename with timestamp
     $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
     $zipName = "playlist_$timestamp.zip"
-    $zipPath = Join-Path (Get-Location) $zipName
+    
+    # Save to user's Downloads folder
+    $downloadsFolder = [Environment]::GetFolderPath("UserProfile") + "\Downloads"
+    $zipPath = Join-Path $downloadsFolder $zipName
     
     # Create the ZIP file with all audio files
     Compress-Archive -Path $audioFiles.FullName -DestinationPath $zipPath -Force
@@ -84,6 +87,14 @@ if ($audioFiles.Count -gt 0) {
     $songCount = $audioFiles.Count
     Write-Host "Created: $zipName ($songCount songs)" -ForegroundColor Green
     Write-Host "Location: $zipPath" -ForegroundColor Yellow
+    
+    # Clean up: Remove individual audio files after successful ZIP creation
+    Write-Host ""
+    Write-Host "Cleaning up individual files..." -ForegroundColor Cyan
+    foreach ($file in $audioFiles) {
+        Remove-Item $file.FullName -Force
+    }
+    Write-Host "Cleaned up $songCount audio files from downloads folder" -ForegroundColor Green
 } else {
     Write-Host "No audio files found to zip." -ForegroundColor Yellow
 }
