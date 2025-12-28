@@ -425,6 +425,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     async (track: Track) => {
       console.log("Attempting to play track:", track.name);
 
+      // Play silent audio immediately to grab Media Session focus (iOS restriction)
+      silentAudioRef.current
+        ?.play()
+        .catch((e) => console.error("Silent audio play failed (early):", e));
+
       // Get fresh token from localStorage if context token is not available
       const currentToken = token || localStorage.getItem("Token");
 
@@ -492,6 +497,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const playPlaylist = useCallback(
     async (playlistUri: string, trackUri?: string) => {
       console.log("Attempting to play playlist:", playlistUri);
+
+      // Play silent audio immediately to grab Media Session focus (iOS restriction)
+      silentAudioRef.current
+        ?.play()
+        .catch((e) => console.error("Silent audio play failed (early):", e));
 
       // Get fresh token from localStorage if context token is not available
       const currentToken = token || localStorage.getItem("Token");
@@ -727,11 +737,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       updateMetadata();
 
       // Retry updates to fight against Spotify SDK overwriting our metadata
-      // We do this every 500ms for 3 seconds after track change
-      const interval = setInterval(updateMetadata, 500);
-      const timeout = setTimeout(() => {
-        clearInterval(interval);
-      }, 3000);
+      // Continuous update to ensure our metadata takes precedence
+      const interval = setInterval(updateMetadata, 1000);
 
       // Set action handlers
       navigator.mediaSession.setActionHandler("play", () => {
@@ -754,7 +761,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return () => {
         clearInterval(interval);
-        clearTimeout(timeout);
       };
     } else {
       navigator.mediaSession.metadata = null;
