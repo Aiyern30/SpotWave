@@ -46,6 +46,7 @@ import {
   ListFilter,
   AlignLeft,
   Download,
+  Youtube,
 } from "lucide-react";
 import { formatDuration } from "@/utils/function";
 import type { PlaylistProps, UserProfile } from "@/lib/types";
@@ -421,16 +422,17 @@ export default function UserHeader({
       // 3. Prepare content (Metadata only due to DRM)
       const header = `Playlist: ${playlist.name}\nDescription: ${
         playlist.description || "N/A"
-      }\nTotal Tracks: ${
-        playlist.tracks.total
-      }\nExported from SpotWave\n\n----------------------------------------\n\n`;
+      }\nTotal Tracks: ${playlist.tracks.total}\n\n`;
 
       const tracks = playlist.tracks.items
-        .map((item, index) => {
+        .map((item) => {
           const track = item.track;
           const artists = track.artists.map((a) => a.name).join(", ");
-          const duration = formatDuration(track.duration_ms);
-          return `${index + 1}. ${track.name} - ${artists} [${duration}]`;
+          const query = encodeURIComponent(`${track.name} ${artists} audio`);
+          const ytSearchLink = `https://www.youtube.com/results?search_query=${query}`;
+
+          // Format: Title - Artist [NewLine] YouTube Search Link
+          return `${track.name} - ${artists}\n${ytSearchLink}\n`;
         })
         .join("\n");
 
@@ -460,6 +462,14 @@ export default function UserHeader({
       const { toast } = await import("react-toastify");
       toast.error("Failed to export playlist. Please try again.");
     }
+  };
+
+  const handleOpenYouTube = () => {
+    const query = encodeURIComponent(`${playlist.name} playlist`);
+    window.open(
+      `https://www.youtube.com/results?search_query=${query}`,
+      "_blank"
+    );
   };
 
   const totalDuration = playlist.tracks.items
@@ -1028,6 +1038,22 @@ export default function UserHeader({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Export Playlist Info</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleOpenYouTube}
+                    className="h-12 w-12 rounded-full bg-red-500/20 backdrop-blur-sm border border-red-500/30 hover:bg-red-500/40 hover:border-red-500/50 transition-all duration-200 hover:scale-105"
+                  >
+                    <Youtube className="h-5 w-5 text-red-500" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Find on YouTube</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
