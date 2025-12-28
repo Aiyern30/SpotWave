@@ -111,6 +111,23 @@ export const MusicPlayer = ({
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [estimatedPosition, setEstimatedPosition] = useState(position);
+
+  // Sync estimated position with global position (source of truth)
+  useEffect(() => {
+    setEstimatedPosition(position);
+  }, [position]);
+
+  // Interpolate position every 100ms for smooth UI updates
+  useEffect(() => {
+    if (!isPlaying || isPaused) return;
+
+    const interval = setInterval(() => {
+      setEstimatedPosition((prev) => Math.min(prev + 100, duration));
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, isPaused, duration]);
 
   const isQuizPage =
     pathname?.startsWith("/Games/artist-quiz/") ||
@@ -278,7 +295,7 @@ export const MusicPlayer = ({
       return;
     }
 
-    const adjustedPosition = position + 300;
+    const adjustedPosition = estimatedPosition + 300;
 
     let newIndex = -1;
     for (let i = syncedLyrics.length - 1; i >= 0; i--) {
@@ -303,7 +320,13 @@ export const MusicPlayer = ({
         }
       }
     }
-  }, [position, syncedLyrics, currentLyricIndex, isLyricsSheetOpen, isPlaying]);
+  }, [
+    estimatedPosition,
+    syncedLyrics,
+    currentLyricIndex,
+    isLyricsSheetOpen,
+    isPlaying,
+  ]);
 
   const handleLyricsClick = () => {
     if (!currentTrack) return;
@@ -350,6 +373,7 @@ export const MusicPlayer = ({
 
   const handleSeek = useCallback(
     (newPosition: number[]) => {
+      setEstimatedPosition(newPosition[0]); // Optimistic update
       seekTo(newPosition[0]);
     },
     [seekTo]
@@ -413,7 +437,7 @@ export const MusicPlayer = ({
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-zinc-800 md:hidden">
         <div
           className="h-full bg-green-500 transition-all duration-300"
-          style={{ width: `${(position / duration) * 100}%` }}
+          style={{ width: `${(estimatedPosition / duration) * 100}%` }}
         />
       </div>
 
@@ -591,10 +615,10 @@ export const MusicPlayer = ({
           {/* Progress Bar */}
           <div className="flex items-center gap-2 w-full">
             <span className="text-[11px] text-zinc-400 w-10 text-right tabular-nums">
-              {formatTime(position)}
+              {formatTime(estimatedPosition)}
             </span>
             <Slider
-              value={[position]}
+              value={[estimatedPosition]}
               max={duration}
               step={1000}
               onValueChange={handleSeek}
