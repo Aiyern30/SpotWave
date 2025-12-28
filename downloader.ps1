@@ -69,8 +69,10 @@ foreach ($song in $playlist) {
 Write-Host ""
 Write-Host "Creating ZIP file..." -ForegroundColor Cyan
 
-# Get all audio files (mp3, webm, m4a)
-$audioFiles = Get-ChildItem -Path $OutputDir -Include "*.mp3", "*.webm", "*.m4a" -Recurse
+# Get all audio files (mp3, webm, m4a) - using Where-Object for better filtering
+$audioFiles = Get-ChildItem -Path $OutputDir | Where-Object { 
+    $_.Extension -in @('.mp3', '.webm', '.m4a') 
+}
 
 if ($audioFiles.Count -gt 0) {
     # Create ZIP filename with timestamp
@@ -93,6 +95,7 @@ if ($audioFiles.Count -gt 0) {
     Write-Host "Cleaning up individual files..." -ForegroundColor Cyan
     foreach ($file in $audioFiles) {
         Remove-Item $file.FullName -Force
+        Write-Host "  Deleted: $($file.Name)" -ForegroundColor Gray
     }
     Write-Host "Cleaned up $songCount audio files from downloads folder" -ForegroundColor Green
 } else {
