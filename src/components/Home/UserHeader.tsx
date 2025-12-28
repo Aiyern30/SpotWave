@@ -45,6 +45,7 @@ import {
   Wand2,
   ListFilter,
   AlignLeft,
+  Download,
 } from "lucide-react";
 import { formatDuration } from "@/utils/function";
 import type { PlaylistProps, UserProfile } from "@/lib/types";
@@ -385,6 +386,79 @@ export default function UserHeader({
       setDescriptionEditing(true);
       setAiGenIsOpen(false);
       setGeneratedContent(null);
+    }
+  };
+
+  const handleExportPlaylist = async () => {
+    try {
+      // Check for browser support
+      if (!("showDirectoryPicker" in window)) {
+        const { toast } = await import("react-toastify");
+        toast.error(
+          "Your browser doesn't support directory selection. Please use Chrome, Edge, or Opera on Desktop."
+        );
+        return;
+      }
+
+      // 1. Ask user for directory
+      // @ts-ignore - File System Access API
+      const dirHandle = await window.showDirectoryPicker({
+        mode: "readwrite",
+        startIn: "downloads",
+      });
+
+      const { toast } = await import("react-toastify");
+      toast.info("Preparing export...", { autoClose: 2000 });
+
+      // 2. Create a file for the playlist
+      const safeName = playlist.name.replace(/[^a-z0-9]/gi, "_");
+      // @ts-ignore
+      const fileHandle = await dirHandle.getFileHandle(
+        `${safeName}_Tracklist.txt`,
+        { create: true }
+      );
+
+      // 3. Prepare content (Metadata only due to DRM)
+      const header = `Playlist: ${playlist.name}\nDescription: ${
+        playlist.description || "N/A"
+      }\nTotal Tracks: ${
+        playlist.tracks.total
+      }\nExported from SpotWave\n\n----------------------------------------\n\n`;
+
+      const tracks = playlist.tracks.items
+        .map((item, index) => {
+          const track = item.track;
+          const artists = track.artists.map((a) => a.name).join(", ");
+          const duration = formatDuration(track.duration_ms);
+          return `${index + 1}. ${track.name} - ${artists} [${duration}]`;
+        })
+        .join("\n");
+
+      const content = header + tracks;
+
+      // 4. Write to file
+      // @ts-ignore
+      const writable = await fileHandle.createWritable();
+      await writable.write(content);
+      await writable.close();
+
+      toast.success("Playlist exported successfully!");
+
+      // 5. Inform user about MP3 limitation
+      setTimeout(() => {
+        toast.warning(
+          "Note: Direct MP3 download is restricted by Spotify API. Tracklist metadata has been saved instead.",
+          { autoClose: 6000 }
+        );
+      }, 1000);
+    } catch (error: any) {
+      if (error.name === "AbortError") {
+        // User cancelled selection
+        return;
+      }
+      console.error("Export failed:", error);
+      const { toast } = await import("react-toastify");
+      toast.error("Failed to export playlist. Please try again.");
     }
   };
 
@@ -939,6 +1013,24 @@ export default function UserHeader({
           <div className="flex flex-row lg:flex-col space-x-3 lg:space-x-0 lg:space-y-3 items-center lg:items-end justify-center lg:justify-end mt-6 lg:mt-0">
             <Settings playlistID={playlist.id} />
             <SearchSongs playlistID={playlist.id} refetch={refetch} />
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleExportPlaylist}
+                    className="h-12 w-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 hover:bg-black/30 hover:border-white/20 transition-all duration-200 hover:scale-105"
+                  >
+                    <Download className="h-5 w-5 text-white" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Export Playlist Info</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             {/* View Summary Button - Only show if playlist has tracks */}
             {playlist.tracks.total > 0 && (
               <Dialog
