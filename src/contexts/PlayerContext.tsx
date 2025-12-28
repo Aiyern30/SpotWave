@@ -44,6 +44,7 @@ interface PlayerContextType {
   isReady: boolean;
   player: any;
   isConnecting: boolean;
+  setToken: (token: string) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -760,6 +761,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setQueue([]);
   }, []);
 
+  const updateToken = useCallback((t: string) => {
+    setToken(t);
+  }, []);
+
   const value: PlayerContextType = {
     currentTrack,
     isPlaying,
@@ -784,6 +789,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     isReady,
     player,
     isConnecting,
+    setToken: updateToken,
   };
 
   return (

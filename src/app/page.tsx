@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Play, Headphones, Volume2 } from "lucide-react";
 import Image from "next/image";
+import { usePlayer } from "@/contexts/PlayerContext";
 
 // PKCE Helper Functions
 function generateRandomString(length: number): string {
@@ -30,6 +31,7 @@ function base64encode(input: ArrayBuffer): string {
 export default function Home() {
   const CLIENT_ID = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID || "";
   const [token, setToken] = useState<string>("");
+  const { setToken: setContextToken } = usePlayer();
   const [loading, setLoading] = useState<boolean>(false);
   const [isRedirecting, setIsRedirecting] = useState<boolean>(false);
   const router = useRouter();
@@ -92,6 +94,7 @@ export default function Home() {
           window.localStorage.setItem("RefreshToken", data.refresh_token);
         }
         setToken(data.access_token);
+        setContextToken(data.access_token);
         setLoading(false);
 
         // Clean up URL before redirecting
@@ -157,6 +160,7 @@ export default function Home() {
       validateToken(storedToken).then((isValid) => {
         if (isValid) {
           setToken(storedToken);
+          setContextToken(storedToken);
           router.push("/Home");
         } else {
           window.localStorage.removeItem("Token");
@@ -228,9 +232,8 @@ export default function Home() {
                   height: `${Math.random() * 300 + 50}px`,
                   top: `${Math.random() * 100}%`,
                   left: `${Math.random() * 100}%`,
-                  animation: `float ${
-                    Math.random() * 10 + 15
-                  }s linear infinite`,
+                  animation: `float ${Math.random() * 10 + 15
+                    }s linear infinite`,
                   animationDelay: `${Math.random() * 5}s`,
                   opacity: Math.random() * 0.5,
                 }}
