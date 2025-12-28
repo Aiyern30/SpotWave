@@ -411,32 +411,37 @@ export default function UserHeader({
       const { toast } = await import("react-toastify");
       toast.info("Preparing export...", { autoClose: 2000 });
 
-      // 2. Create a file for the playlist
-      const safeName = playlist.name.replace(/[^a-z0-9]/gi, "_");
+      // 2. Create 'downloads' subdirectory if it doesn't exist
+      let downloadsDir;
+      try {
+        // @ts-ignore
+        downloadsDir = await dirHandle.getDirectoryHandle("downloads", {
+          create: true,
+        });
+      } catch (e) {
+        // @ts-ignore
+        downloadsDir = dirHandle;
+      }
+
+      // 3. Create the playlist.json file
       // @ts-ignore
-      const fileHandle = await dirHandle.getFileHandle(
-        `${safeName}_Tracklist.txt`,
-        { create: true }
-      );
+      const fileHandle = await downloadsDir.getFileHandle(`playlist.json`, {
+        create: true,
+      });
 
-      // 3. Prepare content (Metadata only due to DRM)
-      const header = `Playlist: ${playlist.name}\nDescription: ${
-        playlist.description || "N/A"
-      }\nTotal Tracks: ${playlist.tracks.total}\n\n`;
+      // 4. Prepare JSON content
+      const exportData = playlist.tracks.items.map((item) => {
+        const track = item.track;
+        const artists = track.artists.map((a) => a.name).join(", ");
+        return {
+          title: track.name,
+          artist: artists,
+          // "ytsearch1:" tells the downloader to pick the first result
+          query: `${track.name} ${artists} audio`,
+        };
+      });
 
-      const tracks = playlist.tracks.items
-        .map((item) => {
-          const track = item.track;
-          const artists = track.artists.map((a) => a.name).join(", ");
-          const query = encodeURIComponent(`${track.name} ${artists} audio`);
-          const ytSearchLink = `https://www.youtube.com/results?search_query=${query}`;
-
-          // Format: Title - Artist [NewLine] YouTube Search Link
-          return `${track.name} - ${artists}\n${ytSearchLink}\n`;
-        })
-        .join("\n");
-
-      const content = header + tracks;
+      const content = JSON.stringify(exportData, null, 2);
 
       // 4. Write to file
       // @ts-ignore
@@ -444,7 +449,11 @@ export default function UserHeader({
       await writable.write(content);
       await writable.close();
 
-      toast.success("Playlist exported successfully!");
+      toast.success("Playlist exported to downloads/playlist.json!");
+      toast.info(
+        "Now run: .\\downloader.ps1 in your SpotWave folder to download the songs!",
+        { autoClose: 8000 }
+      );
 
       // 5. Inform user about MP3 limitation
       setTimeout(() => {
