@@ -46,7 +46,6 @@ import {
   ListFilter,
   AlignLeft,
   Download,
-  Youtube,
 } from "lucide-react";
 import { formatDuration } from "@/utils/function";
 import type { PlaylistProps, UserProfile } from "@/lib/types";
@@ -392,93 +391,43 @@ export default function UserHeader({
 
   const handleExportPlaylist = async () => {
     try {
-      // Check for browser support
-      if (!("showDirectoryPicker" in window)) {
-        const { toast } = await import("react-toastify");
-        toast.error(
-          "Your browser doesn't support directory selection. Please use Chrome, Edge, or Opera on Desktop."
-        );
-        return;
-      }
-
-      // 1. Ask user for directory
-      // @ts-ignore - File System Access API
-      const dirHandle = await window.showDirectoryPicker({
-        mode: "readwrite",
-        startIn: "downloads",
-      });
-
       const { toast } = await import("react-toastify");
       toast.info("Preparing export...", { autoClose: 2000 });
 
-      // 2. Create 'downloads' subdirectory if it doesn't exist
-      let downloadsDir;
-      try {
-        // @ts-ignore
-        downloadsDir = await dirHandle.getDirectoryHandle("downloads", {
-          create: true,
-        });
-      } catch (e) {
-        // @ts-ignore
-        downloadsDir = dirHandle;
-      }
-
-      // 3. Create the playlist.json file
-      // @ts-ignore
-      const fileHandle = await downloadsDir.getFileHandle(`playlist.json`, {
-        create: true,
-      });
-
-      // 4. Prepare JSON content
+      // Prepare JSON content
       const exportData = playlist.tracks.items.map((item) => {
         const track = item.track;
         const artists = track.artists.map((a) => a.name).join(", ");
         return {
           title: track.name,
           artist: artists,
-          // "ytsearch1:" tells the downloader to pick the first result
           query: `${track.name} ${artists} audio`,
         };
       });
 
       const content = JSON.stringify(exportData, null, 2);
 
-      // 4. Write to file
-      // @ts-ignore
-      const writable = await fileHandle.createWritable();
-      await writable.write(content);
-      await writable.close();
+      // Create a blob and download link
+      const blob = new Blob([content], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "playlist.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
 
-      toast.success("Playlist exported to downloads/playlist.json!");
+      toast.success("Playlist exported as playlist.json!");
       toast.info(
-        "Now run: .\\downloader.ps1 in your SpotWave folder to download the songs!",
+        "Save it to your SpotWave/downloads folder, then run: .\\downloader.ps1",
         { autoClose: 8000 }
       );
-
-      // 5. Inform user about MP3 limitation
-      setTimeout(() => {
-        toast.warning(
-          "Note: Direct MP3 download is restricted by Spotify API. Tracklist metadata has been saved instead.",
-          { autoClose: 6000 }
-        );
-      }, 1000);
     } catch (error: any) {
-      if (error.name === "AbortError") {
-        // User cancelled selection
-        return;
-      }
       console.error("Export failed:", error);
       const { toast } = await import("react-toastify");
       toast.error("Failed to export playlist. Please try again.");
     }
-  };
-
-  const handleOpenYouTube = () => {
-    const query = encodeURIComponent(`${playlist.name} playlist`);
-    window.open(
-      `https://www.youtube.com/results?search_query=${query}`,
-      "_blank"
-    );
   };
 
   const totalDuration = playlist.tracks.items
@@ -1047,22 +996,6 @@ export default function UserHeader({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Export Playlist Info</p>
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleOpenYouTube}
-                    className="h-12 w-12 rounded-full bg-red-500/20 backdrop-blur-sm border border-red-500/30 hover:bg-red-500/40 hover:border-red-500/50 transition-all duration-200 hover:scale-105"
-                  >
-                    <Youtube className="h-5 w-5 text-red-500" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Find on YouTube</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
