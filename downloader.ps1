@@ -66,4 +66,27 @@ foreach ($song in $playlist) {
     }
 }
 
-Write-Host "🎉 All done! Check the '$OutputDir' folder." -ForegroundColor Green
+Write-Host ""
+Write-Host "Creating ZIP file..." -ForegroundColor Cyan
+
+# Get all audio files (mp3, webm, m4a)
+$audioFiles = Get-ChildItem -Path $OutputDir -Include "*.mp3", "*.webm", "*.m4a" -Recurse
+
+if ($audioFiles.Count -gt 0) {
+    # Create ZIP filename with timestamp
+    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $zipName = "playlist_$timestamp.zip"
+    $zipPath = Join-Path (Get-Location) $zipName
+    
+    # Create the ZIP file with all audio files
+    Compress-Archive -Path $audioFiles.FullName -DestinationPath $zipPath -Force
+    
+    $songCount = $audioFiles.Count
+    Write-Host "Created: $zipName ($songCount songs)" -ForegroundColor Green
+    Write-Host "Location: $zipPath" -ForegroundColor Yellow
+} else {
+    Write-Host "No audio files found to zip." -ForegroundColor Yellow
+}
+
+Write-Host ""
+Write-Host "All done!" -ForegroundColor Green
