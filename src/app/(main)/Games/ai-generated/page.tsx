@@ -426,13 +426,13 @@ const AiGeneratedPage = () => {
               url.searchParams.delete("mode");
               window.history.pushState({}, "", url.toString());
             }}
-            className="bg-brand hover:bg-brand hover:bg-brand/10 font-medium"
+            className="bg-brand hover:bg-brand  font-medium"
           >
             <ArrowLeft className="w-5 h-5 mr-2" /> Exit Quiz
           </Button>
           <div className="flex flex-col items-center">
             <h2 className="text-white font-bold text-lg">AI Genre Quiz</h2>
-            <span className="bg-brand font-mono text-sm">Score: {score}</span>
+            <span className="text-brand font-mono text-sm">Score: {score}</span>
           </div>
           <div className="w-20 text-right text-zinc-500 text-sm">
             {currentTrackIndex + 1} / {gameTracks.length}
@@ -516,10 +516,10 @@ const AiGeneratedPage = () => {
                             <Music className="w-20 h-20 text-zinc-600" />
                           </div>
                         )}
-                        <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/10">
+                        <div className="absolute inset-0 flex items-center justify-center z-10 bg-brand/10">
                           {isCurrentSongPlaying && (
-                            <div className="bg-black/40 p-3 rounded-full backdrop-blur-sm">
-                              <Volume2 className="w-8 h-8 bg-brand animate-pulse" />
+                            <div className="bg-brand/40 p-3 rounded-full backdrop-blur-sm">
+                              <Volume2 className="w-8 h-8 text-brand animate-pulse" />
                             </div>
                           )}
                         </div>
@@ -570,7 +570,7 @@ const AiGeneratedPage = () => {
                                 key={index}
                                 className={`flex flex-col items-center justify-end w-8 h-10 border-b-2 transition-all duration-300 ${
                                   isRevealed
-                                    ? "border-green-500/50"
+                                    ? "border-brand/50"
                                     : "border-zinc-700"
                                 }`}
                               >
@@ -594,7 +594,7 @@ const AiGeneratedPage = () => {
                           value={guess}
                           onChange={(e) => setGuess(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && checkGuess()}
-                          className={`h-14 pl-6 text-lg bg-black/50 border-zinc-700 text-white rounded-xl focus:ring-green-500 transition-all ${
+                          className={`h-14 pl-6 text-lg bg-black/50 border-zinc-700 text-white rounded-xl focus:ring-brand transition-all ${
                             feedback === "wrong"
                               ? "border-red-500 text-red-500"
                               : ""
@@ -637,7 +637,7 @@ const AiGeneratedPage = () => {
       <div className="max-w-4xl mx-auto w-full space-y-12 px-4 sm:px-0">
         <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6 md:p-10 space-y-8 shadow-2xl backdrop-blur-sm relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-            <Sparkles className="w-32 h-32 bg-brand rotate-12" />
+            <Sparkles className="w-32 h-32 text-brand rotate-12" />
           </div>
 
           <div className="space-y-4 text-center relative z-10">
@@ -659,8 +659,8 @@ const AiGeneratedPage = () => {
                   onClick={() => handleQuickContext("favorites")}
                   className={`rounded-full border border-zinc-800 gap-2 h-9 px-4 transition-all ${
                     activeContextType === "favorites"
-                      ? "bg-brand/10 bg-brand border-green-500/20"
-                      : "text-zinc-500 hover:text-zinc-300"
+                      ? "bg-brand/10 text-brand border-brand/20"
+                      : "text-zinc-500 hover:text-brand"
                   }`}
                 >
                   <User className="w-3.5 h-3.5" /> Favorites
@@ -671,8 +671,8 @@ const AiGeneratedPage = () => {
                   onClick={() => handleQuickContext("recent")}
                   className={`rounded-full border border-zinc-800 gap-2 h-9 px-4 transition-all ${
                     activeContextType === "recent"
-                      ? "bg-brand/10 bg-brand border-green-500/20"
-                      : "text-zinc-500 hover:text-zinc-300"
+                      ? "bg-brand/10 text-brand border-brand/20"
+                      : "text-zinc-500 hover:text-brand"
                   }`}
                 >
                   <Music className="w-3.5 h-3.5" /> Recent
@@ -683,8 +683,8 @@ const AiGeneratedPage = () => {
                   onClick={() => handleQuickContext("mostPlayed")}
                   className={`rounded-full border border-zinc-800 gap-2 h-9 px-4 transition-all ${
                     activeContextType === "mostPlayed"
-                      ? "bg-brand/10 bg-brand border-green-500/20"
-                      : "text-zinc-500 hover:text-zinc-300"
+                      ? "bg-brand/10 text-brand border-brand/20"
+                      : "text-zinc-500 hover:text-brand"
                   }`}
                 >
                   <Sparkles className="w-3.5 h-3.5" /> Most Played
@@ -695,8 +695,8 @@ const AiGeneratedPage = () => {
                   onClick={() => handleQuickContext("playlists")}
                   className={`rounded-full border border-zinc-800 gap-2 h-9 px-4 transition-all ${
                     activeContextType === "playlists"
-                      ? "bg-brand/10 bg-brand border-green-500/20"
-                      : "text-zinc-500 hover:text-zinc-300"
+                      ? "bg-brand/10 text-brand border-brand/20"
+                      : "text-zinc-500 hover:text-brand"
                   }`}
                 >
                   <Lightbulb className="w-3.5 h-3.5" /> Playlists
@@ -712,7 +712,7 @@ const AiGeneratedPage = () => {
                       setActiveContextType("none");
                   }}
                   placeholder="Ask for anything, e.g., 'Modern Mandopop hits', '90s Boy Bands', 'Lo-fi study beats'..."
-                  className="min-h-[180px] bg-black/60 border-zinc-800 text-white placeholder:text-zinc-700 resize-none focus-visible:ring-green-500/40 rounded-3xl p-8 text-xl transition-all border-2"
+                  className="min-h-[180px] bg-black/60 border-zinc-800 text-white placeholder:text-zinc-700 resize-none focus-visible:ring-brand/40 rounded-3xl p-8 text-xl transition-all border-2"
                 />
                 <div className="absolute bottom-6 right-8 text-zinc-700 font-mono text-xs uppercase tracking-widest pointer-events-none">
                   Magic Input Enabled
@@ -723,7 +723,7 @@ const AiGeneratedPage = () => {
             <Button
               onClick={handleGenerateQuiz}
               disabled={!prompt.trim() || isGeneratingQuiz}
-              className="w-full h-20 bg-brand hover:bg-brand text-white font-black text-2xl transition-all rounded-3xl shadow-2xl shadow-green-900/30 active:scale-[0.97]"
+              className="w-full h-20 bg-brand hover:bg-brand text-white font-black text-2xl transition-all rounded-3xl shadow-2xl shadow-brand/30 active:scale-[0.97]"
             >
               {isGeneratingQuiz ? (
                 <Loader2 className="w-8 h-8 animate-spin" />
@@ -740,7 +740,7 @@ const AiGeneratedPage = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 w-full px-2">
             <div className="flex items-center gap-3 text-2xl font-bold text-white">
               <div className="p-2 bg-brand/10 rounded-lg">
-                <Sparkles className="w-6 h-6 bg-brand" />
+                <Sparkles className="w-6 h-6 text-brand" />
               </div>
               <h2>AI Playlist Ideas</h2>
             </div>
@@ -752,7 +752,7 @@ const AiGeneratedPage = () => {
               className="border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800/50 gap-2 rounded-xl px-6 transition-all w-fit"
             >
               {isAiLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin bg-brand" />
+                <Loader2 className="w-4 h-4 animate-spin text-brand" />
               ) : (
                 <Sparkles className="w-4 h-4" />
               )}{" "}
@@ -773,10 +773,10 @@ const AiGeneratedPage = () => {
                 <Card
                   key={i}
                   onClick={() => handleApplySuggestion(item)}
-                  className="bg-zinc-900/40 border-zinc-800/80 hover:bg-zinc-800/40 hover:border-green-500/30 transition-all cursor-pointer group/card rounded-2xl overflow-hidden relative border-2"
+                  className="bg-zinc-900/40 border-zinc-800/80 hover:bg-zinc-800/40 hover:border-brand/30 transition-all cursor-pointer group/card rounded-2xl overflow-hidden relative border-2"
                 >
                   <CardHeader className="p-6 pb-2">
-                    <CardTitle className="text-xl font-bold text-white group-hover/card:bg-brand transition-colors">
+                    <CardTitle className="text-xl font-bold text-white group-hover/card:text-brand transition-colors">
                       {item.title}
                     </CardTitle>
                   </CardHeader>
@@ -784,7 +784,7 @@ const AiGeneratedPage = () => {
                     <p className="text-zinc-400 leading-relaxed">
                       {item.description}
                     </p>
-                    <div className="mt-4 flex items-center text-xs font-semibold bg-brand/0 group-hover/card:bg-brand transition-all transform translate-y-2 group-hover/card:translate-y-0">
+                    <div className="mt-4 flex items-center text-xs font-semibold text-brand/80 group-hover/card:text-brand transition-all transform translate-y-2 group-hover/card:translate-y-0">
                       Use this idea <Music className="w-3 h-3 ml-1" />
                     </div>
                   </CardContent>
