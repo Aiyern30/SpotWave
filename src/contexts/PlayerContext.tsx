@@ -376,9 +376,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     const currentToken = token || localStorage.getItem("Token");
     if (!currentToken) return;
 
+    const pureTrackId = trackId.includes(":") ? trackId.split(":")[2] : trackId;
+
     try {
       const response = await fetch(
-        `https://api.spotify.com/v1/audio-analysis/${trackId}`,
+        `https://api.spotify.com/v1/audio-analysis/${pureTrackId}`,
         {
           headers: { Authorization: `Bearer ${currentToken}` },
         }
@@ -388,10 +390,14 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         const enrichedData = { ...data, trackId };
         setTrackAnalysis(enrichedData);
         analysisRef.current = enrichedData;
-        console.log("Track analysis fetched for:", trackId);
+        console.log("Track analysis fetched for:", pureTrackId);
+      } else {
+        console.warn("Audio analysis not available for this track");
+        // Continue without analysis - synthetic data will be used
       }
     } catch (err) {
-      console.error("Error fetching track analysis:", err);
+      console.warn("Error fetching track analysis, using synthetic data:", err);
+      // Non-blocking - visualizer will use synthetic data
     }
   };
 
@@ -403,59 +409,67 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!isPlaying || isPaused) return;
 
       const currentAnalyser = analyserRef.current;
-      if (!currentAnalyser) return;
 
-      if (
-        !dataArrayRef.current ||
-        dataArrayRef.current.length !== currentAnalyser.frequencyBinCount
-      ) {
-        dataArrayRef.current = new Uint8Array(
-          currentAnalyser.frequencyBinCount
-        );
+      // Even if no analyser exists, we can still generate synthetic data
+      const fftSize = currentAnalyser ? currentAnalyser.frequencyBinCount : 128;
+
+      if (!dataArrayRef.current || dataArrayRef.current.length !== fftSize) {
+        dataArrayRef.current = new Uint8Array(fftSize);
+        setDataArray(dataArrayRef.current);
       }
 
       const dataArr = dataArrayRef.current;
-      currentAnalyser.getByteFrequencyData(dataArr);
+      if (currentAnalyser) {
+        currentAnalyser.getByteFrequencyData(dataArr as any);
+      }
 
       // Check if hardware is silent (CORS/DRM issue)
       const sum = dataArr.reduce((a, b) => a + b, 0);
-      if (sum === 0 && analysisRef.current) {
-        // USE SYNTHETIC DATA based on Spotify Analysis
+      if (sum === 0) {
+        // Fallback rhythmic data
         const posSeconds = position / 1000;
-        const analysis = analysisRef.current;
 
-        // Find current segment for loudness
-        const segment = analysis.segments.find(
-          (s: any) => posSeconds >= s.start && posSeconds < s.start + s.duration
-        );
+        if (analysisRef.current) {
+          // USE SYNTHETIC DATA based on Spotify Analysis
+          const analysis = analysisRef.current;
 
-        if (segment) {
-          // Map loudness (-60 to 0dB) to 0-255 scale
-          const loudness = Math.min(
-            255,
-            Math.max(0, (segment.loudness_max + 60) * 4)
+          // Find current segment for loudness
+          const segment = analysis.segments.find(
+            (s: any) =>
+              posSeconds >= s.start && posSeconds < s.start + s.duration
           );
 
-          // Find current beat/bar for "pulse"
-          const beat = analysis.beats.find(
-            (b: any) =>
-              posSeconds >= b.start && posSeconds < b.start + b.duration
-          );
+          if (segment) {
+            const loudness = Math.min(
+              255,
+              Math.max(0, (segment.loudness_max + 60) * 4)
+            );
 
-          for (let i = 0; i < dataArr.length; i++) {
-            // Low frequencies pulse with beats
-            if (i < 5) {
-              const beatPulse = beat ? 150 : 50;
-              dataArr[i] = Math.max(loudness, beatPulse);
-            }
-            // Others follow loudness with some variance
-            else {
-              dataArr[i] = loudness * (0.5 + Math.random() * 0.5);
+            const beat = analysis.beats.find(
+              (b: any) =>
+                posSeconds >= b.start && posSeconds < b.start + b.duration
+            );
+
+            for (let i = 0; i < dataArr.length; i++) {
+              if (i < 5) {
+                const beatPulse = beat ? 150 : 50;
+                dataArr[i] = Math.max(loudness, beatPulse);
+              } else {
+                dataArr[i] = Math.max(0, loudness - i * 2);
+              }
             }
           }
-          // Notify visualizer components through state update
-          setDataArray(new Uint8Array(dataArr));
+        } else {
+          // TOTAL FALLBACK: Simple heartbeat pulse if API fails or analysis is missing
+          const pulse = (Math.sin(Date.now() / 200) + 1) * 50; // Pulsing 0-100
+          for (let i = 0; i < dataArr.length; i++) {
+            if (i < 5) dataArr[i] = 100 + pulse;
+            else dataArr[i] = Math.max(0, 50 + pulse - i * 2);
+          }
         }
+
+        // Notify visualizer components through state update
+        setDataArray(new Uint8Array(dataArr));
       } else if (sum > 0) {
         // Real data working, just update state
         setDataArray(new Uint8Array(dataArr));
