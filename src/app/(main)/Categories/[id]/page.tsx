@@ -1,16 +1,10 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import {
-  usePathname,
-  useSearchParams,
-  useRouter,
-  useParams,
-} from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import PlaylistCard from "@/components/PlaylistCard";
 import {
-  Card,
   Button,
   Skeleton,
   Table,
@@ -19,11 +13,6 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  Badge,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
 } from "@/components/ui";
 import {
   Music,
@@ -32,519 +21,286 @@ import {
   Play,
   Pause,
   Clock,
-  ListPlus,
   MoreHorizontal,
+  Disc,
+  LayoutGrid,
 } from "lucide-react";
-import { fetchCategory, fetchCategoryPlaylists } from "@/utils/fetchCategories";
-import { fetchUserProfile } from "@/utils/fetchProfile";
-import { fetchPlaylistDetails } from "@/utils/fetchPlaylist";
+import { fetchCategory, fetchCategorySearch } from "@/utils/fetchCategories";
 import { usePlayer } from "@/contexts/PlayerContext";
-import { PiTable } from "react-icons/pi";
-import { LayoutGridIcon as LuLayoutGrid } from "lucide-react";
 import { formatSongDuration } from "@/utils/function";
-import type { PlaylistTrack } from "@/lib/types";
 
-type CategoryPlaylist = {
-  id: string;
-  name: string;
-  description: string;
-  images: { url: string }[];
-  owner: {
-    display_name: string;
-  };
-  tracks: {
-    total: number;
-  };
-};
-
-type CategoryDetails = {
-  id: string;
-  name: string;
-  icons: { url: string }[];
-};
-
-const CategoryDetailPage = () => {
-  const [category, setCategory] = useState<CategoryDetails | null>(null);
-  const [playlists, setPlaylists] = useState<CategoryPlaylist[]>([]);
-  const [categoryTracks, setCategoryTracks] = useState<PlaylistTrack[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [loadingTracks, setLoadingTracks] = useState<boolean>(false);
-  const [token, setToken] = useState<string>("");
-  const [displayUI, setDisplayUI] = useState<"Table" | "Grid">("Grid");
-  const [currentPlaylistUri, setCurrentPlaylistUri] = useState<string | null>(
-    null
-  );
-  const [hoveredPlaylistId, setHoveredPlaylistId] = useState<string | null>(
-    null
-  );
-  const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
-
-  const pathname = usePathname();
+export default function CategoryDetailPage() {
+  const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const params = useParams();
+
+  const id = params.id as string;
+  const nameFromUrl = searchParams.get("name") ?? "";
+
+  const [token, setToken] = useState("");
+  const [categoryInfo, setCategoryInfo] = useState<any>(null);
+  const [tracks, setTracks] = useState<any[]>([]);
+  const [playlists, setPlaylists] = useState<any[]>([]);
+  const [albums, setAlbums] = useState<any[]>([]);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
+
   const {
     playTrack,
-    playPlaylist,
     pauseTrack,
     resumeTrack,
     currentTrack,
     isPlaying,
+    playPlaylist,
   } = usePlayer();
 
-  const categoryId = params.id as string;
-  const categoryName = searchParams.get("name");
-
   useEffect(() => {
-    const storedToken = localStorage.getItem("Token");
-    if (storedToken) {
-      setToken(storedToken);
-    }
+    const stored = localStorage.getItem("Token");
+    if (stored) setToken(stored);
   }, []);
 
-  const fetchCategoryData = useCallback(async () => {
-    if (!token || !categoryId || categoryId === "index") return;
+  const loadData = useCallback(async () => {
+    if (!token || !id) return;
 
-    setLoading(true);
     try {
-      console.log(`Fetching data for category: ${categoryId}`);
+      setLoading(true);
+      setError("");
 
-      // 1. Fetch User Profile to get country
-      const userProfile = await fetchUserProfile(token);
-      const country = userProfile?.country;
+      // Step 1: Get category details (for the visual icon/name)
+      // Step 2: Use search for the content (hybrid fix)
+      const [categoryRes, searchRes] = await Promise.all([
+        fetchCategory(token, id),
+        fetchCategorySearch(token, nameFromUrl || id),
+      ]);
 
-      // 2. Fetch Category Info first
-      const categoryData = await fetchCategory(token, categoryId);
-
-      if (categoryData) {
-        setCategory(categoryData);
-        console.log("Category details loaded:", categoryData.name);
-
-        // 3. Try to fetch playlists - handle failure gracefully
-        try {
-          const playlistsData = await fetchCategoryPlaylists(
-            token,
-            categoryId,
-            country
-          );
-
-          if (playlistsData && playlistsData.length > 0) {
-            setPlaylists(playlistsData);
-            console.log(
-              `Loaded ${playlistsData.length} playlists for category.`
-            );
-
-            // 4. Fetch tracks from the first playlist
-            setLoadingTracks(true);
-            try {
-              const firstPlaylistId = playlistsData[0].id;
-              const playlistDetails = await fetchPlaylistDetails(
-                firstPlaylistId,
-                token
-              );
-              if (playlistDetails?.tracks?.items) {
-                setCategoryTracks(playlistDetails.tracks.items.slice(0, 50));
-              }
-            } catch (trackError) {
-              console.error("Error fetching category tracks:", trackError);
-            }
-            setLoadingTracks(false);
-          } else {
-            setPlaylists([]);
-            setCategoryTracks([]);
-          }
-        } catch (playlistError) {
-          console.error("Error fetching category playlists:", playlistError);
-          setPlaylists([]);
-          setCategoryTracks([]);
-        }
-      } else {
-        // Category itself doesn't exist
-        setCategory(null);
-        setPlaylists([]);
-        setCategoryTracks([]);
-      }
-    } catch (error) {
-      console.error("Error fetching category data:", error);
-      setCategory(null);
-      setPlaylists([]);
-      setCategoryTracks([]);
+      setCategoryInfo(categoryRes);
+      setTracks(searchRes.tracks);
+      setPlaylists(searchRes.playlists);
+      setAlbums(searchRes.albums);
+    } catch (e: any) {
+      console.error("Error loading category hybrid data:", e);
+      setError("Failed to load category content. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, [token, categoryId]);
+  }, [token, id, nameFromUrl]);
 
   useEffect(() => {
-    if (token) {
-      fetchCategoryData();
-    }
-  }, [token, fetchCategoryData]);
+    if (token) loadData();
+  }, [token, loadData]);
 
-  // Update current playlist URI when track changes
-  useEffect(() => {
-    if (currentTrack?.uri) {
-      const contextUri = currentTrack.uri.split(":").slice(0, 3).join(":");
-      if (contextUri.startsWith("spotify:playlist:")) {
-        setCurrentPlaylistUri(contextUri);
-      }
-    }
-  }, [currentTrack]);
-
-  const handlePlaylistClick = (playlistId: string, playlistName: string) => {
-    router.push(`/Home/${playlistId}?name=${encodeURIComponent(playlistName)}`);
-  };
-
-  const handleArtistClick = (artistId: string, artistName: string) => {
-    router.push(`/Artists/${artistId}?name=${encodeURIComponent(artistName)}`);
-  };
-
-  const handleAlbumClick = (albumId: string, albumName: string) => {
-    router.push(`/Albums/${albumId}?name=${encodeURIComponent(albumName)}`);
-  };
-
-  const handlePlayPauseTrack = useCallback(
-    (track: PlaylistTrack["track"]) => {
-      if (currentTrack?.id === track.id && isPlaying) {
-        pauseTrack();
-      } else if (currentTrack?.id === track.id && !isPlaying) {
-        resumeTrack();
-      } else {
-        playTrack({
-          id: track.id,
-          name: track.name,
+  const handlePlayPauseTrack = (track: any) => {
+    if (currentTrack?.id === track.id) {
+      isPlaying ? pauseTrack() : resumeTrack();
+    } else {
+      playTrack({
+        id: track.id,
+        name: track.name,
+        artists: track.artists,
+        album: {
+          name: track.album.name,
+          images: track.album.images,
+          id: track.album.id,
           artists: track.artists,
-          album: {
-            name: track.album.name,
-            images: track.album.images,
-            id: track.album.id,
-            artists: track.artists,
-            release_date: "",
-            total_tracks: 0,
-          },
-          duration_ms: track.duration_ms,
-          explicit: false,
-          external_urls: {
-            spotify: `https://open.spotify.com/track/${track.id}`,
-          },
-          popularity: 0,
-          preview_url: track.preview_url || null,
-          track_number: 0,
-          disc_number: 1,
-          uri: track.uri,
-        });
-      }
-    },
-    [playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying]
-  );
-
-  const handlePlayPlaylist = useCallback(
-    async (playlistId?: string) => {
-      if (!playlistId) return;
-      const playlistUri = `spotify:playlist:${playlistId}`;
-      if (currentPlaylistUri === playlistUri) {
-        if (isPlaying) {
-          pauseTrack();
-        } else {
-          resumeTrack();
-        }
-      } else {
-        try {
-          playPlaylist(playlistUri);
-          setCurrentPlaylistUri(playlistUri);
-        } catch (error) {
-          console.error("Error playing playlist:", error);
-        }
-      }
-    },
-    [playPlaylist, pauseTrack, resumeTrack, currentPlaylistUri, isPlaying]
-  );
-
-  const isPlaylistPlaying = (playlistId: string) => {
-    return currentPlaylistUri === `spotify:playlist:${playlistId}` && isPlaying;
+          release_date: track.album.release_date,
+          total_tracks: track.album.total_tracks,
+        },
+        duration_ms: track.duration_ms,
+        explicit: track.explicit,
+        external_urls: track.external_urls,
+        popularity: track.popularity,
+        preview_url: track.preview_url,
+        track_number: track.track_number,
+        disc_number: track.disc_number,
+        uri: track.uri,
+      });
+    }
   };
 
-  const isTrackPlaying = (trackId: string) => {
-    return currentTrack?.id === trackId && isPlaying;
-  };
+  const isTrackPlaying = (trackId: string) =>
+    currentTrack?.id === trackId && isPlaying;
 
   const LoadingSkeleton = () => (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col sm:flex-row items-center gap-6">
+        <Skeleton className="w-48 h-48 rounded-lg bg-zinc-800" />
+        <div className="space-y-4 flex-1 w-full text-center sm:text-left">
+          <Skeleton className="h-4 w-24 bg-zinc-800 mx-auto sm:mx-0" />
+          <Skeleton className="h-12 w-3/4 bg-zinc-800 mx-auto sm:mx-0" />
+          <Skeleton className="h-4 w-1/3 bg-zinc-800 mx-auto sm:mx-0" />
+        </div>
+      </div>
       <div className="space-y-4">
-        <div className="flex items-center space-x-4">
-          <Skeleton className="w-48 h-48 rounded-lg" />
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-4 w-48" />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {Array(12)
-            .fill(0)
-            .map((_, i) => (
-              <div key={i} className="space-y-3">
-                <Skeleton className="w-full aspect-square rounded-lg bg-zinc-800" />
-                <Skeleton className="h-4 w-3/4 bg-zinc-800" />
-              </div>
-            ))}
-        </div>
+        <Skeleton className="h-8 w-48 bg-zinc-800" />
+        {Array(5)
+          .fill(0)
+          .map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full bg-zinc-800/50" />
+          ))}
       </div>
     </div>
   );
 
-  const EmptyState = () => (
-    <div className="flex flex-col items-center justify-center py-20 space-y-6">
-      <div className="w-32 h-32 rounded-full bg-zinc-800/50 flex items-center justify-center border border-zinc-700">
-        <Music className="h-16 w-16 text-zinc-600" />
-      </div>
-      <div className="text-center space-y-3 max-w-md">
-        <h3 className="text-2xl font-semibold text-white">
-          No Playlists Available
-        </h3>
-        <p className="text-zinc-400 text-base">
-          We couldn't find any playlists in this category at the moment.
-        </p>
-      </div>
-      <Button
-        onClick={() => router.push("/Categories")}
-        className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-6 mt-4"
-      >
-        Back to Categories
-      </Button>
-    </div>
-  );
-
-  if (loading) {
-    return <LoadingSkeleton />;
-  }
-
-  if (!category) {
+  if (loading)
     return (
-      <div className="space-y-6">
-        <div className="flex flex-col items-center justify-center py-16 space-y-4">
-          <div className="w-24 h-24 rounded-full bg-zinc-800 flex items-center justify-center">
-            <Radio className="h-12 w-12 text-zinc-600" />
-          </div>
-          <div className="text-center space-y-2">
-            <h3 className="text-xl font-semibold text-white">
-              Category not found
-            </h3>
-            <p className="text-zinc-400 max-w-md">
-              The category you're looking for doesn't exist or is not
-              accessible.
-            </p>
-          </div>
-          <Button
-            onClick={() => router.push("/Categories")}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 mt-4"
-          >
-            Back to Categories
-          </Button>
-        </div>
+      <div className="p-6">
+        <LoadingSkeleton />
       </div>
     );
-  }
+
+  if (error)
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <Radio className="h-16 w-16 text-zinc-700 mb-4" />
+        <h3 className="text-xl font-bold text-white mb-2">{error}</h3>
+        <Button
+          onClick={loadData}
+          className="bg-green-500 hover:bg-green-400 text-black"
+        >
+          Try Again
+        </Button>
+      </div>
+    );
+
+  const displayName = categoryInfo?.name || nameFromUrl || "Category";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-700 pb-10">
+      {/* Back Button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => router.push("/Categories")}
+        className="text-zinc-400 hover:text-white hover:bg-zinc-800 -ml-2 transition-all"
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back to Categories
+      </Button>
+
       {/* Header */}
-      <div className="space-y-4">
-        {/* Back Button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push("/Categories")}
-          className="text-zinc-400 hover:text-white hover:bg-zinc-800 -ml-2"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Categories
-        </Button>
-
-        {/* Category Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-          {/* Category Icon */}
-          {category.icons?.[0]?.url && (
-            <div className="relative w-48 h-48 rounded-lg overflow-hidden shadow-2xl flex-shrink-0">
-              <Image
-                src={category.icons[0].url}
-                alt={category.name}
-                fill
-                className="object-cover"
-              />
-            </div>
-          )}
-
-          {/* Category Info */}
-          <div className="space-y-4 flex-1">
-            <div className="flex items-center gap-2">
-              <Radio className="h-5 w-5 text-blue-500" />
-              <span className="text-sm font-semibold text-blue-500 uppercase tracking-wider">
-                Category
-              </span>
-            </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tight">
-              {categoryName || category.name}
-            </h1>
-            <p className="text-zinc-400 text-base">
-              {playlists.length}{" "}
-              {playlists.length === 1 ? "playlist" : "playlists"} available
-            </p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6 bg-gradient-to-b from-zinc-800/10 to-transparent p-4 rounded-xl border border-white/5">
+        {categoryInfo?.icons?.[0]?.url && (
+          <div className="relative w-48 h-48 rounded-lg overflow-hidden shadow-2xl flex-shrink-0 group">
+            <Image
+              src={categoryInfo.icons[0].url}
+              alt={displayName}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-110"
+              priority
+            />
           </div>
+        )}
+        <div className="space-y-2 flex-1">
+          <div className="flex items-center gap-2">
+            <Radio className="h-4 w-4 text-green-500" />
+            <span className="text-xs font-bold text-green-500 uppercase tracking-widest">
+              Category
+            </span>
+          </div>
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-white tracking-tight leading-none">
+            {displayName}
+          </h1>
+          <p className="text-zinc-400 text-sm sm:text-base font-medium mt-2">
+            Explore the best of {displayName.toLowerCase()} across tracks,
+            albums, and playlists.
+          </p>
         </div>
       </div>
 
-      {/* Featured Songs from Category */}
-      {categoryTracks.length > 0 && (
+      {/* Popular Tracks Section */}
+      {tracks.length > 0 && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Popular Songs
-            </h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-zinc-400 hover:text-white"
-              onClick={() => {
-                if (playlists[0])
-                  handlePlaylistClick(playlists[0].id, playlists[0].name);
-              }}
-            >
-              See all from featured playlist
-            </Button>
-          </div>
-
-          <div className="overflow-x-auto rounded-lg border border-zinc-800/50 bg-zinc-900/30">
-            <Table className="table-layout-fixed">
+          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Music className="h-5 w-5 text-green-500" />
+            Top Tracks
+          </h2>
+          <div className="overflow-x-auto rounded-xl border border-zinc-800/50 bg-zinc-900/40 backdrop-blur-sm">
+            <Table>
               <TableHeader>
-                <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
-                  <TableHead className="w-[50px] sm:w-[60px] text-center text-zinc-400 font-medium">
+                <TableRow className="border-zinc-800/50 hover:bg-transparent">
+                  <TableHead className="w-12 text-center text-zinc-500">
                     #
                   </TableHead>
-                  <TableHead className="text-zinc-400 font-medium">
-                    Title
-                  </TableHead>
-                  <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
+                  <TableHead className="text-zinc-500">Title</TableHead>
+                  <TableHead className="hidden md:table-cell text-zinc-500">
                     Album
                   </TableHead>
-                  <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium">
+                  <TableHead className="hidden sm:table-cell text-right text-zinc-500">
                     <Clock className="h-4 w-4 ml-auto" />
                   </TableHead>
-                  <TableHead className="w-[50px] text-zinc-400"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {categoryTracks.slice(0, 10).map((playlistTrack, index) => {
-                  const { track } = playlistTrack;
-                  const isCurrent = isTrackPlaying(track.id);
+                {tracks.slice(0, 10).map((track, index) => {
+                  const isPlayingThis = isTrackPlaying(track.id);
                   const isHovered = hoveredTrackId === track.id;
 
                   return (
                     <TableRow
-                      key={`${track.id}-${index}`}
-                      className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
+                      key={track.id}
+                      className="border-zinc-800/30 hover:bg-zinc-800/30 transition-all cursor-pointer group"
                       onClick={() => handlePlayPauseTrack(track)}
                       onMouseEnter={() => setHoveredTrackId(track.id)}
                       onMouseLeave={() => setHoveredTrackId(null)}
                     >
-                      <TableCell className="text-center">
+                      <TableCell className="text-center py-4">
                         {isHovered ? (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:bg-green-500 hover:text-black"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePlayPauseTrack(track);
-                            }}
-                          >
-                            {isCurrent ? (
+                          <div className="flex justify-center">
+                            {isPlayingThis ? (
                               <Pause
-                                className="w-3 h-3 sm:w-4 sm:h-4"
+                                className="w-4 h-4 text-green-500"
                                 fill="currentColor"
                               />
                             ) : (
                               <Play
-                                className="w-3 h-3 sm:w-4 sm:h-4 ml-0.5"
+                                className="w-4 h-4 text-white ml-0.5"
                                 fill="currentColor"
                               />
                             )}
-                          </Button>
+                          </div>
                         ) : (
                           <span
-                            className={`text-xs sm:text-sm font-medium ${
-                              isCurrent ? "text-green-400" : "text-zinc-400"
+                            className={`text-sm ${
+                              isPlayingThis ? "text-green-500" : "text-zinc-500"
                             }`}
                           >
                             {index + 1}
                           </span>
                         )}
                       </TableCell>
-
-                      <TableCell className="max-w-0">
-                        <div className="flex items-center space-x-3 min-w-0">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded overflow-hidden flex-shrink-0">
-                            <Image
-                              src={
-                                track.album.images[0]?.url || "/placeholder.svg"
-                              }
-                              width={48}
-                              height={48}
-                              className="object-cover"
-                              alt={track.name}
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Image
+                            src={
+                              track.album?.images?.[0]?.url ||
+                              "/placeholder.svg"
+                            }
+                            width={40}
+                            height={40}
+                            className="rounded object-cover"
+                            alt={track.name}
+                          />
+                          <div className="min-w-0">
                             <div
-                              className={`font-medium truncate transition-colors ${
-                                isCurrent ? "text-green-400" : "text-white"
+                              className={`font-bold truncate ${
+                                isPlayingThis ? "text-green-500" : "text-white"
                               }`}
                             >
                               {track.name}
                             </div>
                             <div className="text-zinc-400 text-xs truncate">
-                              {track.artists.map((artist, artistIdx) => (
-                                <span key={artist.id}>
-                                  <button
-                                    className="hover:underline hover:text-white transition-colors"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleArtistClick(artist.id, artist.name);
-                                    }}
-                                  >
-                                    {artist.name}
-                                  </button>
-                                  {artistIdx < track.artists.length - 1 && ", "}
-                                </span>
-                              ))}
+                              {track.artists.map((a: any) => a.name).join(", ")}
                             </div>
                           </div>
                         </div>
                       </TableCell>
-
-                      <TableCell className="hidden md:table-cell py-3">
-                        <button
-                          className="text-zinc-400 hover:text-white hover:underline transition-colors truncate text-sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAlbumClick(track.album.id, track.album.name);
-                          }}
-                        >
-                          {track.album.name}
-                        </button>
+                      <TableCell className="hidden md:table-cell text-zinc-400 text-sm truncate max-w-[200px]">
+                        {track.album.name}
                       </TableCell>
-
-                      <TableCell className="hidden md:table-cell text-right text-zinc-400 text-sm">
+                      <TableCell className="hidden sm:table-cell text-right text-zinc-400 text-sm">
                         {formatSongDuration(track.duration_ms)}
-                      </TableCell>
-
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreHorizontal className="h-4 w-4 text-zinc-400" />
-                        </Button>
                       </TableCell>
                     </TableRow>
                   );
@@ -554,189 +310,79 @@ const CategoryDetailPage = () => {
           </div>
         </div>
       )}
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-            Playlists
-          </h2>
-          <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setDisplayUI("Table")}
-              className={`h-9 px-3 transition-all ${
-                displayUI === "Table"
-                  ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
-              }`}
-            >
-              <PiTable className="h-5 w-5 sm:mr-2" />
-              <span className="hidden sm:inline">Table</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setDisplayUI("Grid")}
-              className={`h-9 px-3 transition-all ${
-                displayUI === "Grid"
-                  ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
-              }`}
-            >
-              <LuLayoutGrid className="h-5 w-5 sm:mr-2" />
-              <span className="hidden sm:inline">Grid</span>
-            </Button>
+
+      {/* Featured Playlists Section */}
+      {playlists.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+              <LayoutGrid className="h-5 w-5 text-blue-500" />
+              Featured Playlists
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-6">
+            {playlists.slice(0, 16).map((playlist) => (
+              <PlaylistCard
+                key={playlist.id}
+                id={playlist.id}
+                image={playlist.images?.[0]?.url || "/placeholder.svg"}
+                title={playlist.name}
+                description={
+                  playlist.description?.replace(/<[^>]*>?/gm, "") ||
+                  `By ${playlist.owner?.display_name}`
+                }
+                badge={`${playlist.tracks?.total || 0} tracks`}
+                onClick={(id) =>
+                  router.push(
+                    `/Home/${id}?name=${encodeURIComponent(playlist.name)}`
+                  )
+                }
+              />
+            ))}
           </div>
         </div>
+      )}
 
-        {playlists.length === 0 ? (
-          <EmptyState />
-        ) : displayUI === "Table" ? (
-          <div className="overflow-x-auto rounded-lg border border-zinc-800/50">
-            <Table className="table-layout-fixed">
-              <TableHeader>
-                <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
-                  <TableHead className="w-[50px] sm:w-[60px] text-center text-zinc-400 font-medium whitespace-nowrap">
-                    #
-                  </TableHead>
-                  <TableHead className="text-zinc-400 font-medium">
-                    Playlist
-                  </TableHead>
-                  <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
-                    Owner
-                  </TableHead>
-                  <TableHead className="hidden lg:table-cell text-zinc-400 font-medium text-center">
-                    Tracks
-                  </TableHead>
-                  <TableHead className="w-[50px] text-zinc-400"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {playlists.map((playlist, index) => {
-                  const isPlayingThis = isPlaylistPlaying(playlist.id);
-                  const isHovered = hoveredPlaylistId === playlist.id;
+      {/* Related Albums Section */}
+      {albums.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Disc className="h-5 w-5 text-purple-500" />
+            Popular Albums
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-6">
+            {albums.slice(0, 16).map((album) => (
+              <PlaylistCard
+                key={album.id}
+                id={album.id}
+                image={album.images?.[0]?.url || "/placeholder.svg"}
+                title={album.name}
+                description={album.artists.map((a: any) => a.name).join(", ")}
+                badge={album.album_type}
+                onClick={(id) =>
+                  router.push(
+                    `/Albums/${id}?name=${encodeURIComponent(album.name)}`
+                  )
+                }
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
-                  return (
-                    <TableRow
-                      key={playlist.id}
-                      className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
-                      onClick={() =>
-                        handlePlaylistClick(playlist.id, playlist.name)
-                      }
-                      onMouseEnter={() => setHoveredPlaylistId(playlist.id)}
-                      onMouseLeave={() => setHoveredPlaylistId(null)}
-                    >
-                      <TableCell className="text-center py-4">
-                        {isHovered ? (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="w-8 h-8 rounded-full hover:bg-green-500 hover:text-black"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePlayPlaylist(playlist.id);
-                            }}
-                          >
-                            {isPlayingThis ? (
-                              <Pause className="w-4 h-4" fill="currentColor" />
-                            ) : (
-                              <Play
-                                className="w-4 h-4 ml-0.5"
-                                fill="currentColor"
-                              />
-                            )}
-                          </Button>
-                        ) : (
-                          <span
-                            className={`text-sm font-medium ${
-                              isPlayingThis ? "text-green-400" : "text-zinc-400"
-                            }`}
-                          >
-                            {index + 1}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="relative w-12 h-12 rounded overflow-hidden flex-shrink-0">
-                            <Image
-                              src={
-                                playlist.images?.[0]?.url || "/placeholder.svg"
-                              }
-                              alt={playlist.name}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                          <div className="min-w-0">
-                            <div
-                              className={`font-semibold truncate ${
-                                isPlayingThis ? "text-green-400" : "text-white"
-                              }`}
-                            >
-                              {playlist.name}
-                            </div>
-                            <div className="text-zinc-400 text-xs truncate max-w-md hidden sm:block">
-                              {playlist.description?.replace(
-                                /<[^>]*>?/gm,
-                                ""
-                              ) || "No description"}
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-zinc-400 text-sm">
-                        {playlist.owner.display_name}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-center text-zinc-400 text-sm">
-                        {playlist.tracks.total}
-                      </TableCell>
-                      <TableCell className="text-right pr-4">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                          }}
-                        >
-                          <MoreHorizontal className="h-4 w-4 text-zinc-400" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4 sm:gap-6">
-            {playlists.map((playlist) => {
-              const isPlayingThis = isPlaylistPlaying(playlist.id);
-              return (
-                <PlaylistCard
-                  key={playlist.id}
-                  id={playlist.id}
-                  image={playlist.images?.[0]?.url || "/placeholder.svg"}
-                  title={playlist.name}
-                  description={
-                    playlist.description?.replace(/<[^>]*>?/gm, "") ||
-                    `By ${playlist.owner.display_name}`
-                  }
-                  badge={`${playlist.tracks.total} tracks`}
-                  isPlaying={isPlayingThis}
-                  onPlay={() => handlePlayPlaylist(playlist.id)}
-                  onPause={pauseTrack}
-                  onResume={resumeTrack}
-                  onClick={(id) => handlePlaylistClick(id, playlist.name)}
-                />
-              );
-            })}
-          </div>
-        )}
-      </div>
+      {tracks.length === 0 && playlists.length === 0 && !loading && (
+        <div className="flex flex-col items-center justify-center py-20 text-center text-zinc-500 bg-zinc-900/20 rounded-2xl border border-dashed border-zinc-800">
+          <Radio className="h-12 w-12 mb-4 opacity-50" />
+          <p className="text-lg">No content found for this category.</p>
+          <Button
+            variant="link"
+            onClick={() => router.push("/Categories")}
+            className="text-green-500 mt-2"
+          >
+            Explore other categories
+          </Button>
+        </div>
+      )}
     </div>
   );
-};
-
-export default CategoryDetailPage;
+}
