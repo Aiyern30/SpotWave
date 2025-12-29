@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { usePlayer } from "@/contexts/PlayerContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import {
   Button,
   Slider,
@@ -33,6 +34,7 @@ import {
   Clock,
   Image as ImageIcon,
   FileText,
+  Activity,
 } from "lucide-react";
 import {
   checkUserSavedTracks,
@@ -59,6 +61,16 @@ interface FullScreenPlayerProps {
 interface LyricsLine {
   time: number;
   text: string;
+}
+
+interface Ripple {
+  x: number;
+  y: number;
+  radius: number;
+  maxRadius: number;
+  alpha: number;
+  color: string;
+  speed: number;
 }
 
 interface TopTrack {
@@ -91,6 +103,7 @@ export const FullScreenPlayer = ({
   onClose,
 }: FullScreenPlayerProps) => {
   const router = useRouter();
+  const { currentTheme } = useTheme();
   const {
     currentTrack,
     isPlaying,
@@ -107,6 +120,7 @@ export const FullScreenPlayer = ({
     playTrack,
     repeatMode,
     toggleRepeat,
+    dataArray: globalDataArray,
   } = usePlayer();
 
   const [isMuted, setIsMuted] = useState(false);
@@ -118,6 +132,7 @@ export const FullScreenPlayer = ({
 
   // View toggle state
   const [viewMode, setViewMode] = useState<"image" | "lyrics">("image");
+  const [showVisualizer, setShowVisualizer] = useState(false);
 
   // Top tracks state
   const [topTracks, setTopTracks] = useState<TopTrack[]>([]);
@@ -140,6 +155,12 @@ export const FullScreenPlayer = ({
     string | null
   >(null);
   const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
+
+  // Visualizer Refs
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ripplesRef = useRef<Ripple[]>([]);
+  const animationRef = useRef<number | null>(null);
+  const lastBassRef = useRef<number>(0);
 
   // Sidebar state for responsive layout
   const [sidebarCompact, setSidebarCompact] = useState(true);
@@ -462,6 +483,93 @@ export const FullScreenPlayer = ({
       );
     };
 
+  // Sound Ripple Animation Logic
+  const animateRipples = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !globalDataArray || !showVisualizer) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+
+    // Calculate volume/bass metrics
+    const average =
+      globalDataArray.reduce((a, b) => a + b) / globalDataArray.length;
+    const bass = globalDataArray.slice(0, 8).reduce((a, b) => a + b) / 8;
+
+    // Create new ripples on bass hits
+    const sensitivity = 1.5;
+    const bassThreshold = 180 / sensitivity;
+
+    if (
+      bass > bassThreshold &&
+      bass > lastBassRef.current * 1.1 &&
+      ripplesRef.current.length < 8
+    ) {
+      // Convert currentTheme.color (hex) to rgb
+      const hex = currentTheme.color;
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+
+      ripplesRef.current.push({
+        x: centerX,
+        y: centerY,
+        radius: 120, // Start just outside album art
+        maxRadius: 400 + (bass / 255) * 200,
+        alpha: 0.6,
+        color: `${r}, ${g}, ${b}`,
+        speed: 2 + (bass / 255) * 4,
+      });
+    }
+    lastBassRef.current = bass;
+
+    // Update and draw ripples
+    ctx.lineWidth = 2;
+    ripplesRef.current = ripplesRef.current.filter((ripple) => {
+      ripple.radius += ripple.speed;
+      ripple.alpha = 0.6 * (1 - ripple.radius / ripple.maxRadius);
+
+      if (ripple.alpha > 0) {
+        ctx.beginPath();
+        ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(${ripple.color}, ${ripple.alpha})`;
+        ctx.stroke();
+        return true;
+      }
+      return false;
+    });
+
+    animationRef.current = requestAnimationFrame(animateRipples);
+  }, [globalDataArray]);
+
+  useEffect(() => {
+    if (isOpen && isPlaying && showVisualizer) {
+      // Resize canvas to fill parent
+      const handleResize = () => {
+        const canvas = canvasRef.current;
+        if (canvas && canvas.parentElement) {
+          canvas.width = canvas.parentElement.clientWidth;
+          canvas.height = canvas.parentElement.clientHeight;
+        }
+      };
+
+      handleResize();
+      animationRef.current = requestAnimationFrame(animateRipples);
+      window.addEventListener("resize", handleResize);
+
+      return () => {
+        if (animationRef.current) cancelAnimationFrame(animationRef.current);
+        window.removeEventListener("resize", handleResize);
+      };
+    }
+  }, [isOpen, isPlaying, animateRipples, showVisualizer]);
+
   if (!isOpen || !currentTrack) return null;
 
   return (
@@ -482,6 +590,20 @@ export const FullScreenPlayer = ({
       {/* Header with View Toggle (Desktop Only) and Close Button */}
       <div className="fixed top-2 sm:top-4 right-2 sm:right-4 flex items-center gap-1 sm:gap-2 z-10">
         <div className="hidden lg:flex items-center gap-1 sm:gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowVisualizer(!showVisualizer)}
+            className={`h-8 w-8 sm:h-10 sm:w-10 ${
+              showVisualizer
+                ? "text-brand bg-zinc-800"
+                : "text-white hover:text-brand hover:bg-zinc-800"
+            }`}
+            title={showVisualizer ? "Hide Visualizer" : "Show Visualizer"}
+          >
+            <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
+          </Button>
+          <div className="w-px h-4 sm:h-6 bg-zinc-700 mx-1" />
           <Button
             variant="ghost"
             size="icon"
@@ -526,14 +648,27 @@ export const FullScreenPlayer = ({
         <div className="relative w-full">
           {/* Desktop logic: Switch between image and lyrics. Mobile: Always show image at top. */}
           <div className={viewMode === "image" ? "block" : "block lg:hidden"}>
-            <div className="relative w-full aspect-square max-w-2xl mx-auto">
-              <Image
-                src={currentTrack.album.images[0]?.url || "/default-artist.png"}
-                fill
-                className="object-cover rounded-2xl shadow-2xl"
-                alt={currentTrack.name}
-                priority
+            <div className="relative w-full aspect-square max-w-2xl mx-auto flex items-center justify-center">
+              {/* Visualizer Canvas behind album art */}
+              <canvas
+                ref={canvasRef}
+                className={`absolute inset-0 w-full h-full pointer-events-none z-0 transition-opacity duration-500 ${
+                  showVisualizer ? "opacity-100" : "opacity-0"
+                }`}
+                style={{ filter: "blur(2px)" }}
               />
+
+              <div className="relative w-4/5 h-4/5 z-10">
+                <Image
+                  src={
+                    currentTrack.album.images[0]?.url || "/default-artist.png"
+                  }
+                  fill
+                  className="object-cover rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)]"
+                  alt={currentTrack.name}
+                  priority
+                />
+              </div>
             </div>
           </div>
 
