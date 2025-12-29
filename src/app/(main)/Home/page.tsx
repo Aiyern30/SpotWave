@@ -100,6 +100,10 @@ const Page = () => {
     router.push(`/Playlists/${id}?name=${encodeURIComponent(name)}`);
   };
 
+  const handleCategoryClick = (id: string, name: string) => {
+    router.push(`/Categories/${id}?name=${encodeURIComponent(name)}`);
+  };
+
   const handleFetchUserProfile = useCallback(async () => {
     const profile = await fetchUserProfile(token);
     if (profile) {
@@ -279,8 +283,19 @@ const Page = () => {
     </div>
   );
 
-  const GenericCard = ({ item, type }: { item: any; type: string }) => (
-    <Card className="relative w-full max-w-[140px] sm:max-w-[200px] h-[165px] sm:h-[290px] cursor-pointer bg-zinc-900/50 hover:bg-zinc-800/70 border border-zinc-800 transition-all duration-300 hover:scale-105 group mx-auto overflow-hidden">
+  const GenericCard = ({
+    item,
+    type,
+    onClick,
+  }: {
+    item: any;
+    type: string;
+    onClick?: (id: string, name: string) => void;
+  }) => (
+    <Card
+      className="relative w-full max-w-[140px] sm:max-w-[200px] h-[165px] sm:h-[290px] cursor-pointer bg-zinc-900/50 hover:bg-zinc-800/70 border border-zinc-800 transition-all duration-300 hover:scale-105 group mx-auto overflow-hidden"
+      onClick={() => onClick && onClick(item.id, item.name || item.title)}
+    >
       <div className="relative w-full h-[100px] sm:h-[200px]">
         <Image
           src={
@@ -351,10 +366,19 @@ const Page = () => {
       {/* Browse Categories Section */}
       <div className="space-y-3 sm:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-1 sm:px-2">
-          <h2 className="text-xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2">
-            <Radio className="h-6 w-6 text-blue-500" />
-            Browse Categories
-          </h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2">
+              <Radio className="h-6 w-6 text-blue-500" />
+              Browse Categories
+            </h2>
+            <Button
+              variant="link"
+              className="text-green-500 hover:text-green-400 p-0 h-auto font-semibold text-sm sm:text-base transition-colors"
+              onClick={() => router.push("/Categories")}
+            >
+              See All
+            </Button>
+          </div>
           <p className="text-zinc-400 text-xs sm:text-sm font-medium">
             {categories.length} categories
           </p>
@@ -364,7 +388,12 @@ const Page = () => {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
             {categories.map((category) => (
-              <GenericCard key={category.id} item={category} type="category" />
+              <GenericCard
+                key={category.id}
+                item={category}
+                type="category"
+                onClick={handleCategoryClick}
+              />
             ))}
           </div>
         )}
