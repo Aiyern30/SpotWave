@@ -191,13 +191,13 @@ const PublicLibrary = ({ userId }: { userId?: string }) => {
               <Table className="w-full">
                 <TableHeader>
                   <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
-                    <TableHead className="text-zinc-400 font-medium text-xs sm:text-sm">
+                    <TableHead className="text-zinc-400 font-medium text-xs sm:text-sm w-[50%] sm:w-[60%]">
                       Playlist
                     </TableHead>
-                    <TableHead className="hidden lg:table-cell text-zinc-400 font-medium text-xs sm:text-sm">
+                    <TableHead className="hidden lg:table-cell text-zinc-400 font-medium text-xs sm:text-sm w-[30%]">
                       Description
                     </TableHead>
-                    <TableHead className="hidden md:table-cell w-24 text-right text-zinc-400 font-medium text-xs sm:text-sm">
+                    <TableHead className="hidden md:table-cell w-20 text-right text-zinc-400 font-medium text-xs sm:text-sm">
                       Tracks
                     </TableHead>
                   </TableRow>

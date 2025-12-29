@@ -213,10 +213,10 @@ const FollowingArtists = () => {
               <Table className="w-full">
                 <TableHeader>
                   <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
-                    <TableHead className="text-zinc-400 font-medium text-xs sm:text-sm">
+                    <TableHead className="text-zinc-400 font-medium text-xs sm:text-sm w-[60%] sm:w-[70%]">
                       Artist
                     </TableHead>
-                    <TableHead className="hidden md:table-cell text-zinc-400 font-medium text-xs sm:text-sm">
+                    <TableHead className="hidden md:table-cell text-zinc-400 font-medium text-xs sm:text-sm w-[30%]">
                       Genres
                     </TableHead>
                   </TableRow>
