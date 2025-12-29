@@ -32,13 +32,15 @@ import Image from "next/image";
 import PlaylistCard from "@/components/PlaylistCard";
 import { usePlayer } from "@/contexts/PlayerContext";
 
-const PublicLibrary = () => {
+const PublicLibrary = ({ userId }: { userId?: string }) => {
   const router = useRouter();
   const { playPlaylist, pauseTrack, resumeTrack, currentTrack, isPlaying } =
     usePlayer();
   const [publicPlaylists, setPublicPlaylists] = useState<PlaylistProps[]>([]);
   const [token, setToken] = useState<string>("");
-  const [myProfile, setMyProfile] = useState<User | null>(null);
+  const [targetUserId, setTargetUserId] = useState<string | null>(
+    userId || null
+  );
   const [loading, setLoading] = useState(true);
   const [displayUI, setDisplayUI] = useState<string>("Grid");
   const [currentPlaylistUri, setCurrentPlaylistUri] = useState<string | null>(
@@ -49,48 +51,45 @@ const PublicLibrary = () => {
     const storedToken = localStorage.getItem("Token");
     if (storedToken) {
       setToken(storedToken);
-    } else {
-      console.error("No token found. Please authenticate.");
     }
   }, []);
 
-  const fetchMyProfile = useCallback(async () => {
-    if (!token) {
-      console.error("Token not available");
-      return;
-    }
-
-    const profileData = await fetchUserProfile(token);
-    if (profileData) {
-      setMyProfile(profileData);
-    }
-  }, [token]);
-
-  const fetchPublicPlaylists = useCallback(async () => {
-    if (!token) {
-      console.error("Token not available");
-      return;
-    }
+  const fetchProfileAndPlaylists = useCallback(async () => {
+    if (!token) return;
 
     try {
       setLoading(true);
-      const playlistsData = await fetchSpotifyPlaylists(token);
-      if (playlistsData) {
-        const myPlaylists = playlistsData.filter(
-          (playlist: PlaylistProps) => playlist.owner.id === myProfile?.id
+
+      let effectiveUserId = userId;
+      if (!effectiveUserId) {
+        const profile = await fetchUserProfile(token);
+        effectiveUserId = profile?.id;
+      }
+
+      if (effectiveUserId) {
+        setTargetUserId(effectiveUserId);
+        const playlistsData = await fetchSpotifyPlaylists(
+          token,
+          effectiveUserId
         );
-        setPublicPlaylists(myPlaylists);
+        if (playlistsData) {
+          // If viewing another user, Spotify API only returns public playlists anyway.
+          // We can show them all or filter if we want to be strict.
+          setPublicPlaylists(playlistsData);
+        }
       }
     } catch (error) {
-      console.error("Error fetching public playlists:", error);
+      console.error("Error fetching library data:", error);
     } finally {
       setLoading(false);
     }
-  }, [token, myProfile]);
+  }, [token, userId]);
 
-  const handleClick = (id: string, name: string) => {
-    router.push(`/Playlists/${id}?name=${encodeURIComponent(name)}`);
-  };
+  useEffect(() => {
+    if (token) {
+      fetchProfileAndPlaylists();
+    }
+  }, [token, fetchProfileAndPlaylists]);
 
   const handlePlayPausePlaylist = useCallback(
     async (playlistId?: string) => {
@@ -130,22 +129,14 @@ const PublicLibrary = () => {
     }
   }, [currentTrack]);
 
-  useEffect(() => {
-    if (token) {
-      fetchMyProfile();
-    }
-  }, [token, fetchMyProfile]);
-
-  useEffect(() => {
-    if (token && myProfile) {
-      fetchPublicPlaylists();
-    }
-  }, [token, myProfile, fetchPublicPlaylists]);
+  const handleClick = (id: string, name: string) => {
+    router.push(`/Playlists/${id}?name=${encodeURIComponent(name)}`);
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">My Playlists</h2>
+        <h2 className="text-2xl font-bold text-white">Playlists</h2>
         <div className="flex items-center space-x-3">
           <PiTable
             size={35}

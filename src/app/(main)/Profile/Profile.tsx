@@ -9,70 +9,72 @@ import { fetchSpotifyPlaylists } from "@/utils/fetchAllPlaylist";
 import { Card, CardContent, Skeleton } from "@/components/ui";
 import { Users, Mail, Crown, Music, Heart } from "lucide-react";
 
-const ProfileComponent = () => {
+const ProfileComponent = ({ userId }: { userId?: string }) => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [myProfile, setMyProfile] = useState<User | null>(null);
   const [playlistsCount, setPlaylistsCount] = useState<number>(0);
   const [followingArtistsCount, setFollowingArtistsCount] = useState<number>(0);
   const [token, setToken] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
+  const [isMe, setIsMe] = useState<boolean>(true);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedToken = localStorage.getItem("Token");
       if (storedToken) {
         setToken(storedToken);
-      } else {
-        console.error("No token found. Please authenticate.");
       }
     }
   }, []);
 
-  const fetchMyProfile = useCallback(async () => {
-    if (!token) {
-      console.error("Token not available");
-      return;
-    }
+  const fetchProfileData = useCallback(async () => {
+    if (!token) return;
 
-    const profileData = await fetchUserProfile(token);
-    if (profileData) {
-      setMyProfile(profileData);
-    }
-  }, [token]);
+    try {
+      // 1. Fetch the profile details
+      const profileData = await fetchUserProfile(token, userId);
+      if (profileData) {
+        setMyProfile(profileData);
 
-  const fetchMyPlaylists = useCallback(async () => {
-    if (!token) {
-      console.error("Token not available");
-      return;
-    }
+        // Check if this is the logged-in user
+        const meResponse = await fetch("https://api.spotify.com/v1/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const meData = await meResponse.json();
+        const currentIsMe = !userId || userId === meData.id;
+        setIsMe(currentIsMe);
 
-    const playlistsData = await fetchSpotifyPlaylists(token);
-    if (playlistsData) {
-      setPlaylistsCount(playlistsData.length);
-    }
-  }, [token]);
+        // 2. Fetch playlists (Public for others, all for me)
+        const playlistsUrl = userId
+          ? `https://api.spotify.com/v1/users/${userId}/playlists`
+          : "https://api.spotify.com/v1/me/playlists";
 
-  const fetchFollowingArtists = useCallback(async () => {
-    if (!token) {
-      console.error("Token not available");
-      return;
-    }
+        const playlistsRes = await fetch(playlistsUrl, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (playlistsRes.ok) {
+          const data = await playlistsRes.json();
+          setPlaylistsCount(data.total || data.items?.length || 0);
+        }
 
-    const artistsData = await fetchFollowedArtists(token);
-    setFollowingArtistsCount(artistsData.length);
-  }, [token]);
+        // 3. Fetch following (Only if it's "Me")
+        if (currentIsMe) {
+          const artistsData = await fetchFollowedArtists(token);
+          setFollowingArtistsCount(artistsData.length);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching profile data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, userId]);
 
   useEffect(() => {
     if (token) {
-      Promise.all([
-        fetchMyProfile(),
-        fetchMyPlaylists(),
-        fetchFollowingArtists(),
-      ]).finally(() => {
-        setLoading(false);
-      });
+      fetchProfileData();
     }
-  }, [token, fetchMyProfile, fetchMyPlaylists, fetchFollowingArtists]);
+  }, [token, fetchProfileData]);
 
   if (loading) {
     return (
@@ -136,64 +138,69 @@ const ProfileComponent = () => {
               <Music className="h-4 w-4" />
               <span>{playlistsCount} playlists</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Heart className="h-4 w-4" />
-              <span>{followingArtistsCount} following</span>
-            </div>
+            {isMe && (
+              <div className="flex items-center space-x-2">
+                <Heart className="h-4 w-4" />
+                <span>{followingArtistsCount} following</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Profile Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-zinc-900/30 border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-green-500/20 rounded-full">
-                <Mail className="h-6 w-6 text-green-500" />
+      {/* Profile Stats Cards - Only show for "Me" */}
+      {isMe && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="bg-zinc-900/30 border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-green-500/20 rounded-full">
+                  <Mail className="h-6 w-6 text-green-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-zinc-400">Email</p>
+                  <p className="text-white font-medium">
+                    {myProfile?.email || "Not available"}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-zinc-400">Email</p>
-                <p className="text-white font-medium">
-                  {myProfile?.email || "Not available"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-zinc-900/30 border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-yellow-500/20 rounded-full">
-                <Crown className="h-6 w-6 text-yellow-500" />
+          <Card className="bg-zinc-900/30 border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-yellow-500/20 rounded-full">
+                  <Crown className="h-6 w-6 text-yellow-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-zinc-400">Subscription</p>
+                  <p className="text-white font-medium capitalize">
+                    {myProfile?.product || "Free"}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-zinc-400">Subscription</p>
-                <p className="text-white font-medium capitalize">
-                  {myProfile?.product || "Free"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-zinc-900/30 border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-blue-500/20 rounded-full">
-                <Users className="h-6 w-6 text-blue-500" />
+          <Card className="bg-zinc-900/30 border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-blue-500/20 rounded-full">
+                  <Users className="h-6 w-6 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-sm text-zinc-400">Country</p>
+                  <p className="text-white font-medium">
+                    {myProfile?.country || "Not specified"}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-zinc-400">Country</p>
-                <p className="text-white font-medium">
-                  {myProfile?.country || "Not specified"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

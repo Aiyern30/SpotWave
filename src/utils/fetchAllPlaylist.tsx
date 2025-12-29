@@ -1,10 +1,15 @@
 import { PlaylistProps } from "@/lib/types";
 
 export const fetchSpotifyPlaylists = async (
-  token: string
+  token: string,
+  userId?: string
 ): Promise<PlaylistProps[] | undefined> => {
   try {
-    const response = await fetch("https://api.spotify.com/v1/me/playlists", {
+    const url = userId
+      ? `https://api.spotify.com/v1/users/${userId}/playlists`
+      : "https://api.spotify.com/v1/me/playlists";
+
+    const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
