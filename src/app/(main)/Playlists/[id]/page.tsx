@@ -761,7 +761,7 @@ const PlaylistPage = () => {
                                 e.stopPropagation();
                                 handleAddToPlaylist(track.uri, pl.id, pl.name);
                               }}
-                              className="text-white hover:bg-brand/20 hover:bg-brand"
+                              className="text-white hover:bg-brand/20 hover:text-brand"
                             >
                               {pl.name}
                             </DropdownMenuItem>
@@ -790,7 +790,7 @@ const PlaylistPage = () => {
                           e.stopPropagation();
                           handleSaveToLiked(track.id, track.name);
                         }}
-                        className="text-white hover:bg-brand/20 hover:bg-brand"
+                        className="text-white hover:bg-brand/20 hover:text-brand"
                       >
                         <Heart
                           className={`mr-2 h-4 w-4 ${
@@ -814,7 +814,7 @@ const PlaylistPage = () => {
                             track.artists[0].name
                           );
                         }}
-                        className="text-white hover:bg-brand/20 hover:bg-brand"
+                        className="text-white hover:bg-brand/20 hover:text-brand"
                       >
                         <User className="mr-2 h-4 w-4" />
                         Go to artist
@@ -825,7 +825,7 @@ const PlaylistPage = () => {
                           e.stopPropagation();
                           handleAlbumClick(track.album.id, track.album.name);
                         }}
-                        className="text-white hover:bg-brand/20 hover:bg-brand"
+                        className="text-white hover:bg-brand/20 hover:text-brand"
                       >
                         <Disc className="mr-2 h-4 w-4" />
                         Go to album

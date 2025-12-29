@@ -782,31 +782,31 @@ export const FullScreenPlayer = ({
             <h2 className="text-xl sm:text-2xl font-semibold text-white">
               Popular tracks by {currentTrack.artists[0]?.name}
             </h2>
-            <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50 w-fit">
+            <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setTopTracksDisplayUI("Table")}
-                className={`h-8 sm:h-9 px-2 sm:px-3 transition-all ${
+                className={`h-9 px-3 transition-all ${
                   topTracksDisplayUI === "Table"
-                    ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand/80"
+                    ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
                     : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                 }`}
               >
-                <PiTable className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
+                <PiTable className="h-5 w-5 sm:mr-2" />
                 <span className="hidden sm:inline">Table</span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setTopTracksDisplayUI("Grid")}
-                className={`h-8 sm:h-9 px-2 sm:px-3 transition-all ${
+                className={`h-9 px-3 transition-all ${
                   topTracksDisplayUI === "Grid"
-                    ? "bg-brand/10 bg-brand hover:bg-brand/20 hover:bg-brand"
+                    ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
                     : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                 }`}
               >
-                <LuLayoutGrid className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
+                <LuLayoutGrid className="h-5 w-5 sm:mr-2" />
                 <span className="hidden sm:inline">Grid</span>
               </Button>
             </div>

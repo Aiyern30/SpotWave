@@ -625,7 +625,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                             size="sm"
                             onClick={handleRefreshRecommendations}
                             disabled={isLoadingRecommendations}
-                            className="h-8 text-[10px] text-zinc-400 hover:bg-brand hover:bg-brand/10"
+                            className="h-8 text-[10px] text-zinc-400 hover:bg-brand "
                           >
                             <RefreshCw
                               className={`h-3 w-3 mr-2 ${
