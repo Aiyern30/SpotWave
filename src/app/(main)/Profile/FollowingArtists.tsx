@@ -210,7 +210,7 @@ const FollowingArtists = () => {
             </div>
           ) : (
             <div className="bg-zinc-900/30">
-              <Table>
+              <Table className="w-full">
                 <TableHeader>
                   <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
                     <TableHead className="text-zinc-400 font-medium text-xs sm:text-sm">

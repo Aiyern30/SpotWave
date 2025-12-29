@@ -188,16 +188,16 @@ const PublicLibrary = ({ userId }: { userId?: string }) => {
             </div>
           ) : (
             <div className="bg-zinc-900/30 rounded-lg border border-zinc-800/50">
-              <Table>
+              <Table className="w-full">
                 <TableHeader>
                   <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
-                    <TableHead className="text-zinc-400 font-medium">
+                    <TableHead className="text-zinc-400 font-medium text-xs sm:text-sm">
                       Playlist
                     </TableHead>
-                    <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
+                    <TableHead className="hidden lg:table-cell text-zinc-400 font-medium text-xs sm:text-sm">
                       Description
                     </TableHead>
-                    <TableHead className="hidden lg:table-cell text-right text-zinc-400 font-medium">
+                    <TableHead className="hidden md:table-cell w-24 text-right text-zinc-400 font-medium text-xs sm:text-sm">
                       Tracks
                     </TableHead>
                   </TableRow>
@@ -266,12 +266,12 @@ const PublicLibrary = ({ userId }: { userId?: string }) => {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <div className="text-zinc-400 truncate max-w-xs">
+                        <TableCell className="hidden lg:table-cell">
+                          <div className="text-zinc-400 truncate max-w-xs text-sm">
                             {playlist.description || "No description"}
                           </div>
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell text-right">
+                        <TableCell className="hidden md:table-cell text-right">
                           <span className="text-zinc-400 text-sm">
                             {playlist.tracks?.total || 0} tracks
                           </span>

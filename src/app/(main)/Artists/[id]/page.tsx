@@ -738,20 +738,22 @@ const ArtistProfilePage = () => {
 
             {tracksDisplayUI === "Table" ? (
               <div className="overflow-x-auto bg-zinc-900/50 rounded-xl border border-zinc-800/50">
-                <Table className="table-layout-fixed">
+                <Table className="w-full">
                   <TableHeader>
                     <TableRow className="border-zinc-800 hover:bg-transparent">
                       <TableHead className="w-12 text-center text-zinc-400">
                         #
                       </TableHead>
-                      <TableHead className="text-zinc-400">Title</TableHead>
-                      <TableHead className="hidden md:table-cell text-zinc-400">
+                      <TableHead className="text-zinc-400 w-[45%] sm:w-[50%]">
+                        Title
+                      </TableHead>
+                      <TableHead className="hidden lg:table-cell text-zinc-400 w-[30%]">
                         Album
                       </TableHead>
-                      <TableHead className="hidden lg:table-cell text-center text-zinc-400">
+                      <TableHead className="hidden sm:table-cell w-12 text-center text-zinc-400">
                         Action
                       </TableHead>
-                      <TableHead className="hidden md:table-cell text-right text-zinc-400">
+                      <TableHead className="hidden md:table-cell w-20 text-right text-zinc-400">
                         <Clock className="w-4 h-4 ml-auto" />
                       </TableHead>
                     </TableRow>
@@ -838,7 +840,7 @@ const ArtistProfilePage = () => {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">
+                        <TableCell className="hidden lg:table-cell">
                           <div
                             className="text-zinc-400 hover:text-white hover:underline cursor-pointer truncate"
                             onClick={(e) => {
@@ -852,7 +854,7 @@ const ArtistProfilePage = () => {
                             {track.album.name}
                           </div>
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell text-center">
+                        <TableCell className="hidden sm:table-cell text-center">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
