@@ -31,9 +31,13 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { fetchCategory, fetchCategoryPlaylists } from "@/utils/fetchCategories";
+import { fetchUserProfile } from "@/utils/fetchProfile";
+import { fetchPlaylistDetails } from "@/utils/fetchPlaylist";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { PiTable } from "react-icons/pi";
 import { LayoutGridIcon as LuLayoutGrid } from "lucide-react";
+import { formatSongDuration } from "@/utils/function";
+import type { PlaylistTrack } from "@/lib/types";
 
 type CategoryPlaylist = {
   id: string;
@@ -57,7 +61,9 @@ type CategoryDetails = {
 const CategoryDetailPage = () => {
   const [category, setCategory] = useState<CategoryDetails | null>(null);
   const [playlists, setPlaylists] = useState<CategoryPlaylist[]>([]);
+  const [categoryTracks, setCategoryTracks] = useState<PlaylistTrack[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadingTracks, setLoadingTracks] = useState<boolean>(false);
   const [token, setToken] = useState<string>("");
   const [displayUI, setDisplayUI] = useState<"Table" | "Grid">("Grid");
   const [currentPlaylistUri, setCurrentPlaylistUri] = useState<string | null>(
@@ -66,12 +72,19 @@ const CategoryDetailPage = () => {
   const [hoveredPlaylistId, setHoveredPlaylistId] = useState<string | null>(
     null
   );
+  const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { playPlaylist, pauseTrack, resumeTrack, currentTrack, isPlaying } =
-    usePlayer();
+  const {
+    playTrack,
+    playPlaylist,
+    pauseTrack,
+    resumeTrack,
+    currentTrack,
+    isPlaying,
+  } = usePlayer();
 
   const segments = pathname.split("/");
   const categoryId = segments[segments.length - 1];
@@ -89,16 +102,36 @@ const CategoryDetailPage = () => {
 
     setLoading(true);
     try {
+      // 1. Fetch User Profile to get country (important for browse categories)
+      const userProfile = await fetchUserProfile(token);
+      const country = userProfile?.country;
+
+      // 2. Fetch Category Info and Playlists
       const [categoryData, playlistsData] = await Promise.all([
         fetchCategory(token, categoryId),
-        fetchCategoryPlaylists(token, categoryId),
+        fetchCategoryPlaylists(token, categoryId, country),
       ]);
 
       if (categoryData) {
         setCategory(categoryData);
       }
-      if (playlistsData) {
+      if (playlistsData && playlistsData.length > 0) {
         setPlaylists(playlistsData);
+
+        // 3. Fetch tracks from the first playlist to show "Popular Songs" in this category
+        setLoadingTracks(true);
+        const firstPlaylistId = playlistsData[0].id;
+        const playlistDetails = await fetchPlaylistDetails(
+          firstPlaylistId,
+          token
+        );
+        if (playlistDetails?.tracks?.items) {
+          setCategoryTracks(playlistDetails.tracks.items.slice(0, 50));
+        }
+        setLoadingTracks(false);
+      } else {
+        setPlaylists([]);
+        setCategoryTracks([]);
       }
     } catch (error) {
       console.error("Error fetching category data:", error);
@@ -127,6 +160,49 @@ const CategoryDetailPage = () => {
     router.push(`/Home/${playlistId}?name=${encodeURIComponent(playlistName)}`);
   };
 
+  const handleArtistClick = (artistId: string, artistName: string) => {
+    router.push(`/Artists/${artistId}?name=${encodeURIComponent(artistName)}`);
+  };
+
+  const handleAlbumClick = (albumId: string, albumName: string) => {
+    router.push(`/Albums/${albumId}?name=${encodeURIComponent(albumName)}`);
+  };
+
+  const handlePlayPauseTrack = useCallback(
+    (track: PlaylistTrack["track"]) => {
+      if (currentTrack?.id === track.id && isPlaying) {
+        pauseTrack();
+      } else if (currentTrack?.id === track.id && !isPlaying) {
+        resumeTrack();
+      } else {
+        playTrack({
+          id: track.id,
+          name: track.name,
+          artists: track.artists,
+          album: {
+            name: track.album.name,
+            images: track.album.images,
+            id: track.album.id,
+            artists: track.artists,
+            release_date: "",
+            total_tracks: 0,
+          },
+          duration_ms: track.duration_ms,
+          explicit: false,
+          external_urls: {
+            spotify: `https://open.spotify.com/track/${track.id}`,
+          },
+          popularity: 0,
+          preview_url: track.preview_url || null,
+          track_number: 0,
+          disc_number: 1,
+          uri: track.uri,
+        });
+      }
+    },
+    [playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying]
+  );
+
   const handlePlayPlaylist = useCallback(
     async (playlistId?: string) => {
       if (!playlistId) return;
@@ -151,6 +227,10 @@ const CategoryDetailPage = () => {
 
   const isPlaylistPlaying = (playlistId: string) => {
     return currentPlaylistUri === `spotify:playlist:${playlistId}` && isPlaying;
+  };
+
+  const isTrackPlaying = (trackId: string) => {
+    return currentTrack?.id === trackId && isPlaying;
   };
 
   const LoadingSkeleton = () => (
@@ -278,7 +358,168 @@ const CategoryDetailPage = () => {
         </div>
       </div>
 
-      {/* Playlists Section */}
+      {/* Featured Songs from Category */}
+      {categoryTracks.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Popular Songs
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-zinc-400 hover:text-white"
+              onClick={() => {
+                if (playlists[0])
+                  handlePlaylistClick(playlists[0].id, playlists[0].name);
+              }}
+            >
+              See all from featured playlist
+            </Button>
+          </div>
+
+          <div className="overflow-x-auto rounded-lg border border-zinc-800/50 bg-zinc-900/30">
+            <Table className="table-layout-fixed">
+              <TableHeader>
+                <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
+                  <TableHead className="w-[50px] sm:w-[60px] text-center text-zinc-400 font-medium">
+                    #
+                  </TableHead>
+                  <TableHead className="text-zinc-400 font-medium">
+                    Title
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
+                    Album
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium">
+                    <Clock className="h-4 w-4 ml-auto" />
+                  </TableHead>
+                  <TableHead className="w-[50px] text-zinc-400"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {categoryTracks.slice(0, 10).map((playlistTrack, index) => {
+                  const { track } = playlistTrack;
+                  const isCurrent = isTrackPlaying(track.id);
+                  const isHovered = hoveredTrackId === track.id;
+
+                  return (
+                    <TableRow
+                      key={`${track.id}-${index}`}
+                      className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
+                      onClick={() => handlePlayPauseTrack(track)}
+                      onMouseEnter={() => setHoveredTrackId(track.id)}
+                      onMouseLeave={() => setHoveredTrackId(null)}
+                    >
+                      <TableCell className="text-center">
+                        {isHovered ? (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:bg-green-500 hover:text-black"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePlayPauseTrack(track);
+                            }}
+                          >
+                            {isCurrent ? (
+                              <Pause
+                                className="w-3 h-3 sm:w-4 sm:h-4"
+                                fill="currentColor"
+                              />
+                            ) : (
+                              <Play
+                                className="w-3 h-3 sm:w-4 sm:h-4 ml-0.5"
+                                fill="currentColor"
+                              />
+                            )}
+                          </Button>
+                        ) : (
+                          <span
+                            className={`text-xs sm:text-sm font-medium ${
+                              isCurrent ? "text-green-400" : "text-zinc-400"
+                            }`}
+                          >
+                            {index + 1}
+                          </span>
+                        )}
+                      </TableCell>
+
+                      <TableCell className="max-w-0">
+                        <div className="flex items-center space-x-3 min-w-0">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded overflow-hidden flex-shrink-0">
+                            <Image
+                              src={
+                                track.album.images[0]?.url || "/placeholder.svg"
+                              }
+                              width={48}
+                              height={48}
+                              className="object-cover"
+                              alt={track.name}
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div
+                              className={`font-medium truncate transition-colors ${
+                                isCurrent ? "text-green-400" : "text-white"
+                              }`}
+                            >
+                              {track.name}
+                            </div>
+                            <div className="text-zinc-400 text-xs truncate">
+                              {track.artists.map((artist, artistIdx) => (
+                                <span key={artist.id}>
+                                  <button
+                                    className="hover:underline hover:text-white transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleArtistClick(artist.id, artist.name);
+                                    }}
+                                  >
+                                    {artist.name}
+                                  </button>
+                                  {artistIdx < track.artists.length - 1 && ", "}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="hidden md:table-cell py-3">
+                        <button
+                          className="text-zinc-400 hover:text-white hover:underline transition-colors truncate text-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAlbumClick(track.album.id, track.album.name);
+                          }}
+                        >
+                          {track.album.name}
+                        </button>
+                      </TableCell>
+
+                      <TableCell className="hidden md:table-cell text-right text-zinc-400 text-sm">
+                        {formatSongDuration(track.duration_ms)}
+                      </TableCell>
+
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreHorizontal className="h-4 w-4 text-zinc-400" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
