@@ -131,7 +131,9 @@ export const FullScreenPlayer = ({
   const [isLoadingTrack, setIsLoadingTrack] = useState(false);
 
   // View toggle state
-  const [viewMode, setViewMode] = useState<"image" | "lyrics">("image");
+  const [viewMode, setViewMode] = useState<"image" | "lyrics" | "visualizer">(
+    "image"
+  );
   const [showVisualizer, setShowVisualizer] = useState(false);
 
   // Top tracks state
@@ -486,7 +488,7 @@ export const FullScreenPlayer = ({
   // Sound Ripple Animation Logic
   const animateRipples = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !globalDataArray || !showVisualizer) return;
+    if (!canvas || !globalDataArray) return;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -549,7 +551,7 @@ export const FullScreenPlayer = ({
   }, [globalDataArray]);
 
   useEffect(() => {
-    if (isOpen && isPlaying && showVisualizer) {
+    if (isOpen && isPlaying) {
       // Resize canvas to fill parent
       const handleResize = () => {
         const canvas = canvasRef.current;
@@ -568,7 +570,7 @@ export const FullScreenPlayer = ({
         window.removeEventListener("resize", handleResize);
       };
     }
-  }, [isOpen, isPlaying, animateRipples, showVisualizer]);
+  }, [isOpen, isPlaying, animateRipples]);
 
   if (!isOpen || !currentTrack) return null;
 
@@ -593,17 +595,16 @@ export const FullScreenPlayer = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setShowVisualizer(!showVisualizer)}
+            onClick={() => setViewMode("visualizer")}
             className={`h-8 w-8 sm:h-10 sm:w-10 ${
-              showVisualizer
+              viewMode === "visualizer"
                 ? "text-brand bg-zinc-800"
                 : "text-white hover:text-brand hover:bg-zinc-800"
             }`}
-            title={showVisualizer ? "Hide Visualizer" : "Show Visualizer"}
           >
             <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
-          <div className="w-px h-4 sm:h-6 bg-zinc-700 mx-1" />
+
           <Button
             variant="ghost"
             size="icon"
@@ -613,10 +614,10 @@ export const FullScreenPlayer = ({
                 ? "text-brand bg-zinc-800"
                 : "text-white hover:text-brand hover:bg-zinc-800"
             }`}
-            title="Show Album Art"
           >
             <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
+
           <Button
             variant="ghost"
             size="icon"
@@ -626,7 +627,6 @@ export const FullScreenPlayer = ({
                 ? "text-brand bg-zinc-800"
                 : "text-white hover:text-brand hover:bg-zinc-800"
             }`}
-            title="Show Lyrics"
           >
             <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
@@ -637,7 +637,6 @@ export const FullScreenPlayer = ({
           size="icon"
           onClick={onClose}
           className="text-white hover:text-brand hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10"
-          title="Close"
         >
           <X className="h-5 w-5 sm:h-6 sm:w-6" />
         </Button>
@@ -647,14 +646,29 @@ export const FullScreenPlayer = ({
       <div className="max-w-4xl mx-auto px-4 sm:px-8 py-4 sm:py-8">
         <div className="relative w-full">
           {/* Desktop logic: Switch between image and lyrics. Mobile: Always show image at top. */}
+          {/* Visualizer Only View */}
+          <div className={viewMode === "visualizer" ? "block" : "hidden"}>
+            <div className="relative w-full aspect-square max-w-2xl mx-auto flex items-center justify-center">
+              <canvas
+                ref={canvasRef}
+                className="absolute inset-0 w-full h-full pointer-events-none z-0"
+                style={{ filter: "blur(2px)" }}
+              />
+              <div className="relative z-10 text-center animate-pulse">
+                <Music className="h-24 w-24 text-brand mx-auto mb-4 opacity-50" />
+                <p className="text-zinc-500 font-medium">
+                  Visualizing {currentTrack.name}...
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className={viewMode === "image" ? "block" : "block lg:hidden"}>
             <div className="relative w-full aspect-square max-w-2xl mx-auto flex items-center justify-center">
               {/* Visualizer Canvas behind album art */}
               <canvas
                 ref={canvasRef}
-                className={`absolute inset-0 w-full h-full pointer-events-none z-0 transition-opacity duration-500 ${
-                  showVisualizer ? "opacity-100" : "opacity-0"
-                }`}
+                className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-100"
                 style={{ filter: "blur(2px)" }}
               />
 
