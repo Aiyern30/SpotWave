@@ -456,25 +456,25 @@ const PlaylistPage = () => {
       {displayUI === "Table" ? (
         <div className="overflow-x-auto rounded-lg border border-zinc-800/50">
           <div className="bg-zinc-900/30">
-            <Table className="table-layout-fixed">
+            <Table className="w-full">
               <TableHeader>
                 <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
-                  <TableHead className="w-[50px] sm:w-[60px] text-center text-zinc-400 font-medium text-xs sm:text-sm">
+                  <TableHead className="w-12 text-center text-zinc-400 font-medium text-xs sm:text-sm">
                     #
                   </TableHead>
                   <TableHead className="text-zinc-400 font-medium text-xs sm:text-sm">
                     Title
                   </TableHead>
-                  <TableHead className="hidden md:table-cell text-zinc-400 font-medium text-xs sm:text-sm">
+                  <TableHead className="hidden lg:table-cell text-zinc-400 font-medium text-xs sm:text-sm">
                     Album
                   </TableHead>
-                  <TableHead className="hidden md:table-cell text-zinc-400 font-medium text-xs sm:text-sm">
+                  <TableHead className="hidden xl:table-cell text-zinc-400 font-medium text-xs sm:text-sm">
                     Date added
                   </TableHead>
                   <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium text-xs sm:text-sm">
                     <Clock className="h-4 w-4 ml-auto" />
                   </TableHead>
-                  <TableHead className="w-[50px] text-zinc-400 font-medium text-xs sm:text-sm"></TableHead>
+                  <TableHead className="w-12 text-zinc-400 font-medium text-xs sm:text-sm"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -571,7 +571,7 @@ const PlaylistPage = () => {
                         </div>
                       </TableCell>
 
-                      <TableCell className="hidden md:table-cell py-3 sm:py-4">
+                      <TableCell className="hidden lg:table-cell py-3 sm:py-4">
                         <button
                           className="text-zinc-400 hover:text-white hover:underline transition-colors truncate text-sm"
                           onClick={(e) => {
@@ -583,7 +583,7 @@ const PlaylistPage = () => {
                         </button>
                       </TableCell>
 
-                      <TableCell className="hidden md:table-cell py-3 sm:py-4">
+                      <TableCell className="hidden xl:table-cell py-3 sm:py-4">
                         <span className="text-zinc-400 text-sm">
                           {new Date(
                             playlistTrack.added_at
