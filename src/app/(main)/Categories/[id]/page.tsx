@@ -223,11 +223,13 @@ export default function CategoryDetailPage() {
                   <TableHead className="w-12 text-center text-zinc-500">
                     #
                   </TableHead>
-                  <TableHead className="text-zinc-500">Title</TableHead>
-                  <TableHead className="hidden md:table-cell text-zinc-500">
+                  <TableHead className="text-zinc-500 w-[50%] sm:w-[60%]">
+                    Title
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell text-zinc-500 w-[30%]">
                     Album
                   </TableHead>
-                  <TableHead className="hidden sm:table-cell text-right text-zinc-500">
+                  <TableHead className="hidden sm:table-cell text-right text-zinc-500 w-20">
                     <Clock className="h-4 w-4 ml-auto" />
                   </TableHead>
                 </TableRow>
@@ -270,7 +272,7 @@ export default function CategoryDetailPage() {
                           </span>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-4 max-w-0">
                         <div className="flex items-center gap-3">
                           <Image
                             src={

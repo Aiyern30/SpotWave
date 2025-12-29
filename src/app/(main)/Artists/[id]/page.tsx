@@ -744,7 +744,7 @@ const ArtistProfilePage = () => {
                       <TableHead className="w-12 text-center text-zinc-400">
                         #
                       </TableHead>
-                      <TableHead className="text-zinc-400 w-[45%] sm:w-[50%]">
+                      <TableHead className="text-zinc-400 w-full sm:w-[50%]">
                         Title
                       </TableHead>
                       <TableHead className="hidden lg:table-cell text-zinc-400 w-[30%]">
@@ -799,7 +799,7 @@ const ArtistProfilePage = () => {
                             </span>
                           )}
                         </TableCell>
-                        <TableCell className="max-w-0">
+                        <TableCell className="max-w-0 py-4">
                           <div className="flex items-center space-x-3 min-w-0">
                             <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
                               <Image
