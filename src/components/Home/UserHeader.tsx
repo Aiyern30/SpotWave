@@ -99,6 +99,7 @@ export default function UserHeader({
     name: string;
     description: string;
   } | null>(null);
+  const [playlistImages, setPlaylistImages] = useState<{ url: string }[]>([]);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
@@ -134,6 +135,22 @@ export default function UserHeader({
     }
     setLoading(false);
   }, [playlist.owner.id, id, user, token]);
+
+  // Fetch specialized playlist images
+  useEffect(() => {
+    if (token && playlist.id) {
+      fetch(`https://api.spotify.com/v1/playlists/${playlist.id}/images`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => (res.ok ? res.json() : []))
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setPlaylistImages(data);
+          }
+        })
+        .catch((err) => console.error("Error fetching playlist images:", err));
+    }
+  }, [token, playlist.id]);
 
   useEffect(() => {
     if (nameEditing && nameInputRef.current) {
@@ -496,7 +513,9 @@ export default function UserHeader({
                 <Image
                   src={
                     uploadedImage ||
-                    (playlist?.images?.length
+                    (playlistImages.length > 0
+                      ? playlistImages[0].url
+                      : playlist?.images?.length
                       ? playlist.images[0].url
                       : "/default-artist.png")
                   }
