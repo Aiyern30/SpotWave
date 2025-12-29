@@ -87,6 +87,7 @@ export default function UserHeader({
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [inputWidth, setInputWidth] = useState<number>(0);
   const [generatingAI, setGeneratingAI] = useState(false);
+  const [ownerProfile, setOwnerProfile] = useState<UserProfile | null>(null);
 
   // New AI Generation States
   const [aiGenIsOpen, setAiGenIsOpen] = useState(false);
@@ -114,11 +115,25 @@ export default function UserHeader({
   }, []);
 
   useEffect(() => {
-    if (playlist.owner.id === id) {
-      setIsOwner(true);
+    const ownerId = playlist.owner.id;
+    const isCurrentUser = ownerId === id;
+    setIsOwner(isCurrentUser);
+
+    if (isCurrentUser) {
+      setOwnerProfile(user);
+    } else if (token) {
+      // Fetch owner profile if not the current user
+      fetch(`https://api.spotify.com/v1/users/${ownerId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data) setOwnerProfile(data);
+        })
+        .catch((err) => console.error("Error fetching owner profile:", err));
     }
     setLoading(false);
-  }, [playlist, id]);
+  }, [playlist.owner.id, id, user, token]);
 
   useEffect(() => {
     if (nameEditing && nameInputRef.current) {
@@ -940,7 +955,7 @@ export default function UserHeader({
               <div className="flex items-center space-x-3">
                 <Avatar className="w-8 h-8 ring-2 ring-white/20">
                   <AvatarImage
-                    src={user?.images?.[0]?.url || "/placeholder.svg"}
+                    src={ownerProfile?.images?.[0]?.url || "/placeholder.svg"}
                     className="rounded-full"
                   />
                   <AvatarFallback className="text-xs bg-zinc-700 text-white">
@@ -979,8 +994,12 @@ export default function UserHeader({
 
           {/* Enhanced Action Buttons */}
           <div className="flex flex-row lg:flex-col space-x-3 lg:space-x-0 lg:space-y-3 items-center lg:items-end justify-center lg:justify-end mt-6 lg:mt-0">
-            <Settings playlistID={playlist.id} />
-            <SearchSongs playlistID={playlist.id} refetch={refetch} />
+            {isOwner && (
+              <>
+                <Settings playlistID={playlist.id} />
+                <SearchSongs playlistID={playlist.id} refetch={refetch} />
+              </>
+            )}
 
             <TooltipProvider>
               <Tooltip>
@@ -999,8 +1018,8 @@ export default function UserHeader({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            {/* View Summary Button - Only show if playlist has tracks */}
-            {playlist.tracks.total > 0 && (
+            {/* View Summary Button - Only show if playlist has tracks and user is owner */}
+            {isOwner && playlist.tracks.total > 0 && (
               <Dialog
                 open={summaryDialogOpen}
                 onOpenChange={setSummaryDialogOpen}
