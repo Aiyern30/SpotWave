@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import { Mic, MicOff, Settings } from "lucide-react";
+import { Mic, MicOff, Settings, Volume2 } from "lucide-react";
+import { usePlayer } from "@/contexts/PlayerContext";
 
 interface Ripple {
   x: number;
@@ -30,6 +31,9 @@ export default function SpotifyRippleVisualizer({
   const [sensitivity, setSensitivity] = useState(2);
   const [rippleCount, setRippleCount] = useState(3);
   const [useSpotifyAudio, setUseSpotifyAudio] = useState(true);
+  const [captureMode, setCaptureMode] = useState<"none" | "mic" | "speaker">(
+    "none"
+  );
 
   // Microphone-based audio (original functionality)
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -41,16 +45,20 @@ export default function SpotifyRippleVisualizer({
   const ripplesRef = useRef<Ripple[]>([]);
   const animationRef = useRef<number | null>(null);
 
+  const {
+    analyser: globalAnalyser,
+    dataArray: globalDataArray,
+    isPlaying: isGlobalPlaying,
+  } = usePlayer();
+
   // Determine which audio source to use
   const activeAnalyser =
-    useSpotifyAudio && externalAnalyser
-      ? externalAnalyser
-      : analyserRef.current;
+    useSpotifyAudio && globalAnalyser ? globalAnalyser : analyserRef.current;
   const activeDataArray =
-    useSpotifyAudio && externalDataArray
-      ? externalDataArray
+    useSpotifyAudio && globalAnalyser
+      ? new Uint8Array(globalAnalyser.frequencyBinCount)
       : dataArrayRef.current;
-  const isActive = useSpotifyAudio ? isExternalPlaying : isListening;
+  const isActive = useSpotifyAudio ? isGlobalPlaying : captureMode !== "none";
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -72,7 +80,7 @@ export default function SpotifyRippleVisualizer({
 
   // Start animation when audio is active
   useEffect(() => {
-    if (isActive && (activeAnalyser || (useSpotifyAudio && externalAnalyser))) {
+    if (isActive && (activeAnalyser || (useSpotifyAudio && globalAnalyser))) {
       animate();
     } else {
       if (animationRef.current) {
@@ -96,17 +104,38 @@ export default function SpotifyRippleVisualizer({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isActive, activeAnalyser, externalAnalyser, useSpotifyAudio]);
+  }, [isActive, activeAnalyser, globalAnalyser, useSpotifyAudio]);
 
-  const startListening = async () => {
+  const startListening = async (mode: "mic" | "speaker") => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-        },
-      });
+      let stream: MediaStream;
+      if (mode === "speaker") {
+        // Use getDisplayMedia for system audio
+        stream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: true,
+        });
+
+        // Immediately stop the video track as we only need audio
+        const videoTracks = stream.getVideoTracks();
+        videoTracks.forEach((track) => track.stop());
+
+        if (stream.getAudioTracks().length === 0) {
+          throw new Error(
+            "No audio found in system stream. Did you check 'Share audio'?"
+          );
+        }
+      } else {
+        // Use getUserMedia for microphone
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+          },
+        });
+      }
+
       streamRef.current = stream;
 
       const audioContext = new (window.AudioContext ||
@@ -131,12 +160,12 @@ export default function SpotifyRippleVisualizer({
       const dataArray = new Uint8Array(bufferLength);
       dataArrayRef.current = dataArray;
 
-      setIsListening(true);
-      setUseSpotifyAudio(false); // Switch to microphone mode
+      setCaptureMode(mode);
+      setUseSpotifyAudio(false);
     } catch (err) {
       console.error("Error setting up audio:", err);
       alert(
-        "Could not access microphone. Please grant permission and ensure no other app is using it."
+        err instanceof Error ? err.message : "Could not access audio source."
       );
     }
   };
@@ -162,11 +191,12 @@ export default function SpotifyRippleVisualizer({
     }
 
     setIsListening(false);
+    setCaptureMode("none");
     ripplesRef.current = [];
   };
 
   const toggleAudioSource = () => {
-    if (isListening) {
+    if (captureMode !== "none") {
       stopListening();
     }
     setUseSpotifyAudio(!useSpotifyAudio);
@@ -180,12 +210,12 @@ export default function SpotifyRippleVisualizer({
     if (!ctx) return;
 
     const analyser =
-      useSpotifyAudio && externalAnalyser
-        ? externalAnalyser
-        : analyserRef.current;
+      useSpotifyAudio && globalAnalyser ? globalAnalyser : analyserRef.current;
+
+    // Use the processed globalDataArray when using Spotify audio
     const dataArray =
-      useSpotifyAudio && externalDataArray
-        ? externalDataArray
+      useSpotifyAudio && globalDataArray
+        ? globalDataArray
         : dataArrayRef.current;
 
     if (!analyser || !dataArray) return;
@@ -291,8 +321,7 @@ export default function SpotifyRippleVisualizer({
     animationRef.current = requestAnimationFrame(animate);
   };
 
-  const hasSpotifyAudio =
-    externalAnalyser && externalDataArray && isExternalPlaying;
+  const hasSpotifyAudio = !!globalAnalyser;
 
   return (
     <div className="w-full h-screen bg-gray-900 flex flex-col">
@@ -318,17 +347,47 @@ export default function SpotifyRippleVisualizer({
             )}
 
             <button
-              onClick={isListening ? stopListening : startListening}
+              onClick={() =>
+                captureMode === "speaker"
+                  ? stopListening()
+                  : startListening("speaker")
+              }
               disabled={!!(useSpotifyAudio && hasSpotifyAudio)}
-              className={`px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-all ${
-                isListening
+              className={`px-4 py-3 rounded-lg font-semibold flex items-center gap-2 transition-all ${
+                captureMode === "speaker"
                   ? "bg-red-500 hover:bg-red-600 text-white"
                   : useSpotifyAudio && hasSpotifyAudio
                   ? "bg-gray-600 text-gray-400 cursor-not-allowed"
                   : "bg-brand hover:bg-brand/90 text-brand-foreground"
               }`}
             >
-              {isListening ? (
+              {captureMode === "speaker" ? (
+                <>
+                  <MicOff size={20} />
+                  Stop Speaker
+                </>
+              ) : (
+                <>
+                  <Volume2 size={20} />
+                  Use Speaker
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={() =>
+                captureMode === "mic" ? stopListening() : startListening("mic")
+              }
+              disabled={!!(useSpotifyAudio && hasSpotifyAudio)}
+              className={`px-4 py-3 rounded-lg font-semibold flex items-center gap-2 transition-all ${
+                captureMode === "mic"
+                  ? "bg-red-500 hover:bg-red-600 text-white"
+                  : useSpotifyAudio && hasSpotifyAudio
+                  ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                  : "bg-zinc-700 hover:bg-zinc-600 text-white"
+              }`}
+            >
+              {captureMode === "mic" ? (
                 <>
                   <MicOff size={20} />
                   Stop Mic
