@@ -158,7 +158,7 @@ const FollowingArtists = () => {
             onClick={() => setDisplayUI("Table")}
             className={`h-9 px-3 transition-all ${
               displayUI === "Table"
-                ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
                 : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             }`}
           >
@@ -171,7 +171,7 @@ const FollowingArtists = () => {
             onClick={() => setDisplayUI("Grid")}
             className={`h-9 px-3 transition-all ${
               displayUI === "Grid"
-                ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
                 : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             }`}
           >
@@ -251,7 +251,7 @@ const FollowingArtists = () => {
                                 <Button
                                   size="icon"
                                   variant="ghost"
-                                  className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl"
+                                  className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-brand hover:bg-brand/80 text-brand-foreground shadow-xl"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handlePlayPauseArtist(artist.id);
@@ -275,8 +275,8 @@ const FollowingArtists = () => {
                               <div
                                 className={`font-medium truncate transition-colors text-sm sm:text-base ${
                                   isThisArtist
-                                    ? "text-green-400"
-                                    : "text-white hover:text-green-400"
+                                    ? "text-brand"
+                                    : "text-white hover:text-brand"
                                 }`}
                               >
                                 {artist.name}

@@ -429,7 +429,7 @@ const PlaylistPage = () => {
             onClick={() => setDisplayUI("Table")}
             className={`h-9 px-3 transition-all ${
               displayUI === "Table"
-                ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
                 : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             }`}
           >
@@ -442,7 +442,7 @@ const PlaylistPage = () => {
             onClick={() => setDisplayUI("Grid")}
             className={`h-9 px-3 transition-all ${
               displayUI === "Grid"
-                ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
                 : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             }`}
           >
@@ -496,7 +496,7 @@ const PlaylistPage = () => {
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:bg-green-500 hover:text-black"
+                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:bg-brand hover:text-brand-foreground"
                             onClick={(e) => {
                               e.stopPropagation();
                               handlePlayPause(track);
@@ -518,7 +518,7 @@ const PlaylistPage = () => {
                           <span
                             className={`text-xs sm:text-sm font-medium ${
                               isCurrentlyPlaying
-                                ? "text-green-400"
+                                ? "text-brand"
                                 : "text-zinc-400"
                             }`}
                           >
@@ -542,10 +542,8 @@ const PlaylistPage = () => {
                           </div>
                           <div className="min-w-0 flex-1">
                             <div
-                              className={`font-medium truncate hover:text-green-400 transition-colors text-sm sm:text-base ${
-                                isCurrentlyPlaying
-                                  ? "text-green-400"
-                                  : "text-white"
+                              className={`font-medium truncate hover:text-brand transition-colors text-sm sm:text-base ${
+                                isCurrentlyPlaying ? "text-brand" : "text-white"
                               }`}
                             >
                               {track.name}
@@ -630,7 +628,7 @@ const PlaylistPage = () => {
                                         pl.name
                                       );
                                     }}
-                                    className="text-white hover:bg-green-500/20 hover:text-green-400"
+                                    className="text-white hover:bg-brand/20 hover:text-brand"
                                   >
                                     {pl.name}
                                   </DropdownMenuItem>
@@ -659,12 +657,12 @@ const PlaylistPage = () => {
                                 e.stopPropagation();
                                 handleSaveToLiked(track.id, track.name);
                               }}
-                              className="text-white hover:bg-green-500/20 hover:text-green-400"
+                              className="text-white hover:bg-brand/20 hover:text-brand"
                             >
                               <Heart
                                 className={`mr-2 h-4 w-4 ${
                                   likedTracks.has(track.id)
-                                    ? "fill-green-500 text-green-500"
+                                    ? "fill-brand text-brand"
                                     : ""
                                 }`}
                               />
@@ -683,7 +681,7 @@ const PlaylistPage = () => {
                                   track.artists[0].name
                                 );
                               }}
-                              className="text-white hover:bg-green-500/20 hover:text-green-400"
+                              className="text-white hover:bg-brand/20 hover:text-brand"
                             >
                               <User className="mr-2 h-4 w-4" />
                               Go to artist
@@ -697,7 +695,7 @@ const PlaylistPage = () => {
                                   track.album.name
                                 );
                               }}
-                              className="text-white hover:bg-green-500/20 hover:text-green-400"
+                              className="text-white hover:bg-brand/20 hover:text-brand"
                             >
                               <Disc className="mr-2 h-4 w-4" />
                               Go to album
