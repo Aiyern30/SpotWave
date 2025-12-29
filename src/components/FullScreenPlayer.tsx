@@ -542,7 +542,7 @@ export const FullScreenPlayer = ({
             <div className="w-full min-h-[400px] sm:min-h-[600px] bg-zinc-900/50 rounded-2xl p-4 sm:p-8 backdrop-blur-sm overflow-hidden">
               {loadingLyrics ? (
                 <div className="flex justify-center items-center h-[400px] sm:h-[600px]">
-                  <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin bg-brand-500" />
+                  <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin bg-brand" />
                 </div>
               ) : syncedLyrics && syncedLyrics.length > 0 ? (
                 <div
@@ -628,7 +628,7 @@ export const FullScreenPlayer = ({
             variant="ghost"
             size="icon"
             onClick={handleToggleSave}
-            className="text-zinc-400 hover:bg-brand-400 hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10 transition-all"
+            className="text-zinc-400 hover:bg-brand hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10 transition-all"
             disabled={isSaving}
           >
             {isSaving ? (
@@ -643,7 +643,7 @@ export const FullScreenPlayer = ({
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-400 hover:bg-brand-400 hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10 transition-all hidden sm:flex"
+            className="text-zinc-400 hover:bg-brand hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10 transition-all hidden sm:flex"
           >
             <Shuffle className="h-3 w-3 sm:h-4 sm:w-4" />
           </Button>
@@ -652,7 +652,7 @@ export const FullScreenPlayer = ({
             variant="ghost"
             size="icon"
             onClick={previousTrack}
-            className="text-white hover:bg-brand-400 hover:bg-zinc-800 h-10 w-10 sm:h-12 sm:w-12 transition-all"
+            className="text-white hover:bg-brand hover:bg-zinc-800 h-10 w-10 sm:h-12 sm:w-12 transition-all"
             disabled={!isReady}
           >
             <SkipBack className="h-5 w-5 sm:h-6 sm:w-6 fill-current" />
@@ -677,7 +677,7 @@ export const FullScreenPlayer = ({
             variant="ghost"
             size="icon"
             onClick={nextTrack}
-            className="text-white hover:bg-brand-400 hover:bg-zinc-800 h-10 w-10 sm:h-12 sm:w-12 transition-all"
+            className="text-white hover:bg-brand hover:bg-zinc-800 h-10 w-10 sm:h-12 sm:w-12 transition-all"
             disabled={!isReady}
           >
             <SkipForward className="h-5 w-5 sm:h-6 sm:w-6 fill-current" />
@@ -689,8 +689,8 @@ export const FullScreenPlayer = ({
             onClick={toggleRepeat}
             className={`h-8 w-8 sm:h-10 sm:w-10 transition-all hidden sm:flex ${
               repeatMode === "off"
-                ? "text-zinc-400 hover:bg-brand-400 hover:bg-zinc-800"
-                : "bg-brand-500 hover:bg-brand-400 hover:bg-zinc-800"
+                ? "text-zinc-400 hover:bg-brand hover:bg-zinc-800"
+                : "bg-brand hover:bg-brand hover:bg-zinc-800"
             }`}
             title={
               repeatMode === "off"
@@ -802,7 +802,7 @@ export const FullScreenPlayer = ({
                 onClick={() => setTopTracksDisplayUI("Grid")}
                 className={`h-8 sm:h-9 px-2 sm:px-3 transition-all ${
                   topTracksDisplayUI === "Grid"
-                    ? "bg-brand-500/10 bg-brand-400 hover:bg-brand-500/20 hover:bg-brand-300"
+                    ? "bg-brand/10 bg-brand hover:bg-brand/20 hover:bg-brand"
                     : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                 }`}
               >

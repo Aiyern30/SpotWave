@@ -469,7 +469,7 @@ export default function UserHeader({
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-6 lg:space-y-0 lg:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-xl p-8">
+        <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-6 lg:space-y-0 lg:space-x-8 bg-gradient-to-b from-brand/30 to-transparent rounded-xl p-8">
           <Skeleton className="w-80 h-80 rounded-xl" />
           <div className="flex-1 space-y-4 text-center lg:text-left">
             <Skeleton className="h-12 w-96 mx-auto lg:mx-0" />
@@ -497,7 +497,7 @@ export default function UserHeader({
       </span>
 
       {/* Enhanced Playlist Header */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-zinc-900/90 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm border border-zinc-800/50">
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand/30 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm border border-zinc-800/50">
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--brand-primary)/0.15),transparent_70%)]" />
 
@@ -581,7 +581,7 @@ export default function UserHeader({
 
                             <div className="space-y-3">
                               {uploading ? (
-                                <Loader2 className="h-12 w-12 bg-brand-500 mx-auto animate-spin" />
+                                <Loader2 className="h-12 w-12 bg-brand mx-auto animate-spin" />
                               ) : (
                                 <ImageIcon className="h-12 w-12 text-zinc-400 mx-auto" />
                               )}
@@ -916,7 +916,7 @@ export default function UserHeader({
                           setDescriptionEditing(false);
                           updatePlaylistDetails();
                         }}
-                        className="bg-brand-500 hover:bg-brand-600 text-black"
+                        className="bg-brand hover:bg-brand text-black"
                         disabled={updating}
                       >
                         {updating ? (
@@ -996,7 +996,7 @@ export default function UserHeader({
               </div>
 
               <div className="flex items-center space-x-2">
-                <Music className="h-4 w-4 bg-brand-500" />
+                <Music className="h-4 w-4 bg-brand" />
                 <span className="font-medium">
                   {playlist.tracks.total} songs
                 </span>
@@ -1187,7 +1187,7 @@ export default function UserHeader({
 
       {/* Enhanced Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-zinc-900/90 to-zinc-800/50 border-zinc-800/50 backdrop-blur-sm hover:bg-zinc-800/30 transition-all duration-300">
+        <Card className="bg-gradient-to-br from-brand/30 to-zinc-800/50 border-zinc-800/50 backdrop-blur-sm hover:bg-zinc-800/30 transition-all duration-300">
           <CardContent className="p-6">
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-brand/20 rounded-xl ring-1 ring-brand/30">
@@ -1205,7 +1205,7 @@ export default function UserHeader({
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-zinc-900/90 to-zinc-800/50 border-zinc-800/50 backdrop-blur-sm hover:bg-zinc-800/30 transition-all duration-300">
+        <Card className="bg-gradient-to-br from-brand/30 to-zinc-800/50 border-zinc-800/50 backdrop-blur-sm hover:bg-zinc-800/30 transition-all duration-300">
           <CardContent className="p-6">
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-brand/20 rounded-xl ring-1 ring-brand/30">

@@ -156,7 +156,7 @@ export const Breadcrumbs = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-transparent border-zinc-700 text-white hover:bg-zinc-800 hover:bg-brand-500">
+            <AlertDialogCancel className="bg-transparent border-zinc-700 text-white hover:bg-zinc-800 hover:bg-brand">
               Continue Quiz
             </AlertDialogCancel>
             <AlertDialogAction
@@ -398,8 +398,8 @@ export const SearchSection = () => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center space-x-2">
-                              <User className="h-4 w-4 bg-brand-500" />
-                              <p className="font-semibold text-white truncate group-hover:bg-brand-400 transition-colors">
+                              <User className="h-4 w-4 bg-brand" />
+                              <p className="font-semibold text-white truncate group-hover:bg-brand transition-colors">
                                 {result.artist.name}
                               </p>
                             </div>
@@ -432,7 +432,7 @@ export const SearchSection = () => {
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-white text-sm truncate group-hover:bg-brand-400 transition-colors">
+                              <p className="font-medium text-white text-sm truncate group-hover:bg-brand transition-colors">
                                 {track.name}
                               </p>
                               <p className="text-xs text-zinc-400 truncate">
@@ -471,7 +471,7 @@ export const SearchSection = () => {
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-white text-sm truncate group-hover:bg-brand-400 transition-colors">
+                          <p className="font-medium text-white text-sm truncate group-hover:bg-brand transition-colors">
                             {track.name}
                           </p>
                           <p className="text-xs text-zinc-400 truncate">

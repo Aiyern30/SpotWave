@@ -206,7 +206,7 @@ const ArtistQuizPage = () => {
             />
             {isSearching && (
               <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                <Loader2 className="h-5 w-5 animate-spin bg-brand-500" />
+                <Loader2 className="h-5 w-5 animate-spin bg-brand" />
               </div>
             )}
           </div>
@@ -232,7 +232,7 @@ const ArtistQuizPage = () => {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-white font-medium group-hover:bg-brand-400 transition-colors truncate">
+                        <h4 className="text-white font-medium group-hover:bg-brand transition-colors truncate">
                           {artist.name}
                         </h4>
                         <p className="text-xs text-zinc-500 capitalize truncate">
@@ -291,12 +291,12 @@ const ArtistQuizPage = () => {
                         <AvatarFallback>{artist.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/ai:opacity-100 transition-all flex items-center justify-center">
-                        <div className="bg-brand-500 text-black p-3 rounded-full shadow-xl transform scale-90 group-hover/ai:scale-100 transition-all">
+                        <div className="bg-brand text-black p-3 rounded-full shadow-xl transform scale-90 group-hover/ai:scale-100 transition-all">
                           <Play className="w-6 h-6 fill-current" />
                         </div>
                       </div>
                     </div>
-                    <h3 className="font-bold text-white text-center truncate w-full group-hover/ai:bg-brand-400">
+                    <h3 className="font-bold text-white text-center truncate w-full group-hover/ai:bg-brand">
                       {artist.name}
                     </h3>
                   </CardContent>
@@ -318,13 +318,13 @@ const ArtistQuizPage = () => {
         {/* Following Artists Carousel */}
         <div className="space-y-6">
           <div className="flex items-center gap-3 text-xl md:text-2xl font-semibold text-white px-4 md:px-0">
-            <Music className="w-5 h-5 md:w-6 md:h-6 bg-brand-500" />
+            <Music className="w-5 h-5 md:w-6 md:h-6 bg-brand" />
             <h2>Your Following Artists</h2>
           </div>
 
           {loadingFollowed ? (
             <div className="flex items-center justify-center p-12">
-              <Loader2 className="h-8 w-8 animate-spin bg-brand-500" />
+              <Loader2 className="h-8 w-8 animate-spin bg-brand" />
             </div>
           ) : followedArtists.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
@@ -346,13 +346,13 @@ const ArtistQuizPage = () => {
                         </AvatarFallback>
                       </Avatar>
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/card:opacity-100 transition-all flex items-center justify-center">
-                        <div className="bg-brand-500 text-black p-3 rounded-full shadow-xl transform scale-90 group-hover/card:scale-100 transition-all">
+                        <div className="bg-brand text-black p-3 rounded-full shadow-xl transform scale-90 group-hover/card:scale-100 transition-all">
                           <Play className="w-6 h-6 fill-current" />
                         </div>
                       </div>
                     </div>
                     <div className="text-center space-y-1 w-full">
-                      <h3 className="font-bold text-white truncate w-full group-hover/card:bg-brand-400 transition-colors px-1">
+                      <h3 className="font-bold text-white truncate w-full group-hover/card:bg-brand transition-colors px-1">
                         {artist.name}
                       </h3>
                       <p className="text-xs text-zinc-500 truncate w-full px-1">

@@ -180,7 +180,7 @@ export default function CategoryDetailPage() {
       </Button>
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6 bg-gradient-to-b from-zinc-800/10 to-transparent p-4 rounded-xl border border-white/5">
+      <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6 bg-gradient-to-b from-brand/10 to-transparent p-4 rounded-xl border border-white/5">
         {categoryInfo?.icons?.[0]?.url && (
           <div className="relative w-48 h-48 rounded-lg overflow-hidden shadow-2xl flex-shrink-0 group">
             <Image

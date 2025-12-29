@@ -275,7 +275,7 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-full flex items-center justify-center">
                           <Button
                             size="icon"
-                            className="h-8 w-8 rounded-full bg-brand-500 hover:bg-brand-400 text-black shadow-xl hover:scale-110 transition-all duration-200"
+                            className="h-8 w-8 rounded-full bg-brand hover:bg-brand text-black shadow-xl hover:scale-110 transition-all duration-200"
                             onClick={(e) => {
                               e.stopPropagation();
                               handlePlayTrack(track);
@@ -345,7 +345,7 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-full flex items-center justify-center">
                           <Button
                             size="icon"
-                            className="h-8 w-8 rounded-full bg-brand-500 hover:bg-brand-400 text-black shadow-xl hover:scale-110 transition-all duration-200"
+                            className="h-8 w-8 rounded-full bg-brand hover:bg-brand text-black shadow-xl hover:scale-110 transition-all duration-200"
                             onClick={(e) => {
                               e.stopPropagation();
                               handlePlayTrack(convertToTrack(track));
