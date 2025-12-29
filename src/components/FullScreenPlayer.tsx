@@ -144,9 +144,11 @@ export const FullScreenPlayer = ({
   const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const bgCanvasRef = useRef<HTMLCanvasElement>(null);
   const ripplesRef = useRef<Ripple[]>([]);
   const animationRef = useRef<number | null>(null);
   const lastBassRef = useRef<number>(0);
+  const dataRef = useRef<Uint8Array | null>(null);
 
   const [sidebarCompact, setSidebarCompact] = useState(true);
 
@@ -170,6 +172,11 @@ export const FullScreenPlayer = ({
   useEffect(() => {
     setLocalVolume(volume);
   }, [volume]);
+
+  // Sync audio data to ref for stable animation loop
+  useEffect(() => {
+    dataRef.current = globalDataArray;
+  }, [globalDataArray]);
 
   useEffect(() => {
     if (isOpen) {
@@ -450,10 +457,18 @@ export const FullScreenPlayer = ({
       );
     };
 
-  // Enhanced Ripple Animation using globalDataArray from PlayerContext
+  // Enhanced Ripple Animation using dataRef (populated from globalDataArray)
   const animateRipples = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    // Check both potential canvases and draw to whichever is active/visible
+    const mainCanvas = canvasRef.current;
+    const bgCanvas = bgCanvasRef.current;
+
+    // Prioritize drawing to the active view mode
+    const canvas = viewMode === "visualizer" ? mainCanvas : bgCanvas;
+    if (!canvas) {
+      animationRef.current = requestAnimationFrame(animateRipples);
+      return;
+    }
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -465,18 +480,18 @@ export const FullScreenPlayer = ({
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
 
-    // Use globalDataArray from PlayerContext (includes synthetic data)
-    if (!globalDataArray || globalDataArray.length === 0) {
+    // Use data from ref for stability
+    const data = dataRef.current;
+    if (!data || data.length === 0) {
       animationRef.current = requestAnimationFrame(animateRipples);
       return;
     }
 
     // Calculate audio metrics
-    const average =
-      globalDataArray.reduce((a, b) => a + b) / globalDataArray.length;
-    const bass = globalDataArray.slice(0, 8).reduce((a, b) => a + b) / 8;
-    const mid = globalDataArray.slice(8, 32).reduce((a, b) => a + b) / 24;
-    const treble = globalDataArray.slice(32, 64).reduce((a, b) => a + b) / 32;
+    const average = data.reduce((a, b) => a + b) / data.length;
+    const bass = data.slice(0, 8).reduce((a, b) => a + b) / 8;
+    const mid = data.slice(8, 32).reduce((a, b) => a + b) / 24;
+    const treble = data.slice(32, 64).reduce((a, b) => a + b) / 32;
 
     // Dynamic center circle
     const baseRadius = 80;
@@ -490,8 +505,8 @@ export const FullScreenPlayer = ({
     ctx.lineCap = "round";
 
     for (let i = 0; i < numBars; i++) {
-      const dataIndex = Math.floor((i / numBars) * globalDataArray.length);
-      const value = globalDataArray[dataIndex] || 0;
+      const dataIndex = Math.floor((i / numBars) * data.length);
+      const value = data[dataIndex] || 0;
       const amplitude = (value / 255) * 120 * sensitivity;
       const angle = i * angleStep;
 
@@ -590,17 +605,18 @@ export const FullScreenPlayer = ({
     }
 
     animationRef.current = requestAnimationFrame(animateRipples);
-  }, [globalDataArray, currentTheme.color, sensitivity, maxRipples]);
+  }, [currentTheme.color, sensitivity, maxRipples, viewMode]);
 
   // Start/stop animation based on playing state and view mode
   useEffect(() => {
     if (isOpen && isPlaying) {
       const handleResize = () => {
-        const canvas = canvasRef.current;
-        if (canvas && canvas.parentElement) {
-          canvas.width = canvas.parentElement.clientWidth;
-          canvas.height = canvas.parentElement.clientHeight;
-        }
+        [canvasRef.current, bgCanvasRef.current].forEach((canvas) => {
+          if (canvas && canvas.parentElement) {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+          }
+        });
       };
 
       handleResize();
@@ -611,24 +627,29 @@ export const FullScreenPlayer = ({
 
       return () => {
         window.removeEventListener("resize", handleResize);
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current);
+          animationRef.current = null;
+        }
       };
     } else {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
         animationRef.current = null;
       }
-      // Clear canvas when stopped
-      const canvas = canvasRef.current;
-      if (canvas) {
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.fillStyle = "#000000";
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Clear both canvases when stopped
+      [canvasRef.current, bgCanvasRef.current].forEach((canvas) => {
+        if (canvas) {
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          }
         }
-      }
+      });
       ripplesRef.current = [];
     }
-  }, [isOpen, isPlaying, animateRipples]);
+  }, [isOpen, isPlaying, animateRipples, viewMode]);
 
   if (!isOpen || !currentTrack) return null;
 
@@ -763,7 +784,7 @@ export const FullScreenPlayer = ({
             <div className="relative w-full aspect-square max-w-2xl mx-auto flex items-center justify-center">
               {/* Background ripples */}
               <canvas
-                ref={canvasRef}
+                ref={bgCanvasRef}
                 className="absolute inset-0 w-full h-full pointer-events-none z-0"
                 style={{ filter: "blur(3px)", opacity: 0.6 }}
               />
