@@ -5,16 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import {
-  Button,
-  Slider,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  Card,
-  CardContent,
-} from "@/components/ui";
+import { Button, Slider, Card, CardContent } from "@/components/ui";
 import {
   Play,
   Pause,
@@ -29,12 +20,11 @@ import {
   Loader2,
   X,
   Music,
-  Users,
-  TrendingUp,
   Clock,
-  Image as ImageIcon,
+  ImageIcon,
   FileText,
   Activity,
+  TrendingUp,
 } from "lucide-react";
 import {
   checkUserSavedTracks,
@@ -91,6 +81,7 @@ interface TopTrack {
     }[];
   };
 }
+
 const formatTime = (ms: number) => {
   const seconds = Math.floor(ms / 1000);
   const minutes = Math.floor(seconds / 60);
@@ -130,17 +121,12 @@ export const FullScreenPlayer = ({
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingTrack, setIsLoadingTrack] = useState(false);
 
-  // View toggle state
   const [viewMode, setViewMode] = useState<"image" | "lyrics" | "visualizer">(
     "image"
   );
-  const [showVisualizer, setShowVisualizer] = useState(false);
-
-  // Top tracks state
   const [topTracks, setTopTracks] = useState<TopTrack[]>([]);
   const [loadingTopTracks, setLoadingTopTracks] = useState(false);
 
-  // Lyrics state
   const [lyrics, setLyrics] = useState<string | null>(null);
   const [syncedLyrics, setSyncedLyrics] = useState<LyricsLine[] | null>(null);
   const [loadingLyrics, setLoadingLyrics] = useState(false);
@@ -148,7 +134,6 @@ export const FullScreenPlayer = ({
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
   const mobileLyricsContainerRef = useRef<HTMLDivElement>(null);
 
-  // Add display mode and current artist tracking
   const [topTracksDisplayUI, setTopTracksDisplayUI] = useState<
     "Table" | "Grid"
   >("Table");
@@ -158,21 +143,21 @@ export const FullScreenPlayer = ({
   >(null);
   const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
 
-  // Visualizer Refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ripplesRef = useRef<Ripple[]>([]);
   const animationRef = useRef<number | null>(null);
   const lastBassRef = useRef<number>(0);
 
-  // Sidebar state for responsive layout
   const [sidebarCompact, setSidebarCompact] = useState(true);
 
-  useEffect(() => {
-    // Initial check
-    const stored = localStorage.getItem("sidebar-compact");
-    setSidebarCompact(stored !== "false"); // Default to true if not set
+  // Visualizer settings
+  const [sensitivity, setSensitivity] = useState(1.5);
+  const [maxRipples, setMaxRipples] = useState(8);
 
-    // Listen for storage changes (if sidebar updates it)
+  useEffect(() => {
+    const stored = localStorage.getItem("sidebar-compact");
+    setSidebarCompact(stored !== "false");
+
     const handleStorage = () => {
       const updated = localStorage.getItem("sidebar-compact");
       setSidebarCompact(updated !== "false");
@@ -186,32 +171,24 @@ export const FullScreenPlayer = ({
     setLocalVolume(volume);
   }, [volume]);
 
-  // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
-      // Save current scroll position
       const scrollY = window.scrollY;
-
-      // Prevent body scroll
       document.body.style.overflow = "hidden";
       document.body.style.position = "fixed";
       document.body.style.top = `-${scrollY}px`;
       document.body.style.width = "100%";
 
       return () => {
-        // Restore body scroll
         document.body.style.overflow = "";
         document.body.style.position = "";
         document.body.style.top = "";
         document.body.style.width = "";
-
-        // Restore scroll position
         window.scrollTo(0, scrollY);
       };
     }
   }, [isOpen]);
 
-  // Fetch saved status
   useEffect(() => {
     const checkIfTrackIsSaved = async () => {
       if (currentTrack?.id) {
@@ -226,12 +203,10 @@ export const FullScreenPlayer = ({
     checkIfTrackIsSaved();
   }, [currentTrack]);
 
-  // Fetch top tracks when opening
   useEffect(() => {
     if (isOpen && currentTrack?.artists[0]?.id) {
       const artistId = currentTrack.artists[0].id;
 
-      // Only fetch if artist changed or no tracks loaded
       if (artistId !== currentArtistId || topTracks.length === 0) {
         setCurrentArtistId(artistId);
         fetchTopTracks(artistId);
@@ -243,9 +218,8 @@ export const FullScreenPlayer = ({
         );
       }
     }
-  }, [isOpen, currentTrack?.artists[0]?.id]); // Remove currentTrack from dependencies
+  }, [isOpen, currentTrack?.artists[0]?.id]);
 
-  // Sync lyrics
   useEffect(() => {
     if (!syncedLyrics || syncedLyrics.length === 0 || !isPlaying) return;
 
@@ -260,14 +234,12 @@ export const FullScreenPlayer = ({
 
     if (newIndex !== currentLyricIndex) {
       setCurrentLyricIndex(newIndex);
-      // Scroll both desktop and mobile containers internally
       [lyricsContainerRef, mobileLyricsContainerRef].forEach((ref) => {
         if (ref.current && newIndex >= 0) {
           const activeElement = ref.current.querySelector(
             `[data-index="${newIndex}"]`
           ) as HTMLElement;
           if (activeElement) {
-            // Use internal scrollTo instead of scrollIntoView to prevent page jumping
             const container = ref.current;
             const targetScroll =
               activeElement.offsetTop -
@@ -398,16 +370,13 @@ export const FullScreenPlayer = ({
   };
 
   const handlePlayPauseTopTrack = async (track: TopTrack) => {
-    // Check if this track is currently playing
     if (currentPlayingTrackId === track.id) {
-      // Same track - toggle play/pause
       if (isPlaying) {
         pauseTrack();
       } else {
         resumeTrack();
       }
     } else {
-      // Different track - play it
       await handlePlayTopTrack(track);
     }
   };
@@ -447,7 +416,6 @@ export const FullScreenPlayer = ({
       });
 
       setCurrentPlayingTrackId(trackData.id);
-      // Wait a bit for the track to start loading
       await new Promise((resolve) => setTimeout(resolve, 500));
     } catch (error) {
       console.error("Error playing track:", error);
@@ -456,19 +424,16 @@ export const FullScreenPlayer = ({
     }
   };
 
-  // Update current playing track ID when track changes
   useEffect(() => {
     if (currentTrack?.id) {
       setCurrentPlayingTrackId(currentTrack.id);
     }
   }, [currentTrack]);
 
-  // Helper function to check if track is currently playing
   const isTrackPlaying = (trackId: string) => {
     return currentPlayingTrackId === trackId && isPlaying;
   };
 
-  // Wrapper for PlaylistCard compatibility
   const handlePlayTopTrackWrapper = (trackId?: string) => {
     if (!trackId) return;
     const track = topTracks.find((t) => t.id === trackId);
@@ -485,74 +450,151 @@ export const FullScreenPlayer = ({
       );
     };
 
-  // Sound Ripple Animation Logic
+  // Enhanced Ripple Animation using globalDataArray from PlayerContext
   const animateRipples = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !globalDataArray) return;
+    if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Clear canvas with fade effect for trails
+    ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
 
-    // Calculate volume/bass metrics
+    // Use globalDataArray from PlayerContext (includes synthetic data)
+    if (!globalDataArray || globalDataArray.length === 0) {
+      animationRef.current = requestAnimationFrame(animateRipples);
+      return;
+    }
+
+    // Calculate audio metrics
     const average =
       globalDataArray.reduce((a, b) => a + b) / globalDataArray.length;
     const bass = globalDataArray.slice(0, 8).reduce((a, b) => a + b) / 8;
+    const mid = globalDataArray.slice(8, 32).reduce((a, b) => a + b) / 24;
+    const treble = globalDataArray.slice(32, 64).reduce((a, b) => a + b) / 32;
 
-    // Create new ripples on bass hits
-    const sensitivity = 1.5;
-    const bassThreshold = 180 / sensitivity;
+    // Dynamic center circle
+    const baseRadius = 80;
+    const dynamicRadius = baseRadius + (average / 255) * 30 * sensitivity;
 
+    // Draw radiating lines
+    const numBars = 60;
+    const angleStep = (Math.PI * 2) / numBars;
+
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+
+    for (let i = 0; i < numBars; i++) {
+      const dataIndex = Math.floor((i / numBars) * globalDataArray.length);
+      const value = globalDataArray[dataIndex] || 0;
+      const amplitude = (value / 255) * 120 * sensitivity;
+      const angle = i * angleStep;
+
+      const x1 = centerX + Math.cos(angle) * dynamicRadius;
+      const y1 = centerY + Math.sin(angle) * dynamicRadius;
+      const x2 = centerX + Math.cos(angle) * (dynamicRadius + amplitude);
+      const y2 = centerY + Math.sin(angle) * (dynamicRadius + amplitude);
+
+      // Color based on frequency
+      const hue = (i / numBars) * 360;
+      const saturation = 50 + (value / 255) * 50;
+      const lightness = 50 + (value / 255) * 30;
+
+      ctx.strokeStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.8)`;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    // Draw center circle
+    const gradient = ctx.createRadialGradient(
+      centerX,
+      centerY,
+      0,
+      centerX,
+      centerY,
+      dynamicRadius
+    );
+    const hex = currentTheme.color;
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+
+    gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.9)`);
+    gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.3)`);
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, dynamicRadius - 5, 0, Math.PI * 2);
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, dynamicRadius, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.6)`;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Create ripples on bass hits
+    const bassThreshold = 150 / sensitivity;
     if (
       bass > bassThreshold &&
-      bass > lastBassRef.current * 1.1 &&
-      ripplesRef.current.length < 8
+      bass > lastBassRef.current * 1.15 &&
+      ripplesRef.current.length < maxRipples
     ) {
-      // Convert currentTheme.color (hex) to rgb
-      const hex = currentTheme.color;
-      const r = parseInt(hex.slice(1, 3), 16);
-      const g = parseInt(hex.slice(3, 5), 16);
-      const b = parseInt(hex.slice(5, 7), 16);
+      const angle = Math.random() * Math.PI * 2;
+      const distance = dynamicRadius + 30 + Math.random() * 50;
 
       ripplesRef.current.push({
-        x: centerX,
-        y: centerY,
-        radius: 120, // Start just outside album art
-        maxRadius: 400 + (bass / 255) * 200,
-        alpha: 0.6,
+        x: centerX + Math.cos(angle) * distance,
+        y: centerY + Math.sin(angle) * distance,
+        radius: 0,
+        maxRadius: 150 + (bass / 255) * 150,
+        alpha: 0.8,
         color: `${r}, ${g}, ${b}`,
-        speed: 2 + (bass / 255) * 4,
+        speed: 2.5 + (bass / 255) * 3,
       });
     }
     lastBassRef.current = bass;
 
     // Update and draw ripples
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ripplesRef.current = ripplesRef.current.filter((ripple) => {
       ripple.radius += ripple.speed;
-      ripple.alpha = 0.6 * (1 - ripple.radius / ripple.maxRadius);
+      ripple.alpha = 0.8 * (1 - ripple.radius / ripple.maxRadius);
 
       if (ripple.alpha > 0) {
         ctx.beginPath();
         ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
         ctx.strokeStyle = `rgba(${ripple.color}, ${ripple.alpha})`;
+        ctx.lineWidth = 2 + (1 - ripple.alpha) * 4;
         ctx.stroke();
         return true;
       }
       return false;
     });
 
-    animationRef.current = requestAnimationFrame(animateRipples);
-  }, [globalDataArray]);
+    // Add particles on treble peaks
+    if (treble > 180 && Math.random() > 0.7) {
+      const particleX = centerX + (Math.random() - 0.5) * canvas.width * 0.8;
+      const particleY = centerY + (Math.random() - 0.5) * canvas.height * 0.8;
+      ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + Math.random() * 0.4})`;
+      ctx.beginPath();
+      ctx.arc(particleX, particleY, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
+    animationRef.current = requestAnimationFrame(animateRipples);
+  }, [globalDataArray, currentTheme.color, sensitivity, maxRipples]);
+
+  // Start/stop animation based on playing state and view mode
   useEffect(() => {
     if (isOpen && isPlaying) {
-      // Resize canvas to fill parent
       const handleResize = () => {
         const canvas = canvasRef.current;
         if (canvas && canvas.parentElement) {
@@ -562,13 +604,29 @@ export const FullScreenPlayer = ({
       };
 
       handleResize();
-      animationRef.current = requestAnimationFrame(animateRipples);
+      if (!animationRef.current) {
+        animationRef.current = requestAnimationFrame(animateRipples);
+      }
       window.addEventListener("resize", handleResize);
 
       return () => {
-        if (animationRef.current) cancelAnimationFrame(animationRef.current);
         window.removeEventListener("resize", handleResize);
       };
+    } else {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+      // Clear canvas when stopped
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.fillStyle = "#000000";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+      ripplesRef.current = [];
     }
   }, [isOpen, isPlaying, animateRipples]);
 
@@ -589,18 +647,19 @@ export const FullScreenPlayer = ({
           scrollbar-width: none;
         }
       `}</style>
-      {/* Header with View Toggle (Desktop Only) and Close Button */}
+
       <div className="fixed top-2 sm:top-4 right-2 sm:right-4 flex items-center gap-1 sm:gap-2 z-10">
         <div className="hidden lg:flex items-center gap-1 sm:gap-2">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setViewMode("visualizer")}
-            className={`h-8 w-8 sm:h-10 sm:w-10 ${
+            className={`h-8 w-8 sm:h-10 sm:w-10 transition-all ${
               viewMode === "visualizer"
                 ? "text-brand bg-zinc-800"
                 : "text-white hover:text-brand hover:bg-zinc-800"
             }`}
+            title="Visualizer"
           >
             <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
@@ -609,11 +668,12 @@ export const FullScreenPlayer = ({
             variant="ghost"
             size="icon"
             onClick={() => setViewMode("image")}
-            className={`h-8 w-8 sm:h-10 sm:w-10 ${
+            className={`h-8 w-8 sm:h-10 sm:w-10 transition-all ${
               viewMode === "image"
                 ? "text-brand bg-zinc-800"
                 : "text-white hover:text-brand hover:bg-zinc-800"
             }`}
+            title="Album Art"
           >
             <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
@@ -622,11 +682,12 @@ export const FullScreenPlayer = ({
             variant="ghost"
             size="icon"
             onClick={() => setViewMode("lyrics")}
-            className={`h-8 w-8 sm:h-10 sm:w-10 ${
+            className={`h-8 w-8 sm:h-10 sm:w-10 transition-all ${
               viewMode === "lyrics"
                 ? "text-brand bg-zinc-800"
                 : "text-white hover:text-brand hover:bg-zinc-800"
             }`}
+            title="Lyrics"
           >
             <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
@@ -642,34 +703,69 @@ export const FullScreenPlayer = ({
         </Button>
       </div>
 
-      {/* Hero Section - Album Art or Lyrics (max-w-4xl) */}
       <div className="max-w-4xl mx-auto px-4 sm:px-8 py-4 sm:py-8">
         <div className="relative w-full">
-          {/* Desktop logic: Switch between image and lyrics. Mobile: Always show image at top. */}
-          {/* Visualizer Only View */}
+          {/* Visualizer View */}
           <div className={viewMode === "visualizer" ? "block" : "hidden"}>
+            <div className="relative w-full aspect-square max-w-2xl mx-auto flex items-center justify-center bg-black rounded-2xl overflow-hidden border-2 border-zinc-800">
+              <canvas
+                ref={canvasRef}
+                className="absolute inset-0 w-full h-full"
+              />
+              {!isPlaying && (
+                <div className="relative z-10 text-center p-8">
+                  <Music className="h-24 w-24 text-brand mx-auto mb-4 opacity-50 animate-pulse" />
+                  <p className="text-zinc-400 font-medium text-lg mb-2">
+                    Play music to see visualizations
+                  </p>
+                  <p className="text-zinc-600 text-sm">
+                    Audio ripples powered by Spotify playback
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Visualizer Controls */}
+            {isPlaying && (
+              <div className="mt-6 space-y-4 bg-zinc-900/50 rounded-xl p-4 border border-zinc-800">
+                <div>
+                  <label className="text-white text-sm flex items-center justify-between mb-2">
+                    <span>Sensitivity: {sensitivity.toFixed(1)}x</span>
+                  </label>
+                  <Slider
+                    value={[sensitivity]}
+                    min={0.5}
+                    max={3}
+                    step={0.1}
+                    onValueChange={(val) => setSensitivity(val[0])}
+                    className="cursor-pointer"
+                  />
+                </div>
+                <div>
+                  <label className="text-white text-sm flex items-center justify-between mb-2">
+                    <span>Max Ripples: {maxRipples}</span>
+                  </label>
+                  <Slider
+                    value={[maxRipples]}
+                    min={3}
+                    max={15}
+                    step={1}
+                    onValueChange={(val) => setMaxRipples(val[0])}
+                    className="cursor-pointer"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Album Art View (also shown on mobile below visualizer) */}
+          <div className={viewMode === "image" ? "block" : "block lg:hidden"}>
             <div className="relative w-full aspect-square max-w-2xl mx-auto flex items-center justify-center">
+              {/* Background ripples */}
               <canvas
                 ref={canvasRef}
                 className="absolute inset-0 w-full h-full pointer-events-none z-0"
-                style={{ filter: "blur(2px)" }}
-              />
-              <div className="relative z-10 text-center animate-pulse">
-                <Music className="h-24 w-24 text-brand mx-auto mb-4 opacity-50" />
-                <p className="text-zinc-500 font-medium">
-                  Visualizing {currentTrack.name}...
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className={viewMode === "image" ? "block" : "block lg:hidden"}>
-            <div className="relative w-full aspect-square max-w-2xl mx-auto flex items-center justify-center">
-              {/* Visualizer Canvas behind album art */}
-              <canvas
-                ref={canvasRef}
-                className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-100"
-                style={{ filter: "blur(2px)" }}
+                style={{ filter: "blur(3px)", opacity: 0.6 }}
               />
 
               <div className="relative w-4/5 h-4/5 z-10">
@@ -678,20 +774,18 @@ export const FullScreenPlayer = ({
                     currentTrack.album.images[0]?.url || "/default-artist.png"
                   }
                   fill
-                  className="object-cover rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)]"
+                  className="object-cover rounded-2xl shadow-[0_0_80px_rgba(0,0,0,0.8)]"
                   alt={currentTrack.name}
                   priority
                 />
               </div>
             </div>
           </div>
-
-          {/* Desktop-only lyrics tab content. Mobile lyrics are rendered below the controls. */}
           <div className={viewMode === "lyrics" ? "hidden lg:block" : "hidden"}>
             <div className="w-full min-h-[400px] sm:min-h-[600px] bg-zinc-900/50 rounded-2xl p-4 sm:p-8 backdrop-blur-sm overflow-hidden">
               {loadingLyrics ? (
                 <div className="flex justify-center items-center h-[400px] sm:h-[600px]">
-                  <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin bg-brand" />
+                  <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-brand" />
                 </div>
               ) : syncedLyrics && syncedLyrics.length > 0 ? (
                 <div
@@ -733,7 +827,6 @@ export const FullScreenPlayer = ({
           </div>
         </div>
 
-        {/* Track Info */}
         <div className="text-center space-y-2 pt-4 sm:pt-6">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white px-4 leading-tight">
             {currentTrack.name}
@@ -755,7 +848,6 @@ export const FullScreenPlayer = ({
           </div>
         </div>
 
-        {/* Progress Bar */}
         <div className="space-y-2 px-4 sm:px-0">
           <Slider
             value={[position]}
@@ -771,13 +863,12 @@ export const FullScreenPlayer = ({
           </div>
         </div>
 
-        {/* Controls */}
         <div className="flex items-center justify-center gap-2 sm:gap-4 flex-wrap px-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={handleToggleSave}
-            className="text-zinc-400 hover:bg-brand hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10 transition-all"
+            className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10 transition-all"
             disabled={isSaving}
           >
             {isSaving ? (
@@ -792,7 +883,7 @@ export const FullScreenPlayer = ({
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-400 hover:bg-brand hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10 transition-all hidden sm:flex"
+            className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10 transition-all hidden sm:flex"
           >
             <Shuffle className="h-3 w-3 sm:h-4 sm:w-4" />
           </Button>
@@ -801,7 +892,7 @@ export const FullScreenPlayer = ({
             variant="ghost"
             size="icon"
             onClick={previousTrack}
-            className="text-white hover:bg-brand hover:bg-zinc-800 h-10 w-10 sm:h-12 sm:w-12 transition-all"
+            className="text-white hover:text-brand hover:bg-zinc-800 h-10 w-10 sm:h-12 sm:w-12 transition-all"
             disabled={!isReady}
           >
             <SkipBack className="h-5 w-5 sm:h-6 sm:w-6 fill-current" />
@@ -821,7 +912,6 @@ export const FullScreenPlayer = ({
               <Play className="h-6 w-6 sm:h-7 sm:w-7 ml-0.5 fill-current" />
             )}
           </Button>
-
           <Button
             variant="ghost"
             size="icon"
