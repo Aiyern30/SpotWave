@@ -45,6 +45,11 @@ interface PlayerContextType {
   player: any;
   isConnecting: boolean;
   setToken: (token: string) => void;
+
+  // Analyser and Analysis for visualizers
+  analyser: AnalyserNode | null;
+  dataArray: Uint8Array | null;
+  trackAnalysis: any | null;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -80,6 +85,15 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [repeatMode, setRepeatMode] = useState<"off" | "context" | "track">(
     "off"
   );
+  const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
+  const [dataArray, setDataArray] = useState<Uint8Array | null>(null);
+  const [trackAnalysis, setTrackAnalysis] = useState<any | null>(null);
+
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const dataArrayRef = useRef<Uint8Array | null>(null);
+  const analysisRef = useRef<any | null>(null);
   const trackEndHandlerRef = useRef<boolean>(false);
   const playerRef = useRef<any>(null);
   const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -205,6 +219,18 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             trackEndHandlerRef.current = false;
           }, 1000);
         }
+
+        if (!isCurrentlyPaused && !analyserRef.current) {
+          setTimeout(setupAudioAnalyser, 3000);
+        }
+
+        // Fetch analysis when track changes
+        if (
+          track.id &&
+          (!analysisRef.current || analysisRef.current.trackId !== track.id)
+        ) {
+          fetchTrackAnalysis(track.id);
+        }
       });
 
       // Errors
@@ -301,6 +327,150 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       window.onSpotifyWebPlaybackSDKReady = initializePlayer;
     }
   }, [token]);
+
+  const setupAudioAnalyser = useCallback(async () => {
+    if (analyserRef.current || typeof window === "undefined") return;
+
+    try {
+      const audioElement = document.querySelector("audio");
+      if (!audioElement) return;
+
+      // Crucial for CORS issues with visualizers
+      audioElement.crossOrigin = "anonymous";
+
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext ||
+          (window as any).webkitAudioContext)();
+      }
+
+      const audioContext = audioContextRef.current;
+      if (audioContext.state === "suspended") {
+        await audioContext.resume();
+      }
+
+      const analyserNode = audioContext.createAnalyser();
+      analyserNode.fftSize = 256;
+      analyserNode.smoothingTimeConstant = 0.8;
+      analyserRef.current = analyserNode;
+
+      // Only create source if not already created for THIS element
+      if (!sourceRef.current) {
+        const source = audioContext.createMediaElementSource(audioElement);
+        sourceRef.current = source;
+        source.connect(analyserNode);
+        analyserNode.connect(audioContext.destination);
+      }
+
+      const bufferLength = analyserNode.frequencyBinCount;
+      const dataArr = new Uint8Array(bufferLength);
+
+      setAnalyser(analyserNode);
+      setDataArray(dataArr);
+      console.log("Global Spotify Analyser setup complete");
+    } catch (error) {
+      console.error("Error setting up global audio analyser:", error);
+    }
+  }, []);
+
+  const fetchTrackAnalysis = async (trackId: string) => {
+    const currentToken = token || localStorage.getItem("Token");
+    if (!currentToken) return;
+
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/audio-analysis/${trackId}`,
+        {
+          headers: { Authorization: `Bearer ${currentToken}` },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        const enrichedData = { ...data, trackId };
+        setTrackAnalysis(enrichedData);
+        analysisRef.current = enrichedData;
+        console.log("Track analysis fetched for:", trackId);
+      }
+    } catch (err) {
+      console.error("Error fetching track analysis:", err);
+    }
+  };
+
+  // Synthetic Analyser Loop - Bridging the gap when hardware analyser is silent
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const interval = setInterval(() => {
+      if (!isPlaying || isPaused) return;
+
+      const currentAnalyser = analyserRef.current;
+      if (!currentAnalyser) return;
+
+      if (
+        !dataArrayRef.current ||
+        dataArrayRef.current.length !== currentAnalyser.frequencyBinCount
+      ) {
+        dataArrayRef.current = new Uint8Array(
+          currentAnalyser.frequencyBinCount
+        );
+      }
+
+      const dataArr = dataArrayRef.current;
+      currentAnalyser.getByteFrequencyData(dataArr);
+
+      // Check if hardware is silent (CORS/DRM issue)
+      const sum = dataArr.reduce((a, b) => a + b, 0);
+      if (sum === 0 && analysisRef.current) {
+        // USE SYNTHETIC DATA based on Spotify Analysis
+        const posSeconds = position / 1000;
+        const analysis = analysisRef.current;
+
+        // Find current segment for loudness
+        const segment = analysis.segments.find(
+          (s: any) => posSeconds >= s.start && posSeconds < s.start + s.duration
+        );
+
+        if (segment) {
+          // Map loudness (-60 to 0dB) to 0-255 scale
+          const loudness = Math.min(
+            255,
+            Math.max(0, (segment.loudness_max + 60) * 4)
+          );
+
+          // Find current beat/bar for "pulse"
+          const beat = analysis.beats.find(
+            (b: any) =>
+              posSeconds >= b.start && posSeconds < b.start + b.duration
+          );
+
+          for (let i = 0; i < dataArr.length; i++) {
+            // Low frequencies pulse with beats
+            if (i < 5) {
+              const beatPulse = beat ? 150 : 50;
+              dataArr[i] = Math.max(loudness, beatPulse);
+            }
+            // Others follow loudness with some variance
+            else {
+              dataArr[i] = loudness * (0.5 + Math.random() * 0.5);
+            }
+          }
+          // Notify visualizer components through state update
+          setDataArray(new Uint8Array(dataArr));
+        }
+      } else if (sum > 0) {
+        // Real data working, just update state
+        setDataArray(new Uint8Array(dataArr));
+      }
+    }, 50); // 20fps for visualizer sync
+
+    return () => clearInterval(interval);
+  }, [isPlaying, isPaused, position]);
+
+  // Resume AudioContext on any interaction
+  useEffect(() => {
+    if (isPlaying && audioContextRef.current?.state === "suspended") {
+      audioContextRef.current.resume();
+    }
+  }, [isPlaying]);
 
   // Add cleanup only on window unload (when user closes tab)
   useEffect(() => {
@@ -813,6 +983,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     player,
     isConnecting,
     setToken: updateToken,
+    analyser,
+    dataArray,
+    trackAnalysis,
   };
 
   return (
