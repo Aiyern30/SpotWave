@@ -4,9 +4,36 @@ import { useEffect, useState, useCallback } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import PlaylistCard from "@/components/PlaylistCard";
-import { Card, Button, Skeleton } from "@/components/ui";
-import { Music, Radio, ArrowLeft } from "lucide-react";
+import {
+  Card,
+  Button,
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Badge,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui";
+import {
+  Music,
+  Radio,
+  ArrowLeft,
+  Play,
+  Pause,
+  Clock,
+  ListPlus,
+  MoreHorizontal,
+} from "lucide-react";
 import { fetchCategory, fetchCategoryPlaylists } from "@/utils/fetchCategories";
+import { usePlayer } from "@/contexts/PlayerContext";
+import { PiTable } from "react-icons/pi";
+import { LayoutGridIcon as LuLayoutGrid } from "lucide-react";
 
 type CategoryPlaylist = {
   id: string;
@@ -32,10 +59,19 @@ const CategoryDetailPage = () => {
   const [playlists, setPlaylists] = useState<CategoryPlaylist[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [token, setToken] = useState<string>("");
+  const [displayUI, setDisplayUI] = useState<"Table" | "Grid">("Grid");
+  const [currentPlaylistUri, setCurrentPlaylistUri] = useState<string | null>(
+    null
+  );
+  const [hoveredPlaylistId, setHoveredPlaylistId] = useState<string | null>(
+    null
+  );
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { playPlaylist, pauseTrack, resumeTrack, currentTrack, isPlaying } =
+    usePlayer();
 
   const segments = pathname.split("/");
   const categoryId = segments[segments.length - 1];
@@ -77,8 +113,44 @@ const CategoryDetailPage = () => {
     }
   }, [token, fetchCategoryData]);
 
+  // Update current playlist URI when track changes
+  useEffect(() => {
+    if (currentTrack?.uri) {
+      const contextUri = currentTrack.uri.split(":").slice(0, 3).join(":");
+      if (contextUri.startsWith("spotify:playlist:")) {
+        setCurrentPlaylistUri(contextUri);
+      }
+    }
+  }, [currentTrack]);
+
   const handlePlaylistClick = (playlistId: string, playlistName: string) => {
     router.push(`/Home/${playlistId}?name=${encodeURIComponent(playlistName)}`);
+  };
+
+  const handlePlayPlaylist = useCallback(
+    async (playlistId?: string) => {
+      if (!playlistId) return;
+      const playlistUri = `spotify:playlist:${playlistId}`;
+      if (currentPlaylistUri === playlistUri) {
+        if (isPlaying) {
+          pauseTrack();
+        } else {
+          resumeTrack();
+        }
+      } else {
+        try {
+          playPlaylist(playlistUri);
+          setCurrentPlaylistUri(playlistUri);
+        } catch (error) {
+          console.error("Error playing playlist:", error);
+        }
+      }
+    },
+    [playPlaylist, pauseTrack, resumeTrack, currentPlaylistUri, isPlaying]
+  );
+
+  const isPlaylistPlaying = (playlistId: string) => {
+    return currentPlaylistUri === `spotify:playlist:${playlistId}` && isPlaying;
   };
 
   const LoadingSkeleton = () => (
@@ -207,28 +279,184 @@ const CategoryDetailPage = () => {
       </div>
 
       {/* Playlists Section */}
-      <div className="space-y-4">
-        <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-          Playlists
-        </h2>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            Playlists
+          </h2>
+          <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setDisplayUI("Table")}
+              className={`h-9 px-3 transition-all ${
+                displayUI === "Table"
+                  ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+              }`}
+            >
+              <PiTable className="h-5 w-5 sm:mr-2" />
+              <span className="hidden sm:inline">Table</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setDisplayUI("Grid")}
+              className={`h-9 px-3 transition-all ${
+                displayUI === "Grid"
+                  ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+              }`}
+            >
+              <LuLayoutGrid className="h-5 w-5 sm:mr-2" />
+              <span className="hidden sm:inline">Grid</span>
+            </Button>
+          </div>
+        </div>
 
         {playlists.length === 0 ? (
           <EmptyState />
+        ) : displayUI === "Table" ? (
+          <div className="overflow-x-auto rounded-lg border border-zinc-800/50">
+            <Table className="table-layout-fixed">
+              <TableHeader>
+                <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
+                  <TableHead className="w-[50px] sm:w-[60px] text-center text-zinc-400 font-medium whitespace-nowrap">
+                    #
+                  </TableHead>
+                  <TableHead className="text-zinc-400 font-medium">
+                    Playlist
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell text-zinc-400 font-medium">
+                    Owner
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell text-zinc-400 font-medium text-center">
+                    Tracks
+                  </TableHead>
+                  <TableHead className="w-[50px] text-zinc-400"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {playlists.map((playlist, index) => {
+                  const isPlayingThis = isPlaylistPlaying(playlist.id);
+                  const isHovered = hoveredPlaylistId === playlist.id;
+
+                  return (
+                    <TableRow
+                      key={playlist.id}
+                      className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
+                      onClick={() =>
+                        handlePlaylistClick(playlist.id, playlist.name)
+                      }
+                      onMouseEnter={() => setHoveredPlaylistId(playlist.id)}
+                      onMouseLeave={() => setHoveredPlaylistId(null)}
+                    >
+                      <TableCell className="text-center py-4">
+                        {isHovered ? (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="w-8 h-8 rounded-full hover:bg-green-500 hover:text-black"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePlayPlaylist(playlist.id);
+                            }}
+                          >
+                            {isPlayingThis ? (
+                              <Pause className="w-4 h-4" fill="currentColor" />
+                            ) : (
+                              <Play
+                                className="w-4 h-4 ml-0.5"
+                                fill="currentColor"
+                              />
+                            )}
+                          </Button>
+                        ) : (
+                          <span
+                            className={`text-sm font-medium ${
+                              isPlayingThis ? "text-green-400" : "text-zinc-400"
+                            }`}
+                          >
+                            {index + 1}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-12 h-12 rounded overflow-hidden flex-shrink-0">
+                            <Image
+                              src={
+                                playlist.images?.[0]?.url || "/placeholder.svg"
+                              }
+                              alt={playlist.name}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <div
+                              className={`font-semibold truncate ${
+                                isPlayingThis ? "text-green-400" : "text-white"
+                              }`}
+                            >
+                              {playlist.name}
+                            </div>
+                            <div className="text-zinc-400 text-xs truncate max-w-md hidden sm:block">
+                              {playlist.description?.replace(
+                                /<[^>]*>?/gm,
+                                ""
+                              ) || "No description"}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-zinc-400 text-sm">
+                        {playlist.owner.display_name}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-center text-zinc-400 text-sm">
+                        {playlist.tracks.total}
+                      </TableCell>
+                      <TableCell className="text-right pr-4">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                        >
+                          <MoreHorizontal className="h-4 w-4 text-zinc-400" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4 sm:gap-6">
-            {playlists.map((playlist) => (
-              <PlaylistCard
-                key={playlist.id}
-                id={playlist.id}
-                image={playlist.images?.[0]?.url || "/placeholder.svg"}
-                title={playlist.name}
-                description={
-                  playlist.description || `By ${playlist.owner.display_name}`
-                }
-                badge={`${playlist.tracks.total} tracks`}
-                onClick={(id) => handlePlaylistClick(id, playlist.name)}
-              />
-            ))}
+            {playlists.map((playlist) => {
+              const isPlayingThis = isPlaylistPlaying(playlist.id);
+              return (
+                <PlaylistCard
+                  key={playlist.id}
+                  id={playlist.id}
+                  image={playlist.images?.[0]?.url || "/placeholder.svg"}
+                  title={playlist.name}
+                  description={
+                    playlist.description?.replace(/<[^>]*>?/gm, "") ||
+                    `By ${playlist.owner.display_name}`
+                  }
+                  badge={`${playlist.tracks.total} tracks`}
+                  isPlaying={isPlayingThis}
+                  onPlay={() => handlePlayPlaylist(playlist.id)}
+                  onPause={pauseTrack}
+                  onResume={resumeTrack}
+                  onClick={(id) => handlePlaylistClick(id, playlist.name)}
+                />
+              );
+            })}
           </div>
         )}
       </div>
