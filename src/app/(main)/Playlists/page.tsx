@@ -10,7 +10,7 @@ export default function PlaylistsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-brand/20 flex items-center justify-center">
-            <Music className="h-6 w-6 bg-brand" />
+            <Music className="h-6 w-6 text-brand" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-white tracking-tight">

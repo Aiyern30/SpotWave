@@ -305,7 +305,7 @@ const PlaylistQuizGame = () => {
             pauseTrack();
             router.back();
           }}
-          className="bg-brand hover:bg-brand hover:bg-brand/10 font-medium"
+          className="bg-brand hover:bg-brand hover:opacity-80 font-medium"
         >
           <ArrowLeft className="w-5 h-5 mr-2" /> Quit
         </Button>
@@ -313,7 +313,7 @@ const PlaylistQuizGame = () => {
           <h2 className="text-white font-bold text-lg truncate max-w-[200px]">
             {playlistName}
           </h2>
-          <span className="bg-brand font-mono text-sm">Score: {score}</span>
+          <span className="text-brand font-mono text-sm">Score: {score}</span>
         </div>
         <div className="w-20 text-right text-zinc-500 text-sm">
           {currentTrackIndex + 1} / {gameTracks.length}
@@ -404,10 +404,10 @@ const PlaylistQuizGame = () => {
                           />
                         )}
                       </div>
-                      <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/10">
+                      <div className="absolute inset-0 flex items-center justify-center z-10 bg-brand/10">
                         {isCurrentSongPlaying && (
-                          <div className="bg-black/40 p-3 rounded-full backdrop-blur-sm">
-                            <Volume2 className="w-8 h-8 bg-brand animate-pulse" />
+                          <div className="bg-brand/40 p-3 rounded-full backdrop-blur-sm">
+                            <Volume2 className="w-8 h-8 text-brand animate-pulse" />
                           </div>
                         )}
                       </div>

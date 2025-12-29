@@ -247,17 +247,17 @@ const Page = () => {
 
   const CreatePlaylistCard = () => (
     <Card
-      className="relative w-full max-w-[140px] sm:max-w-[200px] h-[165px] sm:h-[290px] cursor-pointer bg-zinc-900/30 hover:bg-zinc-800/50 border-2 border-dashed border-zinc-700 hover:border-green-500/50 transition-all duration-300 hover:scale-105 flex flex-col items-center justify-center group mx-auto"
+      className="relative w-full max-w-[140px] sm:max-w-[200px] h-[165px] sm:h-[290px] cursor-pointer bg-zinc-900/30 hover:bg-zinc-800/50 border-2 border-dashed border-zinc-700 hover:border-brand/50 transition-all duration-300 hover:scale-105 flex flex-col items-center justify-center group mx-auto"
       onClick={handleCreatePlaylist}
     >
       <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-5">
-        <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-zinc-800/50 group-hover:bg-brand/20 flex items-center justify-center transition-all duration-300 border border-zinc-700 group-hover:border-green-500/50">
+        <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-zinc-800/50 group-hover:bg-brand/20 flex items-center justify-center transition-all duration-300 border border-zinc-700 group-hover:border-brand/50">
           {creating ? (
-            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-2 border-green-500 border-t-transparent" />
+            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-2 border-brand border-t-transparent" />
           ) : (
             <IoMdAdd
               size={24}
-              className="sm:w-9 sm:h-9 bg-brand group-hover:scale-110 transition-transform"
+              className="sm:w-9 sm:h-9 text-brand group-hover:scale-110 transition-transform"
             />
           )}
         </div>
@@ -328,7 +328,7 @@ const Page = () => {
       <div className="space-y-3 sm:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-1 sm:px-2">
           <h1 className="text-xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2">
-            <Music className="h-6 w-6 bg-brand" />
+            <Music className="h-6 w-6 text-brand" />
             Your Playlists
           </h1>
           <p className="text-zinc-400 text-xs sm:text-sm font-medium">
@@ -368,12 +368,12 @@ const Page = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-1 sm:px-2">
           <div className="flex items-center gap-4">
             <h2 className="text-xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2">
-              <Radio className="h-6 w-6 text-blue-500" />
+              <Radio className="h-6 w-6 text-brand" />
               Browse Categories
             </h2>
             <Button
-              variant="link"
-              className="bg-brand hover:bg-brand p-0 h-auto font-semibold text-sm sm:text-base transition-colors"
+              variant="outline"
+              className="font-semibold text-sm sm:text-base transition-colors"
               onClick={() => router.push("/Categories")}
             >
               See All
@@ -403,7 +403,7 @@ const Page = () => {
       <div className="space-y-3 sm:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-1 sm:px-2">
           <h2 className="text-xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2">
-            <BookOpen className="h-6 w-6 text-purple-500" />
+            <BookOpen className="h-6 w-6 text-brand" />
             Audiobooks
           </h2>
           <p className="text-zinc-400 text-xs sm:text-sm font-medium">

@@ -284,7 +284,7 @@ const PlaylistQuizPage = () => {
         {/* My Playlists Grid */}
         <div className="space-y-8">
           <div className="flex items-center gap-3 text-xl md:text-2xl font-semibold text-white px-4 sm:px-0">
-            <Music className="w-5 h-5 md:w-6 md:h-6 bg-brand" />
+            <Music className="w-5 h-5 md:w-6 md:h-6 text-brand" />
             <h2>Your Library Playlists</h2>
           </div>
 
@@ -326,7 +326,7 @@ const PlaylistQuizPage = () => {
                       </div>
                     </div>
                     <div className="p-4 space-y-1">
-                      <h3 className="font-bold text-white truncate group-hover:bg-brand transition-colors">
+                      <h3 className="font-bold text-white truncate group-hover:text-brand transition-colors">
                         {playlist.name}
                       </h3>
                       <p className="text-xs text-zinc-500">

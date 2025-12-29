@@ -318,7 +318,7 @@ const ArtistQuizPage = () => {
         {/* Following Artists Carousel */}
         <div className="space-y-6">
           <div className="flex items-center gap-3 text-xl md:text-2xl font-semibold text-white px-4 md:px-0">
-            <Music className="w-5 h-5 md:w-6 md:h-6 bg-brand" />
+            <Music className="w-5 h-5 md:w-6 md:h-6 text-brand" />
             <h2>Your Following Artists</h2>
           </div>
 
@@ -352,7 +352,7 @@ const ArtistQuizPage = () => {
                       </div>
                     </div>
                     <div className="text-center space-y-1 w-full">
-                      <h3 className="font-bold text-white truncate w-full group-hover/card:bg-brand transition-colors px-1">
+                      <h3 className="font-bold text-white truncate w-full group-hover/card:text-brand transition-colors px-1">
                         {artist.name}
                       </h3>
                       <p className="text-xs text-zinc-500 truncate w-full px-1">
