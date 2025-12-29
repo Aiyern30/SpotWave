@@ -966,7 +966,7 @@ export default function UserHeader({
                   className="hover:text-white transition-colors font-medium hover:underline"
                   onClick={() =>
                     router.push(
-                      `/Artists/${playlist.owner.id}?name=${encodeURIComponent(
+                      `/Profile/${playlist.owner.id}?name=${encodeURIComponent(
                         playlist.owner.display_name
                       )}`
                     )
