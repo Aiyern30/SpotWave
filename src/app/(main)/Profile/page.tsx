@@ -4,6 +4,7 @@ import ProfileComponent from "./Profile";
 import PublicLibrary from "./PublicLibrary";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
 import FollowingArtists from "./FollowingArtists";
+import SavedAlbums from "./SavedAlbums";
 
 const Profile = () => {
   return (
@@ -16,7 +17,13 @@ const Profile = () => {
             value="My Library"
             className="data-[state=active]:bg-green-500 data-[state=active]:text-black text-zinc-400 hover:text-white transition-colors px-6 py-2 rounded-md font-medium"
           >
-            My Library
+            Playlists
+          </TabsTrigger>
+          <TabsTrigger
+            value="Saved Albums"
+            className="data-[state=active]:bg-green-500 data-[state=active]:text-black text-zinc-400 hover:text-white transition-colors px-6 py-2 rounded-md font-medium"
+          >
+            Saved Albums
           </TabsTrigger>
           <TabsTrigger
             value="Following Artists"
@@ -28,6 +35,10 @@ const Profile = () => {
 
         <TabsContent value="My Library" className="mt-6">
           <PublicLibrary />
+        </TabsContent>
+
+        <TabsContent value="Saved Albums" className="mt-6">
+          <SavedAlbums />
         </TabsContent>
 
         <TabsContent value="Following Artists" className="mt-6">

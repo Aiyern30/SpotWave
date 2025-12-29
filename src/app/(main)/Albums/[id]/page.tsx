@@ -14,6 +14,7 @@ import {
   Calendar,
   Disc3,
   Pause,
+  Heart,
 } from "lucide-react";
 import {
   Card,
@@ -67,6 +68,9 @@ const AlbumsIDPage = () => {
   const [hoveredArtist, setHoveredArtist] = useState<string | null>(null);
   const [playingTrack, setPlayingTrack] = useState<string | null>(null);
   const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState<boolean>(false);
+  const [artistImage, setArtistImage] = useState<string | null>(null);
+  const [isCheckingSaved, setIsCheckingSaved] = useState<boolean>(true);
 
   const handleArtistClick = (artistId: string, name: string) => {
     router.push(`/Artists/${artistId}?name=${encodeURIComponent(name)}`);
@@ -124,7 +128,31 @@ const AlbumsIDPage = () => {
         const albumData = await fetchAlbumDetails(id, token);
         if (albumData) {
           setAlbum(albumData);
+
+          // Fetch artist details for the main artist image
+          if (albumData.artists?.[0]) {
+            fetch(
+              `https://api.spotify.com/v1/artists/${albumData.artists[0].id}`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            )
+              .then((res) => res.json())
+              .then((data) => setArtistImage(data.images?.[0]?.url || null))
+              .catch((err) =>
+                console.error("Error fetching artist image:", err)
+              );
+          }
         }
+
+        // Check if album is saved
+        fetch(`https://api.spotify.com/v1/me/albums/contains?ids=${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((res) => res.json())
+          .then((data) => setIsSaved(data[0]))
+          .catch((err) => console.error("Error checking saved status:", err))
+          .finally(() => setIsCheckingSaved(false));
       }
     };
 
@@ -198,6 +226,28 @@ const AlbumsIDPage = () => {
     }
   };
 
+  const toggleSaveAlbum = async () => {
+    if (!token || !id) return;
+
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/me/albums?ids=${id}`,
+        {
+          method: isSaved ? "DELETE" : "PUT",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.ok) {
+        setIsSaved(!isSaved);
+        const { toast } = await import("react-toastify");
+        toast.success(isSaved ? "Removed from library" : "Saved to library");
+      }
+    } catch (error) {
+      console.error("Error toggling saved status:", error);
+    }
+  };
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedToken = localStorage.getItem("Token");
@@ -241,59 +291,104 @@ const AlbumsIDPage = () => {
     <TooltipProvider>
       <div className="space-y-4 sm:space-y-8">
         {/* Enhanced Album Header */}
-        <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-lg p-8">
-          <div className="relative group flex-shrink-0">
-            <Image
-              src={album.images[0]?.url || "/default-artist.png"}
-              width={192}
-              height={192}
-              alt={album.name}
-              className="w-48 h-48 rounded-lg shadow-2xl object-cover"
-              priority
-            />
-            <div className="absolute inset-0 bg-black/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          </div>
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-zinc-900/90 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm border border-zinc-800/50">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.1),transparent_50%)]" />
 
-          <div className="flex-1 text-center md:text-left space-y-4">
-            <div>
-              <Badge variant="secondary" className="mb-2 capitalize">
-                <Disc3 className="w-3 h-3 mr-1" />
-                {album.album_type}
-              </Badge>
-              <h1 className="text-4xl md:text-6xl font-bold text-white">
-                {album.name}
-              </h1>
-            </div>
-
-            <div className="flex flex-wrap justify-center md:justify-start gap-4 text-zinc-300">
-              <div className="flex items-center space-x-2">
-                <Calendar className="h-4 w-4" />
-                <span>{new Date(album.release_date).getFullYear()}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Music className="h-4 w-4" />
-                <span>{album.total_tracks} tracks</span>
+          <div className="relative flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 p-8">
+            <div className="relative group flex-shrink-0">
+              <div className="relative overflow-hidden rounded-xl shadow-2xl ring-1 ring-white/10">
+                <Image
+                  src={album.images[0]?.url || "/default-artist.png"}
+                  width={256}
+                  height={256}
+                  alt={album.name}
+                  className="w-48 h-48 md:w-64 md:h-64 rounded-xl object-cover transition-transform duration-500 group-hover:scale-105"
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               </div>
             </div>
 
-            {album.artists && (
-              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                {album.artists.map((artist: any, index: number) => (
-                  <span key={artist.id}>
-                    <Button
-                      variant="link"
-                      className="text-white hover:text-green-400 p-0 h-auto font-medium text-lg transition-colors"
-                      onClick={() => handleArtistClick(artist.id, artist.name)}
-                    >
-                      {artist.name}
-                    </Button>
-                    {index < album.artists.length - 1 && (
-                      <span className="text-zinc-400">,</span>
-                    )}
+            <div className="flex-1 text-center md:text-left space-y-6">
+              <div className="space-y-3">
+                <Badge
+                  variant="secondary"
+                  className="bg-green-500/20 text-green-400 border-green-500/30 capitalize"
+                >
+                  <Disc3 className="w-3 h-3 mr-1" />
+                  {album.album_type}
+                </Badge>
+                <div className="flex items-center justify-center md:justify-start gap-4">
+                  <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tight">
+                    {album.name}
+                  </h1>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleSaveAlbum}
+                    className={`h-12 w-12 rounded-full backdrop-blur-sm border border-white/10 transition-all duration-200 hover:scale-110 ${
+                      isSaved
+                        ? "text-green-500 bg-green-500/10 border-green-500/20"
+                        : "text-white bg-black/20 hover:bg-black/40"
+                    }`}
+                  >
+                    <Heart
+                      className={`h-6 w-6 ${
+                        isSaved ? "fill-current" : "text-white"
+                      }`}
+                    />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap justify-center md:justify-start gap-6 text-zinc-300">
+                <div className="flex items-center space-x-2">
+                  <Calendar className="h-4 w-4 text-green-500" />
+                  <span className="font-medium">
+                    {new Date(album.release_date).getFullYear()}
                   </span>
-                ))}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Music className="h-4 w-4 text-blue-500" />
+                  <span className="font-medium">
+                    {album.total_tracks} tracks
+                  </span>
+                </div>
               </div>
-            )}
+
+              {album.artists && (
+                <div className="flex flex-wrap gap-4 items-center justify-center md:justify-start">
+                  {album.artists.map((artist: any, index: number) => (
+                    <div key={artist.id} className="flex items-center gap-3">
+                      {index === 0 && artistImage && (
+                        <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-white/10 flex-shrink-0">
+                          <Image
+                            src={artistImage}
+                            width={40}
+                            height={40}
+                            alt={artist.name}
+                            className="object-cover"
+                          />
+                        </div>
+                      )}
+                      <Button
+                        variant="link"
+                        className="text-white hover:text-green-400 p-0 h-auto font-semibold text-lg hover:underline transition-colors"
+                        onClick={() =>
+                          handleArtistClick(artist.id, artist.name)
+                        }
+                      >
+                        {artist.name}
+                      </Button>
+                      {index < album.artists.length - 1 && (
+                        <span className="text-zinc-600 text-xl">•</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
