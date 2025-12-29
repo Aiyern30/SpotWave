@@ -485,7 +485,7 @@ const Page = () => {
               onClick={() => setDisplayUI("Table")}
               className={`h-9 px-3 transition-all ${
                 displayUI === "Table"
-                  ? "bg-brand/10 bg-brand hover:bg-brand/20 hover:bg-brand"
+                  ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
                   : "text-zinc-400 hover:text-white hover:bg-zinc-800"
               }`}
             >
@@ -498,7 +498,7 @@ const Page = () => {
               onClick={() => setDisplayUI("Grid")}
               className={`h-9 px-3 transition-all ${
                 displayUI === "Grid"
-                  ? "bg-brand/10 bg-brand hover:bg-brand/20 hover:bg-brand"
+                  ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
                   : "text-zinc-400 hover:text-white hover:bg-zinc-800"
               }`}
             >
@@ -660,7 +660,7 @@ const Page = () => {
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="h-8 w-8 bg-brand/10 bg-brand hover:bg-brand hover:text-black rounded-full transition-all"
+                                      className="h-8 w-8 bg-brand/10 hover:bg-brand hover:text-black rounded-full transition-all"
                                       onClick={(e) => e.stopPropagation()}
                                     >
                                       <MoreHorizontal className="h-4 w-4" />
@@ -687,7 +687,7 @@ const Page = () => {
                                                 pl.name
                                               );
                                             }}
-                                            className="text-white hover:bg-brand/20 hover:bg-brand"
+                                            className="text-white hover:bg-brand/20 hover:text-brand"
                                           >
                                             {pl.name}
                                           </DropdownMenuItem>
@@ -703,7 +703,7 @@ const Page = () => {
                                           track.name
                                         );
                                       }}
-                                      className="text-white hover:bg-brand/20 hover:bg-brand"
+                                      className="text-white hover:bg-brand/20 hover:text-brand"
                                     >
                                       <Heart
                                         className={`mr-2 h-4 w-4 ${
@@ -732,7 +732,7 @@ const Page = () => {
                                           );
                                         }
                                       }}
-                                      className="text-white hover:bg-brand/20 hover:bg-brand"
+                                      className="text-white hover:bg-brand/20 hover:text-brand"
                                     >
                                       <User className="mr-2 h-4 w-4" />
                                       Go to artist
@@ -746,7 +746,7 @@ const Page = () => {
                                           "_blank"
                                         );
                                       }}
-                                      className="text-white hover:bg-brand/20 hover:bg-brand"
+                                      className="text-white hover:bg-brand/20 hover:text-brand"
                                     >
                                       <ExternalLink className="mr-2 h-4 w-4" />
                                       Open in Spotify
@@ -790,7 +790,7 @@ const Page = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 bg-brand/10 bg-brand hover:bg-brand hover:text-black rounded-full backdrop-blur-sm shadow-sm transition-all"
+                                className="h-8 w-8 bg-brand/10 hover:bg-brand hover:text-black rounded-full backdrop-blur-sm shadow-sm transition-all"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <MoreHorizontal className="h-4 w-4" />
@@ -817,7 +817,7 @@ const Page = () => {
                                           pl.name
                                         );
                                       }}
-                                      className="text-white hover:bg-brand/20 hover:bg-brand"
+                                      className="text-white hover:bg-brand/20 hover:text-brand"
                                     >
                                       {pl.name}
                                     </DropdownMenuItem>
@@ -830,7 +830,7 @@ const Page = () => {
                                   e.stopPropagation();
                                   handleSaveToLiked(track.id!, track.name);
                                 }}
-                                className="text-white hover:bg-brand/20 hover:bg-brand"
+                                className="text-white hover:bg-brand/20 hover:text-brand"
                               >
                                 <Heart
                                   className={`mr-2 h-4 w-4 ${
@@ -859,7 +859,7 @@ const Page = () => {
                                     );
                                   }
                                 }}
-                                className="text-white hover:bg-brand/20 hover:bg-brand"
+                                className="text-white hover:bg-brand/20 hover:text-brand"
                               >
                                 <User className="mr-2 h-4 w-4" />
                                 Go to artist
@@ -873,7 +873,7 @@ const Page = () => {
                                     "_blank"
                                   );
                                 }}
-                                className="text-white hover:bg-brand/20 hover:bg-brand"
+                                className="text-white hover:bg-brand/20 hover:text-brand"
                               >
                                 <ExternalLink className="mr-2 h-4 w-4" />
                                 Open in Spotify

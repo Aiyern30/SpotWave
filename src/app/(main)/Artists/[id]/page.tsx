@@ -887,7 +887,7 @@ const ArtistProfilePage = () => {
                                           pl.name
                                         );
                                       }}
-                                      className="text-white hover:bg-brand/20 hover:bg-brand"
+                                      className="text-white hover:bg-brand/20 "
                                     >
                                       {pl.name}
                                     </DropdownMenuItem>
@@ -900,7 +900,7 @@ const ArtistProfilePage = () => {
                                   e.stopPropagation();
                                   handleSaveToLiked(track.id, track.name);
                                 }}
-                                className="text-white hover:bg-brand/20 hover:bg-brand"
+                                className="text-white hover:bg-brand/20"
                               >
                                 <Heart
                                   className={`mr-2 h-4 w-4 ${
@@ -924,7 +924,7 @@ const ArtistProfilePage = () => {
                                     track.album.name
                                   );
                                 }}
-                                className="text-white hover:bg-brand/20 hover:bg-brand"
+                                className="text-white hover:bg-brand/20"
                               >
                                 <Disc className="mr-2 h-4 w-4" />
                                 Go to album
@@ -938,7 +938,7 @@ const ArtistProfilePage = () => {
                                     "_blank"
                                   );
                                 }}
-                                className="text-white hover:bg-brand/20 hover:bg-brand"
+                                className="text-white hover:bg-brand/20"
                               >
                                 <ExternalLink className="mr-2 h-4 w-4" />
                                 Open in Spotify
@@ -1005,7 +1005,7 @@ const ArtistProfilePage = () => {
                                         pl.name
                                       );
                                     }}
-                                    className="text-white hover:bg-brand/20 hover:bg-brand"
+                                    className="text-white hover:bg-brand/20"
                                   >
                                     {pl.name}
                                   </DropdownMenuItem>
@@ -1018,7 +1018,7 @@ const ArtistProfilePage = () => {
                                 e.stopPropagation();
                                 handleSaveToLiked(track.id, track.name);
                               }}
-                              className="text-white hover:bg-brand/20 hover:bg-brand"
+                              className="text-white hover:bg-brand/20"
                             >
                               <Heart
                                 className={`mr-2 h-4 w-4 ${
@@ -1042,7 +1042,7 @@ const ArtistProfilePage = () => {
                                   track.album.name
                                 );
                               }}
-                              className="text-white hover:bg-brand/20 hover:bg-brand"
+                              className="text-white hover:bg-brand/20"
                             >
                               <Disc className="mr-2 h-4 w-4" />
                               Go to album
@@ -1056,7 +1056,7 @@ const ArtistProfilePage = () => {
                                   "_blank"
                                 );
                               }}
-                              className="text-white hover:bg-brand/20 hover:bg-brand"
+                              className="text-white hover:bg-brand/20"
                             >
                               <ExternalLink className="mr-2 h-4 w-4" />
                               Open in Spotify
@@ -1082,7 +1082,7 @@ const ArtistProfilePage = () => {
                   onClick={() => setAlbumsDisplayUI("Table")}
                   className={`h-9 px-3 transition-all ${
                     albumsDisplayUI === "Table"
-                      ? "bg-brand/10 bg-brand hover:bg-brand/20 hover:bg-brand"
+                      ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
                       : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                   }`}
                 >
@@ -1095,7 +1095,7 @@ const ArtistProfilePage = () => {
                   onClick={() => setAlbumsDisplayUI("Grid")}
                   className={`h-9 px-3 transition-all ${
                     albumsDisplayUI === "Grid"
-                      ? "bg-brand/10 bg-brand hover:bg-brand/20 hover:bg-brand"
+                      ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
                       : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                   }`}
                 >
@@ -1182,7 +1182,7 @@ const ArtistProfilePage = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 bg-brand/10 bg-brand hover:bg-brand hover:text-black rounded-full transition-all"
+                                className="h-8 w-8 bg-brand/10 hover:bg-brand hover:text-black rounded-full transition-all"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <MoreHorizontal className="h-4 w-4" />
@@ -1197,7 +1197,7 @@ const ArtistProfilePage = () => {
                                   e.stopPropagation();
                                   handleAlbumClick(album.id, album.name);
                                 }}
-                                className="text-white hover:bg-brand/20 hover:bg-brand"
+                                className="text-white hover:bg-brand/20"
                               >
                                 <Disc className="mr-2 h-4 w-4" />
                                 Go to album
@@ -1211,7 +1211,7 @@ const ArtistProfilePage = () => {
                                     "_blank"
                                   );
                                 }}
-                                className="text-white hover:bg-brand/20 hover:bg-brand"
+                                className="text-white hover:bg-brand/20"
                               >
                                 <ExternalLink className="mr-2 h-4 w-4" />
                                 Open in Spotify
@@ -1251,7 +1251,7 @@ const ArtistProfilePage = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 bg-brand/10 bg-brand hover:bg-brand hover:text-black rounded-full backdrop-blur-sm shadow-sm transition-all"
+                            className="h-8 w-8 bg-brand/10 hover:bg-brand hover:text-black rounded-full backdrop-blur-sm shadow-sm transition-all"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MoreHorizontal className="h-4 w-4" />
@@ -1266,7 +1266,7 @@ const ArtistProfilePage = () => {
                               e.stopPropagation();
                               handleAlbumClick(album.id, album.name);
                             }}
-                            className="text-white hover:bg-brand/20 hover:bg-brand"
+                            className="text-white hover:bg-brand/20"
                           >
                             <Disc className="mr-2 h-4 w-4" />
                             Go to album
@@ -1280,7 +1280,7 @@ const ArtistProfilePage = () => {
                                 "_blank"
                               );
                             }}
-                            className="text-white hover:bg-brand/20 hover:bg-brand"
+                            className="text-white hover:bg-brand/20"
                           >
                             <ExternalLink className="mr-2 h-4 w-4" />
                             Open in Spotify
