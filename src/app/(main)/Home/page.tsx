@@ -97,7 +97,7 @@ const Page = () => {
     usePlayer();
 
   const handleClick = (id: string, name: string) => {
-    router.push(`/Home/${id}?name=${encodeURIComponent(name)}`);
+    router.push(`/Playlists/${id}?name=${encodeURIComponent(name)}`);
   };
 
   const handleFetchUserProfile = useCallback(async () => {

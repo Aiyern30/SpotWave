@@ -59,7 +59,7 @@ export default function PlaylistCard({
     if (onClick) {
       onClick(id, title);
     } else {
-      router.push(`/Home/${id}?name=${encodeURIComponent(title)}`);
+      router.push(`/Playlists/${id}?name=${encodeURIComponent(title)}`);
     }
   };
 

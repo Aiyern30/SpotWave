@@ -98,7 +98,7 @@ export default function Settings({ playlistID }: SettingsProps) {
         const playlistName = playlistResponse.name;
         toast.success("Playlist created successfully!");
         router.push(
-          `/Home/${playlistID}?name=${encodeURIComponent(playlistName)}`
+          `/Playlists/${playlistID}?name=${encodeURIComponent(playlistName)}`
         );
       } else {
         toast.error("Failed to create playlist");

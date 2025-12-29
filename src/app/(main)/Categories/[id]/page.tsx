@@ -334,7 +334,7 @@ export default function CategoryDetailPage() {
                 badge={`${playlist.tracks?.total || 0} tracks`}
                 onClick={(id) =>
                   router.push(
-                    `/Home/${id}?name=${encodeURIComponent(playlist.name)}`
+                    `/Playlists/${id}?name=${encodeURIComponent(playlist.name)}`
                   )
                 }
               />
