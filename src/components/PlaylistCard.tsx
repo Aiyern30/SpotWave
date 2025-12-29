@@ -118,7 +118,7 @@ export default function PlaylistCard({
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
                 <Button
                   size="sm"
-                  className="bg-green-500 hover:bg-green-400 text-black rounded-full w-12 h-12 p-0 shadow-xl hover:scale-110 transition-transform"
+                  className="bg-brand hover:bg-brand/80 text-brand-foreground rounded-full w-12 h-12 p-0 shadow-xl hover:scale-110 transition-transform"
                   onClick={handlePlayPauseClick}
                 >
                   {isPlaying ? (
@@ -139,7 +139,7 @@ export default function PlaylistCard({
 
             {/* Currently Playing/Paused Indicator */}
             {isPlaying && (
-              <Badge className="absolute top-2 right-2 bg-green-500 text-black text-xs font-bold animate-pulse">
+              <Badge className="absolute top-2 right-2 bg-brand text-brand-foreground text-xs font-bold animate-pulse">
                 Playing
               </Badge>
             )}
@@ -167,8 +167,8 @@ export default function PlaylistCard({
               <CardTitle
                 className={`text-base font-semibold truncate transition-colors ${
                   isCurrentTrack
-                    ? "text-green-400"
-                    : "text-white group-hover:text-green-400"
+                    ? "text-brand"
+                    : "text-white group-hover:text-brand"
                 }`}
               >
                 {title}
@@ -198,7 +198,7 @@ export default function PlaylistCard({
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-6 px-2 text-xs hover:text-green-400"
+                  className="h-6 px-2 text-xs hover:text-brand"
                   onClick={handleExternalClick}
                 >
                   <ExternalLink className="w-3 h-3" />

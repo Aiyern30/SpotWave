@@ -564,7 +564,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                   </TabsTrigger>
                   <TabsTrigger
                     value="ai"
-                    className="rounded-lg data-[state=active]:bg-green-500/20 data-[state=active]:text-green-400 flex items-center gap-2"
+                    className="rounded-lg data-[state=active]:bg-brand/20 data-[state=active]:text-brand flex items-center gap-2"
                   >
                     <Wand2 className="h-4 w-4" />
                     AI Assistant
@@ -574,8 +574,8 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                 <TabsContent value="search" className="space-y-6 mt-0">
                   <SheetHeader className="space-y-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-green-500/20 rounded-lg">
-                        <Search className="h-5 w-5 text-green-400" />
+                      <div className="p-2 bg-brand/20 rounded-lg">
+                        <Search className="h-5 w-5 text-brand" />
                       </div>
                       <div>
                         <SheetTitle className="text-white text-xl">
@@ -594,7 +594,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                         placeholder="Song, artist, or album..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10 pr-10 bg-zinc-800/50 border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-green-500/50 focus:ring-green-500/20"
+                        className="pl-10 pr-10 bg-zinc-800/50 border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-brand/50 focus:ring-brand/20"
                       />
                       {searchQuery && (
                         <Button
@@ -616,7 +616,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                     {!searchQuery.trim() ? (
                       <div className="space-y-6">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 text-green-400 font-semibold uppercase tracking-wider text-xs">
+                          <div className="flex items-center gap-2 text-brand font-semibold uppercase tracking-wider text-xs">
                             <Sparkles className="h-3.5 w-3.5" />
                             Based on your playlist
                           </div>
@@ -666,7 +666,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                       <div className="space-y-1">
                         {isLoading ? (
                           <div className="flex flex-col items-center justify-center py-20 gap-4">
-                            <Loader2 className="h-8 w-8 animate-spin text-green-500" />
+                            <Loader2 className="h-8 w-8 animate-spin text-brand" />
                             <p className="text-zinc-500 text-sm">
                               Searching Spotify...
                             </p>
@@ -691,10 +691,10 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                 </TabsContent>
 
                 <TabsContent value="ai" className="space-y-6 mt-0">
-                  <div className="bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-transparent p-6 rounded-2xl border border-green-500/10">
+                  <div className="bg-gradient-to-br from-brand/10 via-emerald-500/5 to-transparent p-6 rounded-2xl border border-brand/10">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2.5 bg-green-500 rounded-xl shadow-[0_0_15px_rgba(34,197,94,0.3)]">
-                        <Wand2 className="h-5 w-5 text-black" />
+                      <div className="p-2.5 bg-brand rounded-xl shadow-[0_0_15px_rgba(var(--brand-primary-rgb),0.3)]">
+                        <Wand2 className="h-5 w-5 text-brand-foreground" />
                       </div>
                       <div>
                         <h3 className="text-white font-bold text-lg">
@@ -715,7 +715,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                           placeholder="e.g. 'Upbeat summer songs with 80s synth vibes' or 'Chill acoustic covers of rock hits'"
                           value={aiPrompt}
                           onChange={(e) => setAiPrompt(e.target.value)}
-                          className="bg-black/40 border-zinc-800 placeholder:text-zinc-600 focus:border-green-500/50 resize-none h-24"
+                          className="bg-black/40 border-zinc-800 placeholder:text-zinc-600 focus:border-brand/50 resize-none h-24"
                         />
                       </div>
 
@@ -734,7 +734,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                               }
                               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
                                 selectedGenre === vibe.value
-                                  ? "bg-green-500 border-green-500 text-black shadow-[0_0_10px_rgba(34,197,94,0.4)]"
+                                  ? "bg-brand border-brand text-brand-foreground shadow-[0_0_10px_rgba(var(--brand-primary-rgb),0.4)]"
                                   : "bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
                               }`}
                             >
@@ -749,7 +749,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                           <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
                             Discovery Amount
                           </label>
-                          <span className="text-xs font-bold text-green-400 bg-green-400/10 px-2 py-0.5 rounded">
+                          <span className="text-xs font-bold text-brand bg-brand/10 px-2 py-0.5 rounded">
                             {discoveryCount} Songs
                           </span>
                         </div>
@@ -763,7 +763,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                             onChange={(e) =>
                               setDiscoveryCount(parseInt(e.target.value))
                             }
-                            className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-green-500"
+                            className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-brand"
                           />
                           <div className="flex justify-between mt-2 px-0.5">
                             <span className="text-[9px] text-zinc-600 font-bold uppercase">
@@ -783,7 +783,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                       </div>
 
                       <Button
-                        className="w-full bg-green-600 hover:bg-green-500 text-black font-bold h-11 transition-all active:scale-95 shadow-lg shadow-green-500/10 mt-2"
+                        className="w-full bg-brand hover:bg-brand/90 text-brand-foreground font-bold h-11 transition-all active:scale-95 shadow-lg shadow-brand/10 mt-2"
                         onClick={handleAiRecommend}
                         disabled={
                           isAiProcessing || (!aiPrompt.trim() && !selectedGenre)
