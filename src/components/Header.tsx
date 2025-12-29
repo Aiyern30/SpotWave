@@ -33,6 +33,7 @@ import {
 import { formatSongDuration } from "@/utils/function";
 import { Search, Music, User, Play, Clock, Disc } from "lucide-react";
 import Image from "next/image";
+import ThemeSwitcher from "./ThemeSwitcher";
 
 interface Artist {
   id: string;
@@ -90,51 +91,60 @@ export const Breadcrumbs = () => {
 
   return (
     <div className="lg:relative fixed top-0 left-0 right-0 z-40 lg:z-auto bg-black/60 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none px-4 lg:px-0 py-4 lg:py-0 border-b border-white/5 lg:border-0 transition-all duration-300 pl-20 lg:pl-0">
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              asChild
-              className="text-zinc-400 hover:text-white transition-colors"
-            >
-              <Link href="/Home" onClick={(e) => handleNavigation(e, "/Home")}>
-                Home
-              </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          {breadcrumbSegments.map((segment, index) => {
-            if (segment.toLowerCase() === "home" && index === 0) return null;
+      <div className="flex items-center justify-between w-full pr-4 lg:pr-0">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                asChild
+                className="text-zinc-400 hover:text-white transition-colors"
+              >
+                <Link
+                  href="/Home"
+                  onClick={(e) => handleNavigation(e, "/Home")}
+                >
+                  Home
+                </Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            {breadcrumbSegments.map((segment, index) => {
+              if (segment.toLowerCase() === "home" && index === 0) return null;
 
-            const isLast = index === breadcrumbSegments.length - 1;
-            const href = `/${breadcrumbSegments.slice(0, index + 1).join("/")}`;
+              const isLast = index === breadcrumbSegments.length - 1;
+              const href = `/${breadcrumbSegments
+                .slice(0, index + 1)
+                .join("/")}`;
 
-            return (
-              <React.Fragment key={href}>
-                <BreadcrumbSeparator className="text-zinc-600" />
-                <BreadcrumbItem>
-                  {isLast && name ? (
-                    <BreadcrumbPage className="text-white font-medium">
-                      {name}
-                    </BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink
-                      asChild
-                      className="text-zinc-400 hover:text-white transition-colors capitalize"
-                    >
-                      <Link
-                        href={href}
-                        onClick={(e) => handleNavigation(e, href)}
+              return (
+                <React.Fragment key={href}>
+                  <BreadcrumbSeparator className="text-zinc-600" />
+                  <BreadcrumbItem>
+                    {isLast && name ? (
+                      <BreadcrumbPage className="text-white font-medium">
+                        {name}
+                      </BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink
+                        asChild
+                        className="text-zinc-400 hover:text-white transition-colors capitalize"
                       >
-                        {segment.charAt(0).toUpperCase() + segment.slice(1)}
-                      </Link>
-                    </BreadcrumbLink>
-                  )}
-                </BreadcrumbItem>
-              </React.Fragment>
-            );
-          })}
-        </BreadcrumbList>
-      </Breadcrumb>
+                        <Link
+                          href={href}
+                          onClick={(e) => handleNavigation(e, href)}
+                        >
+                          {segment.charAt(0).toUpperCase() + segment.slice(1)}
+                        </Link>
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                </React.Fragment>
+              );
+            })}
+          </BreadcrumbList>
+        </Breadcrumb>
+
+        <ThemeSwitcher />
+      </div>
 
       <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
         <AlertDialogContent className="bg-zinc-950 border-zinc-800 text-white">
