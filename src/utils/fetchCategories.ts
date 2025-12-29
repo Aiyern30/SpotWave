@@ -53,14 +53,18 @@ export const fetchCategoryPlaylists = async (
   country?: string,
   limit: number = 50
 ) => {
+  if (!categoryId || categoryId === "index") {
+    console.error("Invalid categoryId provided:", categoryId);
+    return [];
+  }
+
   try {
     const url = new URL(
       `https://api.spotify.com/v1/browse/categories/${categoryId}/playlists`
     );
+
     url.searchParams.append("limit", limit.toString());
-    if (country) {
-      url.searchParams.append("country", country);
-    }
+    if (country) url.searchParams.append("country", country);
 
     const response = await fetch(url.toString(), {
       headers: {
@@ -69,11 +73,13 @@ export const fetchCategoryPlaylists = async (
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch category playlists: ${response.status}`);
+      const err = await response.json();
+      console.error("Spotify error:", err);
+      throw new Error("Failed to fetch category playlists");
     }
 
     const data = await response.json();
-    return data.playlists.items;
+    return data.playlists.items ?? [];
   } catch (error) {
     console.error("Error fetching category playlists:", error);
     return [];
