@@ -309,7 +309,7 @@ export default function SpotifyRippleVisualizer({
                 onClick={toggleAudioSource}
                 className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
                   useSpotifyAudio
-                    ? "bg-green-600 text-white"
+                    ? "bg-brand text-brand-foreground"
                     : "bg-gray-600 text-white hover:bg-gray-500"
                 }`}
               >
@@ -325,7 +325,7 @@ export default function SpotifyRippleVisualizer({
                   ? "bg-red-500 hover:bg-red-600 text-white"
                   : useSpotifyAudio && hasSpotifyAudio
                   ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                  : "bg-green-500 hover:bg-green-600 text-white"
+                  : "bg-brand hover:bg-brand/90 text-brand-foreground"
               }`}
             >
               {isListening ? (
@@ -378,7 +378,7 @@ export default function SpotifyRippleVisualizer({
         </div>
 
         {isActive && (
-          <div className="text-center mt-4 text-green-500 text-xs animate-pulse">
+          <div className="text-center mt-4 text-brand text-xs animate-pulse">
             {useSpotifyAudio && hasSpotifyAudio
               ? "Visualizing Spotify Audio"
               : "Microphone Active - Play music out loud"}

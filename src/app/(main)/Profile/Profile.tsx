@@ -122,10 +122,10 @@ const ProfileComponent = ({ userId }: { userId?: string }) => {
               fill
               alt={myProfile?.display_name || "User name"}
               priority
-              className="rounded-full object-cover shadow-2xl border-4 border-green-500/20"
+              className="rounded-full object-cover shadow-2xl border-4 border-brand/20"
             />
-            <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full p-2">
-              <Crown className="h-6 w-6 text-black" />
+            <div className="absolute -bottom-2 -right-2 bg-brand rounded-full p-2">
+              <Crown className="h-6 w-6 text-brand-foreground" />
             </div>
           </div>
         </div>
@@ -174,8 +174,8 @@ const ProfileComponent = ({ userId }: { userId?: string }) => {
           <Card className="bg-zinc-900/30 border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
             <CardContent className="p-6">
               <div className="flex items-center space-x-4">
-                <div className="p-3 bg-green-500/20 rounded-full">
-                  <Mail className="h-6 w-6 text-green-500" />
+                <div className="p-3 bg-brand/20 rounded-full">
+                  <Mail className="h-6 w-6 text-brand" />
                 </div>
                 <div>
                   <p className="text-sm text-zinc-400">Email</p>

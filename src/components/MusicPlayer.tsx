@@ -436,7 +436,7 @@ export const MusicPlayer = ({
       {/* Mobile Top Progress Bar */}
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-zinc-800 md:hidden">
         <div
-          className="h-full bg-green-500 transition-all duration-300"
+          className="h-full bg-brand transition-all duration-300"
           style={{ width: `${(estimatedPosition / duration) * 100}%` }}
         />
       </div>
@@ -468,7 +468,7 @@ export const MusicPlayer = ({
               </>
             ) : (
               <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-6 w-6 border-2 border-green-500 border-t-transparent" />
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-brand border-t-transparent" />
               </div>
             )}
           </div>
@@ -525,7 +525,7 @@ export const MusicPlayer = ({
           <Button
             variant="ghost"
             size="icon"
-            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 flex-shrink-0 transition-all duration-200 hidden sm:flex"
+            className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-8 w-8 flex-shrink-0 transition-all duration-200 hidden sm:flex"
             onClick={(e) => {
               e.stopPropagation();
               handleToggleSave();
@@ -533,9 +533,9 @@ export const MusicPlayer = ({
             disabled={!currentTrack || isSaving}
           >
             {isSaving ? (
-              <Loader2 className="h-4 w-4 animate-spin text-green-500" />
+              <Loader2 className="h-4 w-4 animate-spin text-brand" />
             ) : isSaved ? (
-              <Heart className="h-4 w-4 fill-green-500 text-green-500 animate-in zoom-in-50 duration-200" />
+              <Heart className="h-4 w-4 fill-brand text-brand animate-in zoom-in-50 duration-200" />
             ) : (
               <Heart className="h-4 w-4 hover:scale-110 transition-transform" />
             )}
@@ -549,7 +549,7 @@ export const MusicPlayer = ({
             <Button
               variant="ghost"
               size="icon"
-              className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 transition-all"
+              className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-8 w-8 transition-all"
             >
               <Shuffle className="h-4 w-4" />
             </Button>
@@ -558,7 +558,7 @@ export const MusicPlayer = ({
               variant="ghost"
               size="icon"
               onClick={previousTrack}
-              className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 transition-all"
+              className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-8 w-8 transition-all"
               disabled={!isReady}
             >
               <SkipBack className="h-4 w-4 fill-current" />
@@ -567,7 +567,7 @@ export const MusicPlayer = ({
             <Button
               onClick={handlePlayPause}
               size="icon"
-              className="bg-white hover:bg-green-500 hover:scale-105 text-black h-8 w-8 rounded-full transition-all"
+              className="bg-white hover:bg-brand hover:scale-105 text-black h-8 w-8 rounded-full transition-all"
               disabled={!isReady}
             >
               {isPlaying ? (
@@ -581,7 +581,7 @@ export const MusicPlayer = ({
               variant="ghost"
               size="icon"
               onClick={nextTrack}
-              className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 transition-all"
+              className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-8 w-8 transition-all"
               disabled={!isReady}
             >
               <SkipForward className="h-4 w-4 fill-current" />
@@ -593,8 +593,8 @@ export const MusicPlayer = ({
               onClick={toggleRepeat}
               className={`h-8 w-8 transition-all ${
                 repeatMode === "off"
-                  ? "text-zinc-400 hover:text-green-400 hover:bg-zinc-800"
-                  : "text-green-500 hover:text-green-400 hover:bg-zinc-800"
+                  ? "text-zinc-400 hover:text-brand hover:bg-zinc-800"
+                  : "text-brand hover:text-brand/80 hover:bg-zinc-800"
               }`}
               title={
                 repeatMode === "off"
@@ -642,7 +642,7 @@ export const MusicPlayer = ({
               }}
               size="icon"
               variant="ghost"
-              className="text-white hover:text-green-400 h-10 w-10"
+              className="text-white hover:text-brand h-10 w-10"
               disabled={!isReady}
             >
               {isPlaying ? (
@@ -674,7 +674,7 @@ export const MusicPlayer = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 hidden lg:flex transition-all"
+                    className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-8 w-8 hidden lg:flex transition-all"
                     onClick={handleLyricsClick}
                     disabled={!currentTrack}
                   >
@@ -714,7 +714,7 @@ export const MusicPlayer = ({
                   <div className="flex-1 overflow-hidden mt-6">
                     {loadingLyrics ? (
                       <div className="flex items-center justify-center h-full">
-                        <div className="animate-spin rounded-full h-8 w-8 border-2 border-green-500 border-t-transparent"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-2 border-brand border-t-transparent"></div>
                         <span className="ml-3 text-zinc-400">
                           Loading lyrics...
                         </span>
@@ -732,7 +732,7 @@ export const MusicPlayer = ({
                               data-index={index}
                               className={`text-sm leading-relaxed transition-all duration-300 py-1 ${
                                 index === currentLyricIndex
-                                  ? "text-green-400 font-semibold text-lg scale-105"
+                                  ? "text-brand font-semibold text-lg scale-105"
                                   : index < currentLyricIndex
                                   ? "text-zinc-500"
                                   : "text-zinc-300"
@@ -760,7 +760,7 @@ export const MusicPlayer = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 hidden md:flex transition-all"
+                className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-8 w-8 hidden md:flex transition-all"
                 onClick={handleQueueClick}
               >
                 <List className="h-4 w-4" />
@@ -769,7 +769,7 @@ export const MusicPlayer = ({
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 hidden md:flex transition-all"
+                className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-8 w-8 hidden md:flex transition-all"
                 onClick={handleFullScreenClick}
                 disabled={!currentTrack}
               >
@@ -785,7 +785,7 @@ export const MusicPlayer = ({
               e.stopPropagation();
               handleMute();
             }}
-            className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 transition-all hidden md:flex"
+            className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-8 w-8 transition-all hidden md:flex"
             disabled={!isReady}
           >
             {isMuted || localVolume === 0 ? (
@@ -810,7 +810,7 @@ export const MusicPlayer = ({
       {isConnecting && !hasConnected && (
         <div className="absolute inset-0 bg-black/90 flex items-center justify-center">
           <div className="flex items-center space-x-3 text-zinc-300">
-            <div className="animate-spin rounded-full h-5 w-5 border-2 border-green-500 border-t-transparent" />
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-brand border-t-transparent" />
             <span className="text-sm">Connecting to Spotify Player...</span>
           </div>
         </div>

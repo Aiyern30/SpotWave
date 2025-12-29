@@ -1055,7 +1055,7 @@ export default function UserHeader({
                 <DialogContent className="bg-zinc-950/95 border-zinc-800/50 max-w-xl backdrop-blur-2xl shadow-2xl">
                   {/* ... rest of content ... */}
                   <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-green-400 via-blue-400 to-purple-400 bg-clip-text text-transparent flex items-center justify-between">
+                    <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-brand via-blue-400 to-purple-400 bg-clip-text text-transparent flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-brand/10 rounded-lg">
                           <Sparkles className="h-6 w-6 text-brand" />
@@ -1084,8 +1084,8 @@ export default function UserHeader({
                     <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2 no-scrollbar">
                       {/* Genres Section */}
                       <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-green-400/80 font-semibold tracking-wide uppercase text-xs">
-                          <div className="w-1 h-1 rounded-full bg-green-400" />
+                        <div className="flex items-center gap-2 text-brand/80 font-semibold tracking-wide uppercase text-xs">
+                          <div className="w-1 h-1 rounded-full bg-brand" />
                           Top Genres
                         </div>
                         <div className="flex flex-wrap gap-2">

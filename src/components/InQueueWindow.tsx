@@ -156,7 +156,7 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
           <div className="flex justify-end">
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-green-500 transition-colors"
+              className="text-gray-500 hover:text-brand transition-colors"
             >
               <FiChevronDown size={24} />
             </button>
@@ -190,7 +190,7 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-full flex items-center justify-center">
                           <Button
                             size="icon"
-                            className="h-8 w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl hover:scale-110 transition-all duration-200"
+                            className="h-8 w-8 rounded-full bg-brand hover:bg-brand/80 text-brand-foreground shadow-xl hover:scale-110 transition-all duration-200"
                             onClick={(e) => {
                               e.stopPropagation();
                               handlePlayTrack(currentTrack);

@@ -488,8 +488,8 @@ export const FullScreenPlayer = ({
             onClick={() => setViewMode("image")}
             className={`h-8 w-8 sm:h-10 sm:w-10 ${
               viewMode === "image"
-                ? "text-green-400 bg-zinc-800"
-                : "text-white hover:text-green-400 hover:bg-zinc-800"
+                ? "text-brand bg-zinc-800"
+                : "text-white hover:text-brand hover:bg-zinc-800"
             }`}
             title="Show Album Art"
           >
@@ -501,8 +501,8 @@ export const FullScreenPlayer = ({
             onClick={() => setViewMode("lyrics")}
             className={`h-8 w-8 sm:h-10 sm:w-10 ${
               viewMode === "lyrics"
-                ? "text-green-400 bg-zinc-800"
-                : "text-white hover:text-green-400 hover:bg-zinc-800"
+                ? "text-brand bg-zinc-800"
+                : "text-white hover:text-brand hover:bg-zinc-800"
             }`}
             title="Show Lyrics"
           >
@@ -514,7 +514,7 @@ export const FullScreenPlayer = ({
           variant="ghost"
           size="icon"
           onClick={onClose}
-          className="text-white hover:text-green-400 hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10"
+          className="text-white hover:text-brand hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10"
           title="Close"
         >
           <X className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -555,7 +555,7 @@ export const FullScreenPlayer = ({
                       data-index={index}
                       className={`text-sm sm:text-base leading-relaxed transition-all duration-300 py-1 break-words ${
                         index === currentLyricIndex
-                          ? "text-green-400 font-semibold text-lg sm:text-2xl"
+                          ? "text-brand font-semibold text-lg sm:text-2xl"
                           : index < currentLyricIndex
                           ? "text-zinc-500"
                           : "text-zinc-300"
@@ -632,9 +632,9 @@ export const FullScreenPlayer = ({
             disabled={isSaving}
           >
             {isSaving ? (
-              <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-green-500" />
+              <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-brand" />
             ) : isSaved ? (
-              <Heart className="h-4 w-4 sm:h-5 sm:w-5 fill-green-500 text-green-500" />
+              <Heart className="h-4 w-4 sm:h-5 sm:w-5 fill-brand text-brand" />
             ) : (
               <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
             )}
@@ -661,7 +661,7 @@ export const FullScreenPlayer = ({
           <Button
             onClick={isPlaying ? pauseTrack : resumeTrack}
             size="icon"
-            className="bg-white hover:bg-green-500 hover:scale-105 text-black h-12 w-12 sm:h-14 sm:w-14 rounded-full transition-all"
+            className="bg-white hover:bg-brand hover:scale-105 text-black h-12 w-12 sm:h-14 sm:w-14 rounded-full transition-all"
             disabled={!isReady || isLoadingTrack}
           >
             {isLoadingTrack ? (
@@ -712,7 +712,7 @@ export const FullScreenPlayer = ({
               variant="ghost"
               size="icon"
               onClick={handleMute}
-              className="text-zinc-400 hover:text-green-400 hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10 transition-all"
+              className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10 transition-all"
             >
               {isMuted || localVolume === 0 ? (
                 <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -735,12 +735,12 @@ export const FullScreenPlayer = ({
         <div className="lg:hidden block px-4 pt-4">
           <div className="w-full bg-zinc-900/50 rounded-2xl p-6 backdrop-blur-sm overflow-hidden border border-zinc-800/50">
             <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-              <FileText className="h-4 w-4 text-green-500" />
+              <FileText className="h-4 w-4 text-brand" />
               Lyrics
             </h3>
             {loadingLyrics ? (
               <div className="flex justify-center items-center h-[300px]">
-                <Loader2 className="h-6 w-6 animate-spin text-green-500" />
+                <Loader2 className="h-6 w-6 animate-spin text-brand" />
               </div>
             ) : syncedLyrics && syncedLyrics.length > 0 ? (
               <div
@@ -753,7 +753,7 @@ export const FullScreenPlayer = ({
                     data-index={index}
                     className={`text-lg leading-relaxed transition-all duration-300 py-1 break-words ${
                       index === currentLyricIndex
-                        ? "text-green-400 font-bold text-xl scale-105 origin-left"
+                        ? "text-brand font-bold text-xl scale-105 origin-left"
                         : index < currentLyricIndex
                         ? "text-zinc-500"
                         : "text-zinc-300"
@@ -789,7 +789,7 @@ export const FullScreenPlayer = ({
                 onClick={() => setTopTracksDisplayUI("Table")}
                 className={`h-8 sm:h-9 px-2 sm:px-3 transition-all ${
                   topTracksDisplayUI === "Table"
-                    ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                    ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand/80"
                     : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                 }`}
               >
@@ -814,7 +814,7 @@ export const FullScreenPlayer = ({
 
           {loadingTopTracks ? (
             <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-green-500" />
+              <Loader2 className="h-8 w-8 animate-spin text-brand" />
             </div>
           ) : topTracksDisplayUI === "Table" ? (
             <div className="bg-zinc-900/50 rounded-xl overflow-hidden border border-zinc-800/50">
@@ -853,7 +853,7 @@ export const FullScreenPlayer = ({
                         <TableCell className="text-center py-2 sm:py-3 align-middle">
                           <span
                             className={`text-xs sm:text-sm font-medium ${
-                              isThisTrack ? "text-green-400" : "text-zinc-400"
+                              isThisTrack ? "text-brand" : "text-zinc-400"
                             }`}
                           >
                             {index + 1}
@@ -875,7 +875,7 @@ export const FullScreenPlayer = ({
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-green-500 hover:bg-green-400 text-black shadow-xl"
+                                className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-brand hover:bg-brand/80 text-brand-foreground shadow-xl"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handlePlayPauseTopTrack(track);
@@ -900,8 +900,8 @@ export const FullScreenPlayer = ({
                           <div
                             className={`font-medium truncate transition-colors text-xs sm:text-sm ${
                               isThisTrack
-                                ? "text-green-400"
-                                : "text-white group-hover:text-green-400"
+                                ? "text-brand"
+                                : "text-white group-hover:text-brand"
                             }`}
                           >
                             {track.name}
@@ -987,7 +987,7 @@ export const FullScreenPlayer = ({
                   <div className="flex items-center space-x-2 sm:space-x-3">
                     <div className="w-16 sm:w-24 h-2 bg-zinc-700 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-green-500 rounded-full"
+                        className="h-full bg-brand rounded-full"
                         style={{ width: `${currentTrack.popularity}%` }}
                       />
                     </div>
@@ -1001,7 +1001,7 @@ export const FullScreenPlayer = ({
                     Album
                   </span>
                   <span
-                    className="text-white hover:text-green-400 cursor-pointer hover:underline text-sm sm:text-base truncate ml-4"
+                    className="text-white hover:text-brand cursor-pointer hover:underline text-sm sm:text-base truncate ml-4"
                     onClick={() =>
                       router.push(
                         `/Albums/${currentTrack.album.id}?name=${currentTrack.album.name}`
