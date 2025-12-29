@@ -336,6 +336,7 @@ export default Sidebar;
 const items = [
   { title: "Home", Icon: IoIosHome, href: "/Home" },
   { title: "Explore", Icon: BiSolidCompass, href: "/Explore" },
+  { title: "Playlists", Icon: BiSolidAlbum, href: "/Playlists" },
   { title: "Artists", Icon: RiUserVoiceFill, href: "/Artists" },
   { title: "Songs", Icon: BiSolidMusic, href: "/Songs" },
   { title: "Events", Icon: IoTicket, href: "/Events" },
