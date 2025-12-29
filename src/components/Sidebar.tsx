@@ -120,7 +120,7 @@ const Sidebar = ({
               className="w-10 h-10 rounded-full"
             />
           </div>
-          <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1 border border-black shadow-lg">
+          <div className="absolute -bottom-1 -right-1 bg-brand rounded-full p-1 border border-black shadow-lg">
             <GiHamburgerMenu className="text-[10px] text-white" />
           </div>
         </div>
@@ -166,11 +166,11 @@ const Sidebar = ({
                 onClick={onClose}
               >
                 <div className="relative w-11 h-11 flex-shrink-0">
-                  <div className="absolute inset-0 rounded-full bg-green-500/10 animate-pulse group-hover/logo:bg-green-500/20" />
+                  <div className="absolute inset-0 rounded-full bg-brand/10 animate-pulse group-hover/logo:bg-brand/20" />
                   <img
                     src="/Logo.png"
                     alt="SpotWave Logo"
-                    className="w-full h-full rounded-full ring-2 ring-green-500/20 z-10 relative transition-transform group-hover/logo:scale-105"
+                    className="w-full h-full rounded-full ring-2 ring-brand/20 z-10 relative transition-transform group-hover/logo:scale-105"
                   />
                   {/* Show a small back icon on mobile header logo hover */}
                   <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1 border border-black z-20 opacity-0 group-hover/logo:opacity-100 transition-opacity md:hidden">
@@ -192,9 +192,9 @@ const Sidebar = ({
                   <img
                     src="/Logo.png"
                     alt="SpotWave Logo"
-                    className="w-11 h-11 rounded-full ring-2 ring-white/10 group-hover/header:ring-green-500/40 transition-all duration-500 shadow-2xl"
+                    className="w-11 h-11 rounded-full ring-2 ring-white/10 group-hover/header:ring-brand/40 transition-all duration-500 shadow-2xl"
                   />
-                  <div className="absolute inset-0 rounded-full bg-green-500/0 group-hover/header:bg-green-500/5 transition-colors duration-500" />
+                  <div className="absolute inset-0 rounded-full bg-brand/0 group-hover/header:bg-brand/5 transition-colors duration-500" />
                 </div>
               </div>
             )}
@@ -221,7 +221,7 @@ const Sidebar = ({
                         className={`flex items-center gap-4 p-3.5 rounded-xl transition-all relative group
                           ${
                             isActive
-                              ? "bg-green-500/10 text-green-500 border border-green-500/20 shadow-[0_0_20px_rgba(34,197,94,0.05)]"
+                              ? "bg-brand/10 text-brand border border-brand/20 shadow-[0_0_20px_hsl(var(--brand-primary)/0.05)]"
                               : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
                           } 
                           ${isCompact ? "justify-center px-0" : ""}`}
@@ -229,7 +229,7 @@ const Sidebar = ({
                         {isActive && !isCompact && (
                           <motion.div
                             layoutId="active-indicator"
-                            className="absolute left-0 w-1 h-6 bg-green-500 rounded-r-full shadow-[0_0_10px_rgba(34,197,94,0.5)]"
+                            className="absolute left-0 w-1 h-6 bg-brand rounded-r-full shadow-[0_0_10px_hsl(var(--brand-primary)/0.5)]"
                           />
                         )}
                         <div

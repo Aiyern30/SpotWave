@@ -29,6 +29,35 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
+    
+    /* Brand Colors - Defaults to Spotify Green */
+    --brand-primary: 142 71% 45%; 
+    --brand-primary-foreground: 144 100% 10%;
+  }
+
+  .theme-blue {
+    --brand-primary: 217 91% 60%;
+    --brand-primary-foreground: 210 40% 98%;
+  }
+
+  .theme-purple {
+    --brand-primary: 271 81% 56%;
+    --brand-primary-foreground: 210 40% 98%;
+  }
+
+  .theme-red {
+    --brand-primary: 0 84% 60%;
+    --brand-primary-foreground: 210 40% 98%;
+  }
+
+  .theme-orange {
+    --brand-primary: 25 95% 53%;
+    --brand-primary-foreground: 210 40% 98%;
+  }
+
+  .theme-pink {
+    --brand-primary: 330 81% 60%;
+    --brand-primary-foreground: 210 40% 98%;
   }
 
   .dark {
