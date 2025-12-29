@@ -35,14 +35,14 @@ const PublicProfilePage = () => {
         <TabsList className="bg-zinc-900/50 border border-zinc-800/50 p-1 rounded-lg">
           <TabsTrigger
             value="Public Playlists"
-            className="data-[state=active]:bg-brand-500 data-[state=active]:text-black text-zinc-400 hover:text-white transition-colors px-6 py-2 rounded-md font-medium"
+            className="data-[state=active]:bg-brand data-[state=active]:text-black text-zinc-400 hover:text-white transition-colors px-6 py-2 rounded-md font-medium"
           >
             {isMe ? "My Library" : "Public Playlists"}
           </TabsTrigger>
           {isMe && (
             <TabsTrigger
               value="Following Artists"
-              className="data-[state=active]:bg-brand-500 data-[state=active]:text-black text-zinc-400 hover:text-white transition-colors px-6 py-2 rounded-md font-medium"
+              className="data-[state=active]:bg-brand data-[state=active]:text-black text-zinc-400 hover:text-white transition-colors px-6 py-2 rounded-md font-medium"
             >
               Following Artists
             </TabsTrigger>

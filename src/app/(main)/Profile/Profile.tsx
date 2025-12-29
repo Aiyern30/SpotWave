@@ -91,7 +91,7 @@ const ProfileComponent = ({ userId }: { userId?: string }) => {
 
   if (loading) {
     return (
-      <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-lg p-8">
+      <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-brand/30 to-transparent rounded-lg p-8">
         <Skeleton className="w-48 h-48 rounded-full" />
         <div className="flex-1 space-y-4">
           <Skeleton className="h-12 w-64" />
@@ -110,7 +110,7 @@ const ProfileComponent = ({ userId }: { userId?: string }) => {
   return (
     <div className="space-y-6">
       {/* Profile Header */}
-      <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-lg p-8">
+      <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-brand/30 to-transparent rounded-lg p-8">
         <div className="flex-shrink-0">
           <div className="relative w-[200px] h-[200px]">
             <Image

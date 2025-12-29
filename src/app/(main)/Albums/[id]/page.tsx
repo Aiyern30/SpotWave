@@ -261,7 +261,7 @@ const AlbumsIDPage = () => {
     return (
       <div className="space-y-4 sm:space-y-8">
         {/* Album Header Skeleton */}
-        <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-zinc-800/50 to-transparent rounded-lg p-8">
+        <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-brand/30 to-transparent rounded-lg p-8">
           <Skeleton className="w-48 h-48 rounded-lg" />
           <div className="flex-1 space-y-4">
             <Skeleton className="h-12 w-64" />
@@ -291,7 +291,7 @@ const AlbumsIDPage = () => {
     <TooltipProvider>
       <div className="space-y-4 sm:space-y-8">
         {/* Enhanced Album Header */}
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-zinc-900/90 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm border border-zinc-800/50">
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand/30 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm border border-zinc-800/50">
           {/* Background Pattern */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--brand-primary)/0.15),transparent_70%)]" />
 
