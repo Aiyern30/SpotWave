@@ -342,7 +342,7 @@ const Page = () => {
               onClick={() => setDisplayUI("Table")}
               className={`h-9 px-3 transition-all ${
                 displayUI === "Table"
-                  ? "bg-brand/10  hover:bg-brand/20 "
+                  ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
                   : "text-zinc-400 hover:text-white hover:bg-zinc-800"
               }`}
             >
@@ -355,7 +355,7 @@ const Page = () => {
               onClick={() => setDisplayUI("Grid")}
               className={`h-9 px-3 transition-all ${
                 displayUI === "Grid"
-                  ? "bg-brand/10  hover:bg-brand/20 "
+                  ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
                   : "text-zinc-400 hover:text-white hover:bg-zinc-800"
               }`}
             >
@@ -411,7 +411,7 @@ const Page = () => {
                             <TableCell className="text-center py-3 sm:py-4">
                               <span
                                 className={`text-xs sm:text-sm font-medium ${
-                                  isThisArtist ? "bg-brand" : "text-zinc-400"
+                                  isThisArtist ? "text-brand" : "text-zinc-400"
                                 }`}
                               >
                                 {index + 1}
@@ -458,8 +458,8 @@ const Page = () => {
                                   <div
                                     className={`font-medium truncate transition-colors text-sm sm:text-base ${
                                       isThisArtist
-                                        ? "bg-brand"
-                                        : "text-white hover:bg-brand"
+                                        ? "text-brand"
+                                        : "text-white hover:text-brand"
                                     }`}
                                   >
                                     {artist.name}
