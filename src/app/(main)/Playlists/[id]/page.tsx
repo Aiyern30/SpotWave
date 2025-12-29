@@ -88,6 +88,8 @@ const PlaylistPage = () => {
   const playlistId = segments[segments.length - 1];
   const playlistName = searchParams.get("name");
 
+  const isOwner = playlist?.owner?.id === userProfile?.id;
+
   useEffect(() => {
     const storedToken = localStorage.getItem("Token");
     if (storedToken) {
@@ -636,19 +638,21 @@ const PlaylistPage = () => {
                               </DropdownMenuSubContent>
                             </DropdownMenuSub>
 
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setTrackToRemove({
-                                  uri: track.uri,
-                                  name: track.name,
-                                });
-                              }}
-                              className="text-red-400 hover:bg-red-500/20 hover:text-red-300"
-                            >
-                              <Ban className="mr-2 h-4 w-4" />
-                              Remove from this playlist
-                            </DropdownMenuItem>
+                            {isOwner && (
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setTrackToRemove({
+                                    uri: track.uri,
+                                    name: track.name,
+                                  });
+                                }}
+                                className="text-red-400 hover:bg-red-500/20 hover:text-red-300"
+                              >
+                                <Ban className="mr-2 h-4 w-4" />
+                                Remove from this playlist
+                              </DropdownMenuItem>
+                            )}
 
                             <DropdownMenuItem
                               onClick={(e) => {
@@ -767,19 +771,21 @@ const PlaylistPage = () => {
                         </DropdownMenuSubContent>
                       </DropdownMenuSub>
 
-                      <DropdownMenuItem
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setTrackToRemove({
-                            uri: track.uri,
-                            name: track.name,
-                          });
-                        }}
-                        className="text-red-400 hover:bg-red-500/20 hover:text-red-300"
-                      >
-                        <Ban className="mr-2 h-4 w-4" />
-                        Remove from this playlist
-                      </DropdownMenuItem>
+                      {isOwner && (
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTrackToRemove({
+                              uri: track.uri,
+                              name: track.name,
+                            });
+                          }}
+                          className="text-red-400 hover:bg-red-500/20 hover:text-red-300"
+                        >
+                          <Ban className="mr-2 h-4 w-4" />
+                          Remove from this playlist
+                        </DropdownMenuItem>
+                      )}
 
                       <DropdownMenuItem
                         onClick={(e) => {
