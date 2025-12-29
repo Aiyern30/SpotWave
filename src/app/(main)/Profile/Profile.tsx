@@ -14,6 +14,7 @@ const ProfileComponent = ({ userId }: { userId?: string }) => {
   const [myProfile, setMyProfile] = useState<User | null>(null);
   const [playlistsCount, setPlaylistsCount] = useState<number>(0);
   const [followingArtistsCount, setFollowingArtistsCount] = useState<number>(0);
+  const [savedAlbumsCount, setSavedAlbumsCount] = useState<number>(0);
   const [token, setToken] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [isMe, setIsMe] = useState<boolean>(true);
@@ -61,6 +62,18 @@ const ProfileComponent = ({ userId }: { userId?: string }) => {
         if (currentIsMe) {
           const artistsData = await fetchFollowedArtists(token);
           setFollowingArtistsCount(artistsData.length);
+
+          // 4. Fetch saved albums count
+          const albumsRes = await fetch(
+            "https://api.spotify.com/v1/me/albums?limit=1",
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          if (albumsRes.ok) {
+            const data = await albumsRes.json();
+            setSavedAlbumsCount(data.total || 0);
+          }
         }
       }
     } catch (error) {
@@ -142,6 +155,12 @@ const ProfileComponent = ({ userId }: { userId?: string }) => {
               <div className="flex items-center space-x-2">
                 <Heart className="h-4 w-4" />
                 <span>{followingArtistsCount} following</span>
+              </div>
+            )}
+            {isMe && (
+              <div className="flex items-center space-x-2">
+                <Heart className="h-4 w-4 text-pink-500" />
+                <span>{savedAlbumsCount} albums</span>
               </div>
             )}
           </div>
