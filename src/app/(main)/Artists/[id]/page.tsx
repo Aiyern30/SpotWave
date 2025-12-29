@@ -693,7 +693,7 @@ const ArtistProfilePage = () => {
                       handleFollowArtist(artistProfile.id);
                       setIsFollowing(true);
                     }}
-                    className="bg-green-500 hover:bg-green-600 text-black font-semibold"
+                    className="bg-brand hover:bg-brand/80 text-brand-foreground font-semibold"
                   >
                     Follow
                   </Button>
@@ -713,7 +713,7 @@ const ArtistProfilePage = () => {
                   onClick={() => setTracksDisplayUI("Table")}
                   className={`h-9 px-3 transition-all ${
                     tracksDisplayUI === "Table"
-                      ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                      ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
                       : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                   }`}
                 >
@@ -726,7 +726,7 @@ const ArtistProfilePage = () => {
                   onClick={() => setTracksDisplayUI("Grid")}
                   className={`h-9 px-3 transition-all ${
                     tracksDisplayUI === "Grid"
-                      ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                      ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
                       : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                   }`}
                 >
@@ -772,7 +772,7 @@ const ArtistProfilePage = () => {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="w-8 h-8 p-0 rounded-full hover:bg-green-500 hover:text-black"
+                              className="w-8 h-8 p-0 rounded-full hover:bg-brand hover:text-brand-foreground"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handlePlayPauseTrack(track);
@@ -791,7 +791,7 @@ const ArtistProfilePage = () => {
                             <span
                               className={`text-sm ${
                                 isTrackPlaying(track.id)
-                                  ? "text-green-400"
+                                  ? "text-brand"
                                   : "text-zinc-400"
                               }`}
                             >

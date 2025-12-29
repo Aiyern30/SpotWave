@@ -293,7 +293,7 @@ const AlbumsIDPage = () => {
         {/* Enhanced Album Header */}
         <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-zinc-900/90 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm border border-zinc-800/50">
           {/* Background Pattern */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.1),transparent_50%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--brand-primary)/0.15),transparent_70%)]" />
 
           <div className="relative flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 p-8">
             <div className="relative group flex-shrink-0">
@@ -314,7 +314,7 @@ const AlbumsIDPage = () => {
               <div className="space-y-3">
                 <Badge
                   variant="secondary"
-                  className="bg-green-500/20 text-green-400 border-green-500/30 capitalize"
+                  className="bg-brand/20 text-brand border-brand/30 capitalize"
                 >
                   <Disc3 className="w-3 h-3 mr-1" />
                   {album.album_type}
@@ -329,7 +329,7 @@ const AlbumsIDPage = () => {
                     onClick={toggleSaveAlbum}
                     className={`h-12 w-12 rounded-full backdrop-blur-sm border border-white/10 transition-all duration-200 hover:scale-110 ${
                       isSaved
-                        ? "text-green-500 bg-green-500/10 border-green-500/20"
+                        ? "text-brand bg-brand/10 border-brand/20"
                         : "text-white bg-black/20 hover:bg-black/40"
                     }`}
                   >
@@ -344,7 +344,7 @@ const AlbumsIDPage = () => {
 
               <div className="flex flex-wrap justify-center md:justify-start gap-6 text-zinc-300">
                 <div className="flex items-center space-x-2">
-                  <Calendar className="h-4 w-4 text-green-500" />
+                  <Calendar className="h-4 w-4 text-brand" />
                   <span className="font-medium">
                     {new Date(album.release_date).getFullYear()}
                   </span>
@@ -374,7 +374,7 @@ const AlbumsIDPage = () => {
                       )}
                       <Button
                         variant="link"
-                        className="text-white hover:text-green-400 p-0 h-auto font-semibold text-lg hover:underline transition-colors"
+                        className="text-white hover:text-brand p-0 h-auto font-semibold text-lg hover:underline transition-colors"
                         onClick={() =>
                           handleArtistClick(artist.id, artist.name)
                         }
@@ -405,7 +405,7 @@ const AlbumsIDPage = () => {
                 onClick={() => setDisplayUI("Table")}
                 className={`h-9 px-3 transition-all ${
                   displayUI === "Table"
-                    ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                    ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
                     : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                 }`}
               >
@@ -418,7 +418,7 @@ const AlbumsIDPage = () => {
                 onClick={() => setDisplayUI("Grid")}
                 className={`h-9 px-3 transition-all ${
                   displayUI === "Grid"
-                    ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                    ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
                     : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                 }`}
               >
@@ -465,7 +465,7 @@ const AlbumsIDPage = () => {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="w-8 h-8 p-0 rounded-full hover:bg-green-500 hover:text-black"
+                            className="w-8 h-8 p-0 rounded-full hover:bg-brand hover:text-brand-foreground"
                             onClick={(e) => {
                               e.stopPropagation();
                               handlePlayPauseTrack(item);
@@ -481,7 +481,7 @@ const AlbumsIDPage = () => {
                           <span
                             className={`text-sm ${
                               isTrackPlaying(item.id)
-                                ? "text-green-400"
+                                ? "text-brand"
                                 : "text-zinc-400"
                             }`}
                           >
@@ -509,8 +509,8 @@ const AlbumsIDPage = () => {
                             <div
                               className={`font-medium truncate transition-colors ${
                                 isTrackPlaying(item.id)
-                                  ? "text-green-400"
-                                  : "text-white group-hover:text-green-400"
+                                  ? "text-brand"
+                                  : "text-white group-hover:text-brand"
                               }`}
                             >
                               {item.name}
@@ -545,7 +545,7 @@ const AlbumsIDPage = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="border-zinc-700 text-green-500 hover:bg-green-500/10 hover:border-green-500 hover:text-green-400 transition-all"
+                          className="border-zinc-700 text-brand hover:bg-brand/10 hover:border-brand hover:text-brand transition-all"
                           onClick={(e) => {
                             e.stopPropagation();
                             window.open(
@@ -636,7 +636,7 @@ const AlbumsIDPage = () => {
                         value={inputPage}
                         onChange={handleInputChange}
                         placeholder={currentPage.toString()}
-                        className="w-10 sm:w-16 px-1 sm:px-2 py-1 text-xs bg-zinc-800 border border-zinc-700 rounded text-white text-center focus:outline-none focus:border-green-500"
+                        className="w-10 sm:w-16 px-1 sm:px-2 py-1 text-xs bg-zinc-800 border border-zinc-700 rounded text-white text-center focus:outline-none focus:border-brand"
                       />
                       <Button
                         type="submit"

@@ -157,7 +157,7 @@ export default function CategoryDetailPage() {
         <h3 className="text-xl font-bold text-white mb-2">{error}</h3>
         <Button
           onClick={loadData}
-          className="bg-green-500 hover:bg-green-400 text-black"
+          className="bg-brand hover:bg-brand/80 text-brand-foreground"
         >
           Try Again
         </Button>
@@ -194,8 +194,8 @@ export default function CategoryDetailPage() {
         )}
         <div className="space-y-2 flex-1">
           <div className="flex items-center gap-2">
-            <Radio className="h-4 w-4 text-green-500" />
-            <span className="text-xs font-bold text-green-500 uppercase tracking-widest">
+            <Radio className="h-4 w-4 text-brand" />
+            <span className="text-xs font-bold text-brand uppercase tracking-widest">
               Category
             </span>
           </div>
@@ -213,7 +213,7 @@ export default function CategoryDetailPage() {
       {tracks.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Music className="h-5 w-5 text-green-500" />
+            <Music className="h-5 w-5 text-brand" />
             Top Tracks
           </h2>
           <div className="overflow-x-auto rounded-xl border border-zinc-800/50 bg-zinc-900/40 backdrop-blur-sm">
@@ -252,7 +252,7 @@ export default function CategoryDetailPage() {
                           <div className="flex justify-center">
                             {isPlayingThis ? (
                               <Pause
-                                className="w-4 h-4 text-green-500"
+                                className="w-4 h-4 text-brand"
                                 fill="currentColor"
                               />
                             ) : (
@@ -265,7 +265,7 @@ export default function CategoryDetailPage() {
                         ) : (
                           <span
                             className={`text-sm ${
-                              isPlayingThis ? "text-green-500" : "text-zinc-500"
+                              isPlayingThis ? "text-brand" : "text-zinc-500"
                             }`}
                           >
                             {index + 1}
@@ -287,7 +287,7 @@ export default function CategoryDetailPage() {
                           <div className="min-w-0">
                             <div
                               className={`font-bold truncate ${
-                                isPlayingThis ? "text-green-500" : "text-white"
+                                isPlayingThis ? "text-brand" : "text-white"
                               }`}
                             >
                               {track.name}
@@ -379,7 +379,7 @@ export default function CategoryDetailPage() {
           <Button
             variant="link"
             onClick={() => router.push("/Categories")}
-            className="text-green-500 mt-2"
+            className="text-brand mt-2"
           >
             Explore other categories
           </Button>

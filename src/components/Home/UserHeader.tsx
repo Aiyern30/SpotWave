@@ -499,7 +499,7 @@ export default function UserHeader({
       {/* Enhanced Playlist Header */}
       <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-zinc-900/90 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm border border-zinc-800/50">
         {/* Background Pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(34,197,94,0.1),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--brand-primary)/0.15),transparent_70%)]" />
 
         <div className="relative flex flex-col lg:flex-row items-center lg:items-start space-y-6 lg:space-y-0 lg:space-x-8 p-8">
           {/* Enhanced Playlist Cover Image */}
@@ -562,7 +562,7 @@ export default function UserHeader({
                           <div
                             className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                               dragActive
-                                ? "border-green-500 bg-green-500/10"
+                                ? "border-brand bg-brand/10"
                                 : "border-zinc-700 hover:border-zinc-600"
                             }`}
                             onDragEnter={handleDrag}
@@ -618,7 +618,7 @@ export default function UserHeader({
               {/* Upload Status Badge */}
               {uploading && (
                 <div className="absolute -top-2 -right-2">
-                  <Badge className="bg-green-500 text-black">
+                  <Badge className="bg-brand text-brand-foreground">
                     <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                     Uploading
                   </Badge>
@@ -632,7 +632,7 @@ export default function UserHeader({
             <div className="space-y-3">
               <Badge
                 variant="secondary"
-                className="bg-green-500/20 text-green-400 border-green-500/30"
+                className="bg-brand/20 text-brand border-brand/30"
               >
                 <Music className="h-3 w-3 mr-1" />
                 Playlist
@@ -651,7 +651,7 @@ export default function UserHeader({
                         handleKeyPress(e, "name")
                       }
                       style={{ width: `${inputWidth}px` }}
-                      className="text-4xl lg:text-6xl font-bold bg-transparent border-2 border-green-500/50 focus:border-green-500 text-white px-3 py-0 h-auto leading-tight rounded-lg transition-all"
+                      className="text-4xl lg:text-6xl font-bold bg-transparent border-2 border-brand/50 focus:border-brand text-white px-3 py-0 h-auto leading-tight rounded-lg transition-all"
                       disabled={updating}
                     />
                     <div className="flex space-x-1 flex-shrink-0">
@@ -661,7 +661,7 @@ export default function UserHeader({
                           setNameEditing(false);
                           updatePlaylistDetails();
                         }}
-                        className="bg-green-500 hover:bg-green-600 text-black"
+                        className="bg-brand hover:bg-brand/80 text-brand-foreground font-semibold"
                         disabled={updating}
                       >
                         {updating ? (
@@ -715,7 +715,7 @@ export default function UserHeader({
                                 disabled={
                                   generatingAI || playlist.tracks.total === 0
                                 }
-                                className="opacity-0 group-hover:opacity-100 transition-opacity text-green-400 hover:text-green-300 hover:bg-green-500/10 flex-shrink-0"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-brand hover:text-brand/80 hover:bg-brand/10 flex-shrink-0"
                               >
                                 <Wand2 className="h-4 w-4" />
                               </Button>
@@ -736,7 +736,7 @@ export default function UserHeader({
                           <DialogContent className="bg-zinc-900 border-zinc-800 text-white sm:max-w-[425px]">
                             <DialogHeader>
                               <DialogTitle className="flex items-center gap-2 text-xl">
-                                <Sparkles className="h-5 w-5 text-green-400" />
+                                <Sparkles className="h-5 w-5 text-brand" />
                                 AI Magic Renamer
                               </DialogTitle>
                               <DialogDescription className="text-zinc-400">
@@ -755,7 +755,7 @@ export default function UserHeader({
                                   onChange={(e) =>
                                     setUserAiPrompt(e.target.value)
                                   }
-                                  className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-green-500"
+                                  className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-brand"
                                 />
                               </div>
 
@@ -770,7 +770,7 @@ export default function UserHeader({
                                     }
                                     className={`flex-1 p-3 rounded-lg border cursor-pointer transition-all ${
                                       descriptionLength === "short"
-                                        ? "bg-green-500/10 border-green-500 text-green-400"
+                                        ? "bg-brand/10 border-brand text-brand"
                                         : "bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:bg-zinc-800"
                                     }`}
                                   >
@@ -789,7 +789,7 @@ export default function UserHeader({
                                     onClick={() => setDescriptionLength("long")}
                                     className={`flex-1 p-3 rounded-lg border cursor-pointer transition-all ${
                                       descriptionLength === "long"
-                                        ? "bg-green-500/10 border-green-500 text-green-400"
+                                        ? "bg-brand/10 border-brand text-brand"
                                         : "bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:bg-zinc-800"
                                     }`}
                                   >
@@ -809,7 +809,7 @@ export default function UserHeader({
                               {generatedContent && (
                                 <div className="space-y-4 pt-4 border-t border-zinc-800 animate-in fade-in zoom-in-95 duration-300">
                                   <div className="space-y-1">
-                                    <label className="text-xs font-medium text-green-400 uppercase tracking-wider">
+                                    <label className="text-xs font-medium text-brand uppercase tracking-wider">
                                       Generated Name
                                     </label>
                                     <Input
@@ -825,7 +825,7 @@ export default function UserHeader({
                                     />
                                   </div>
                                   <div className="space-y-1">
-                                    <label className="text-xs font-medium text-green-400 uppercase tracking-wider">
+                                    <label className="text-xs font-medium text-brand uppercase tracking-wider">
                                       Generated Description
                                     </label>
                                     <Textarea
@@ -852,7 +852,7 @@ export default function UserHeader({
                                 <Button
                                   onClick={generatePlaylistNameAndDescription}
                                   disabled={generatingAI}
-                                  className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold"
+                                  className="w-full bg-brand hover:bg-brand/80 text-brand-foreground font-semibold"
                                 >
                                   {generatingAI ? (
                                     <>
@@ -872,13 +872,13 @@ export default function UserHeader({
                                     variant="outline"
                                     onClick={generatePlaylistNameAndDescription}
                                     disabled={generatingAI}
-                                    className="flex-1 border-zinc-700 text-black hover:text-green-500"
+                                    className="flex-1 border-zinc-700 text-zinc-400 hover:text-brand"
                                   >
                                     Try Again
                                   </Button>
                                   <Button
                                     onClick={applyGeneratedContent}
-                                    className="flex-1 bg-green-500 hover:bg-green-600 text-black font-semibold"
+                                    className="flex-1 bg-brand hover:bg-brand/80 text-brand-foreground font-semibold"
                                   >
                                     Apply Changes
                                   </Button>
@@ -1057,8 +1057,8 @@ export default function UserHeader({
                   <DialogHeader>
                     <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-green-400 via-blue-400 to-purple-400 bg-clip-text text-transparent flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-500/10 rounded-lg">
-                          <Sparkles className="h-6 w-6 text-green-400" />
+                        <div className="p-2 bg-brand/10 rounded-lg">
+                          <Sparkles className="h-6 w-6 text-brand" />
                         </div>
                         AI Playlist Analysis
                       </div>
@@ -1068,8 +1068,8 @@ export default function UserHeader({
                   {summaryLoading ? (
                     <div className="flex flex-col items-center justify-center py-16 space-y-4">
                       <div className="relative">
-                        <div className="h-16 w-16 rounded-full border-t-2 border-b-2 border-green-500 animate-spin" />
-                        <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-green-400 animate-pulse" />
+                        <div className="h-16 w-16 rounded-full border-t-2 border-b-2 border-brand animate-spin" />
+                        <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-brand animate-pulse" />
                       </div>
                       <div className="text-center">
                         <p className="text-lg font-medium text-white">
@@ -1092,7 +1092,7 @@ export default function UserHeader({
                           {aiSummary.genres?.map((g: string) => (
                             <span
                               key={g}
-                              className="px-3 py-1.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 text-sm font-medium hover:bg-green-500/20 transition-all cursor-default"
+                              className="px-3 py-1.5 rounded-full bg-brand/10 text-brand border border-brand/20 text-sm font-medium hover:bg-brand/20 transition-all cursor-default"
                             >
                               {g}
                             </span>
@@ -1190,8 +1190,8 @@ export default function UserHeader({
         <Card className="bg-gradient-to-br from-zinc-900/90 to-zinc-800/50 border-zinc-800/50 backdrop-blur-sm hover:bg-zinc-800/30 transition-all duration-300">
           <CardContent className="p-6">
             <div className="flex items-center space-x-4">
-              <div className="p-3 bg-green-500/20 rounded-xl ring-1 ring-green-500/30">
-                <Music className="h-6 w-6 text-green-500" />
+              <div className="p-3 bg-brand/20 rounded-xl ring-1 ring-brand/30">
+                <Music className="h-6 w-6 text-brand" />
               </div>
               <div>
                 <p className="text-sm text-zinc-400 font-medium">
@@ -1208,8 +1208,8 @@ export default function UserHeader({
         <Card className="bg-gradient-to-br from-zinc-900/90 to-zinc-800/50 border-zinc-800/50 backdrop-blur-sm hover:bg-zinc-800/30 transition-all duration-300">
           <CardContent className="p-6">
             <div className="flex items-center space-x-4">
-              <div className="p-3 bg-purple-500/20 rounded-xl ring-1 ring-purple-500/30">
-                <Users className="h-6 w-6 text-purple-500" />
+              <div className="p-3 bg-brand/20 rounded-xl ring-1 ring-brand/30">
+                <Users className="h-6 w-6 text-brand" />
               </div>
               <div>
                 <p className="text-sm text-zinc-400 font-medium">Created by</p>

@@ -219,21 +219,22 @@ export default function Home() {
 
   if (token || isRedirecting || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-black to-green-900 flex flex-col items-center justify-center p-4 overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-b from-black to-brand/30 flex flex-col items-center justify-center p-4 overflow-hidden">
         {/* Animated background elements */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-full">
             {[...Array(20)].map((_, i) => (
               <div
                 key={i}
-                className="absolute rounded-full bg-green-500/10"
+                className="absolute rounded-full bg-brand/10"
                 style={{
                   width: `${Math.random() * 300 + 50}px`,
                   height: `${Math.random() * 300 + 50}px`,
                   top: `${Math.random() * 100}%`,
                   left: `${Math.random() * 100}%`,
-                  animation: `float ${Math.random() * 10 + 15
-                    }s linear infinite`,
+                  animation: `float ${
+                    Math.random() * 10 + 15
+                  }s linear infinite`,
                   animationDelay: `${Math.random() * 5}s`,
                   opacity: Math.random() * 0.5,
                 }}
@@ -245,9 +246,9 @@ export default function Home() {
         <div className="relative z-10 flex flex-col items-center justify-center text-white text-center max-w-md">
           {/* Logo animation */}
           <div className="relative mb-8">
-            <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
-            <div className="absolute inset-0 bg-green-500/40 rounded-full animate-pulse" />
-            <div className="relative rounded-full p-5 shadow-lg shadow-green-500/30 bg-white/10 backdrop-blur-sm">
+            <div className="absolute inset-0 bg-brand/20 rounded-full animate-ping" />
+            <div className="absolute inset-0 bg-brand/40 rounded-full animate-pulse" />
+            <div className="relative rounded-full p-5 shadow-lg shadow-brand/30 bg-white/10 backdrop-blur-sm">
               <Image
                 src="/Logo.png"
                 alt="SpotWave Logo"
@@ -263,7 +264,7 @@ export default function Home() {
             {[...Array(12)].map((_, i) => (
               <div
                 key={i}
-                className="w-1.5 bg-green-500 rounded-full"
+                className="w-1.5 bg-brand rounded-full"
                 style={{
                   height: `${Math.sin(i / 2) * 20 + 30}%`,
                   animation: `soundWave 1.5s ease-in-out infinite`,
@@ -277,12 +278,12 @@ export default function Home() {
 
           <div className="w-full bg-black/30 h-2 rounded-full mb-6 overflow-hidden">
             <div
-              className="h-full bg-green-500 animate-pulse rounded-full"
+              className="h-full bg-brand animate-pulse rounded-full"
               style={{ width: "70%" }}
             />
           </div>
 
-          <p className="text-green-400 animate-pulse text-lg">
+          <p className="text-brand animate-pulse text-lg">
             Preparing your music experience...
           </p>
         </div>
@@ -312,7 +313,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black to-green-900 flex flex-col items-center justify-center p-4 overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-black to-brand/30 flex flex-col items-center justify-center p-4 overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full">
@@ -367,9 +368,9 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="max-w-md w-full backdrop-blur-sm bg-black/30 rounded-xl p-8 shadow-2xl border border-green-500/20 relative z-10">
+      <div className="max-w-md w-full backdrop-blur-sm bg-black/30 rounded-xl p-8 shadow-2xl border border-brand/20 relative z-10">
         <div
-          className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/10 backdrop-blur-sm rounded-full p-4 shadow-lg shadow-green-500/30"
+          className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/10 backdrop-blur-sm rounded-full p-4 shadow-lg shadow-brand/30"
           style={{ animation: "float 3s ease-in-out infinite" }}
         >
           <Image
@@ -383,7 +384,7 @@ export default function Home() {
 
         <div className="text-center mt-6 mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">SpotWave</h1>
-          <p className="text-green-400">Your music, amplified.</p>
+          <p className="text-brand">Your music, amplified.</p>
         </div>
 
         <div className="space-y-6">
@@ -396,7 +397,7 @@ export default function Home() {
 
           <button
             onClick={handleLogin}
-            className="w-full py-6 bg-green-500 hover:bg-green-600 text-black font-bold text-lg flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 group rounded-lg"
+            className="w-full py-6 bg-brand hover:bg-brand/80 text-brand-foreground font-bold text-lg flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 group rounded-lg"
           >
             <Play className="h-5 w-5" />
             <span>Connect with Spotify</span>
