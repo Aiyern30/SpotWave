@@ -111,6 +111,7 @@ export const FullScreenPlayer = ({
     playTrack,
     repeatMode,
     toggleRepeat,
+    analyser: globalAnalyser,
     dataArray: globalDataArray,
   } = usePlayer();
 
@@ -150,11 +151,42 @@ export const FullScreenPlayer = ({
   const lastBassRef = useRef<number>(0);
   const dataRef = useRef<Uint8Array | null>(null);
 
-  const [sidebarCompact, setSidebarCompact] = useState(true);
-
-  // Visualizer settings
   const [sensitivity, setSensitivity] = useState(1.5);
   const [maxRipples, setMaxRipples] = useState(8);
+
+  const [sidebarCompact, setSidebarCompact] = useState(true);
+
+  // Visualizer settings Refs for stable animation loop
+  const sensitivityRef = useRef(sensitivity);
+  const maxRipplesRef = useRef(maxRipples);
+  const viewModeRef = useRef(viewMode);
+  const themeColorRef = useRef(currentTheme.color);
+
+  useEffect(() => {
+    sensitivityRef.current = sensitivity;
+  }, [sensitivity]);
+
+  useEffect(() => {
+    maxRipplesRef.current = maxRipples;
+  }, [maxRipples]);
+
+  useEffect(() => {
+    viewModeRef.current = viewMode;
+    // Clear the canvas that is no longer active
+    const inactiveCanvas =
+      viewMode === "visualizer" ? bgCanvasRef.current : canvasRef.current;
+    if (inactiveCanvas) {
+      const ctx = inactiveCanvas.getContext("2d");
+      if (ctx) {
+        ctx.fillStyle = "#000000";
+        ctx.fillRect(0, 0, inactiveCanvas.width, inactiveCanvas.height);
+      }
+    }
+  }, [viewMode]);
+
+  useEffect(() => {
+    themeColorRef.current = currentTheme.color;
+  }, [currentTheme.color]);
 
   useEffect(() => {
     const stored = localStorage.getItem("sidebar-compact");
@@ -457,187 +489,14 @@ export const FullScreenPlayer = ({
       );
     };
 
-  // Enhanced Ripple Animation using dataRef (populated from globalDataArray)
-  const animateRipples = useCallback(() => {
-    // Check both potential canvases and draw to whichever is active/visible
-    const mainCanvas = canvasRef.current;
-    const bgCanvas = bgCanvasRef.current;
-
-    // Prioritize drawing to the active view mode
-    const canvas = viewMode === "visualizer" ? mainCanvas : bgCanvas;
-    if (!canvas) {
-      animationRef.current = requestAnimationFrame(animateRipples);
-      return;
-    }
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Clear canvas with fade effect for trails
-    ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-
-    // Use data from ref for stability
-    const data = dataRef.current;
-    if (!data || data.length === 0) {
-      animationRef.current = requestAnimationFrame(animateRipples);
-      return;
-    }
-
-    // Calculate audio metrics
-    const average = data.reduce((a, b) => a + b) / data.length;
-    const bass = data.slice(0, 8).reduce((a, b) => a + b) / 8;
-    const mid = data.slice(8, 32).reduce((a, b) => a + b) / 24;
-    const treble = data.slice(32, 64).reduce((a, b) => a + b) / 32;
-
-    // Dynamic center circle
-    const baseRadius = 80;
-    const dynamicRadius = baseRadius + (average / 255) * 30 * sensitivity;
-
-    // Draw radiating lines
-    const numBars = 60;
-    const angleStep = (Math.PI * 2) / numBars;
-
-    ctx.lineWidth = 3;
-    ctx.lineCap = "round";
-
-    for (let i = 0; i < numBars; i++) {
-      const dataIndex = Math.floor((i / numBars) * data.length);
-      const value = data[dataIndex] || 0;
-      const amplitude = (value / 255) * 120 * sensitivity;
-      const angle = i * angleStep;
-
-      const x1 = centerX + Math.cos(angle) * dynamicRadius;
-      const y1 = centerY + Math.sin(angle) * dynamicRadius;
-      const x2 = centerX + Math.cos(angle) * (dynamicRadius + amplitude);
-      const y2 = centerY + Math.sin(angle) * (dynamicRadius + amplitude);
-
-      // Color based on frequency
-      const hue = (i / numBars) * 360;
-      const saturation = 50 + (value / 255) * 50;
-      const lightness = 50 + (value / 255) * 30;
-
-      ctx.strokeStyle = `hsla(${hue}, ${saturation}%, ${lightness}%, 0.8)`;
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
-    }
-
-    // Draw center circle
-    const gradient = ctx.createRadialGradient(
-      centerX,
-      centerY,
-      0,
-      centerX,
-      centerY,
-      dynamicRadius
-    );
-    const hex = currentTheme.color;
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-
-    gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.9)`);
-    gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.3)`);
-
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, dynamicRadius - 5, 0, Math.PI * 2);
-    ctx.fillStyle = gradient;
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, dynamicRadius, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.6)`;
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
-    // Create ripples on bass hits
-    const bassThreshold = 150 / sensitivity;
-    if (
-      bass > bassThreshold &&
-      bass > lastBassRef.current * 1.15 &&
-      ripplesRef.current.length < maxRipples
-    ) {
-      const angle = Math.random() * Math.PI * 2;
-      const distance = dynamicRadius + 30 + Math.random() * 50;
-
-      ripplesRef.current.push({
-        x: centerX + Math.cos(angle) * distance,
-        y: centerY + Math.sin(angle) * distance,
-        radius: 0,
-        maxRadius: 150 + (bass / 255) * 150,
-        alpha: 0.8,
-        color: `${r}, ${g}, ${b}`,
-        speed: 2.5 + (bass / 255) * 3,
-      });
-    }
-    lastBassRef.current = bass;
-
-    // Update and draw ripples
-    ctx.lineWidth = 3;
-    ripplesRef.current = ripplesRef.current.filter((ripple) => {
-      ripple.radius += ripple.speed;
-      ripple.alpha = 0.8 * (1 - ripple.radius / ripple.maxRadius);
-
-      if (ripple.alpha > 0) {
-        ctx.beginPath();
-        ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(${ripple.color}, ${ripple.alpha})`;
-        ctx.lineWidth = 2 + (1 - ripple.alpha) * 4;
-        ctx.stroke();
-        return true;
-      }
-      return false;
-    });
-
-    // Add particles on treble peaks
-    if (treble > 180 && Math.random() > 0.7) {
-      const particleX = centerX + (Math.random() - 0.5) * canvas.width * 0.8;
-      const particleY = centerY + (Math.random() - 0.5) * canvas.height * 0.8;
-      ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + Math.random() * 0.4})`;
-      ctx.beginPath();
-      ctx.arc(particleX, particleY, 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    animationRef.current = requestAnimationFrame(animateRipples);
-  }, [currentTheme.color, sensitivity, maxRipples, viewMode]);
-
-  // Start/stop animation based on playing state and view mode
+  // Stable Animation Loop
   useEffect(() => {
-    if (isOpen && isPlaying) {
-      const handleResize = () => {
-        [canvasRef.current, bgCanvasRef.current].forEach((canvas) => {
-          if (canvas && canvas.parentElement) {
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
-          }
-        });
-      };
-
-      handleResize();
-      if (!animationRef.current) {
-        animationRef.current = requestAnimationFrame(animateRipples);
-      }
-      window.addEventListener("resize", handleResize);
-
-      return () => {
-        window.removeEventListener("resize", handleResize);
-        if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current);
-          animationRef.current = null;
-        }
-      };
-    } else {
+    if (!isOpen || !isPlaying) {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
         animationRef.current = null;
       }
-      // Clear both canvases when stopped
+      // Clear canvases when stopped
       [canvasRef.current, bgCanvasRef.current].forEach((canvas) => {
         if (canvas) {
           const ctx = canvas.getContext("2d");
@@ -648,8 +507,189 @@ export const FullScreenPlayer = ({
         }
       });
       ripplesRef.current = [];
+      return;
     }
-  }, [isOpen, isPlaying, animateRipples, viewMode]);
+
+    const handleResize = () => {
+      [canvasRef.current, bgCanvasRef.current].forEach((canvas) => {
+        if (canvas && canvas.parentElement) {
+          const { clientWidth, clientHeight } = canvas.parentElement;
+          if (clientWidth > 0 && clientHeight > 0) {
+            canvas.width = clientWidth;
+            canvas.height = clientHeight;
+          }
+        }
+      });
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    const animate = () => {
+      // Prioritize active canvas
+      const isVisualizer = viewModeRef.current === "visualizer";
+      const canvas = isVisualizer ? canvasRef.current : bgCanvasRef.current;
+
+      if (!canvas) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
+      // If dimensions are 0, try to resize again
+      if (canvas.width === 0 || canvas.height === 0) {
+        handleResize();
+      }
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      // Clear with fade trail
+      ctx.fillStyle = isVisualizer
+        ? "rgba(0, 0, 0, 0.15)"
+        : "rgba(0, 0, 0, 0.2)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const data = dataRef.current;
+      if (!data || data.length === 0) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
+      // Physical analyser poll for maximum smoothness (like SpotifyRippleVisualizer)
+      if (globalAnalyser) {
+        globalAnalyser.getByteFrequencyData(data as any);
+      }
+
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const currentSensitivity = sensitivityRef.current;
+      const currentMaxRipples = maxRipplesRef.current;
+
+      // Metrics
+      const average = data.reduce((a, b) => a + b, 0) / data.length;
+      const bass = data.slice(0, 8).reduce((a, b) => a + b, 0) / 8;
+      const treble = data.slice(32, 64).reduce((a, b) => a + b, 0) / 32;
+
+      // Center Circle
+      const baseRadius = 80;
+      const dynamicRadius =
+        baseRadius + (average / 255) * 40 * currentSensitivity;
+
+      // Draw bars
+      const numBars = 64;
+      const angleStep = (Math.PI * 2) / numBars;
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+
+      for (let i = 0; i < numBars; i++) {
+        const val = data[i] || 0;
+        const amplitude = (val / 255) * 140 * currentSensitivity;
+        if (amplitude <= 0) continue;
+
+        const angle = i * angleStep;
+
+        const x1 = centerX + Math.cos(angle) * dynamicRadius;
+        const y1 = centerY + Math.sin(angle) * dynamicRadius;
+        const x2 = centerX + Math.cos(angle) * (dynamicRadius + amplitude);
+        const y2 = centerY + Math.sin(angle) * (dynamicRadius + amplitude);
+
+        const hue = (i / numBars) * 360;
+        ctx.strokeStyle = `hsla(${hue}, 70%, 60%, 0.8)`;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+
+      // Draw center gradients
+      const hex = themeColorRef.current || "#ff0080";
+      const r = parseInt(hex.slice(1, 3), 16) || 255;
+      const g = parseInt(hex.slice(3, 5), 16) || 20;
+      const b = parseInt(hex.slice(5, 7), 16) || 147;
+
+      const grad = ctx.createRadialGradient(
+        centerX,
+        centerY,
+        0,
+        centerX,
+        centerY,
+        dynamicRadius
+      );
+      grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.9)`);
+      grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.3)`);
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, dynamicRadius - 5, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Add a subtle border to the center circle to ensure visibility even with no data
+      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.5)`;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Ripples
+      const bassThreshold = 140 / currentSensitivity;
+      if (
+        bass > bassThreshold &&
+        bass > lastBassRef.current * 1.12 &&
+        ripplesRef.current.length < currentMaxRipples
+      ) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = dynamicRadius + 40 + Math.random() * 40;
+        ripplesRef.current.push({
+          x: centerX + Math.cos(angle) * dist,
+          y: centerY + Math.sin(angle) * dist,
+          radius: 0,
+          maxRadius: 150 + (bass / 255) * 200,
+          alpha: 0.8,
+          color: `${r}, ${g}, ${b}`,
+          speed: 3 + (bass / 255) * 4,
+        });
+      }
+      lastBassRef.current = bass;
+
+      ctx.lineWidth = 2;
+      ripplesRef.current = ripplesRef.current.filter((ripple) => {
+        ripple.radius += ripple.speed;
+        ripple.alpha = 0.8 * (1 - ripple.radius / ripple.maxRadius);
+        if (ripple.alpha > 0) {
+          ctx.beginPath();
+          ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(${ripple.color}, ${ripple.alpha})`;
+          ctx.stroke();
+          return true;
+        }
+        return false;
+      });
+
+      // Treble particles
+      if (treble > 180 && Math.random() > 0.6) {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+        ctx.beginPath();
+        ctx.arc(
+          centerX + (Math.random() - 0.5) * canvas.width * 0.7,
+          centerY + (Math.random() - 0.5) * canvas.height * 0.7,
+          2,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+      }
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+    };
+  }, [isOpen, isPlaying, viewMode]);
 
   if (!isOpen || !currentTrack) return null;
 
@@ -728,11 +768,8 @@ export const FullScreenPlayer = ({
         <div className="relative w-full">
           {/* Visualizer View */}
           <div className={viewMode === "visualizer" ? "block" : "hidden"}>
-            <div className="relative w-full aspect-square max-w-2xl mx-auto flex items-center justify-center bg-black rounded-2xl overflow-hidden border-2 border-zinc-800">
-              <canvas
-                ref={canvasRef}
-                className="absolute inset-0 w-full h-full"
-              />
+            <div className="relative w-full aspect-square max-w-2xl mx-auto flex items-center justify-center bg-black/40 rounded-2xl overflow-hidden border border-zinc-800/50 shadow-2xl backdrop-blur-sm">
+              <canvas ref={canvasRef} className="w-full h-full block" />
               {!isPlaying && (
                 <div className="relative z-10 text-center p-8">
                   <Music className="h-24 w-24 text-brand mx-auto mb-4 opacity-50 animate-pulse" />

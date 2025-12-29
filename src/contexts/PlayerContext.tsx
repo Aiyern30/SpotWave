@@ -404,7 +404,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     }, 50);
 
     return () => clearInterval(intervalId);
-  }, [isPlaying, isPaused, position]);
+  }, [isPlaying, isPaused]);
 
   // Resume AudioContext on any interaction
   useEffect(() => {
