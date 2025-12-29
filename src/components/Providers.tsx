@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PlayerProvider } from "@/contexts/PlayerContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { MusicPlayer } from "@/components/MusicPlayer";
 import { FullScreenPlayer } from "@/components/FullScreenPlayer";
 import { Toaster } from "@/components/ui/Toaster";
@@ -14,23 +15,25 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthProvider>
-      <PlayerProvider>
-        {/* MusicPlayer and overlays here */}
-        <MusicPlayer
-          onToggleQueue={() => setIsQueueOpen((prev) => !prev)}
-          onToggleFullScreen={() => setIsFullScreenOpen((prev) => !prev)}
-        />
-        <FullScreenPlayer
-          isOpen={isFullScreenOpen}
-          onClose={() => setIsFullScreenOpen(false)}
-        />
-        <InQueueWindow
-          isOpen={isQueueOpen}
-          onClose={() => setIsQueueOpen(false)}
-        />
-        <Toaster />
-        {children}
-      </PlayerProvider>
+      <ThemeProvider>
+        <PlayerProvider>
+          {/* MusicPlayer and overlays here */}
+          <MusicPlayer
+            onToggleQueue={() => setIsQueueOpen((prev) => !prev)}
+            onToggleFullScreen={() => setIsFullScreenOpen((prev) => !prev)}
+          />
+          <FullScreenPlayer
+            isOpen={isFullScreenOpen}
+            onClose={() => setIsFullScreenOpen(false)}
+          />
+          <InQueueWindow
+            isOpen={isQueueOpen}
+            onClose={() => setIsQueueOpen(false)}
+          />
+          <Toaster />
+          {children}
+        </PlayerProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

@@ -43,6 +43,20 @@ export default function RootLayout({
         <meta name="theme-color" content="#22c55e" />
         <link rel="icon" href="/Logo.png" />
         <link rel="apple-touch-icon" href="/Logo.png" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var savedTheme = localStorage.getItem('app-theme');
+                  if (savedTheme) {
+                    document.documentElement.classList.add(savedTheme);
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
       </head>
       <body className={`${inter.className} bg-primary-background`}>
         <Providers>{children}</Providers>

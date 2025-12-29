@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Palette, Check } from "lucide-react";
 import {
   DropdownMenu,
@@ -9,44 +8,10 @@ import {
   DropdownMenuTrigger,
   Button,
 } from "@/components/ui";
-
-const themes = [
-  { name: "Green", class: "", color: "#22c55e" }, // Default
-  { name: "Blue", class: "theme-blue", color: "#3b82f6" },
-  { name: "Purple", class: "theme-purple", color: "#a855f7" },
-  { name: "Red", class: "theme-red", color: "#ef4444" },
-  { name: "Orange", class: "theme-orange", color: "#f97316" },
-  { name: "Pink", class: "theme-pink", color: "#ec4899" },
-];
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function ThemeSwitcher() {
-  const [currentTheme, setCurrentTheme] = useState(themes[0]);
-
-  // Load theme from localStorage
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("app-theme");
-    if (savedTheme) {
-      const theme = themes.find((t) => t.class === savedTheme) || themes[0];
-      applyTheme(theme);
-    }
-  }, []);
-
-  const applyTheme = (theme: (typeof themes)[0]) => {
-    const doc = document.documentElement;
-
-    // Remove all theme classes
-    themes.forEach((t) => {
-      if (t.class) doc.classList.remove(t.class);
-    });
-
-    // Add new theme class
-    if (theme.class) {
-      doc.classList.add(theme.class);
-    }
-
-    setCurrentTheme(theme);
-    localStorage.setItem("app-theme", theme.class);
-  };
+  const { currentTheme, setColorTheme, themes } = useTheme();
 
   return (
     <DropdownMenu>
@@ -69,7 +34,7 @@ export default function ThemeSwitcher() {
         {themes.map((theme) => (
           <DropdownMenuItem
             key={theme.class}
-            onClick={() => applyTheme(theme)}
+            onClick={() => setColorTheme(theme.class)}
             className="flex items-center justify-between gap-3 px-3 py-2 rounded-md hover:bg-zinc-800 cursor-pointer group transition-colors"
           >
             <div className="flex items-center gap-3">
@@ -81,14 +46,14 @@ export default function ThemeSwitcher() {
                 className={`text-sm ${
                   currentTheme.class === theme.class
                     ? "text-white font-medium"
-                    : "text-zinc-400 group-hover:text-black"
+                    : "text-zinc-400"
                 }`}
               >
                 {theme.name}
               </span>
             </div>
             {currentTheme.class === theme.class && (
-              <Check className="h-4 w-4 bg-brand shadow-[0_0_10px_rgba(34,197,94,0.3)]" />
+              <Check className="h-4 w-4 text-brand" />
             )}
           </DropdownMenuItem>
         ))}
