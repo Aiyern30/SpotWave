@@ -76,9 +76,9 @@ export default function CategoryDetailPage() {
       ]);
 
       setCategoryInfo(categoryRes);
-      setTracks(searchRes.tracks);
-      setPlaylists(searchRes.playlists);
-      setAlbums(searchRes.albums);
+      setTracks((searchRes.tracks || []).filter((t: any) => t !== null));
+      setPlaylists((searchRes.playlists || []).filter((p: any) => p !== null));
+      setAlbums((searchRes.albums || []).filter((a: any) => a !== null));
     } catch (e: any) {
       console.error("Error loading category hybrid data:", e);
       setError("Failed to load category content. Please try again.");
