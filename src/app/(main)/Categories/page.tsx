@@ -4,10 +4,13 @@ import Image from "next/image";
 import { Card } from "@/components/ui/";
 import { Button } from "@/components/ui/";
 import { Skeleton } from "@/components/ui/";
-import { Radio, Search, Grid3x3, List } from "lucide-react";
+import { Radio, Search } from "lucide-react";
+import { PiTable } from "react-icons/pi";
+import { LuLayoutGrid } from "react-icons/lu";
 import { fetchBrowseCategories } from "@/utils/fetchCategories";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { DisplayUIProps } from "@/lib/types";
 
 type CategoryProps = {
   id: string;
@@ -21,13 +24,13 @@ const CategoryCard = ({
   viewMode,
 }: {
   category: CategoryProps;
-  viewMode: "grid" | "list";
+  viewMode: DisplayUIProps;
 }) => {
   const detailUrl = `/Categories/${category.id}?name=${encodeURIComponent(
     category.name
   )}`;
 
-  if (viewMode === "list") {
+  if (viewMode === "Table") {
     return (
       <Link href={detailUrl} className="block w-full">
         <Card className="group bg-zinc-900/50 hover:bg-zinc-800/70 border border-zinc-800 transition-all duration-300 hover:scale-[1.01] cursor-pointer overflow-hidden">
@@ -87,7 +90,7 @@ const CategoriesPage = () => {
   const [token, setToken] = useState<string>("");
   const [categories, setCategories] = useState<CategoryProps[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [displayUI, setDisplayUI] = useState<DisplayUIProps>("Grid");
   const router = useRouter();
 
   const handleFetchCategories = useCallback(async () => {
@@ -115,7 +118,7 @@ const CategoriesPage = () => {
   const LoadingSkeleton = () => (
     <div
       className={`grid ${
-        viewMode === "grid"
+        displayUI === "Grid"
           ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
           : "grid-cols-1"
       } gap-4 sm:gap-6`}
@@ -124,7 +127,7 @@ const CategoriesPage = () => {
         <div key={i} className="space-y-3">
           <Skeleton
             className={`w-full ${
-              viewMode === "grid" ? "aspect-square" : "h-24"
+              displayUI === "Grid" ? "aspect-square" : "h-24"
             } rounded-lg bg-zinc-800`}
           />
           <Skeleton className="h-4 w-3/4 bg-zinc-800" />
@@ -172,33 +175,32 @@ const CategoriesPage = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
           <Button
-            variant="outline"
-            size="icon"
-            className="border-zinc-700 hover:bg-zinc-800"
+            variant="ghost"
+            size="sm"
+            onClick={() => setDisplayUI("Table")}
+            className={`h-9 px-3 transition-all ${
+              displayUI === "Table"
+                ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+            }`}
           >
-            <Search className="h-4 w-4" />
+            <PiTable className="h-5 w-5 sm:mr-2" />
+            <span className="hidden sm:inline">Table</span>
           </Button>
           <Button
-            variant="outline"
-            size="icon"
-            className={`border-zinc-700 hover:bg-zinc-800 ${
-              viewMode === "grid" ? "bg-zinc-800" : ""
+            variant="ghost"
+            size="sm"
+            onClick={() => setDisplayUI("Grid")}
+            className={`h-9 px-3 transition-all ${
+              displayUI === "Grid"
+                ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             }`}
-            onClick={() => setViewMode("grid")}
           >
-            <Grid3x3 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className={`border-zinc-700 hover:bg-zinc-800 ${
-              viewMode === "list" ? "bg-zinc-800" : ""
-            }`}
-            onClick={() => setViewMode("list")}
-          >
-            <List className="h-4 w-4" />
+            <LuLayoutGrid className="h-5 w-5 sm:mr-2" />
+            <span className="hidden sm:inline">Grid</span>
           </Button>
         </div>
       </div>
@@ -210,7 +212,7 @@ const CategoriesPage = () => {
       ) : (
         <div
           className={`grid ${
-            viewMode === "grid"
+            displayUI === "Grid"
               ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
               : "grid-cols-1"
           } gap-4 sm:gap-6`}
@@ -219,7 +221,7 @@ const CategoriesPage = () => {
             <CategoryCard
               key={category.id}
               category={category}
-              viewMode={viewMode}
+              viewMode={displayUI}
             />
           ))}
         </div>
