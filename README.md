@@ -35,6 +35,23 @@ SpotWave is a premium music exploration platform that transforms your Spotify li
 - **Seamless Profile Sync**: View your Spotify library, followed artists, and public playlists in one unified dashboard.
 - **Direct Discovery**: explore top global tracks, hidden gems via Categories, and detailed Artist/Album profiles.
 
+### 📥 Offline Playlist Downloader
+
+SpotWave includes powerful local scripts to download your exported playlists for offline listening.
+
+1.  **Export**: Click the "Download JSON" button on any playlist page in SpotWave (this creates `downloads/playlist.json`).
+2.  **Run Script**:
+    _ **Windows (PowerShell)**:
+    `powershell
+.\downloader.ps1
+`
+    _ **Bash (macOS/Linux/Git Bash)**:
+    `bash
+chmod +x downloader.sh
+./downloader.sh
+`
+    _These scripts automatically download dependencies like `yt-dlp`, fetch the highest quality audio, and package your songs into a ZIP file in your system's **Downloads** folder._
+
 ---
 
 ## 🛠️ Technology Stack
@@ -112,4 +129,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 
-_Made with ❤️ by the SpotWave Team._
+_Made by Aiyern30._
