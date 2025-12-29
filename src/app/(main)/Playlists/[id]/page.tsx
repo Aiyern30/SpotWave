@@ -462,16 +462,16 @@ const PlaylistPage = () => {
                   <TableHead className="w-12 text-center text-zinc-400 font-medium text-xs sm:text-sm">
                     #
                   </TableHead>
-                  <TableHead className="text-zinc-400 font-medium text-xs sm:text-sm">
+                  <TableHead className="text-zinc-400 font-medium text-xs sm:text-sm w-[40%] sm:w-[45%]">
                     Title
                   </TableHead>
-                  <TableHead className="hidden lg:table-cell text-zinc-400 font-medium text-xs sm:text-sm">
+                  <TableHead className="hidden lg:table-cell text-zinc-400 font-medium text-xs sm:text-sm w-[25%] sm:w-[30%]">
                     Album
                   </TableHead>
-                  <TableHead className="hidden xl:table-cell text-zinc-400 font-medium text-xs sm:text-sm">
+                  <TableHead className="hidden xl:table-cell text-zinc-400 font-medium text-xs sm:text-sm w-[15%]">
                     Date added
                   </TableHead>
-                  <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium text-xs sm:text-sm">
+                  <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium text-xs sm:text-sm w-20">
                     <Clock className="h-4 w-4 ml-auto" />
                   </TableHead>
                   <TableHead className="w-12 text-zinc-400 font-medium text-xs sm:text-sm"></TableHead>
