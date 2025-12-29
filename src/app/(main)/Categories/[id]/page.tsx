@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import {
+  usePathname,
+  useSearchParams,
+  useRouter,
+  useParams,
+} from "next/navigation";
 import Image from "next/image";
 import PlaylistCard from "@/components/PlaylistCard";
 import {
@@ -77,6 +82,7 @@ const CategoryDetailPage = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const params = useParams();
   const {
     playTrack,
     playPlaylist,
@@ -86,8 +92,7 @@ const CategoryDetailPage = () => {
     isPlaying,
   } = usePlayer();
 
-  const segments = pathname.split("/");
-  const categoryId = segments[segments.length - 1];
+  const categoryId = params.id as string;
   const categoryName = searchParams.get("name");
 
   useEffect(() => {
@@ -98,43 +103,72 @@ const CategoryDetailPage = () => {
   }, []);
 
   const fetchCategoryData = useCallback(async () => {
-    if (!token || !categoryId) return;
+    if (!token || !categoryId || categoryId === "index") return;
 
     setLoading(true);
     try {
-      // 1. Fetch User Profile to get country (important for browse categories)
+      console.log(`Fetching data for category: ${categoryId}`);
+
+      // 1. Fetch User Profile to get country
       const userProfile = await fetchUserProfile(token);
       const country = userProfile?.country;
 
-      // 2. Fetch Category Info and Playlists
-      const [categoryData, playlistsData] = await Promise.all([
-        fetchCategory(token, categoryId),
-        fetchCategoryPlaylists(token, categoryId, country),
-      ]);
+      // 2. Fetch Category Info first
+      const categoryData = await fetchCategory(token, categoryId);
 
       if (categoryData) {
         setCategory(categoryData);
-      }
-      if (playlistsData && playlistsData.length > 0) {
-        setPlaylists(playlistsData);
+        console.log("Category details loaded:", categoryData.name);
 
-        // 3. Fetch tracks from the first playlist to show "Popular Songs" in this category
-        setLoadingTracks(true);
-        const firstPlaylistId = playlistsData[0].id;
-        const playlistDetails = await fetchPlaylistDetails(
-          firstPlaylistId,
-          token
-        );
-        if (playlistDetails?.tracks?.items) {
-          setCategoryTracks(playlistDetails.tracks.items.slice(0, 50));
+        // 3. Try to fetch playlists - handle failure gracefully
+        try {
+          const playlistsData = await fetchCategoryPlaylists(
+            token,
+            categoryId,
+            country
+          );
+
+          if (playlistsData && playlistsData.length > 0) {
+            setPlaylists(playlistsData);
+            console.log(
+              `Loaded ${playlistsData.length} playlists for category.`
+            );
+
+            // 4. Fetch tracks from the first playlist
+            setLoadingTracks(true);
+            try {
+              const firstPlaylistId = playlistsData[0].id;
+              const playlistDetails = await fetchPlaylistDetails(
+                firstPlaylistId,
+                token
+              );
+              if (playlistDetails?.tracks?.items) {
+                setCategoryTracks(playlistDetails.tracks.items.slice(0, 50));
+              }
+            } catch (trackError) {
+              console.error("Error fetching category tracks:", trackError);
+            }
+            setLoadingTracks(false);
+          } else {
+            setPlaylists([]);
+            setCategoryTracks([]);
+          }
+        } catch (playlistError) {
+          console.error("Error fetching category playlists:", playlistError);
+          setPlaylists([]);
+          setCategoryTracks([]);
         }
-        setLoadingTracks(false);
       } else {
+        // Category itself doesn't exist
+        setCategory(null);
         setPlaylists([]);
         setCategoryTracks([]);
       }
     } catch (error) {
       console.error("Error fetching category data:", error);
+      setCategory(null);
+      setPlaylists([]);
+      setCategoryTracks([]);
     } finally {
       setLoading(false);
     }
