@@ -237,7 +237,7 @@ const FollowingArtists = () => {
                         }
                         className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
                       >
-                        <TableCell className="py-3 sm:py-4">
+                        <TableCell className="py-3 sm:py-4 max-w-0">
                           <div className="flex items-center space-x-3">
                             <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex-shrink-0 group/image">
                               <Image

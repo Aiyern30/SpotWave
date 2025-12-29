@@ -137,30 +137,38 @@ const PublicLibrary = ({ userId }: { userId?: string }) => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-white">Playlists</h2>
-        <div className="flex items-center space-x-3">
-          <PiTable
-            size={35}
+        <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setDisplayUI("Table")}
-            className={`cursor-pointer transition-colors ${
+            className={`h-9 px-3 transition-all ${
               displayUI === "Table"
-                ? "text-white"
-                : "text-[#707070] hover:text-white"
+                ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             }`}
-          />
-          <LuLayoutGrid
-            size={30}
+          >
+            <PiTable className="h-5 w-5 sm:mr-2" />
+            <span className="hidden sm:inline">Table</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setDisplayUI("Grid")}
-            className={`cursor-pointer transition-colors ${
+            className={`h-9 px-3 transition-all ${
               displayUI === "Grid"
-                ? "text-white"
-                : "text-[#707070] hover:text-white"
+                ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             }`}
-          />
+          >
+            <LuLayoutGrid className="h-5 w-5 sm:mr-2" />
+            <span className="hidden sm:inline">Grid</span>
+          </Button>
         </div>
       </div>
 
       {displayUI === "Table" ? (
-        <div className="overflow-x-auto container">
+        <div className="overflow-x-auto rounded-lg border border-zinc-800/50">
           {loading ? (
             <div className="space-y-3">
               {Array(5)
@@ -187,17 +195,17 @@ const PublicLibrary = ({ userId }: { userId?: string }) => {
               </div>
             </div>
           ) : (
-            <div className="bg-zinc-900/30 rounded-lg border border-zinc-800/50">
+            <div className="bg-zinc-900/30">
               <Table className="w-full">
                 <TableHeader>
                   <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
-                    <TableHead className="text-zinc-400 font-medium text-xs sm:text-sm w-[50%] sm:w-[60%]">
+                    <TableHead className="text-zinc-400 font-medium text-xs sm:text-sm w-[45%] sm:w-[50%]">
                       Playlist
                     </TableHead>
-                    <TableHead className="hidden lg:table-cell text-zinc-400 font-medium text-xs sm:text-sm w-[30%]">
+                    <TableHead className="hidden lg:table-cell text-zinc-400 font-medium text-xs sm:text-sm w-[30%] sm:w-[35%]">
                       Description
                     </TableHead>
-                    <TableHead className="hidden md:table-cell w-20 text-right text-zinc-400 font-medium text-xs sm:text-sm">
+                    <TableHead className="hidden md:table-cell w-28 text-right text-zinc-400 font-medium text-xs sm:text-sm">
                       Tracks
                     </TableHead>
                   </TableRow>
@@ -213,7 +221,7 @@ const PublicLibrary = ({ userId }: { userId?: string }) => {
                         onClick={() => handleClick(playlist.id, playlist.name)}
                         className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
                       >
-                        <TableCell>
+                        <TableCell className="py-3 sm:py-4 max-w-0">
                           <div className="flex items-center space-x-3">
                             <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0 group/image">
                               <Image
