@@ -761,7 +761,7 @@ const PlaylistPage = () => {
                                 e.stopPropagation();
                                 handleAddToPlaylist(track.uri, pl.id, pl.name);
                               }}
-                              className="text-white hover:bg-green-500/20 hover:text-green-400"
+                              className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                             >
                               {pl.name}
                             </DropdownMenuItem>
@@ -790,12 +790,12 @@ const PlaylistPage = () => {
                           e.stopPropagation();
                           handleSaveToLiked(track.id, track.name);
                         }}
-                        className="text-white hover:bg-green-500/20 hover:text-green-400"
+                        className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                       >
                         <Heart
                           className={`mr-2 h-4 w-4 ${
                             likedTracks.has(track.id)
-                              ? "fill-green-500 text-green-500"
+                              ? "fill-green-500 bg-brand-500"
                               : ""
                           }`}
                         />
@@ -814,7 +814,7 @@ const PlaylistPage = () => {
                             track.artists[0].name
                           );
                         }}
-                        className="text-white hover:bg-green-500/20 hover:text-green-400"
+                        className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                       >
                         <User className="mr-2 h-4 w-4" />
                         Go to artist
@@ -825,7 +825,7 @@ const PlaylistPage = () => {
                           e.stopPropagation();
                           handleAlbumClick(track.album.id, track.album.name);
                         }}
-                        className="text-white hover:bg-green-500/20 hover:text-green-400"
+                        className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                       >
                         <Disc className="mr-2 h-4 w-4" />
                         Go to album

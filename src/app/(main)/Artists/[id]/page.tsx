@@ -817,15 +817,15 @@ const ArtistProfilePage = () => {
                               <div
                                 className={`font-medium truncate transition-colors ${
                                   isTrackPlaying(track.id)
-                                    ? "text-green-400"
-                                    : "text-white group-hover:text-green-400"
+                                    ? "bg-brand-400"
+                                    : "text-white group-hover:bg-brand-400"
                                 }`}
                               >
                                 {track.name}
                               </div>
                               <div className="text-zinc-400 text-sm truncate">
                                 <span
-                                  className="hover:underline hover:text-green-400 transition-colors cursor-pointer"
+                                  className="hover:underline hover:bg-brand-400 transition-colors cursor-pointer"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleArtistClick(
@@ -887,7 +887,7 @@ const ArtistProfilePage = () => {
                                           pl.name
                                         );
                                       }}
-                                      className="text-white hover:bg-green-500/20 hover:text-green-400"
+                                      className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                                     >
                                       {pl.name}
                                     </DropdownMenuItem>
@@ -900,12 +900,12 @@ const ArtistProfilePage = () => {
                                   e.stopPropagation();
                                   handleSaveToLiked(track.id, track.name);
                                 }}
-                                className="text-white hover:bg-green-500/20 hover:text-green-400"
+                                className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                               >
                                 <Heart
                                   className={`mr-2 h-4 w-4 ${
                                     likedTracks.has(track.id)
-                                      ? "fill-green-500 text-green-500"
+                                      ? "fill-green-500 bg-brand-500"
                                       : ""
                                   }`}
                                 />
@@ -924,7 +924,7 @@ const ArtistProfilePage = () => {
                                     track.album.name
                                   );
                                 }}
-                                className="text-white hover:bg-green-500/20 hover:text-green-400"
+                                className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                               >
                                 <Disc className="mr-2 h-4 w-4" />
                                 Go to album
@@ -938,7 +938,7 @@ const ArtistProfilePage = () => {
                                     "_blank"
                                   );
                                 }}
-                                className="text-white hover:bg-green-500/20 hover:text-green-400"
+                                className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                               >
                                 <ExternalLink className="mr-2 h-4 w-4" />
                                 Open in Spotify
@@ -1005,7 +1005,7 @@ const ArtistProfilePage = () => {
                                         pl.name
                                       );
                                     }}
-                                    className="text-white hover:bg-green-500/20 hover:text-green-400"
+                                    className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                                   >
                                     {pl.name}
                                   </DropdownMenuItem>
@@ -1018,12 +1018,12 @@ const ArtistProfilePage = () => {
                                 e.stopPropagation();
                                 handleSaveToLiked(track.id, track.name);
                               }}
-                              className="text-white hover:bg-green-500/20 hover:text-green-400"
+                              className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                             >
                               <Heart
                                 className={`mr-2 h-4 w-4 ${
                                   likedTracks.has(track.id)
-                                    ? "fill-green-500 text-green-500"
+                                    ? "fill-green-500 bg-brand-500"
                                     : ""
                                 }`}
                               />
@@ -1042,7 +1042,7 @@ const ArtistProfilePage = () => {
                                   track.album.name
                                 );
                               }}
-                              className="text-white hover:bg-green-500/20 hover:text-green-400"
+                              className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                             >
                               <Disc className="mr-2 h-4 w-4" />
                               Go to album
@@ -1056,7 +1056,7 @@ const ArtistProfilePage = () => {
                                   "_blank"
                                 );
                               }}
-                              className="text-white hover:bg-green-500/20 hover:text-green-400"
+                              className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                             >
                               <ExternalLink className="mr-2 h-4 w-4" />
                               Open in Spotify
@@ -1082,7 +1082,7 @@ const ArtistProfilePage = () => {
                   onClick={() => setAlbumsDisplayUI("Table")}
                   className={`h-9 px-3 transition-all ${
                     albumsDisplayUI === "Table"
-                      ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                      ? "bg-brand-500/10 bg-brand-400 hover:bg-brand-500/20 hover:bg-brand-300"
                       : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                   }`}
                 >
@@ -1095,7 +1095,7 @@ const ArtistProfilePage = () => {
                   onClick={() => setAlbumsDisplayUI("Grid")}
                   className={`h-9 px-3 transition-all ${
                     albumsDisplayUI === "Grid"
-                      ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                      ? "bg-brand-500/10 bg-brand-400 hover:bg-brand-500/20 hover:bg-brand-300"
                       : "text-zinc-400 hover:text-white hover:bg-zinc-800"
                   }`}
                 >
@@ -1146,12 +1146,12 @@ const ArtistProfilePage = () => {
                               />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="text-white font-medium truncate group-hover:text-green-400 transition-colors">
+                              <div className="text-white font-medium truncate group-hover:bg-brand-400 transition-colors">
                                 {album.name}
                               </div>
                               <div className="text-zinc-400 text-sm truncate">
                                 <span
-                                  className="hover:underline hover:text-green-400 transition-colors cursor-pointer"
+                                  className="hover:underline hover:bg-brand-400 transition-colors cursor-pointer"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleArtistClick(
@@ -1182,7 +1182,7 @@ const ArtistProfilePage = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-black rounded-full transition-all"
+                                className="h-8 w-8 bg-brand-500/10 bg-brand-500 hover:bg-brand-500 hover:text-black rounded-full transition-all"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <MoreHorizontal className="h-4 w-4" />
@@ -1197,7 +1197,7 @@ const ArtistProfilePage = () => {
                                   e.stopPropagation();
                                   handleAlbumClick(album.id, album.name);
                                 }}
-                                className="text-white hover:bg-green-500/20 hover:text-green-400"
+                                className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                               >
                                 <Disc className="mr-2 h-4 w-4" />
                                 Go to album
@@ -1211,7 +1211,7 @@ const ArtistProfilePage = () => {
                                     "_blank"
                                   );
                                 }}
-                                className="text-white hover:bg-green-500/20 hover:text-green-400"
+                                className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                               >
                                 <ExternalLink className="mr-2 h-4 w-4" />
                                 Open in Spotify
@@ -1251,7 +1251,7 @@ const ArtistProfilePage = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-black rounded-full backdrop-blur-sm shadow-sm transition-all"
+                            className="h-8 w-8 bg-brand-500/10 bg-brand-500 hover:bg-brand-500 hover:text-black rounded-full backdrop-blur-sm shadow-sm transition-all"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MoreHorizontal className="h-4 w-4" />
@@ -1266,7 +1266,7 @@ const ArtistProfilePage = () => {
                               e.stopPropagation();
                               handleAlbumClick(album.id, album.name);
                             }}
-                            className="text-white hover:bg-green-500/20 hover:text-green-400"
+                            className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                           >
                             <Disc className="mr-2 h-4 w-4" />
                             Go to album
@@ -1280,7 +1280,7 @@ const ArtistProfilePage = () => {
                                 "_blank"
                               );
                             }}
-                            className="text-white hover:bg-green-500/20 hover:text-green-400"
+                            className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                           >
                             <ExternalLink className="mr-2 h-4 w-4" />
                             Open in Spotify
@@ -1317,7 +1317,7 @@ const ArtistProfilePage = () => {
                   <Button
                     variant="ghost"
                     onClick={() => setIsBioExpanded(!isBioExpanded)}
-                    className="w-full text-green-500 hover:text-green-400 font-semibold flex items-center justify-center gap-2 group-hover:bg-white/5"
+                    className="w-full bg-brand-500 hover:bg-brand-400 font-semibold flex items-center justify-center gap-2 group-hover:bg-white/5"
                   >
                     {isBioExpanded ? "Read Less" : "Read More"}
                   </Button>
@@ -1352,7 +1352,7 @@ const ArtistProfilePage = () => {
                       </Avatar>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className="text-center text-sm font-medium text-white group-hover:text-green-400 transition-colors line-clamp-2">
+                          <div className="text-center text-sm font-medium text-white group-hover:bg-brand-400 transition-colors line-clamp-2">
                             {similarArtist.name}
                           </div>
                         </TooltipTrigger>

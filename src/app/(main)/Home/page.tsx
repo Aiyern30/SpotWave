@@ -251,13 +251,13 @@ const Page = () => {
       onClick={handleCreatePlaylist}
     >
       <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-5">
-        <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-zinc-800/50 group-hover:bg-green-500/20 flex items-center justify-center transition-all duration-300 border border-zinc-700 group-hover:border-green-500/50">
+        <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-zinc-800/50 group-hover:bg-brand-500/20 flex items-center justify-center transition-all duration-300 border border-zinc-700 group-hover:border-green-500/50">
           {creating ? (
             <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-2 border-green-500 border-t-transparent" />
           ) : (
             <IoMdAdd
               size={24}
-              className="sm:w-9 sm:h-9 text-green-500 group-hover:scale-110 transition-transform"
+              className="sm:w-9 sm:h-9 bg-brand-500 group-hover:scale-110 transition-transform"
             />
           )}
         </div>
@@ -328,7 +328,7 @@ const Page = () => {
       <div className="space-y-3 sm:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-1 sm:px-2">
           <h1 className="text-xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2">
-            <Music className="h-6 w-6 text-green-500" />
+            <Music className="h-6 w-6 bg-brand-500" />
             Your Playlists
           </h1>
           <p className="text-zinc-400 text-xs sm:text-sm font-medium">
@@ -373,7 +373,7 @@ const Page = () => {
             </h2>
             <Button
               variant="link"
-              className="text-green-500 hover:text-green-400 p-0 h-auto font-semibold text-sm sm:text-base transition-colors"
+              className="bg-brand-500 hover:bg-brand-400 p-0 h-auto font-semibold text-sm sm:text-base transition-colors"
               onClick={() => router.push("/Categories")}
             >
               See All

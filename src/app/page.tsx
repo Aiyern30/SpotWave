@@ -320,7 +320,7 @@ export default function Home() {
           {[...Array(10)].map((_, i) => (
             <div
               key={i}
-              className="absolute rounded-full bg-green-500/10"
+              className="absolute rounded-full bg-brand-500/10"
               style={{
                 width: `${Math.random() * 300 + 50}px`,
                 height: `${Math.random() * 300 + 50}px`,

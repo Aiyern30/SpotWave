@@ -451,7 +451,7 @@ const SongPage = () => {
                   onClick={() =>
                     window.open(track.external_urls?.spotify, "_blank")
                   }
-                  className="bg-green-500 hover:bg-green-600 text-black font-semibold hover:scale-105 transition-all"
+                  className="bg-brand-500 hover:bg-brand-600 text-black font-semibold hover:scale-105 transition-all"
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Open in Spotify
@@ -461,7 +461,7 @@ const SongPage = () => {
                   <SheetTrigger asChild>
                     <Button
                       variant="outline"
-                      className="bg-transparent border-white text-white hover:bg-green-500 hover:text-black hover:border-green-500 transition-all"
+                      className="bg-transparent border-white text-white hover:bg-brand-500 hover:text-black hover:border-green-500 transition-all"
                       onClick={() => {
                         if (!lyrics && !loadingLyrics) {
                           fetchLyrics(
@@ -526,7 +526,7 @@ const SongPage = () => {
                                 data-index={index}
                                 className={`text-sm leading-relaxed transition-all duration-300 py-1 ${
                                   index === currentLyricIndex
-                                    ? "text-green-400 font-semibold text-lg scale-105"
+                                    ? "bg-brand-400 font-semibold text-lg scale-105"
                                     : index < currentLyricIndex
                                     ? "text-zinc-500"
                                     : "text-zinc-300"
@@ -557,7 +557,7 @@ const SongPage = () => {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="bg-green-500/10 border-green-500/20 text-green-500 hover:bg-green-500 hover:text-black transition-all w-10 px-0 rounded-full"
+                      className="bg-brand-500/10 border-green-500/20 bg-brand-500 hover:bg-brand-500 hover:text-black transition-all w-10 px-0 rounded-full"
                     >
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
@@ -582,7 +582,7 @@ const SongPage = () => {
                                 pl.name
                               )
                             }
-                            className="text-white hover:bg-green-500/20 hover:text-green-400"
+                            className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                           >
                             {pl.name}
                           </DropdownMenuItem>
@@ -592,12 +592,12 @@ const SongPage = () => {
 
                     <DropdownMenuItem
                       onClick={() => handleSaveToLiked(track.id, track.name)}
-                      className="text-white hover:bg-green-500/20 hover:text-green-400"
+                      className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                     >
                       <Heart
                         className={`mr-2 h-4 w-4 ${
                           likedTracks.has(track.id)
-                            ? "fill-green-500 text-green-500"
+                            ? "fill-green-500 bg-brand-500"
                             : ""
                         }`}
                       />
@@ -618,7 +618,7 @@ const SongPage = () => {
                           );
                         }
                       }}
-                      className="text-white hover:bg-green-500/20 hover:text-green-400"
+                      className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                     >
                       <Disc className="mr-2 h-4 w-4" />
                       Go to album
@@ -638,7 +638,7 @@ const SongPage = () => {
                           );
                         }
                       }}
-                      className="text-white hover:bg-green-500/20 hover:text-green-400"
+                      className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                     >
                       <User className="mr-2 h-4 w-4" />
                       Go to artist
@@ -648,7 +648,7 @@ const SongPage = () => {
                       onClick={() =>
                         window.open(track.external_urls?.spotify, "_blank")
                       }
-                      className="text-white hover:bg-green-500/20 hover:text-green-400"
+                      className="text-white hover:bg-brand-500/20 hover:bg-brand-400"
                     >
                       <ExternalLink className="mr-2 h-4 w-4" />
                       Open in Spotify
@@ -730,7 +730,7 @@ const SongPage = () => {
                     <div className="flex items-center space-x-2">
                       <div className="w-20 h-2 bg-zinc-700 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-green-500 rounded-full"
+                          className="h-full bg-brand-500 rounded-full"
                           style={{ width: `${track.popularity}%` }}
                         />
                       </div>
@@ -767,7 +767,7 @@ const SongPage = () => {
                   alt={track.album.name}
                 />
                 <div className="flex-1">
-                  <h4 className="text-lg font-semibold text-white hover:text-green-400 transition-colors">
+                  <h4 className="text-lg font-semibold text-white hover:bg-brand-400 transition-colors">
                     {track.album.name}
                   </h4>
                   <p className="text-zinc-400">

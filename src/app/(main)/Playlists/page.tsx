@@ -9,8 +9,8 @@ export default function PlaylistsPage() {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
-            <Music className="h-6 w-6 text-green-500" />
+          <div className="w-12 h-12 rounded-full bg-brand-500/20 flex items-center justify-center">
+            <Music className="h-6 w-6 bg-brand-500" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-white tracking-tight">

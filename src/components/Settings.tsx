@@ -291,7 +291,7 @@ export default function Settings({ playlistID }: SettingsProps) {
                   <Users className="mr-3 h-4 w-4" />
                   <span>Invite collaborators</span>
                   {copiedStates["Invite link"] && (
-                    <Check className="ml-auto h-4 w-4 text-green-500" />
+                    <Check className="ml-auto h-4 w-4 bg-brand-500" />
                   )}
                 </DropdownMenuItem>
 
@@ -309,7 +309,7 @@ export default function Settings({ playlistID }: SettingsProps) {
                         <Link className="mr-3 h-4 w-4" />
                         <span>Copy playlist link</span>
                         {copiedStates["Playlist link"] && (
-                          <Check className="ml-auto h-4 w-4 text-green-500" />
+                          <Check className="ml-auto h-4 w-4 bg-brand-500" />
                         )}
                       </DropdownMenuItem>
                       <DropdownMenuItem
@@ -491,7 +491,7 @@ export default function Settings({ playlistID }: SettingsProps) {
                   >
                     {copiedStates["Embed code"] ? (
                       <>
-                        <Check className="mr-2 h-4 w-4 text-green-500" />
+                        <Check className="mr-2 h-4 w-4 bg-brand-500" />
                         Copied!
                       </>
                     ) : (

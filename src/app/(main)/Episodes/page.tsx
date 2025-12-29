@@ -135,7 +135,7 @@ const EpisodesPage = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-12 w-12 rounded-full bg-green-500 hover:bg-green-600"
+                className="h-12 w-12 rounded-full bg-brand-500 hover:bg-brand-600"
               >
                 <Play className="h-6 w-6 text-black fill-black" />
               </Button>
@@ -163,7 +163,7 @@ const EpisodesPage = () => {
               >
                 <Heart
                   className={`h-5 w-5 ${
-                    isSaved ? "fill-green-500 text-green-500" : "text-zinc-400"
+                    isSaved ? "fill-green-500 bg-brand-500" : "text-zinc-400"
                   }`}
                 />
               </Button>
@@ -244,7 +244,7 @@ const EpisodesPage = () => {
       {savedEpisodes.length > 0 && !loading && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-green-500" />
+            <Heart className="h-5 w-5 bg-brand-500" />
             <h2 className="text-xl font-bold text-white">
               Your Saved Episodes
             </h2>
