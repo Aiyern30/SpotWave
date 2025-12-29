@@ -625,7 +625,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                             size="sm"
                             onClick={handleRefreshRecommendations}
                             disabled={isLoadingRecommendations}
-                            className="h-8 text-[10px] text-zinc-400 hover:text-green-400 hover:bg-green-400/10"
+                            className="h-8 text-[10px] text-zinc-400 hover:bg-brand-400 hover:bg-brand-400/10"
                           >
                             <RefreshCw
                               className={`h-3 w-3 mr-2 ${
@@ -918,7 +918,7 @@ function TrackItem({
         <div className="flex items-center gap-2">
           <h4
             className={`font-medium text-sm truncate ${
-              isPlaying ? "text-green-400" : "text-zinc-200"
+              isPlaying ? "bg-brand-400" : "text-zinc-200"
             }`}
           >
             {track.name}
@@ -939,7 +939,7 @@ function TrackItem({
         disabled={isAdding}
         size="icon"
         variant="ghost"
-        className="h-8 w-8 rounded-full hover:bg-green-500 hover:text-black transition-all"
+        className="h-8 w-8 rounded-full hover:bg-brand-500 hover:text-black transition-all"
       >
         {isAdding ? (
           <Loader2 className="h-4 w-4 animate-spin" />

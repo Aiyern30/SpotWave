@@ -199,7 +199,7 @@ const ArtistQuizGame = () => {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center space-y-4">
-          <Loader2 className="w-12 h-12 text-green-500 animate-spin mx-auto" />
+          <Loader2 className="w-12 h-12 bg-brand-500 animate-spin mx-auto" />
           <p className="text-zinc-400">Loading tracks for {artistName}...</p>
         </div>
       </div>
@@ -238,7 +238,7 @@ const ArtistQuizGame = () => {
           transition={{ duration: 0.5 }}
           className="space-y-2"
         >
-          <h1 className="text-4xl font-bold text-green-500">Quiz Complete!</h1>
+          <h1 className="text-4xl font-bold bg-brand-500">Quiz Complete!</h1>
           <p className="text-xl text-white">You scored {score} points</p>
         </motion.div>
 
@@ -275,7 +275,7 @@ const ArtistQuizGame = () => {
                 </Button>
                 <Button
                   onClick={() => router.push("/Games")}
-                  className="bg-green-500 hover:bg-green-600 text-black font-semibold"
+                  className="bg-brand-500 hover:bg-brand-600 text-black font-semibold"
                 >
                   More Games
                 </Button>
@@ -296,16 +296,14 @@ const ArtistQuizGame = () => {
             pauseTrack();
             router.back();
           }}
-          className="text-green-500 hover:text-green-400 hover:bg-green-500/10 font-medium"
+          className="bg-brand-500 hover:bg-brand-400 hover:bg-brand-500/10 font-medium"
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
           Quit
         </Button>
         <div className="flex flex-col items-center">
           <h2 className="text-white font-bold text-lg">{artistName} Quiz</h2>
-          <span className="text-green-500 font-mono text-sm">
-            Score: {score}
-          </span>
+          <span className="bg-brand-500 font-mono text-sm">Score: {score}</span>
         </div>
         <div className="w-20 text-right text-zinc-500 text-sm">
           {currentTrackIndex + 1} / {gameTracks.length}
@@ -322,7 +320,7 @@ const ArtistQuizGame = () => {
         <Card className="bg-zinc-900/50 border-zinc-800 backdrop-blur-sm shadow-2xl overflow-hidden relative">
           <div className="absolute top-0 left-0 w-full h-1 bg-zinc-800">
             <div
-              className="h-full bg-green-500 transition-all duration-500"
+              className="h-full bg-brand-500 transition-all duration-500"
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
@@ -360,7 +358,7 @@ const ArtistQuizGame = () => {
                         cy="50"
                       />
                       <circle
-                        className={`text-green-500 transition-all duration-1000 ease-linear ${
+                        className={`bg-brand-500 transition-all duration-1000 ease-linear ${
                           isCurrentSongPlaying ? "opacity-100" : "opacity-0"
                         }`}
                         strokeWidth="4"
@@ -403,7 +401,7 @@ const ArtistQuizGame = () => {
                       <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/10">
                         {isCurrentSongPlaying && (
                           <div className="bg-black/40 p-3 rounded-full backdrop-blur-sm">
-                            <Volume2 className="w-8 h-8 text-green-500 animate-pulse" />
+                            <Volume2 className="w-8 h-8 bg-brand-500 animate-pulse" />
                           </div>
                         )}
                       </div>
@@ -415,7 +413,7 @@ const ArtistQuizGame = () => {
                     className={`rounded-full w-16 h-16 p-0 transition-transform hover:scale-105 ${
                       isCurrentSongPlaying
                         ? "bg-zinc-800 hover:bg-zinc-700"
-                        : "bg-green-500 hover:bg-green-400 text-black"
+                        : "bg-brand-500 hover:bg-brand-400 text-black"
                     }`}
                     onClick={togglePlayback}
                   >
@@ -515,7 +513,7 @@ const ArtistQuizGame = () => {
                         <HelpCircle className="w-4 h-4 mr-2" /> Give Up
                       </Button>
                       <Button
-                        className="h-12 bg-green-500 hover:bg-green-600 text-black font-semibold"
+                        className="h-12 bg-brand-500 hover:bg-brand-600 text-black font-semibold"
                         onClick={checkGuess}
                       >
                         Submit <CheckCircle2 className="w-4 h-4 ml-2" />

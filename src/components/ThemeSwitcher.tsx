@@ -88,7 +88,7 @@ export default function ThemeSwitcher() {
               </span>
             </div>
             {currentTheme.class === theme.class && (
-              <Check className="h-4 w-4 text-green-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]" />
+              <Check className="h-4 w-4 bg-brand-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]" />
             )}
           </DropdownMenuItem>
         ))}

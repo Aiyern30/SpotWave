@@ -54,7 +54,7 @@ const CategoryCard = ({
             <Button
               variant="ghost"
               size="sm"
-              className="text-green-500 hover:text-green-400 pointer-events-none"
+              className="bg-brand-500 hover:bg-brand-400 pointer-events-none"
             >
               Explore →
             </Button>
@@ -76,7 +76,7 @@ const CategoryCard = ({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h3 className="text-white font-bold text-lg drop-shadow-lg group-hover:text-green-400 transition-colors">
+            <h3 className="text-white font-bold text-lg drop-shadow-lg group-hover:bg-brand-400 transition-colors">
               {category.name}
             </h3>
           </div>
@@ -182,7 +182,7 @@ const CategoriesPage = () => {
             onClick={() => setDisplayUI("Table")}
             className={`h-9 px-3 transition-all ${
               displayUI === "Table"
-                ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                ? "bg-brand-500/10 bg-brand-400 hover:bg-brand-500/20 hover:bg-brand-300"
                 : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             }`}
           >
@@ -195,7 +195,7 @@ const CategoriesPage = () => {
             onClick={() => setDisplayUI("Grid")}
             className={`h-9 px-3 transition-all ${
               displayUI === "Grid"
-                ? "bg-green-500/10 text-green-400 hover:bg-green-500/20 hover:text-green-300"
+                ? "bg-brand-500/10 bg-brand-400 hover:bg-brand-500/20 hover:bg-brand-300"
                 : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             }`}
           >

@@ -581,7 +581,7 @@ export default function UserHeader({
 
                             <div className="space-y-3">
                               {uploading ? (
-                                <Loader2 className="h-12 w-12 text-green-500 mx-auto animate-spin" />
+                                <Loader2 className="h-12 w-12 bg-brand-500 mx-auto animate-spin" />
                               ) : (
                                 <ImageIcon className="h-12 w-12 text-zinc-400 mx-auto" />
                               )}
@@ -916,7 +916,7 @@ export default function UserHeader({
                           setDescriptionEditing(false);
                           updatePlaylistDetails();
                         }}
-                        className="bg-green-500 hover:bg-green-600 text-black"
+                        className="bg-brand-500 hover:bg-brand-600 text-black"
                         disabled={updating}
                       >
                         {updating ? (
@@ -996,7 +996,7 @@ export default function UserHeader({
               </div>
 
               <div className="flex items-center space-x-2">
-                <Music className="h-4 w-4 text-green-500" />
+                <Music className="h-4 w-4 bg-brand-500" />
                 <span className="font-medium">
                   {playlist.tracks.total} songs
                 </span>

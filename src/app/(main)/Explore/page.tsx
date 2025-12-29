@@ -225,7 +225,7 @@ const Page = () => {
           <Button
             onClick={handleToggleAll}
             variant="outline"
-            className="bg-zinc-800/50 border-zinc-700 text-zinc-300 hover:bg-green-500 hover:text-black hover:border-green-500 w-fit transition-all"
+            className="bg-zinc-800/50 border-zinc-700 text-zinc-300 hover:bg-brand-500 hover:text-black hover:border-green-500 w-fit transition-all"
           >
             {allOpen ? "Collapse All" : "Expand All"}
           </Button>
@@ -242,7 +242,7 @@ const Page = () => {
             value="item-1"
             className="bg-zinc-900/30 rounded-lg border border-zinc-800/50"
           >
-            <AccordionTrigger className="px-4 text-white hover:text-green-400 transition-colors">
+            <AccordionTrigger className="px-4 text-white hover:bg-brand-400 transition-colors">
               <div className="flex items-center space-x-2">
                 <Users className="h-5 w-5" />
                 <span>Your Followed Artists</span>
@@ -292,7 +292,7 @@ const Page = () => {
             value="item-2"
             className="bg-zinc-900/30 rounded-lg border border-zinc-800/50"
           >
-            <AccordionTrigger className="px-4 text-white hover:text-green-400 transition-colors">
+            <AccordionTrigger className="px-4 text-white hover:bg-brand-400 transition-colors">
               <div className="flex items-center space-x-2">
                 <Music className="h-5 w-5" />
                 <span>Your Favorite Artists</span>
@@ -342,7 +342,7 @@ const Page = () => {
             value="item-3"
             className="bg-zinc-900/30 rounded-lg border border-zinc-800/50"
           >
-            <AccordionTrigger className="px-4 text-white hover:text-green-400 transition-colors">
+            <AccordionTrigger className="px-4 text-white hover:bg-brand-400 transition-colors">
               <div className="flex items-center space-x-2">
                 <Clock className="h-5 w-5" />
                 <span>Your Recently Listening</span>

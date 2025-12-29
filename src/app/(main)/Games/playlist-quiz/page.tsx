@@ -160,7 +160,7 @@ const PlaylistQuizPage = () => {
             />
             {isSearching && (
               <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                <Loader2 className="h-5 w-5 animate-spin text-green-500" />
+                <Loader2 className="h-5 w-5 animate-spin bg-brand-500" />
               </div>
             )}
           </div>
@@ -187,7 +187,7 @@ const PlaylistQuizPage = () => {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-white font-medium group-hover:text-green-400 transition-colors truncate">
+                      <h4 className="text-white font-medium group-hover:bg-brand-400 transition-colors truncate">
                         {playlist.name}
                       </h4>
                       <p className="text-sm text-zinc-500 truncate">
@@ -251,13 +251,13 @@ const PlaylistQuizPage = () => {
                         </div>
                       )}
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
-                        <div className="bg-green-500 text-black p-3 rounded-full shadow-xl transform scale-90 group-hover:scale-100 transition-all">
+                        <div className="bg-brand-500 text-black p-3 rounded-full shadow-xl transform scale-90 group-hover:scale-100 transition-all">
                           <Play className="w-6 h-6 fill-current" />
                         </div>
                       </div>
                     </div>
                     <div className="p-4 space-y-1">
-                      <h3 className="font-bold text-white truncate group-hover:text-green-400 transition-colors">
+                      <h3 className="font-bold text-white truncate group-hover:bg-brand-400 transition-colors">
                         {playlist.name}
                       </h3>
                       <p className="text-xs text-zinc-500">
@@ -284,7 +284,7 @@ const PlaylistQuizPage = () => {
         {/* My Playlists Grid */}
         <div className="space-y-8">
           <div className="flex items-center gap-3 text-xl md:text-2xl font-semibold text-white px-4 sm:px-0">
-            <Music className="w-5 h-5 md:w-6 md:h-6 text-green-500" />
+            <Music className="w-5 h-5 md:w-6 md:h-6 bg-brand-500" />
             <h2>Your Library Playlists</h2>
           </div>
 
@@ -320,13 +320,13 @@ const PlaylistQuizPage = () => {
                         </div>
                       )}
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
-                        <div className="bg-green-500 text-black p-3 rounded-full shadow-xl transform scale-90 group-hover:scale-100 transition-all">
+                        <div className="bg-brand-500 text-black p-3 rounded-full shadow-xl transform scale-90 group-hover:scale-100 transition-all">
                           <Play className="w-6 h-6 fill-current" />
                         </div>
                       </div>
                     </div>
                     <div className="p-4 space-y-1">
-                      <h3 className="font-bold text-white truncate group-hover:text-green-400 transition-colors">
+                      <h3 className="font-bold text-white truncate group-hover:bg-brand-400 transition-colors">
                         {playlist.name}
                       </h3>
                       <p className="text-xs text-zinc-500">
