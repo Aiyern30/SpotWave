@@ -49,7 +49,6 @@ interface PlayerContextType {
   // Analyser and Analysis for visualizers
   analyser: AnalyserNode | null;
   dataArray: Uint8Array | null;
-  trackAnalysis: any | null;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -87,13 +86,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   );
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const [dataArray, setDataArray] = useState<Uint8Array | null>(null);
-  const [trackAnalysis, setTrackAnalysis] = useState<any | null>(null);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array | null>(null);
-  const analysisRef = useRef<any | null>(null);
   const trackEndHandlerRef = useRef<boolean>(false);
   const playerRef = useRef<any>(null);
   const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -222,14 +219,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (!isCurrentlyPaused && !analyserRef.current) {
           setTimeout(setupAudioAnalyser, 3000);
-        }
-
-        // Fetch analysis when track changes
-        if (
-          track.id &&
-          (!analysisRef.current || analysisRef.current.trackId !== track.id)
-        ) {
-          fetchTrackAnalysis(track.id);
         }
       });
 
@@ -372,50 +361,20 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  const fetchTrackAnalysis = async (trackId: string) => {
-    const currentToken = token || localStorage.getItem("Token");
-    if (!currentToken) return;
-
-    const pureTrackId = trackId.includes(":") ? trackId.split(":")[2] : trackId;
-
-    try {
-      const response = await fetch(
-        `https://api.spotify.com/v1/audio-analysis/${pureTrackId}`,
-        {
-          headers: { Authorization: `Bearer ${currentToken}` },
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        const enrichedData = { ...data, trackId };
-        setTrackAnalysis(enrichedData);
-        analysisRef.current = enrichedData;
-        console.log("Track analysis fetched for:", pureTrackId);
-      } else {
-        console.warn("Audio analysis not available for this track");
-        // Continue without analysis - synthetic data will be used
-      }
-    } catch (err) {
-      console.warn("Error fetching track analysis, using synthetic data:", err);
-      // Non-blocking - visualizer will use synthetic data
-    }
-  };
-
   // Synthetic Analyser Loop - Bridging the gap when hardware analyser is silent
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const interval = setInterval(() => {
+    const intervalId = setInterval(() => {
       if (!isPlaying || isPaused) return;
 
       const currentAnalyser = analyserRef.current;
 
-      // Even if no analyser exists, we can still generate synthetic data
+      // Even if no analyser exists, we provide data for visualizers
       const fftSize = currentAnalyser ? currentAnalyser.frequencyBinCount : 128;
 
       if (!dataArrayRef.current || dataArrayRef.current.length !== fftSize) {
         dataArrayRef.current = new Uint8Array(fftSize);
-        setDataArray(dataArrayRef.current);
       }
 
       const dataArr = dataArrayRef.current;
@@ -426,57 +385,25 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       // Check if hardware is silent (CORS/DRM issue)
       const sum = dataArr.reduce((a, b) => a + b, 0);
       if (sum === 0) {
-        // Fallback rhythmic data
-        const posSeconds = position / 1000;
+        // FALLBACK: Rhythmic heartbeat pulse (no API needed)
+        const now = Date.now();
+        const pulse = (Math.sin(now / 200) + 1) * 50;
 
-        if (analysisRef.current) {
-          // USE SYNTHETIC DATA based on Spotify Analysis
-          const analysis = analysisRef.current;
-
-          // Find current segment for loudness
-          const segment = analysis.segments.find(
-            (s: any) =>
-              posSeconds >= s.start && posSeconds < s.start + s.duration
-          );
-
-          if (segment) {
-            const loudness = Math.min(
-              255,
-              Math.max(0, (segment.loudness_max + 60) * 4)
-            );
-
-            const beat = analysis.beats.find(
-              (b: any) =>
-                posSeconds >= b.start && posSeconds < b.start + b.duration
-            );
-
-            for (let i = 0; i < dataArr.length; i++) {
-              if (i < 5) {
-                const beatPulse = beat ? 150 : 50;
-                dataArr[i] = Math.max(loudness, beatPulse);
-              } else {
-                dataArr[i] = Math.max(0, loudness - i * 2);
-              }
-            }
-          }
-        } else {
-          // TOTAL FALLBACK: Simple heartbeat pulse if API fails or analysis is missing
-          const pulse = (Math.sin(Date.now() / 200) + 1) * 50; // Pulsing 0-100
-          for (let i = 0; i < dataArr.length; i++) {
-            if (i < 5) dataArr[i] = 100 + pulse;
-            else dataArr[i] = Math.max(0, 50 + pulse - i * 2);
+        for (let i = 0; i < dataArr.length; i++) {
+          if (i < 5) {
+            dataArr[i] = 130 + pulse;
+          } else {
+            dataArr[i] = Math.max(0, 45 + pulse - i * 3);
           }
         }
-
-        // Notify visualizer components through state update
-        setDataArray(new Uint8Array(dataArr));
-      } else if (sum > 0) {
-        // Real data working, just update state
-        setDataArray(new Uint8Array(dataArr));
       }
-    }, 50); // 20fps for visualizer sync
 
-    return () => clearInterval(interval);
+      // Notify visualizer components through state update
+      // We always create a new array to trigger React state updates
+      setDataArray(new Uint8Array(dataArr));
+    }, 50);
+
+    return () => clearInterval(intervalId);
   }, [isPlaying, isPaused, position]);
 
   // Resume AudioContext on any interaction
@@ -486,7 +413,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [isPlaying]);
 
-  // Add cleanup only on window unload (when user closes tab)
+  // Add cleanup only on window unload
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (
@@ -999,7 +926,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setToken: updateToken,
     analyser,
     dataArray,
-    trackAnalysis,
   };
 
   return (
