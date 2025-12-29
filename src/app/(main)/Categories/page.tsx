@@ -66,9 +66,18 @@ const CategoriesPage = () => {
   );
 
   const CategoryCard = ({ category }: { category: CategoryProps }) => {
+    const handleClick = () => {
+      router.push(
+        `/Categories/${category.id}?name=${encodeURIComponent(category.name)}`
+      );
+    };
+
     if (viewMode === "list") {
       return (
-        <Card className="group bg-zinc-900/50 hover:bg-zinc-800/70 border border-zinc-800 transition-all duration-300 hover:scale-[1.02] cursor-pointer overflow-hidden">
+        <Card
+          className="group bg-zinc-900/50 hover:bg-zinc-800/70 border border-zinc-800 transition-all duration-300 hover:scale-[1.02] cursor-pointer overflow-hidden"
+          onClick={handleClick}
+        >
           <div className="flex items-center gap-4 p-4">
             <div className="relative w-20 h-20 flex-shrink-0">
               <Image
@@ -99,7 +108,10 @@ const CategoriesPage = () => {
     }
 
     return (
-      <Card className="group relative bg-zinc-900/50 hover:bg-zinc-800/70 border border-zinc-800 transition-all duration-300 hover:scale-105 cursor-pointer overflow-hidden">
+      <Card
+        className="group relative bg-zinc-900/50 hover:bg-zinc-800/70 border border-zinc-800 transition-all duration-300 hover:scale-105 cursor-pointer overflow-hidden"
+        onClick={handleClick}
+      >
         <div className="relative w-full aspect-square">
           <Image
             src={category.icons?.[0]?.url || "/default-category.png"}
