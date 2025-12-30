@@ -549,15 +549,21 @@ export const FullScreenPlayer = ({
         : "rgba(0, 0, 0, 0.2)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const data = dataRef.current;
+      let data = dataRef.current;
+
+      // Physical analyser poll for maximum smoothness
+      if (globalAnalyser) {
+        // Ensure buffer matches analyser resolution
+        if (!data || data.length !== globalAnalyser.frequencyBinCount) {
+          data = new Uint8Array(globalAnalyser.frequencyBinCount);
+          dataRef.current = data;
+        }
+        globalAnalyser.getByteFrequencyData(data as any);
+      }
+
       if (!data || data.length === 0) {
         animationRef.current = requestAnimationFrame(animate);
         return;
-      }
-
-      // Physical analyser poll for maximum smoothness (like SpotifyRippleVisualizer)
-      if (globalAnalyser) {
-        globalAnalyser.getByteFrequencyData(data as any);
       }
 
       const centerX = canvas.width / 2;
@@ -567,31 +573,38 @@ export const FullScreenPlayer = ({
 
       // Metrics
       const average = data.reduce((a, b) => a + b, 0) / data.length;
-      const bass = data.slice(0, 8).reduce((a, b) => a + b, 0) / 8;
+      // Sample a bit more bass (16 bins) for better beat detection
+      const bass = data.slice(0, 16).reduce((a, b) => a + b, 0) / 16;
       const treble = data.slice(32, 64).reduce((a, b) => a + b, 0) / 32;
+      const bassChange = bass - lastBassRef.current;
 
       // Center Circle
       const baseRadius = 80;
       const dynamicRadius =
         baseRadius + (average / 255) * 40 * currentSensitivity;
 
-      // Draw bars
+      // Draw bars - Sample across the spectrum for more variety
       const numBars = 64;
       const angleStep = (Math.PI * 2) / numBars;
+      const step = Math.floor(data.length / numBars); // Spread bars across the actual data length
+
       ctx.lineWidth = 3;
       ctx.lineCap = "round";
 
       for (let i = 0; i < numBars; i++) {
-        const val = data[i] || 0;
+        // Sample from different parts of the spectrum (Bass -> Mids -> Treble)
+        const val = data[i * step] || 0;
         const amplitude = (val / 255) * 140 * currentSensitivity;
-        if (amplitude <= 0) continue;
+
+        // Ensure a minimum visibility even for quiet parts
+        const finalAmplitude = Math.max(amplitude, 2);
 
         const angle = i * angleStep;
 
         const x1 = centerX + Math.cos(angle) * dynamicRadius;
         const y1 = centerY + Math.sin(angle) * dynamicRadius;
-        const x2 = centerX + Math.cos(angle) * (dynamicRadius + amplitude);
-        const y2 = centerY + Math.sin(angle) * (dynamicRadius + amplitude);
+        const x2 = centerX + Math.cos(angle) * (dynamicRadius + finalAmplitude);
+        const y2 = centerY + Math.sin(angle) * (dynamicRadius + finalAmplitude);
 
         const hue = (i / numBars) * 360;
         ctx.strokeStyle = `hsla(${hue}, 70%, 60%, 0.8)`;
@@ -628,13 +641,15 @@ export const FullScreenPlayer = ({
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Ripples
-      const bassThreshold = 140 / currentSensitivity;
-      if (
-        bass > bassThreshold &&
-        bass > lastBassRef.current * 1.12 &&
-        ripplesRef.current.length < currentMaxRipples
-      ) {
+      // Ripples detection
+      const bassThreshold = 110 / currentSensitivity; // Slightly lowered threshold
+      const shouldTriggerRipple =
+        (bass > bassThreshold &&
+          bassChange > 3 && // Lowered change requirement for better sensitivity
+          ripplesRef.current.length < currentMaxRipples) ||
+        (bass > bassThreshold * 0.6 && ripplesRef.current.length < 2);
+
+      if (shouldTriggerRipple) {
         const angle = Math.random() * Math.PI * 2;
         const dist = dynamicRadius + 40 + Math.random() * 40;
         ripplesRef.current.push({
@@ -649,14 +664,15 @@ export const FullScreenPlayer = ({
       }
       lastBassRef.current = bass;
 
-      ctx.lineWidth = 2;
       ripplesRef.current = ripplesRef.current.filter((ripple) => {
         ripple.radius += ripple.speed;
-        ripple.alpha = 0.8 * (1 - ripple.radius / ripple.maxRadius);
+        ripple.alpha = 0.9 * (1 - ripple.radius / ripple.maxRadius);
         if (ripple.alpha > 0) {
           ctx.beginPath();
           ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
           ctx.strokeStyle = `rgba(${ripple.color}, ${ripple.alpha})`;
+          // Make ripple thicker as it expands for better visibility
+          ctx.lineWidth = 1.5 + (1 - ripple.alpha) * 4;
           ctx.stroke();
           return true;
         }
