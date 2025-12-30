@@ -25,6 +25,9 @@ import {
   FileText,
   Activity,
   TrendingUp,
+  Mic,
+  MicOff,
+  Settings,
 } from "lucide-react";
 import {
   checkUserSavedTracks,
@@ -151,6 +154,17 @@ export const FullScreenPlayer = ({
   const lastBassRef = useRef<number>(0);
   const dataRef = useRef<Uint8Array | null>(null);
 
+  // Audio capture refs (for Share Audio/Mic)
+  const localAudioContextRef = useRef<AudioContext | null>(null);
+  const localAnalyserRef = useRef<AnalyserNode | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const localSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+
+  const [captureMode, setCaptureMode] = useState<"none" | "mic" | "speaker">(
+    "none"
+  );
+  const [useSpotifyAudio, setUseSpotifyAudio] = useState(true);
+
   const [sensitivity, setSensitivity] = useState(1.5);
   const [maxRipples, setMaxRipples] = useState(8);
 
@@ -187,6 +201,69 @@ export const FullScreenPlayer = ({
   useEffect(() => {
     themeColorRef.current = currentTheme.color;
   }, [currentTheme.color]);
+
+  const startListening = async (mode: "mic" | "speaker") => {
+    try {
+      let stream: MediaStream;
+      if (mode === "speaker") {
+        stream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: true,
+        });
+        const videoTracks = stream.getVideoTracks();
+        videoTracks.forEach((track) => track.stop());
+        if (stream.getAudioTracks().length === 0) {
+          throw new Error("No audio found in system stream.");
+        }
+      } else {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+          },
+        });
+      }
+
+      localStreamRef.current = stream;
+      const audioContext = new (window.AudioContext ||
+        (window as any).webkitAudioContext)();
+      if (audioContext.state === "suspended") await audioContext.resume();
+      localAudioContextRef.current = audioContext;
+
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
+      localAnalyserRef.current = analyser;
+
+      const source = audioContext.createMediaStreamSource(stream);
+      localSourceRef.current = source;
+      source.connect(analyser);
+
+      setCaptureMode(mode);
+      setUseSpotifyAudio(false);
+    } catch (err) {
+      console.error("Error setting up audio:", err);
+    }
+  };
+
+  const stopListening = () => {
+    if (localSourceRef.current) {
+      localSourceRef.current.disconnect();
+      localSourceRef.current = null;
+    }
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
+    }
+    if (localAudioContextRef.current) {
+      localAudioContextRef.current.close();
+      localAudioContextRef.current = null;
+    }
+    localAnalyserRef.current = null;
+    setCaptureMode("none");
+    setUseSpotifyAudio(true);
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem("sidebar-compact");
@@ -543,22 +620,26 @@ export const FullScreenPlayer = ({
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      // Clear with fade trail
-      ctx.fillStyle = isVisualizer
-        ? "rgba(0, 0, 0, 0.15)"
-        : "rgba(0, 0, 0, 0.2)";
+      // Clear canvas (Solid black like the reference for "sharp" look)
+      ctx.fillStyle = "#000000";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       let data = dataRef.current;
 
+      // Determine which analyser to use
+      const activeAnalyser =
+        !useSpotifyAudio && localAnalyserRef.current
+          ? localAnalyserRef.current
+          : globalAnalyser;
+
       // Physical analyser poll for maximum smoothness
-      if (globalAnalyser) {
+      if (activeAnalyser) {
         // Ensure buffer matches analyser resolution
-        if (!data || data.length !== globalAnalyser.frequencyBinCount) {
-          data = new Uint8Array(globalAnalyser.frequencyBinCount);
+        if (!data || data.length !== activeAnalyser.frequencyBinCount) {
+          data = new Uint8Array(activeAnalyser.frequencyBinCount);
           dataRef.current = data;
         }
-        globalAnalyser.getByteFrequencyData(data as any);
+        activeAnalyser.getByteFrequencyData(data as any);
       }
 
       if (!data || data.length === 0) {
@@ -573,10 +654,9 @@ export const FullScreenPlayer = ({
 
       // Metrics
       const average = data.reduce((a, b) => a + b, 0) / data.length;
-      // Sample a bit more bass (16 bins) for better beat detection
-      const bass = data.slice(0, 16).reduce((a, b) => a + b, 0) / 16;
+      // Match SpotifyRippleVisualizer bass calculation (first 8 bins)
+      const bass = data.slice(0, 8).reduce((a, b) => a + b, 0) / 8;
       const treble = data.slice(32, 64).reduce((a, b) => a + b, 0) / 32;
-      const bassChange = bass - lastBassRef.current;
 
       // Center Circle
       const baseRadius = 80;
@@ -594,17 +674,15 @@ export const FullScreenPlayer = ({
       for (let i = 0; i < numBars; i++) {
         // Sample from different parts of the spectrum (Bass -> Mids -> Treble)
         const val = data[i * step] || 0;
-        const amplitude = (val / 255) * 140 * currentSensitivity;
-
-        // Ensure a minimum visibility even for quiet parts
-        const finalAmplitude = Math.max(amplitude, 2);
+        // Match SpotifyRippleVisualizer amplitude scaling (150)
+        const amplitude = (val / 255) * 150 * currentSensitivity;
 
         const angle = i * angleStep;
 
         const x1 = centerX + Math.cos(angle) * dynamicRadius;
         const y1 = centerY + Math.sin(angle) * dynamicRadius;
-        const x2 = centerX + Math.cos(angle) * (dynamicRadius + finalAmplitude);
-        const y2 = centerY + Math.sin(angle) * (dynamicRadius + finalAmplitude);
+        const x2 = centerX + Math.cos(angle) * (dynamicRadius + amplitude);
+        const y2 = centerY + Math.sin(angle) * (dynamicRadius + amplitude);
 
         const hue = (i / numBars) * 360;
         ctx.strokeStyle = `hsla(${hue}, 70%, 60%, 0.8)`;
@@ -641,38 +719,36 @@ export const FullScreenPlayer = ({
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Ripples detection
-      const bassThreshold = 110 / currentSensitivity; // Slightly lowered threshold
-      const shouldTriggerRipple =
-        (bass > bassThreshold &&
-          bassChange > 3 && // Lowered change requirement for better sensitivity
-          ripplesRef.current.length < currentMaxRipples) ||
-        (bass > bassThreshold * 0.6 && ripplesRef.current.length < 2);
-
-      if (shouldTriggerRipple) {
+      // Ripples detection - Ported directly from SpotifyRippleVisualizer.tsx
+      const bassThreshold = 50 * (2 / currentSensitivity);
+      if (
+        bass > bassThreshold &&
+        ripplesRef.current.length < currentMaxRipples
+      ) {
         const angle = Math.random() * Math.PI * 2;
-        const dist = dynamicRadius + 40 + Math.random() * 40;
+        const dist = dynamicRadius + 20 + Math.random() * 50;
         ripplesRef.current.push({
           x: centerX + Math.cos(angle) * dist,
           y: centerY + Math.sin(angle) * dist,
           radius: 0,
-          maxRadius: 150 + (bass / 255) * 200,
-          alpha: 0.8,
+          maxRadius: 100 + (bass / 255) * 150,
+          alpha: 1.0,
           color: `${r}, ${g}, ${b}`,
-          speed: 3 + (bass / 255) * 4,
+          speed: 2 + (bass / 255) * 3,
         });
       }
       lastBassRef.current = bass;
 
       ripplesRef.current = ripplesRef.current.filter((ripple) => {
         ripple.radius += ripple.speed;
-        ripple.alpha = 0.9 * (1 - ripple.radius / ripple.maxRadius);
+        ripple.alpha = 1 - ripple.radius / ripple.maxRadius;
+
         if (ripple.alpha > 0) {
           ctx.beginPath();
           ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
           ctx.strokeStyle = `rgba(${ripple.color}, ${ripple.alpha})`;
-          // Make ripple thicker as it expands for better visibility
-          ctx.lineWidth = 1.5 + (1 - ripple.alpha) * 4;
+          // Match the line thickness behavior of the reference visualizer
+          ctx.lineWidth = 2 + (1 - ripple.alpha) * 3;
           ctx.stroke();
           return true;
         }
@@ -700,12 +776,13 @@ export const FullScreenPlayer = ({
 
     return () => {
       window.removeEventListener("resize", handleResize);
+      stopListening();
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
         animationRef.current = null;
       }
     };
-  }, [isOpen, isPlaying, viewMode]);
+  }, [isOpen, isPlaying, viewMode, useSpotifyAudio, captureMode]);
 
   if (!isOpen || !currentTrack) return null;
 
@@ -801,32 +878,88 @@ export const FullScreenPlayer = ({
 
             {/* Visualizer Controls */}
             {isPlaying && (
-              <div className="mt-6 space-y-4 bg-zinc-900/50 rounded-xl p-4 border border-zinc-800">
-                <div>
-                  <label className="text-white text-sm flex items-center justify-between mb-2">
-                    <span>Sensitivity: {sensitivity.toFixed(1)}x</span>
-                  </label>
-                  <Slider
-                    value={[sensitivity]}
-                    min={0.5}
-                    max={3}
-                    step={0.1}
-                    onValueChange={(val) => setSensitivity(val[0])}
-                    className="cursor-pointer"
-                  />
+              <div className="mt-6 space-y-6 bg-zinc-900/50 rounded-xl p-6 border border-zinc-800">
+                <div className="flex flex-wrap gap-3 pb-4 border-b border-zinc-800/50">
+                  <Button
+                    variant={captureMode === "speaker" ? "default" : "outline"}
+                    size="sm"
+                    className={
+                      captureMode === "speaker"
+                        ? "bg-brand text-white"
+                        : "text-zinc-400"
+                    }
+                    onClick={() =>
+                      captureMode === "speaker"
+                        ? stopListening()
+                        : startListening("speaker")
+                    }
+                  >
+                    <Volume2 className="h-4 w-4 mr-2" />
+                    {captureMode === "speaker"
+                      ? "Sharing Audio"
+                      : "Share Audio"}
+                  </Button>
+                  <Button
+                    variant={captureMode === "mic" ? "default" : "outline"}
+                    size="sm"
+                    className={
+                      captureMode === "mic"
+                        ? "bg-brand text-white"
+                        : "text-zinc-400"
+                    }
+                    onClick={() =>
+                      captureMode === "mic"
+                        ? stopListening()
+                        : startListening("mic")
+                    }
+                  >
+                    <Mic className="h-4 w-4 mr-2" />
+                    {captureMode === "mic" ? "Mic Active" : "Use Mic"}
+                  </Button>
+                  {captureMode !== "none" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-400 hover:text-red-300 hover:bg-red-950/20"
+                      onClick={stopListening}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Stop Capture
+                    </Button>
+                  )}
                 </div>
-                <div>
-                  <label className="text-white text-sm flex items-center justify-between mb-2">
-                    <span>Max Ripples: {maxRipples}</span>
-                  </label>
-                  <Slider
-                    value={[maxRipples]}
-                    min={3}
-                    max={15}
-                    step={1}
-                    onValueChange={(val) => setMaxRipples(val[0])}
-                    className="cursor-pointer"
-                  />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-zinc-400 text-xs font-semibold uppercase tracking-wider flex items-center justify-between mb-3">
+                      <span>Sensitivity</span>
+                      <span className="text-brand">
+                        {sensitivity.toFixed(1)}x
+                      </span>
+                    </label>
+                    <Slider
+                      value={[sensitivity]}
+                      min={0.5}
+                      max={3}
+                      step={0.1}
+                      onValueChange={(val) => setSensitivity(val[0])}
+                      className="cursor-pointer"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-zinc-400 text-xs font-semibold uppercase tracking-wider flex items-center justify-between mb-3">
+                      <span>Max Ripples</span>
+                      <span className="text-brand">{maxRipples}</span>
+                    </label>
+                    <Slider
+                      value={[maxRipples]}
+                      min={3}
+                      max={15}
+                      step={1}
+                      onValueChange={(val) => setMaxRipples(val[0])}
+                      className="cursor-pointer"
+                    />
+                  </div>
                 </div>
               </div>
             )}
