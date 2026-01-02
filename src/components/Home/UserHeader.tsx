@@ -57,7 +57,7 @@ interface UserHeaderProps {
   playlist: PlaylistProps;
   user: UserProfile;
   id: string;
-  refetch: (playlistID: string) => void;
+  refetch: (silent?: boolean) => void;
 }
 
 export default function UserHeader({
@@ -213,7 +213,7 @@ export default function UserHeader({
 
       if (response.ok) {
         console.log("Playlist updated successfully");
-        refetch(playlist.id);
+        refetch();
       } else {
         console.error("Failed to update playlist details");
       }
@@ -240,7 +240,7 @@ export default function UserHeader({
 
       if (response.ok) {
         console.log("Playlist cover image updated successfully");
-        refetch(playlist.id);
+        refetch();
         setImageDialogOpen(false);
       } else if (response.status === 401) {
         console.error("Unauthorized. Check token.");

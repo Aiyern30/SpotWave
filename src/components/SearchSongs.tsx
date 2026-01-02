@@ -56,7 +56,7 @@ import { getPlaylistRecommendations } from "@/utils/getPlaylistRecommendations";
 
 interface SearchSongsProps {
   playlistID: string;
-  refetch: (playlistID: string) => void;
+  refetch: (silent?: boolean) => void;
 }
 
 export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
@@ -81,6 +81,63 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
   const [isAddingAll, setIsAddingAll] = useState(false);
   const [discoveryCount, setDiscoveryCount] = useState(10);
   const [searchProgress, setSearchProgress] = useState(0);
+
+  const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(
+    new Set()
+  );
+
+  const toggleTrackSelection = (trackId: string) => {
+    setSelectedTrackIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(trackId)) {
+        newSet.delete(trackId);
+      } else {
+        newSet.add(trackId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleAddSelectedTracks = async () => {
+    if (selectedTrackIds.size === 0) return;
+
+    setIsLoading(true);
+    try {
+      const tracksToAdd = [
+        ...searchResults,
+        ...recommendedTracks,
+        ...aiRecTracks,
+      ].filter((t) => selectedTrackIds.has(t.id));
+
+      if (tracksToAdd.length === 0) return;
+
+      const uris = tracksToAdd.map((t) => t.uri);
+      const response = await fetch(
+        `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ uris }),
+        }
+      );
+
+      if (response.ok) {
+        toast.success(`Successfully added ${tracksToAdd.length} tracks!`);
+        setSelectedTrackIds(new Set());
+        refetch(true); // SILENT REFRESH
+      } else {
+        throw new Error("Failed to add tracks");
+      }
+    } catch (error) {
+      console.error("Error adding selected tracks:", error);
+      toast.error("Failed to add selected tracks");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const {
     playTrack,
@@ -432,9 +489,8 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
         } else {
           toast.success(`Successfully added ${newTracks.length} tracks!`);
         }
-        setAiRecTracks([]);
-        setAiPrompt("");
-        refetch(playlistID);
+        setSelectedTrackIds(new Set());
+        refetch(true); // SILENT REFRESH
       } else {
         throw new Error("Failed to add tracks");
       }
@@ -480,7 +536,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
       }
 
       toast.success(`Added "${track.name}" to playlist!`);
-      refetch(playlistID);
+      refetch(true); // SILENT REFRESH
 
       // Remove from recommendations after adding
       setRecommendedTracks((prev) => prev.filter((t) => t.id !== track.id));
@@ -648,6 +704,8 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                                   currentTrack?.id === track.id &&
                                   isGlobalPlaying
                                 }
+                                isSelected={selectedTrackIds.has(track.id)}
+                                onSelect={() => toggleTrackSelection(track.id)}
                               />
                             ))}
                           </div>
@@ -674,6 +732,8 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                               isPlaying={
                                 currentTrack?.id === track.id && isGlobalPlaying
                               }
+                              isSelected={selectedTrackIds.has(track.id)}
+                              onSelect={() => toggleTrackSelection(track.id)}
                             />
                           ))
                         )}
@@ -832,6 +892,8 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                               isPlaying={
                                 currentTrack?.id === track.id && isGlobalPlaying
                               }
+                              isSelected={selectedTrackIds.has(track.id)}
+                              onSelect={() => toggleTrackSelection(track.id)}
                             />
                           ))}
                         </div>
@@ -852,6 +914,29 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                   </ScrollArea>
                 </TabsContent>
               </Tabs>
+
+              {/* Floating Batch Add Button */}
+              {selectedTrackIds.size > 0 && (
+                <div className="absolute bottom-6 left-6 right-6 animate-in slide-in-from-bottom-4 duration-300">
+                  <Button
+                    className="w-full bg-brand hover:bg-brand/90 text-brand-foreground font-bold h-12 shadow-[0_8px_30px_rgb(var(--brand-primary-rgb),0.3)] rounded-xl flex items-center justify-between px-6"
+                    onClick={handleAddSelectedTracks}
+                    disabled={isLoading}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="bg-brand-foreground/20 px-2 py-0.5 rounded text-xs">
+                        {selectedTrackIds.size}
+                      </div>
+                      <span>Add Selected Tracks</span>
+                    </div>
+                    {isLoading ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <Plus className="h-5 w-5" />
+                    )}
+                  </Button>
+                </div>
+              )}
             </SheetContent>
           </Sheet>
         </TooltipTrigger>
@@ -870,6 +955,8 @@ interface TrackItemProps {
   onPlay: () => void;
   isCurrentTrack: boolean;
   isPlaying: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }
 
 function TrackItem({
@@ -879,10 +966,22 @@ function TrackItem({
   onPlay,
   isCurrentTrack,
   isPlaying,
+  isSelected,
+  onSelect,
 }: TrackItemProps) {
   return (
-    <div className="group flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-800/40 transition-all duration-300 border border-transparent hover:border-zinc-800/50 w-full min-w-0">
-      <div className="relative">
+    <div
+      onClick={onSelect}
+      className={`group flex items-center gap-3 p-3 rounded-xl transition-all duration-300 border cursor-pointer w-full min-w-0 ${
+        isSelected
+          ? "bg-brand/20 border-brand/50 shadow-[0_0_15px_rgba(var(--brand-primary-rgb),0.1)]"
+          : "hover:bg-zinc-800/40 border-transparent hover:border-zinc-800/50"
+      }`}
+    >
+      <div
+        className="relative flex-shrink-0"
+        onClick={(e) => e.stopPropagation()}
+      >
         <Avatar className="h-11 w-11 rounded-lg">
           <AvatarImage
             src={track.album.images[2]?.url || track.album.images[0]?.url}
@@ -909,17 +1008,17 @@ function TrackItem({
         </Button>
       </div>
 
-      <div className="flex-1 min-w-0 overflow-hidden">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="flex-1 min-w-0 overflow-hidden text-left">
+        <div className="flex items-center gap-2 w-full">
           <h4
-            className={`font-medium text-sm truncate transition-colors ${
+            className={`font-medium text-sm truncate transition-colors flex-1 ${
               isCurrentTrack ? "text-brand" : "text-zinc-200"
             }`}
           >
             {track.name}
           </h4>
           {track.explicit && (
-            <span className="text-[9px] font-bold bg-zinc-800 text-zinc-500 px-1 rounded-sm border border-zinc-700">
+            <span className="text-[9px] font-bold bg-zinc-800 text-zinc-500 px-1 rounded-sm border border-zinc-700 flex-shrink-0">
               E
             </span>
           )}
@@ -929,19 +1028,30 @@ function TrackItem({
         </p>
       </div>
 
-      <Button
-        onClick={onAdd}
-        disabled={isAdding}
-        size="icon"
-        variant="ghost"
-        className="h-8 w-8 rounded-full hover:bg-brand hover:text-black transition-all shrink-0"
-      >
-        {isAdding ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <Plus className="h-4 w-4" />
-        )}
-      </Button>
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <Button
+          onClick={(e) => {
+            e.stopPropagation();
+            onAdd();
+          }}
+          disabled={isAdding}
+          size="icon"
+          variant="ghost"
+          className={`h-8 w-8 rounded-full transition-all ${
+            isSelected
+              ? "bg-brand text-brand-foreground"
+              : "hover:bg-brand hover:text-black"
+          }`}
+        >
+          {isAdding ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : isSelected ? (
+            <CheckCircle2 className="h-4 w-4" />
+          ) : (
+            <Plus className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
     </div>
   );
 }
