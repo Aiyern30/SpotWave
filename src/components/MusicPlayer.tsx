@@ -155,9 +155,14 @@ export const MusicPlayer = ({
       if (currentTrack?.id) {
         try {
           const saved = await checkUserSavedTracks([currentTrack.id]);
-          setIsSaved(saved[0]);
+          if (Array.isArray(saved)) {
+            setIsSaved(saved[0]);
+          } else {
+            setIsSaved(false);
+          }
         } catch (error) {
-          console.error("Failed to check if track is saved:", error);
+          console.warn("Saving check failed silently:", error);
+          setIsSaved(false);
         }
       }
     };
