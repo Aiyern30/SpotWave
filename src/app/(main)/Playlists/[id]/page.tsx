@@ -97,37 +97,40 @@ const PlaylistPage = () => {
     }
   }, []);
 
-  const fetchPlaylistDetails = useCallback(async () => {
-    if (!token || !playlistId) return;
+  const fetchPlaylistDetails = useCallback(
+    async (silent = false) => {
+      if (!token || !playlistId) return;
 
-    setLoading(true);
-    try {
-      const [playlistResponse, userResponse] = await Promise.all([
-        fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetchUserProfile(token),
-      ]);
+      if (!silent) setLoading(true);
+      try {
+        const [playlistResponse, userResponse] = await Promise.all([
+          fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetchUserProfile(token),
+        ]);
 
-      if (playlistResponse.ok) {
-        const playlistData = await playlistResponse.json();
-        setPlaylist(playlistData);
-      } else {
-        console.error(
-          "Failed to fetch playlist details:",
-          playlistResponse.status
-        );
+        if (playlistResponse.ok) {
+          const playlistData = await playlistResponse.json();
+          setPlaylist(playlistData);
+        } else {
+          console.error(
+            "Failed to fetch playlist details:",
+            playlistResponse.status
+          );
+        }
+
+        if (userResponse) {
+          setUserProfile(userResponse);
+        }
+      } catch (error) {
+        console.error("Error fetching playlist details:", error);
+      } finally {
+        if (!silent) setLoading(false);
       }
-
-      if (userResponse) {
-        setUserProfile(userResponse);
-      }
-    } catch (error) {
-      console.error("Error fetching playlist details:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [token, playlistId]);
+    },
+    [token, playlistId]
+  );
 
   const fetchUserPlaylists = useCallback(async () => {
     if (!token || !userProfile?.id) return;
