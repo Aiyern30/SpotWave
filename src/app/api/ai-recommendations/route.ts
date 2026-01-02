@@ -74,15 +74,19 @@ export async function POST(req: Request) {
       }`;
     }
 
-    // List of models to try based on latest 2025/2026 quotas.
-    // Prioritizing Flash-Lite for its massive 1,000 RPD quota.
+    // List of models to try based on latest 2026 quotas.
+    // Prioritizing Gemini 3 and Gemma 3 which often have fresh or larger quotas.
     const attempts = [
-      { version: "v1", model: "gemini-2.5-flash-lite" }, // High quota (1,000 RPD)
-      { version: "v1", model: "gemini-3-flash" }, // Newest tech
-      { version: "v1", model: "gemini-2.5-flash" }, // (250 RPD)
-      { version: "v1", model: "gemini-2.5-pro" }, // (100 RPD)
-      { version: "v1", model: "gemini-1.5-flash" }, // Legacy stable
-      { version: "v1", model: "gemini-1.5-pro" }, // Legacy pro
+      { version: "v1beta", model: "gemini-3-flash" }, // Newest tech, usually separate quota
+      { version: "v1", model: "gemini-3-flash" },
+      { version: "v1beta", model: "gemma-3-27b" }, // High quota (14.4K RPD)
+      { version: "v1", model: "gemma-3-27b" },
+      { version: "v1beta", model: "gemma-3-12b" }, // High quota fallback
+      { version: "v1", model: "gemma-3-12b" },
+      { version: "v1", model: "gemini-2.5-flash-lite" },
+      { version: "v1", model: "gemini-2.5-flash" },
+      { version: "v1", model: "gemini-1.5-flash" },
+      { version: "v1", model: "gemini-1.5-pro" },
     ];
 
     let lastError = "";
@@ -91,7 +95,7 @@ export async function POST(req: Request) {
     for (const attempt of attempts) {
       try {
         console.log(
-          `🤖 Attempting Gemini AI: ${attempt.version}/${attempt.model}`
+          `🤖 Attempting AI Model: ${attempt.version}/${attempt.model}`
         );
 
         const url = `https://generativelanguage.googleapis.com/${attempt.version}/models/${attempt.model}:generateContent?key=${apiKey}`;
@@ -112,12 +116,29 @@ export async function POST(req: Request) {
 
         if (response.ok) {
           data = await response.json();
-          console.log(`✅ Gemini AI Success: ${attempt.model}`);
+          console.log(`✅ AI Success: ${attempt.model} (${attempt.version})`);
           break;
         } else {
-          const err = await response.text();
-          lastError = err;
-          console.warn(`⚠️ Gemini AI Failed (${attempt.model}):`, err);
+          const status = response.status;
+          const errText = await response.text();
+          lastError = `Status ${status}: ${errText}`;
+
+          if (status === 429) {
+            console.warn(
+              `⚠️ Rate Limit (429) for ${attempt.model}. Trying next...`
+            );
+          } else {
+            console.warn(
+              `⚠️ AI Failed (${attempt.model}) [${status}]:`,
+              errText
+            );
+          }
+
+          // If auth error, no point in trying other models with same key
+          if (status === 401 || status === 403) {
+            console.error("❌ Auth/API Key error. Stopping attempts.");
+            break;
+          }
         }
       } catch (e: any) {
         lastError = e.message;
