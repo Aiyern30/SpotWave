@@ -24,15 +24,17 @@ export const checkUserSavedTracks = async (
     );
 
     if (!response.ok) {
+      const errText = await response.text();
       throw new Error(
-        `Failed to check saved tracks: ${response.status} ${response.statusText}`
+        `Failed to check saved tracks: ${response.status} ${response.statusText} - ${errText}`
       );
     }
 
     return await response.json();
-  } catch (error) {
-    console.error("Error checking saved tracks:", error);
-    throw new Error("Failed to check saved tracks");
+  } catch (error: any) {
+    console.warn("⚠️ Spotify API Error (Check Saved Tracks):", error.message);
+    // Return empty array instead of throwing to prevent component crashes
+    return trackIds.map(() => false);
   }
 };
 
