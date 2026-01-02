@@ -46,6 +46,14 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "./ui";
 import { useEffect, useState, useRef, useCallback } from "react";
 import type { Artist, Track } from "@/lib/types";
@@ -56,10 +64,15 @@ import { getPlaylistRecommendations } from "@/utils/getPlaylistRecommendations";
 
 interface SearchSongsProps {
   playlistID: string;
+  playlistName: string;
   refetch: (silent?: boolean) => void;
 }
 
-export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
+export default function SearchSongs({
+  playlistID,
+  playlistName,
+  refetch,
+}: SearchSongsProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -81,6 +94,11 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
   const [isAddingAll, setIsAddingAll] = useState(false);
   const [discoveryCount, setDiscoveryCount] = useState(10);
   const [searchProgress, setSearchProgress] = useState(0);
+  const [duplicateTrack, setDuplicateTrack] = useState<Track | null>(null);
+  const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
+  const [pendingBatchTracks, setPendingBatchTracks] = useState<Track[] | null>(
+    null
+  );
 
   const [selectedTrackIds, setSelectedTrackIds] = useState<Set<string>>(
     new Set()
@@ -111,7 +129,19 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
 
       if (tracksToAdd.length === 0) return;
 
-      const uris = tracksToAdd.map((t) => t.uri);
+      // Check if any selected tracks are already in the playlist
+      const duplicates = tracksToAdd.filter((t) =>
+        existingTrackIds.includes(t.id)
+      );
+
+      if (duplicates.length > 0 && !pendingBatchTracks) {
+        setPendingBatchTracks(tracksToAdd);
+        setIsDuplicateDialogOpen(true);
+        return;
+      }
+
+      const tracksToExecute = pendingBatchTracks || tracksToAdd;
+      const uris = tracksToExecute.map((t) => t.uri);
       const response = await fetch(
         `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
         {
@@ -125,8 +155,14 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
       );
 
       if (response.ok) {
-        toast.success(`Successfully added ${tracksToAdd.length} tracks!`);
+        toast.success(`Successfully added ${tracksToExecute.length} tracks!`);
         setSelectedTrackIds(new Set());
+        // Update local existing tracks to prevent immediate duplicate warnings
+        setExistingTrackIds((prev) => [
+          ...prev,
+          ...tracksToExecute.map((t) => t.id),
+        ]);
+        setPendingBatchTracks(null);
         refetch(true); // SILENT REFRESH
       } else {
         throw new Error("Failed to add tracks");
@@ -502,18 +538,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
     }
   };
 
-  const handleAddTrackToPlaylist = async (track: Track) => {
-    if (!token) {
-      toast.error("Authentication required");
-      return;
-    }
-
-    // Check if track already exists in playlist
-    if (existingTrackIds.includes(track.id)) {
-      toast.info(`"${track.name}" is already in this playlist!`);
-      return;
-    }
-
+  const executeAddTrack = async (track: Track) => {
     setAddingTracks((prev) => new Set(prev).add(track.id));
 
     try {
@@ -536,6 +561,8 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
       }
 
       toast.success(`Added "${track.name}" to playlist!`);
+      // Update local existing tracks
+      setExistingTrackIds((prev) => [...prev, track.id]);
       refetch(true); // SILENT REFRESH
 
       // Remove from recommendations after adding
@@ -550,7 +577,24 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
         newSet.delete(track.id);
         return newSet;
       });
+      setDuplicateTrack(null);
     }
+  };
+
+  const handleAddTrackToPlaylist = async (track: Track) => {
+    if (!token) {
+      toast.error("Authentication required");
+      return;
+    }
+
+    // Check if track already exists in playlist
+    if (existingTrackIds.includes(track.id)) {
+      setDuplicateTrack(track);
+      setIsDuplicateDialogOpen(true);
+      return;
+    }
+
+    await executeAddTrack(track);
   };
 
   const handleTogglePlay = (track: Track) => {
@@ -694,7 +738,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                           <div className="space-y-1">
                             {recommendedTracks.map((track) => (
                               <TrackItem
-                                key={track.id}
+                                key={`rec-${track.id}`}
                                 track={track}
                                 onAdd={() => handleAddTrackToPlaylist(track)}
                                 isAdding={addingTracks.has(track.id)}
@@ -723,7 +767,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                         ) : (
                           searchResults.map((track) => (
                             <TrackItem
-                              key={track.id}
+                              key={`search-${track.id}`}
                               track={track}
                               onAdd={() => handleAddTrackToPlaylist(track)}
                               isAdding={addingTracks.has(track.id)}
@@ -883,7 +927,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                         <div className="space-y-1">
                           {aiRecTracks.map((track) => (
                             <TrackItem
-                              key={track.id}
+                              key={`ai-${track.id}`}
                               track={track}
                               onAdd={() => handleAddTrackToPlaylist(track)}
                               isAdding={addingTracks.has(track.id)}
@@ -944,6 +988,47 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
           <p>Add songs to playlist</p>
         </TooltipContent>
       </Tooltip>
+
+      <AlertDialog
+        open={isDuplicateDialogOpen}
+        onOpenChange={setIsDuplicateDialogOpen}
+      >
+        <AlertDialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-[400px] rounded-2xl p-6">
+          <AlertDialogHeader className="space-y-3">
+            <AlertDialogTitle className="text-xl font-bold">
+              Already added
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-zinc-400 text-sm">
+              {pendingBatchTracks
+                ? `Some of these songs are already in your '${playlistName}' playlist.`
+                : `This is already in your '${playlistName}' playlist.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-row items-center justify-end gap-2 mt-6">
+            <AlertDialogCancel
+              onClick={() => {
+                setDuplicateTrack(null);
+                setPendingBatchTracks(null);
+              }}
+              className="mt-0 border-none bg-transparent hover:bg-transparent text-zinc-400 hover:text-white font-bold h-11 px-6 transition-colors"
+            >
+              Don't add
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingBatchTracks) {
+                  handleAddSelectedTracks();
+                } else if (duplicateTrack) {
+                  executeAddTrack(duplicateTrack);
+                }
+              }}
+              className="bg-brand hover:bg-brand/90 text-black rounded-full font-bold h-11 px-8 shadow-[0_8px_30px_rgb(var(--brand-primary-rgb),0.3)]"
+            >
+              Add anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TooltipProvider>
   );
 }

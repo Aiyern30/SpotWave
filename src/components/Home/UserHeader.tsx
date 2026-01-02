@@ -1016,7 +1016,11 @@ export default function UserHeader({
             {isOwner && (
               <>
                 <Settings playlistID={playlist.id} />
-                <SearchSongs playlistID={playlist.id} refetch={refetch} />
+                <SearchSongs
+                  playlistID={playlist.id}
+                  playlistName={playlist.name}
+                  refetch={refetch}
+                />
               </>
             )}
 
