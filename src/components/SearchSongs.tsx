@@ -15,6 +15,7 @@ import {
   Wand2,
   ListMusic,
   CheckCircle2,
+  Pause,
 } from "lucide-react";
 import {
   Avatar,
@@ -48,6 +49,7 @@ import {
 } from "./ui";
 import { useEffect, useState, useRef, useCallback } from "react";
 import type { Artist, Track } from "@/lib/types";
+import { usePlayer } from "@/contexts/PlayerContext";
 import { toast } from "react-toastify";
 import { analyzePlaylistGenres } from "@/utils/analyzePlaylistGenres";
 import { getPlaylistRecommendations } from "@/utils/getPlaylistRecommendations";
@@ -79,6 +81,15 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
   const [isAddingAll, setIsAddingAll] = useState(false);
   const [discoveryCount, setDiscoveryCount] = useState(10);
   const [searchProgress, setSearchProgress] = useState(0);
+
+  const {
+    playTrack,
+    pauseTrack,
+    resumeTrack,
+    currentTrack,
+    isPlaying: isGlobalPlaying,
+    isPaused,
+  } = usePlayer();
 
   const VIBE_TAGS = [
     { label: "Pop", value: "pop" },
@@ -486,36 +497,14 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
     }
   };
 
-  const handlePlayPreview = (
-    previewUrl: string | null | undefined,
-    trackId: string
-  ) => {
-    if (!previewUrl) {
-      toast.info("No preview available for this track");
-      return;
-    }
-
-    if (playingPreview === trackId) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      setPlayingPreview(null);
+  const handleTogglePlay = (track: Track) => {
+    const isCurrentTrack = currentTrack?.id === track.id;
+    if (isCurrentTrack && isGlobalPlaying) {
+      pauseTrack();
+    } else if (isCurrentTrack && isPaused) {
+      resumeTrack();
     } else {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-
-      const audio = new Audio(previewUrl);
-      audio.volume = 0.5;
-      audio.play();
-      audioRef.current = audio;
-      setPlayingPreview(trackId);
-
-      audio.onended = () => {
-        setPlayingPreview(null);
-        audioRef.current = null;
-      };
+      playTrack(track);
     }
   };
 
@@ -653,10 +642,12 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                                 track={track}
                                 onAdd={() => handleAddTrackToPlaylist(track)}
                                 isAdding={addingTracks.has(track.id)}
-                                onPreview={() =>
-                                  handlePlayPreview(track.preview_url, track.id)
+                                onPlay={() => handleTogglePlay(track)}
+                                isCurrentTrack={currentTrack?.id === track.id}
+                                isPlaying={
+                                  currentTrack?.id === track.id &&
+                                  isGlobalPlaying
                                 }
-                                isPlaying={playingPreview === track.id}
                               />
                             ))}
                           </div>
@@ -678,10 +669,11 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                               track={track}
                               onAdd={() => handleAddTrackToPlaylist(track)}
                               isAdding={addingTracks.has(track.id)}
-                              onPreview={() =>
-                                handlePlayPreview(track.preview_url, track.id)
+                              onPlay={() => handleTogglePlay(track)}
+                              isCurrentTrack={currentTrack?.id === track.id}
+                              isPlaying={
+                                currentTrack?.id === track.id && isGlobalPlaying
                               }
-                              isPlaying={playingPreview === track.id}
                             />
                           ))
                         )}
@@ -835,10 +827,11 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                               track={track}
                               onAdd={() => handleAddTrackToPlaylist(track)}
                               isAdding={addingTracks.has(track.id)}
-                              onPreview={() =>
-                                handlePlayPreview(track.preview_url, track.id)
+                              onPlay={() => handleTogglePlay(track)}
+                              isCurrentTrack={currentTrack?.id === track.id}
+                              isPlaying={
+                                currentTrack?.id === track.id && isGlobalPlaying
                               }
-                              isPlaying={playingPreview === track.id}
                             />
                           ))}
                         </div>
@@ -874,7 +867,8 @@ interface TrackItemProps {
   track: Track;
   onAdd: () => void;
   isAdding: boolean;
-  onPreview: () => void;
+  onPlay: () => void;
+  isCurrentTrack: boolean;
   isPlaying: boolean;
 }
 
@@ -882,7 +876,8 @@ function TrackItem({
   track,
   onAdd,
   isAdding,
-  onPreview,
+  onPlay,
+  isCurrentTrack,
   isPlaying,
 }: TrackItemProps) {
   return (
@@ -898,27 +893,27 @@ function TrackItem({
           </AvatarFallback>
         </Avatar>
 
-        {track.preview_url && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onPreview}
-            className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-lg flex items-center justify-center"
-          >
-            {isPlaying ? (
-              <X className="h-4 w-4 text-white" />
-            ) : (
-              <Play className="h-4 w-4 text-white fill-current" />
-            )}
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onPlay}
+          className={`absolute inset-0 bg-black/60 transition-all duration-200 rounded-lg flex items-center justify-center ${
+            isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          }`}
+        >
+          {isPlaying ? (
+            <Pause className="h-5 w-5 text-brand fill-current" />
+          ) : (
+            <Play className="h-5 w-5 text-white fill-current translate-x-0.5" />
+          )}
+        </Button>
       </div>
 
       <div className="flex-1 min-w-0 overflow-hidden">
         <div className="flex items-center gap-2 min-w-0">
           <h4
-            className={`font-medium text-sm truncate ${
-              isPlaying ? "text-brand" : "text-zinc-200"
+            className={`font-medium text-sm truncate transition-colors ${
+              isCurrentTrack ? "text-brand" : "text-zinc-200"
             }`}
           >
             {track.name}
