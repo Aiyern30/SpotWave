@@ -547,7 +547,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
 
             <SheetContent
               side="right"
-              className="w-full sm:w-[500px] bg-zinc-900/95 backdrop-blur-sm border-zinc-700/50 text-white overflow-y-auto"
+              className="w-full sm:w-[500px] sm:max-w-none bg-zinc-900/95 backdrop-blur-sm border-zinc-700/50 text-white overflow-x-hidden"
             >
               <Tabs
                 value={activeTab}
@@ -611,7 +611,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
 
                   <Separator className="bg-zinc-800/50" />
 
-                  <ScrollArea className="h-[calc(100vh-320px)] pr-4 -mr-4">
+                  <ScrollArea className="h-[calc(100vh-320px)] w-full overflow-x-hidden">
                     {/* Standard Search Content */}
                     {!searchQuery.trim() ? (
                       <div className="space-y-6">
@@ -806,7 +806,7 @@ export default function SearchSongs({ playlistID, refetch }: SearchSongsProps) {
                     </div>
                   </div>
 
-                  <ScrollArea className="h-[calc(100vh-500px)] pr-4 -mr-4">
+                  <ScrollArea className="h-[calc(100vh-500px)] w-full overflow-x-hidden">
                     {aiRecTracks.length > 0 ? (
                       <div className="space-y-4">
                         <div className="flex items-center justify-between px-1">
@@ -886,7 +886,7 @@ function TrackItem({
   isPlaying,
 }: TrackItemProps) {
   return (
-    <div className="group flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-800/40 transition-all duration-300 border border-transparent hover:border-zinc-800/50">
+    <div className="group flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-800/40 transition-all duration-300 border border-transparent hover:border-zinc-800/50 w-full min-w-0">
       <div className="relative">
         <Avatar className="h-11 w-11 rounded-lg">
           <AvatarImage
@@ -914,11 +914,11 @@ function TrackItem({
         )}
       </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+      <div className="flex-1 min-w-0 overflow-hidden">
+        <div className="flex items-center gap-2 min-w-0">
           <h4
             className={`font-medium text-sm truncate ${
-              isPlaying ? "bg-brand" : "text-zinc-200"
+              isPlaying ? "text-brand" : "text-zinc-200"
             }`}
           >
             {track.name}
@@ -939,7 +939,7 @@ function TrackItem({
         disabled={isAdding}
         size="icon"
         variant="ghost"
-        className="h-8 w-8 rounded-full hover:bg-brand hover:text-black transition-all"
+        className="h-8 w-8 rounded-full hover:bg-brand hover:text-black transition-all shrink-0"
       >
         {isAdding ? (
           <Loader2 className="h-4 w-4 animate-spin" />
