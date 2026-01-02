@@ -895,16 +895,16 @@ function TrackItem({
 
         <Button
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={onPlay}
-          className={`absolute inset-0 bg-black/60 transition-all duration-200 rounded-lg flex items-center justify-center ${
+          className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hover:bg-brand transition-all duration-200 rounded-full h-9 w-9 border border-white/10 flex items-center justify-center p-0 ${
             isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
           }`}
         >
           {isPlaying ? (
-            <Pause className="h-5 w-5 text-brand fill-current" />
+            <Pause className="h-4 w-4 text-white" />
           ) : (
-            <Play className="h-5 w-5 text-white fill-current translate-x-0.5" />
+            <Play className="h-4 w-4 text-white translate-x-0.5" />
           )}
         </Button>
       </div>
