@@ -44,7 +44,15 @@ export async function POST(req: Request) {
       const count = countMatch ? countMatch[1] : "10";
       const cleanContext = context.replace(/count:\d+/, "").trim();
 
-      prompt = `${systemInstruction} Suggest exactly ${count} specific and high-quality songs for a playlist based on this prompt or genre: ${cleanContext}. 
+      prompt = `${systemInstruction} Suggest exactly ${count} specific and high-quality songs for a music playlist.
+      User Prompt/Context: "${cleanContext}".
+      
+      CRITICAL INSTRUCTIONS:
+      1. DO NOT suggest any songs that are mentioned as 'EXCLUDE' or 'existing' in the context.
+      2. Prioritize variety and fresh discovery. 
+      3. Avoid well-known chart-toppers if the user is looking for a specific vibe, unless they fit perfectly.
+      4. Ensure all songs are available on major streaming platforms.
+
       Return ONLY a JSON array of objects with 'song' and 'artist' keys. 
       Example: [{"song": "Blinding Lights", "artist": "The Weeknd"}]`;
     } else if (type === "user-summary") {

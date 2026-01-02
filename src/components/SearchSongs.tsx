@@ -94,6 +94,7 @@ export default function SearchSongs({
   const [isAddingAll, setIsAddingAll] = useState(false);
   const [discoveryCount, setDiscoveryCount] = useState(10);
   const [searchProgress, setSearchProgress] = useState(0);
+  const [existingTracksInfo, setExistingTracksInfo] = useState<string[]>([]);
   const [duplicateTrack, setDuplicateTrack] = useState<Track | null>(null);
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
   const [pendingBatchTracks, setPendingBatchTracks] = useState<Track[] | null>(
@@ -310,7 +311,11 @@ export default function SearchSongs({
 
         // Store existing track IDs to filter duplicates
         const trackIds = playlistData.items.map((item: any) => item.track.id);
+        const tracksInfo = playlistData.items.map(
+          (item: any) => `${item.track.name} by ${item.track.artists[0].name}`
+        );
         setExistingTrackIds(trackIds);
+        setExistingTracksInfo(tracksInfo);
 
         // Get genres and recommendations with offset for variety
         const analysis = await analyzePlaylistGenres(playlistData.items, token);
@@ -412,9 +417,19 @@ export default function SearchSongs({
     setAiRecTracks([]);
     setSearchProgress(0);
     try {
+      // Create context with existing tracks to EXCLUDE
+      const excludeContext =
+        existingTracksInfo.length > 0
+          ? `(CRITICAL: EXCLUDE these existing songs: ${existingTracksInfo
+              .slice(0, 15)
+              .join(", ")})`
+          : "";
+
       const promptContext = `count:${discoveryCount} ${aiPrompt.trim()}${
         selectedGenre ? ` (Genre: ${selectedGenre})` : ""
-      }`;
+      } ${excludeContext} [RandomSeed: ${Math.random()
+        .toString(36)
+        .substring(7)}]`;
 
       const response = await fetch("/api/ai-recommendations", {
         method: "POST",
