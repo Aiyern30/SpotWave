@@ -1,8 +1,17 @@
-// Fetch Audiobooks
-export const fetchAudiobooks = async (token: string) => {
+// Utility to fetch audiobooks from Spotify
+export const fetchAudiobooks = async (
+  token: string,
+  query: string = "popular",
+  limit: number = 50
+) => {
   try {
+    // We search for audiobooks. Market is required as audiobooks are restricted.
+    // Defaulting to 'US' to ensure we see content even if the user's market is restricted,
+    // though they might need a US-eligible account to play.
     const response = await fetch(
-      "https://api.spotify.com/v1/audiobooks?ids=7iHfbu1YPACw6oZPAFJtqe,1HGw3J3NxZO1TP1BTtVhpZ,7ouMYWpwJ422jRcDASZB7P,4VqPOruhp5EdPBeR92t6lQ,2takcwOaAZWiXQijPHIx7B&market=US",
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(
+        query
+      )}&type=audiobook&limit=${limit}&market=US`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -11,42 +20,60 @@ export const fetchAudiobooks = async (token: string) => {
     );
 
     if (!response.ok) {
-      throw new Error("Failed to fetch audiobooks");
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || "Failed to fetch audiobooks");
     }
 
     const data = await response.json();
-    return data.audiobooks;
+    return data.audiobooks?.items || [];
   } catch (error) {
     console.error("Error fetching audiobooks:", error);
     return [];
   }
 };
 
-// Get Single Audiobook
-export const fetchAudiobook = async (token: string, audiobookId: string) => {
+// Advanced Discovery: Try multiple queries if one fails
+export const fetchDiscoverAudiobooks = async (token: string) => {
+  const discoveryQueries = ["featured", "new releases", "top", "trending"];
+
+  // Try to get a mix of results
   try {
-    const response = await fetch(
-      `https://api.spotify.com/v1/audiobooks/${audiobookId}?market=US`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+    const results = await Promise.all(
+      discoveryQueries.map((q) => fetchAudiobooks(token, q, 10))
     );
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch audiobook");
-    }
-
-    const data = await response.json();
-    return data;
+    // Flatten and remove duplicates by ID
+    const allBooks = results.flat();
+    const seen = new Set();
+    return allBooks.filter((book) => {
+      if (!book || seen.has(book.id)) return false;
+      seen.add(book.id);
+      return true;
+    });
   } catch (error) {
-    console.error("Error fetching audiobook:", error);
-    return null;
+    return [];
   }
 };
 
-// Get User's Saved Audiobooks
+// Fetch specific categories of audiobooks to act as recommendations
+export const fetchAudiobookRecommendations = async (token: string) => {
+  // We can fetch a few "topics" to give variety
+  const topics = [
+    "bestseller",
+    "trending",
+    "classics",
+    "thriller",
+    "self-help",
+    "history",
+    "fantasy",
+    "mystery",
+  ];
+  const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+
+  return fetchAudiobooks(token, randomTopic);
+};
+
+// Fetch User's Saved Audiobooks
 export const fetchUserSavedAudiobooks = async (token: string) => {
   try {
     const response = await fetch(
@@ -71,26 +98,20 @@ export const fetchUserSavedAudiobooks = async (token: string) => {
 };
 
 // Save Audiobooks for Current User
-export const saveAudiobooksForUser = async (
-  token: string,
-  audiobookIds: string[]
-) => {
+export const saveAudiobooksForUser = async (token: string, ids: string[]) => {
   try {
     const response = await fetch(
-      `https://api.spotify.com/v1/me/audiobooks?ids=${audiobookIds.join(",")}`,
+      `https://api.spotify.com/v1/me/audiobooks?ids=${ids.join(",")}`,
       {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       }
     );
 
-    if (!response.ok) {
-      throw new Error("Failed to save audiobooks");
-    }
-
-    return true;
+    return response.ok;
   } catch (error) {
     console.error("Error saving audiobooks:", error);
     return false;
@@ -100,11 +121,11 @@ export const saveAudiobooksForUser = async (
 // Remove User's Saved Audiobooks
 export const removeAudiobooksFromUser = async (
   token: string,
-  audiobookIds: string[]
+  ids: string[]
 ) => {
   try {
     const response = await fetch(
-      `https://api.spotify.com/v1/me/audiobooks?ids=${audiobookIds.join(",")}`,
+      `https://api.spotify.com/v1/me/audiobooks?ids=${ids.join(",")}`,
       {
         method: "DELETE",
         headers: {
@@ -113,27 +134,21 @@ export const removeAudiobooksFromUser = async (
       }
     );
 
-    if (!response.ok) {
-      throw new Error("Failed to remove audiobooks");
-    }
-
-    return true;
+    return response.ok;
   } catch (error) {
     console.error("Error removing audiobooks:", error);
     return false;
   }
 };
 
-// Check User's Saved Audiobooks
-export const checkUserSavedAudiobooks = async (
+// Fetch a single audiobook's details
+export const fetchAudiobookDetails = async (
   token: string,
-  audiobookIds: string[]
+  audiobookId: string
 ) => {
   try {
     const response = await fetch(
-      `https://api.spotify.com/v1/me/audiobooks/contains?ids=${audiobookIds.join(
-        ","
-      )}`,
+      `https://api.spotify.com/v1/audiobooks/${audiobookId}?market=US`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -142,13 +157,12 @@ export const checkUserSavedAudiobooks = async (
     );
 
     if (!response.ok) {
-      throw new Error("Failed to check saved audiobooks");
+      throw new Error("Failed to fetch audiobook details");
     }
 
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
-    console.error("Error checking saved audiobooks:", error);
-    return [];
+    console.error("Error fetching audiobook details:", error);
+    return null;
   }
 };
