@@ -1,8 +1,74 @@
-// Get Show Episodes
+// Search for Shows (Podcasts) in Malaysia
+export const fetchMalaysianShows = async (
+  token: string,
+  query: string = "malaysia"
+) => {
+  try {
+    const response = await fetch(
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(
+        query
+      )}&type=show&market=MY&limit=20`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to search shows");
+    }
+
+    const data = await response.json();
+    return data.shows?.items || [];
+  } catch (error) {
+    console.error("Error searching shows:", error);
+    return [];
+  }
+};
+
+// Fetch Malaysian Podcast Categories
+export const fetchPodcastCategories = async (token: string) => {
+  try {
+    const response = await fetch(
+      "https://api.spotify.com/v1/browse/categories?country=MY&limit=50",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch podcast categories");
+    }
+
+    const data = await response.json();
+    return data.categories?.items || [];
+  } catch (error) {
+    console.error("Error fetching podcast categories:", error);
+    return [];
+  }
+};
+
+// Discover Local Content using Keywords
+export const fetchDiscoverPodcasts = async (token: string) => {
+  const keywords = [
+    "Malaysia",
+    "Melayu",
+    "Kuala Lumpur",
+    "Sembang",
+    "Sembang Kencang",
+  ];
+  const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
+  return fetchMalaysianShows(token, randomKeyword);
+};
+
+// Get Show Episodes (Updated for MY market)
 export const fetchShowEpisodes = async (token: string, showId: string) => {
   try {
     const response = await fetch(
-      `https://api.spotify.com/v1/shows/${showId}/episodes?market=US&limit=50`,
+      `https://api.spotify.com/v1/shows/${showId}/episodes?market=MY&limit=50`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -22,11 +88,11 @@ export const fetchShowEpisodes = async (token: string, showId: string) => {
   }
 };
 
-// Get Single Episode
+// Get Single Episode (Updated for MY market)
 export const fetchEpisode = async (token: string, episodeId: string) => {
   try {
     const response = await fetch(
-      `https://api.spotify.com/v1/episodes/${episodeId}?market=US`,
+      `https://api.spotify.com/v1/episodes/${episodeId}?market=MY`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -46,7 +112,7 @@ export const fetchEpisode = async (token: string, episodeId: string) => {
   }
 };
 
-// Get Several Episodes
+// Get Several Episodes (Updated for MY market)
 export const fetchSeveralEpisodes = async (
   token: string,
   episodeIds: string[]
@@ -55,7 +121,7 @@ export const fetchSeveralEpisodes = async (
     const response = await fetch(
       `https://api.spotify.com/v1/episodes?ids=${episodeIds.join(
         ","
-      )}&market=US`,
+      )}&market=MY`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
