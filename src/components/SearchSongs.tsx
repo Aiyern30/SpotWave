@@ -643,9 +643,9 @@ export default function SearchSongs({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-12 w-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 hover:bg-black/30 hover:border-white/20 transition-all duration-200 hover:scale-105"
+                className="h-12 w-12 rounded-full bg-brand text-black hover:bg-brand/80 hover:scale-105 transition-all duration-300 shadow-lg shadow-brand/20 border-none"
               >
-                <Plus className="h-5 w-5 text-white" />
+                <Plus className="h-5 w-5" />
               </Button>
             </SheetTrigger>
 

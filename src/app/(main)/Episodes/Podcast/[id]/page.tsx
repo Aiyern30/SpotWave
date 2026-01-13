@@ -320,7 +320,7 @@ const PodcastDetailPage = () => {
             isFollowing
               ? "bg-zinc-800 text-white border border-zinc-700"
               : "bg-brand text-black"
-          } font-bold h-14 px-8 rounded-full hover:scale-105 transition-transform shadow-lg shadow-brand/20`}
+          } font-bold h-12 px-8 rounded-full hover:scale-105 transition-all shadow-lg shadow-brand/20 border-none`}
         >
           {isFollowing ? (
             <>
@@ -336,7 +336,7 @@ const PodcastDetailPage = () => {
           onClick={handleShare}
           variant="ghost"
           size="icon"
-          className="h-12 w-12 rounded-full border border-brand text-brand hover:text-brand/80 hover:bg-brand/50"
+          className="h-12 w-12 rounded-full bg-brand text-black hover:bg-brand/80 hover:scale-105 transition-all duration-300 shadow-lg shadow-brand/20 border-none"
         >
           <Share2 className="h-5 w-5" />
         </Button>
@@ -345,7 +345,7 @@ const PodcastDetailPage = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="h-12 w-12 rounded-full border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
+              className="h-12 w-12 rounded-full bg-brand text-black hover:bg-brand/80 hover:scale-105 transition-all duration-300 shadow-lg shadow-brand/20 border-none"
             >
               <MoreHorizontal className="h-5 w-5" />
             </Button>

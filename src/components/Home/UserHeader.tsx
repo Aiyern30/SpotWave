@@ -1125,9 +1125,9 @@ export default function UserHeader({
                     variant="ghost"
                     size="icon"
                     onClick={handleExportPlaylist}
-                    className="h-12 w-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 hover:bg-black/30 hover:border-white/20 transition-all duration-200 hover:scale-105"
+                    className="h-12 w-12 rounded-full bg-brand text-black hover:bg-brand/80 hover:scale-105 transition-all duration-300 shadow-lg shadow-brand/20 border-none"
                   >
-                    <Download className="h-5 w-5 text-white" />
+                    <Download className="h-5 w-5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -1145,9 +1145,9 @@ export default function UserHeader({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-12 w-12 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 hover:bg-black/30 hover:border-white/20 transition-all duration-200 hover:scale-105"
+                    className="h-12 w-12 rounded-full bg-brand text-black hover:bg-brand/80 hover:scale-105 transition-all duration-300 shadow-lg shadow-brand/20 border-none"
                   >
-                    <Sparkles className="h-4 w-4 text-white" />
+                    <Sparkles className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="bg-zinc-950/95 border-zinc-800/50 max-w-xl backdrop-blur-2xl shadow-2xl">
