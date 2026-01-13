@@ -295,3 +295,54 @@ export const checkUserSavedEpisodes = async (
     return [];
   }
 };
+
+// Follow Show
+export const followShow = async (token: string, showId: string) => {
+  try {
+    const response = await fetch(
+      `https://api.spotify.com/v1/me/shows?ids=${showId}`,
+      {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    return response.ok;
+  } catch (error) {
+    console.error("Error following show:", error);
+    return false;
+  }
+};
+
+// Unfollow Show
+export const unfollowShow = async (token: string, showId: string) => {
+  try {
+    const response = await fetch(
+      `https://api.spotify.com/v1/me/shows?ids=${showId}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    return response.ok;
+  } catch (error) {
+    console.error("Error unfollowing show:", error);
+    return false;
+  }
+};
+
+// Check if User follows show
+export const checkUserFollowsShow = async (token: string, showId: string) => {
+  try {
+    const response = await fetch(
+      `https://api.spotify.com/v1/me/shows/contains?ids=${showId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    if (!response.ok) return [false];
+    return await response.json();
+  } catch (error) {
+    console.error("Error checking show follow status:", error);
+    return [false];
+  }
+};

@@ -8,8 +8,20 @@ import {
   saveEpisodesForUser,
   removeEpisodesFromUser,
   checkUserSavedEpisodes,
+  checkUserFollowsShow,
+  followShow,
+  unfollowShow,
 } from "@/utils/fetchEpisodes";
 import { Button, Card, Skeleton, Badge } from "@/components/ui/";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+} from "@/components/ui/";
 import {
   Play,
   Heart,
@@ -19,8 +31,12 @@ import {
   MoreHorizontal,
   Calendar,
   Music,
+  Check,
+  Plus,
+  X,
 } from "lucide-react";
 import { usePlayer } from "@/contexts/PlayerContext";
+import { toast } from "sonner";
 
 interface ShowDetails {
   id: string;
@@ -47,7 +63,38 @@ const PodcastDetailPage = () => {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [loading, setLoading] = useState(true);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
   const { playTrack } = usePlayer();
+
+  const checkFollowStatus = useCallback(async () => {
+    const token = localStorage.getItem("Token");
+    if (!token || !id) return;
+    const showId = Array.isArray(id) ? id[0] : id;
+    const followed = await checkUserFollowsShow(token, showId);
+    if (followed && followed.length > 0) {
+      setIsFollowing(followed[0]);
+    }
+  }, [id]);
+
+  const fetchPlaylists = useCallback(async () => {
+    const token = localStorage.getItem("Token");
+    if (!token) return;
+    try {
+      const response = await fetch(
+        "https://api.spotify.com/v1/me/playlists?limit=50",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setUserPlaylists(data.items);
+      }
+    } catch (error) {
+      console.error("Error fetching playlists:", error);
+    }
+  }, []);
 
   const loadData = useCallback(async () => {
     const token = localStorage.getItem("Token");
@@ -83,7 +130,67 @@ const PodcastDetailPage = () => {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    checkFollowStatus();
+    fetchPlaylists();
+  }, [loadData, checkFollowStatus, fetchPlaylists]);
+
+  const handleToggleFollow = async () => {
+    const token = localStorage.getItem("Token");
+    if (!token || !show) return;
+
+    if (isFollowing) {
+      const success = await unfollowShow(token, show.id);
+      if (success) {
+        setIsFollowing(false);
+        toast.success(`Stopped following ${show.name}`);
+      }
+    } else {
+      const success = await followShow(token, show.id);
+      if (success) {
+        setIsFollowing(true);
+        toast.success(`Following ${show.name}!`);
+      }
+    }
+  };
+
+  const handleShare = () => {
+    if (!show) return;
+    const url = window.location.href;
+    navigator.clipboard.writeText(url);
+    toast.success("Link copied to clipboard!");
+  };
+
+  const handleAddEpisodeToPlaylist = async (
+    episodeId: string,
+    playlistId: string,
+    playlistName: string
+  ) => {
+    const token = localStorage.getItem("Token");
+    if (!token) return;
+
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ uris: [`spotify:episode:${episodeId}`] }),
+        }
+      );
+
+      if (response.ok) {
+        toast.success(`Episode added to ${playlistName}`);
+      } else {
+        toast.error("Failed to add episode to playlist");
+      }
+    } catch (error) {
+      console.error("Error adding episode to playlist:", error);
+      toast.error("An error occurred");
+    }
+  };
 
   const formatDuration = (ms: number) => {
     const minutes = Math.floor(ms / 60000);
@@ -182,15 +289,15 @@ const PodcastDetailPage = () => {
           </div>
 
           <div className="flex-1 space-y-4 text-center md:text-left">
+            <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight">
+              {show.name}
+            </h1>
             <Badge
               variant="secondary"
               className="bg-brand/20 text-brand border-brand/30 px-3 py-1 font-bold uppercase tracking-widest text-[10px]"
             >
               Podcast Show
             </Badge>
-            <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight">
-              {show.name}
-            </h1>
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-zinc-400 font-medium pt-2">
               <span className="text-white hover:text-brand transition-colors cursor-pointer">
                 {show.publisher}
@@ -207,23 +314,68 @@ const PodcastDetailPage = () => {
 
       {/* Action Bar */}
       <div className="px-6 md:px-10 py-6 flex items-center gap-6">
-        <Button className="bg-brand text-black font-bold h-14 px-8 rounded-full hover:scale-105 transition-transform shadow-lg shadow-brand/20">
-          <Play className="mr-2 h-6 w-6 fill-black" /> Follow
+        <Button
+          onClick={handleToggleFollow}
+          className={`${
+            isFollowing
+              ? "bg-zinc-800 text-white border border-zinc-700"
+              : "bg-brand text-black"
+          } font-bold h-14 px-8 rounded-full hover:scale-105 transition-transform shadow-lg shadow-brand/20`}
+        >
+          {isFollowing ? (
+            <>
+              <Check className="mr-2 h-5 w-5" /> Following
+            </>
+          ) : (
+            <>
+              <Plus className="mr-2 h-5 w-5" /> Follow
+            </>
+          )}
         </Button>
         <Button
+          onClick={handleShare}
           variant="ghost"
           size="icon"
-          className="h-12 w-12 rounded-full border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
+          className="h-12 w-12 rounded-full border border-brand text-brand hover:text-brand/80 hover:bg-brand/50"
         >
           <Share2 className="h-5 w-5" />
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-12 w-12 rounded-full border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
-        >
-          <MoreHorizontal className="h-5 w-5" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-12 w-12 rounded-full border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
+            >
+              <MoreHorizontal className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="start"
+            className="bg-zinc-900 border-zinc-800 w-48"
+          >
+            <DropdownMenuItem
+              onClick={handleShare}
+              className="text-white hover:bg-brand/10 cursor-pointer"
+            >
+              <Share2 className="mr-2 h-4 w-4" /> Share Show
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={handleToggleFollow}
+              className="text-white hover:bg-brand/10 cursor-pointer"
+            >
+              {isFollowing ? (
+                <>
+                  <X className="mr-2 h-4 w-4" /> Unfollow
+                </>
+              ) : (
+                <>
+                  <Heart className="mr-2 h-4 w-4" /> Follow
+                </>
+              )}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="px-6 md:px-10 grid grid-cols-1 lg:grid-cols-3 gap-10">
@@ -256,18 +408,100 @@ const PodcastDetailPage = () => {
                       <h3 className="text-white font-bold text-lg leading-tight group-hover:text-brand transition-colors line-clamp-1">
                         {episode.name}
                       </h3>
-                      <button
-                        onClick={(e) => handleToggleSave(e, episode.id)}
-                        className="text-zinc-500 hover:text-brand transition-colors"
-                      >
-                        <Heart
-                          className={`w-5 h-5 ${
-                            savedIds.has(episode.id)
-                              ? "text-brand fill-brand"
-                              : ""
-                          }`}
-                        />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => handleToggleSave(e, episode.id)}
+                          className="text-zinc-500 hover:text-brand transition-colors"
+                        >
+                          <Heart
+                            className={`w-5 h-5 ${
+                              savedIds.has(episode.id)
+                                ? "text-brand fill-brand"
+                                : ""
+                            }`}
+                          />
+                        </button>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-zinc-500 hover:text-white transition-colors p-1"
+                            >
+                              <MoreHorizontal className="w-5 h-5" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="bg-zinc-900 border-zinc-800 w-56 p-1 py-1"
+                          >
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleSave(e, episode.id);
+                              }}
+                              className="text-white hover:bg-brand/10 cursor-pointer"
+                            >
+                              <Heart
+                                className={`mr-2 h-4 w-4 ${
+                                  savedIds.has(episode.id)
+                                    ? "text-brand fill-brand"
+                                    : ""
+                                }`}
+                              />
+                              {savedIds.has(episode.id)
+                                ? "Remove from Your Episodes"
+                                : "Save to Your Episodes"}
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger className="text-white hover:bg-brand/10 cursor-pointer">
+                                <Plus className="mr-2 h-4 w-4" /> Add to
+                                Playlist
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent className="bg-zinc-900 border-zinc-800 max-h-64 overflow-y-auto w-56">
+                                {userPlaylists.length > 0 ? (
+                                  userPlaylists.map((pl) => (
+                                    <DropdownMenuItem
+                                      key={pl.id}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleAddEpisodeToPlaylist(
+                                          episode.id,
+                                          pl.id,
+                                          pl.name
+                                        );
+                                      }}
+                                      className="text-white hover:bg-brand/10 cursor-pointer"
+                                    >
+                                      {pl.name}
+                                    </DropdownMenuItem>
+                                  ))
+                                ) : (
+                                  <DropdownMenuItem
+                                    disabled
+                                    className="text-zinc-500"
+                                  >
+                                    No playlists found
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const url = `https://open.spotify.com/episode/${episode.id}`;
+                                navigator.clipboard.writeText(url);
+                                toast.success("Episode link copied!");
+                              }}
+                              className="text-white hover:bg-brand/10 cursor-pointer"
+                            >
+                              <Share2 className="mr-2 h-4 w-4" /> Share Episode
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                     <p className="text-zinc-500 text-sm line-clamp-2 leading-relaxed">
                       {episode.description}
