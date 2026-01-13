@@ -288,7 +288,7 @@ const EpisodesPage = () => {
                 {localShows.map((show) => (
                   <Card
                     key={show.id}
-                    onClick={() => router.push(`/Explore`)} // Redirect to explore or show page
+                    onClick={() => router.push(`/Episodes/Podcast/${show.id}`)}
                     className="group bg-zinc-900/40 border-zinc-800/50 hover:bg-zinc-800/50 transition-all duration-300 cursor-pointer overflow-hidden"
                   >
                     <div className="p-4 space-y-4">
