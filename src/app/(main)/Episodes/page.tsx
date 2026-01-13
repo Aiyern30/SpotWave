@@ -34,8 +34,15 @@ const EpisodesPage = () => {
   const [savedEpisodes, setSavedEpisodes] = useState<EpisodeProps[]>([]);
   const [localShows, setLocalShows] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [selectedMarket, setSelectedMarket] = useState<string>("MY");
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const router = useRouter();
+
+  const markets = [
+    { code: "MY", name: "Malaysia", flag: "🇲🇾" },
+    { code: "US", name: "United States", flag: "🇺🇸" },
+    { code: "GB", name: "United Kingdom", flag: "🇬🇧" },
+  ];
 
   const formatDuration = (ms: number) => {
     const minutes = Math.floor(ms / 60000);
@@ -46,29 +53,29 @@ const EpisodesPage = () => {
     return `${minutes}m`;
   };
 
-  const handleFetchEpisodes = useCallback(async () => {
+  const handleFetchEpisodes = useCallback(async (market: string) => {
     setLoading(true);
     try {
       const storedToken = localStorage.getItem("Token");
       if (!storedToken) return;
 
-      // 1. Fetch Discovery Shows for Malaysia
-      const shows = await fetchDiscoverPodcasts(storedToken);
+      // 1. Fetch Discovery Shows for selected market
+      const shows = await fetchDiscoverPodcasts(storedToken, market);
       setLocalShows(shows);
 
-      // 2. Fetch Episodes from the first few local shows to populate "All Episodes"
+      // 2. Fetch Episodes from the first few local shows
       let allEpisodes: EpisodeProps[] = [];
       if (shows.length > 0) {
         const topShows = shows.slice(0, 3);
         const episodePromises = topShows.map((show: any) =>
-          fetchShowEpisodes(storedToken, show.id)
+          fetchShowEpisodes(storedToken, show.id, market)
         );
         const episodesResults = await Promise.all(episodePromises);
         allEpisodes = episodesResults.flat().slice(0, 15);
       }
       setEpisodes(allEpisodes);
 
-      // 3. Fetch User Saved Episodes
+      // 3. Fetch User Saved Episodes (Saved episodes are global)
       const savedData = await fetchUserSavedEpisodes(storedToken);
       if (savedData) {
         const saved = savedData.map((item: any) => item.episode);
@@ -111,9 +118,9 @@ const EpisodesPage = () => {
 
   useEffect(() => {
     if (token) {
-      handleFetchEpisodes();
+      handleFetchEpisodes(selectedMarket);
     }
-  }, [token, handleFetchEpisodes]);
+  }, [token, selectedMarket, handleFetchEpisodes]);
 
   const LoadingSkeleton = () => (
     <div className="space-y-4">
@@ -227,20 +234,37 @@ const EpisodesPage = () => {
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-10">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Header & Market Selector */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-orange-500/20 flex items-center justify-center shadow-lg shadow-orange-500/5">
-            <Radio className="h-7 w-7 text-orange-500" />
+          <div className="w-14 h-14 rounded-2xl bg-brand/20 flex items-center justify-center shadow-lg shadow-brand/5">
+            <Radio className="h-7 w-7 text-brand" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-white tracking-tight">
               Podcast Discovery
             </h1>
             <p className="text-zinc-400 text-sm mt-1">
-              Top local Malaysian shows and trending episodes.
+              Explore trending shows and episodes from around the world.
             </p>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2 bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-800">
+          {markets.map((m) => (
+            <button
+              key={m.code}
+              onClick={() => setSelectedMarket(m.code)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
+                selectedMarket === m.code
+                  ? "bg-brand text-black shadow-[0_0_20px_rgba(30,215,96,0.3)]"
+                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+              }`}
+            >
+              <span>{m.flag}</span>
+              <span>{m.name}</span>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -255,7 +279,8 @@ const EpisodesPage = () => {
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-6 bg-brand rounded-full" />
                   <h2 className="text-2xl font-bold text-white">
-                    Local Malaysian Shows
+                    Trending in{" "}
+                    {markets.find((m) => m.code === selectedMarket)?.name}
                   </h2>
                 </div>
               </div>
@@ -312,7 +337,8 @@ const EpisodesPage = () => {
             <div className="flex items-center gap-2 px-1">
               <Clock className="h-6 w-6 text-zinc-400" />
               <h2 className="text-2xl font-bold text-white">
-                Trending Local Episodes
+                Featured {markets.find((m) => m.code === selectedMarket)?.name}{" "}
+                Episodes
               </h2>
             </div>
             {episodes.length === 0 && savedEpisodes.length === 0 ? (
