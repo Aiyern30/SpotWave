@@ -10,6 +10,7 @@ import {
   BiSolidCompass,
   BiLogOut,
   BiJoystick,
+  BiPodcast,
 } from "react-icons/bi";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { RiUserVoiceFill } from "react-icons/ri";
@@ -29,6 +30,7 @@ import {
 import { IoIosHome } from "react-icons/io";
 import { FaUserCircle } from "react-icons/fa";
 import { LuLayoutGrid } from "react-icons/lu";
+import { HiMicrophone } from "react-icons/hi2";
 import Link from "next/link";
 
 const Sidebar = ({
@@ -340,8 +342,9 @@ const items = [
   { title: "Categories", Icon: LuLayoutGrid, href: "/Categories" },
   { title: "Playlists", Icon: BiSolidAlbum, href: "/Playlists" },
   { title: "Artists", Icon: RiUserVoiceFill, href: "/Artists" },
+  { title: "Episodes", Icon: HiMicrophone, href: "/Episodes" },
   { title: "Songs", Icon: BiSolidMusic, href: "/Songs" },
-  { title: "Events", Icon: IoTicket, href: "/Events" },
+  // { title: "Events", Icon: IoTicket, href: "/Events" },
   { title: "Games", Icon: BiJoystick, href: "/Games" },
   { title: "Profile", Icon: FaUserCircle, href: "/Profile" },
 ];
