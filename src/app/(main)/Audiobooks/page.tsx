@@ -8,6 +8,8 @@ import { BookOpen, Heart, Search, Filter } from "lucide-react";
 import {
   fetchAudiobooks,
   fetchUserSavedAudiobooks,
+  fetchAudiobookRecommendations,
+  fetchDiscoverAudiobooks,
   saveAudiobooksForUser,
   removeAudiobooksFromUser,
 } from "@/utils/fetchAudiobooks";
@@ -26,6 +28,7 @@ type AudiobookProps = {
 const AudiobooksPage = () => {
   const [token, setToken] = useState<string>("");
   const [audiobooks, setAudiobooks] = useState<AudiobookProps[]>([]);
+  const [recommendations, setRecommendations] = useState<AudiobookProps[]>([]);
   const [savedAudiobooks, setSavedAudiobooks] = useState<AudiobookProps[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
@@ -33,21 +36,40 @@ const AudiobooksPage = () => {
 
   const handleFetchAudiobooks = useCallback(async () => {
     setLoading(true);
-    const data = await fetchAudiobooks(token);
-    const savedData = await fetchUserSavedAudiobooks(token);
+    try {
+      const [data, recData, savedData, discoverData] = await Promise.all([
+        fetchAudiobooks(token, "best sellers", 20),
+        fetchAudiobookRecommendations(token),
+        fetchUserSavedAudiobooks(token),
+        fetchDiscoverAudiobooks(token),
+      ]);
 
-    if (data) {
-      const filtered = data.filter((book: any) => book !== null);
-      setAudiobooks(filtered);
+      // Combine general and discovery results to ensure no empty state if possible
+      const combinedDiscovery = [
+        ...(data || []),
+        ...(discoverData || []),
+      ].filter(
+        (book, index, self) =>
+          book !== null && self.findIndex((b) => b?.id === book?.id) === index
+      );
+
+      setAudiobooks(combinedDiscovery);
+
+      if (recData) {
+        const filtered = recData.filter((book: any) => book !== null);
+        setRecommendations(filtered);
+      }
+
+      if (savedData) {
+        const saved = savedData.map((item: any) => item.audiobook);
+        setSavedAudiobooks(saved);
+        setSavedIds(new Set(saved.map((book: any) => book.id)));
+      }
+    } catch (error) {
+      console.error("Error loading audiobooks:", error);
+    } finally {
+      setLoading(false);
     }
-
-    if (savedData) {
-      const saved = savedData.map((item: any) => item.audiobook);
-      setSavedAudiobooks(saved);
-      setSavedIds(new Set(saved.map((book: any) => book.id)));
-    }
-
-    setLoading(false);
   }, [token]);
 
   const handleToggleSave = async (audiobookId: string) => {
@@ -219,15 +241,65 @@ const AudiobooksPage = () => {
         </div>
       )}
 
-      {/* All Audiobooks Section */}
-      <div className="space-y-4">
-        {savedAudiobooks.length > 0 && !loading && (
-          <h2 className="text-xl font-bold text-white">Discover More</h2>
+      {/* Recommendations Section */}
+      {recommendations.length > 0 && !loading && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="p-1 rounded bg-yellow-500/10">
+              <BookOpen className="h-5 w-5 text-yellow-500" />
+            </div>
+            <h2 className="text-xl font-bold text-white">
+              Recommended for You
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
+            {recommendations.slice(0, 6).map((audiobook) => (
+              <AudiobookCard key={audiobook.id} audiobook={audiobook} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recommended for You Section (Hero Style) */}
+      {recommendations.length > 0 && !loading && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-yellow-500/20 shadow-sm shadow-yellow-500/10">
+                <BookOpen className="h-5 w-5 text-yellow-500" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white tracking-tight">
+                  Recommended for You
+                </h2>
+                <p className="text-zinc-500 text-sm">
+                  Hand-picked based on what's trending right now.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
+            {recommendations.map((audiobook) => (
+              <AudiobookCard key={audiobook.id} audiobook={audiobook} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Discover Section */}
+      <div className="space-y-6 pt-4">
+        {!loading && audiobooks.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Search className="h-5 w-5 text-brand" />
+            <h2 className="text-2xl font-bold text-white tracking-tight">
+              Discover Audiobooks
+            </h2>
+          </div>
         )}
 
         {loading ? (
           <LoadingSkeleton />
-        ) : audiobooks.length === 0 ? (
+        ) : audiobooks.length === 0 && savedAudiobooks.length === 0 ? (
           <EmptyState />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
