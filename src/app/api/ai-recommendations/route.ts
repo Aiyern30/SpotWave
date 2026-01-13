@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     }
 
     const systemInstruction =
-      "You are a specialized music quiz assistant. You MUST return ONLY a raw JSON array. Do not include any text before or after the JSON. If you cannot provide a specific recommendation, provide a creative generic music alternative.";
+      "You are a specialized music assistant. You MUST return ONLY a raw JSON response (either an array or an object as requested). Do not include any text before or after the JSON. If you cannot provide a specific recommendation, provide a creative generic music alternative.";
 
     let prompt = "";
     if (type === "artist") {
@@ -293,7 +293,11 @@ export async function POST(req: Request) {
     }
 
     if (type === "playlist-naming") {
-      return NextResponse.json({ recommendations });
+      // Normalize: if it's an array of 1, take the first item
+      const finalResult = Array.isArray(recommendations)
+        ? recommendations[0]
+        : recommendations;
+      return NextResponse.json({ recommendations: finalResult });
     }
 
     if (!Array.isArray(recommendations)) {

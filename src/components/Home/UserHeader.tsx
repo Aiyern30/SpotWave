@@ -394,12 +394,20 @@ export default function UserHeader({
       if (!response.ok) throw new Error("AI generation failed");
 
       const data = await response.json();
-      const result = data.recommendations;
+      const rawResult = data.recommendations;
 
-      if (result?.name && result?.description) {
-        setGeneratedContent(result);
+      // Robust extraction: handle both array and direct object
+      const result = Array.isArray(rawResult) ? rawResult[0] : rawResult;
+
+      if (result && (result.name || result.description)) {
+        setGeneratedContent({
+          name: result.name || playlist.name,
+          description: result.description || playlist.description || "",
+        });
         const { toast } = await import("react-toastify");
         toast.success("Generated! Review and apply.");
+      } else {
+        throw new Error("Invalid AI response format");
       }
     } catch (error) {
       console.error("Error generating playlist details:", error);
