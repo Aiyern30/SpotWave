@@ -70,6 +70,19 @@ mkdir -p "$OUTPUT_DIR"
 # 6. Read Playlist
 SONG_COUNT=$("$JQ_EXE" '. | length' "$INPUT_FILE")
 echo "Found $SONG_COUNT songs. Starting enhanced download..."
+
+# Calculate Estimated Time (Average 12s per track)
+est_seconds=$((SONG_COUNT * 12))
+est_minutes=$((est_seconds / 60))
+est_rem_seconds=$((est_seconds % 60))
+est_string=""
+if [ $est_minutes -gt 0 ]; then
+    est_string="${est_minutes} min "
+fi
+if [ $est_rem_seconds -gt 0 ] || [ $est_minutes -eq 0 ]; then
+    est_string="${est_string}${est_rem_seconds} sec"
+fi
+echo "Estimated time: ~$est_string"
 echo "Using ISRC codes and metadata for accurate matching"
 echo ""
 
