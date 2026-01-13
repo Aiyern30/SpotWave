@@ -59,6 +59,19 @@ $jsonContent = Get-Content $InputFile -Raw
 $playlist = $jsonContent | ConvertFrom-Json
 
 Write-Host "Found $($playlist.Count) songs. Starting enhanced download..." -ForegroundColor Cyan
+
+# Calculate Estimated Time (Average 12s per track)
+$estSeconds = $playlist.Count * 12
+$estMinutes = [Math]::Floor($estSeconds / 60)
+$estRemainingSeconds = $estSeconds % 60
+$estString = ""
+if ($estMinutes -gt 0) {
+    $estString = "$estMinutes min "
+}
+if ($estRemainingSeconds -gt 0 -or $estMinutes -eq 0) {
+    $estString += "$estRemainingSeconds sec"
+}
+Write-Host "Estimated time: ~$estString" -ForegroundColor Yellow
 Write-Host "Using ISRC codes and metadata for accurate matching" -ForegroundColor Cyan
 Write-Host ""
 
