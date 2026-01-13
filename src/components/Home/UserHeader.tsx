@@ -649,45 +649,49 @@ export default function UserHeader({
               {/* Enhanced Editable Title */}
               <div className="relative">
                 {nameEditing ? (
-                  <div className="flex items-center justify-center lg:justify-start space-x-2">
-                    <Input
-                      ref={nameInputRef}
-                      type="text"
-                      value={inputValue}
-                      onChange={handleInputChange}
-                      onKeyDown={(e: React.KeyboardEvent<Element>) =>
-                        handleKeyPress(e, "name")
-                      }
-                      style={{ width: `${inputWidth}px` }}
-                      className="text-4xl lg:text-6xl font-bold bg-transparent border-2 border-brand/50 focus:border-brand text-white px-3 py-0 h-auto leading-tight rounded-lg transition-all"
-                      disabled={updating}
-                    />
-                    <div className="flex space-x-1 flex-shrink-0">
+                  <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 w-full max-w-4xl">
+                    <div className="relative flex-1 w-full">
+                      <Input
+                        ref={nameInputRef}
+                        type="text"
+                        value={inputValue}
+                        onChange={handleInputChange}
+                        onKeyDown={(e: React.KeyboardEvent<Element>) =>
+                          handleKeyPress(e, "name")
+                        }
+                        className="text-3xl lg:text-5xl font-bold bg-zinc-900/50 border-2 border-brand/30 focus:border-brand text-white px-4 py-2 h-auto leading-tight rounded-xl transition-all shadow-2xl backdrop-blur-md w-full"
+                        disabled={updating}
+                      />
+                      {updating && (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                          <Loader2 className="h-5 w-5 text-brand animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex space-x-2 flex-shrink-0">
                       <Button
-                        size="sm"
+                        size="lg"
                         onClick={() => {
                           setNameEditing(false);
                           updatePlaylistDetails();
                         }}
-                        className="bg-brand hover:bg-brand/80 text-brand-foreground font-semibold"
+                        className="bg-brand hover:bg-brand/90 text-brand-foreground font-bold shadow-lg shadow-brand/20 rounded-xl px-6"
                         disabled={updating}
                       >
-                        {updating ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Check className="h-4 w-4" />
-                        )}
+                        <Check className="h-5 w-5 mr-2" />
+                        Save
                       </Button>
                       <Button
-                        size="sm"
-                        variant="default"
+                        size="lg"
+                        variant="outline"
                         onClick={() => {
                           setInputValue(playlist.name);
                           setNameEditing(false);
                         }}
-                        className="border-zinc-700 text-white hover:bg-zinc-800"
+                        className="border-zinc-700 bg-zinc-800/50 text-white hover:bg-zinc-800 hover:text-white rounded-xl px-6"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-5 w-5 mr-2" />
+                        Cancel
                       </Button>
                     </div>
                   </div>
@@ -723,13 +727,16 @@ export default function UserHeader({
                                 disabled={
                                   generatingAI || playlist.tracks.total === 0
                                 }
-                                className="opacity-0 group-hover:opacity-100 transition-opacity text-brand hover:text-brand/80 hover:bg-brand/10 flex-shrink-0"
+                                className="text-brand hover:text-brand/80 hover:bg-brand/10 flex-shrink-0 bg-brand/5 backdrop-blur-sm border border-brand/20 shadow-lg"
                               >
-                                <Wand2 className="h-4 w-4" />
+                                <Wand2 className="h-4 w-4 mr-2" />
+                                <span className="text-xs font-bold uppercase tracking-wider">
+                                  AI Rename
+                                </span>
                               </Button>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>AI Generate Name & Description</p>
+                              <p>AI Magic Rename & Description</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -741,21 +748,24 @@ export default function UserHeader({
                             if (!open) setGeneratedContent(null);
                           }}
                         >
-                          <DialogContent className="bg-zinc-900 border-zinc-800 text-white sm:max-w-[425px]">
-                            <DialogHeader>
-                              <DialogTitle className="flex items-center gap-2 text-xl">
-                                <Sparkles className="h-5 w-5 text-brand" />
+                          <DialogContent className="bg-zinc-950 border-zinc-800 text-white sm:max-w-[450px] overflow-hidden shadow-2xl">
+                            <div className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-purple-900/10 pointer-events-none" />
+                            <DialogHeader className="relative z-10">
+                              <DialogTitle className="flex items-center gap-3 text-2xl font-bold bg-gradient-to-r from-brand to-purple-400 bg-clip-text text-transparent">
+                                <Sparkles className="h-6 w-6 text-brand" />
                                 AI Magic Renamer
                               </DialogTitle>
                               <DialogDescription className="text-zinc-400">
-                                Customize how AI reads your playlist vibes.
+                                Infuse your playlist with fresh energy and
+                                vibes.
                               </DialogDescription>
                             </DialogHeader>
 
-                            <div className="grid gap-6 py-4">
-                              <div className="space-y-2">
-                                <label className="text-sm font-medium text-zinc-300">
-                                  Vibe / Context (Optional)
+                            <div className="grid gap-6 py-6 relative z-10">
+                              <div className="space-y-3">
+                                <label className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+                                  <Edit3 className="h-4 w-4 text-brand/70" />
+                                  Custom Vibe (Optional)
                                 </label>
                                 <Input
                                   placeholder="e.g. 'Chill late night drive', 'Gym beast mode'"
@@ -763,62 +773,87 @@ export default function UserHeader({
                                   onChange={(e) =>
                                     setUserAiPrompt(e.target.value)
                                   }
-                                  className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-brand"
+                                  className="bg-zinc-900/80 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-brand focus:ring-4 focus:ring-brand/10 rounded-xl"
                                 />
                               </div>
 
                               <div className="space-y-3">
-                                <label className="text-sm font-medium text-zinc-300">
-                                  Description Length
+                                <label className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+                                  <AlignLeft className="h-4 w-4 text-brand/70" />
+                                  Vibe Intensity
                                 </label>
-                                <div className="flex gap-4">
+                                <div className="flex gap-3">
                                   <div
                                     onClick={() =>
                                       setDescriptionLength("short")
                                     }
-                                    className={`flex-1 p-3 rounded-lg border cursor-pointer transition-all ${
+                                    className={`flex-1 p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
                                       descriptionLength === "short"
-                                        ? "bg-brand/10 border-brand text-brand"
-                                        : "bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+                                        ? "bg-brand/20 border-brand shadow-lg shadow-brand/20"
+                                        : "bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:bg-zinc-900"
                                     }`}
                                   >
                                     <div className="flex items-center gap-2 mb-1">
-                                      <ListFilter className="h-4 w-4" />
-                                      <span className="font-semibold text-sm">
-                                        Short
+                                      <ListFilter
+                                        className={`h-4 w-4 ${
+                                          descriptionLength === "short"
+                                            ? "text-brand"
+                                            : ""
+                                        }`}
+                                      />
+                                      <span
+                                        className={`font-bold text-sm ${
+                                          descriptionLength === "short"
+                                            ? "text-white"
+                                            : ""
+                                        }`}
+                                      >
+                                        Punchy
                                       </span>
                                     </div>
-                                    <p className="text-xs opacity-70">
-                                      Punchy & concise.
+                                    <p className="text-[10px] uppercase tracking-widest opacity-50">
+                                      Concise
                                     </p>
                                   </div>
 
                                   <div
                                     onClick={() => setDescriptionLength("long")}
-                                    className={`flex-1 p-3 rounded-lg border cursor-pointer transition-all ${
+                                    className={`flex-1 p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
                                       descriptionLength === "long"
-                                        ? "bg-brand/10 border-brand text-brand"
-                                        : "bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:bg-zinc-800"
+                                        ? "bg-brand/20 border-brand shadow-lg shadow-brand/20"
+                                        : "bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:bg-zinc-900"
                                     }`}
                                   >
                                     <div className="flex items-center gap-2 mb-1">
-                                      <AlignLeft className="h-4 w-4" />
-                                      <span className="font-semibold text-sm">
+                                      <AlignLeft
+                                        className={`h-4 w-4 ${
+                                          descriptionLength === "long"
+                                            ? "text-brand"
+                                            : ""
+                                        }`}
+                                      />
+                                      <span
+                                        className={`font-bold text-sm ${
+                                          descriptionLength === "long"
+                                            ? "text-white"
+                                            : ""
+                                        }`}
+                                      >
                                         Detailed
                                       </span>
                                     </div>
-                                    <p className="text-xs opacity-70">
-                                      Expressive & full.
+                                    <p className="text-[10px] uppercase tracking-widest opacity-50">
+                                      Explosive
                                     </p>
                                   </div>
                                 </div>
                               </div>
 
                               {generatedContent && (
-                                <div className="space-y-4 pt-4 border-t border-zinc-800 animate-in fade-in zoom-in-95 duration-300">
-                                  <div className="space-y-1">
-                                    <label className="text-xs font-medium text-brand uppercase tracking-wider">
-                                      Generated Name
+                                <div className="space-y-5 pt-6 border-t border-zinc-800 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                  <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-brand uppercase tracking-[0.2em] px-1">
+                                      Proposed Name
                                     </label>
                                     <Input
                                       value={generatedContent.name}
@@ -829,12 +864,12 @@ export default function UserHeader({
                                             : null
                                         )
                                       }
-                                      className="bg-zinc-800/50 border-zinc-700 text-white"
+                                      className="bg-zinc-900/50 border-brand/30 text-white font-bold text-lg rounded-xl focus:border-brand"
                                     />
                                   </div>
-                                  <div className="space-y-1">
-                                    <label className="text-xs font-medium text-brand uppercase tracking-wider">
-                                      Generated Description
+                                  <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-brand uppercase tracking-[0.2em] px-1">
+                                      Proposed Vibe Description
                                     </label>
                                     <Textarea
                                       value={generatedContent.description}
@@ -848,47 +883,47 @@ export default function UserHeader({
                                             : null
                                         )
                                       }
-                                      className="bg-zinc-800/50 border-zinc-700 text-white h-24  resize-none"
+                                      className="bg-zinc-900/50 border-brand/30 text-white h-28 resize-none rounded-xl focus:border-brand leading-relaxed"
                                     />
                                   </div>
                                 </div>
                               )}
                             </div>
 
-                            <DialogFooter className="flex-col sm:flex-row gap-2">
+                            <DialogFooter className="flex-col sm:flex-row gap-3 pt-4 relative z-10">
                               {!generatedContent ? (
                                 <Button
                                   onClick={generatePlaylistNameAndDescription}
                                   disabled={generatingAI}
-                                  className="w-full bg-brand hover:bg-brand/80 text-brand-foreground font-semibold"
+                                  className="w-full h-12 bg-brand hover:bg-brand/90 text-brand-foreground font-black uppercase tracking-widest rounded-xl shadow-xl shadow-brand/20"
                                 >
                                   {generatingAI ? (
                                     <>
-                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                      Magic in Progress...
+                                      <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                                      Spinning Vibes...
                                     </>
                                   ) : (
                                     <>
-                                      <Wand2 className="mr-2 h-4 w-4" />
-                                      Generate
+                                      <Wand2 className="mr-3 h-5 w-5" />
+                                      Cast Spell
                                     </>
                                   )}
                                 </Button>
                               ) : (
-                                <div className="flex gap-2 w-full">
+                                <div className="flex gap-3 w-full">
                                   <Button
                                     variant="outline"
                                     onClick={generatePlaylistNameAndDescription}
                                     disabled={generatingAI}
-                                    className="flex-1 border-zinc-700 text-zinc-400 hover:text-brand"
+                                    className="flex-1 h-12 border-zinc-700 bg-zinc-900/50 text-white hover:bg-zinc-800 rounded-xl font-bold"
                                   >
-                                    Try Again
+                                    Reroll
                                   </Button>
                                   <Button
                                     onClick={applyGeneratedContent}
-                                    className="flex-1 bg-brand hover:bg-brand/80 text-brand-foreground font-semibold"
+                                    className="flex-1 h-12 bg-brand hover:bg-brand/90 text-brand-foreground font-black uppercase tracking-widest rounded-xl shadow-xl shadow-brand/20"
                                   >
-                                    Apply Changes
+                                    Apply
                                   </Button>
                                 </div>
                               )}
@@ -904,7 +939,7 @@ export default function UserHeader({
               {/* Enhanced Editable Description */}
               <div className="relative">
                 {descriptionEditing ? (
-                  <div className="space-y-2">
+                  <div className="space-y-4 max-w-3xl animate-in fade-in slide-in-from-top-2 duration-300">
                     <Textarea
                       ref={descriptionInputRef}
                       value={descriptionValue}
@@ -913,36 +948,36 @@ export default function UserHeader({
                         handleKeyPress(e, "description")
                       }
                       placeholder="Add a description to your playlist..."
-                      className="text-lg bg-zinc-800/50 border-2 border-green-500/50 focus:border-green-500 text-zinc-300 resize-none rounded-lg"
-                      rows={3}
+                      className="text-lg bg-zinc-900/50 border-2 border-brand/20 focus:border-brand text-zinc-300 resize-none rounded-xl p-4 min-h-[120px] transition-all focus:ring-4 focus:ring-brand/10"
                       disabled={updating}
                     />
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-3">
                       <Button
-                        size="sm"
+                        size="default"
                         onClick={() => {
                           setDescriptionEditing(false);
                           updatePlaylistDetails();
                         }}
-                        className="bg-brand hover:bg-brand text-black"
+                        className="bg-brand hover:bg-brand/90 text-brand-foreground font-bold rounded-xl px-6 shadow-lg shadow-brand/20"
                         disabled={updating}
                       >
                         {updating ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         ) : (
-                          <Save className="h-4 w-4" />
+                          <Check className="h-4 w-4 mr-2" />
                         )}
-                        Save
+                        Save Changes
                       </Button>
                       <Button
-                        size="sm"
-                        variant="default"
+                        size="default"
+                        variant="ghost"
                         onClick={() => {
                           setDescriptionValue(playlist.description || "");
                           setDescriptionEditing(false);
                         }}
-                        className="border-zinc-700 text-white hover:bg-zinc-800"
+                        className="text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-xl px-6"
                       >
+                        <X className="h-4 w-4 mr-2" />
                         Cancel
                       </Button>
                     </div>
@@ -1004,7 +1039,7 @@ export default function UserHeader({
               </div>
 
               <div className="flex items-center space-x-2">
-                <Music className="h-4 w-4 bg-brand" />
+                <Music className="h-4 w-4 text-brand" />
                 <span className="font-medium">
                   {playlist.tracks.total} songs
                 </span>
