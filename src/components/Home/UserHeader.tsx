@@ -52,6 +52,7 @@ import type { PlaylistProps, UserProfile } from "@/lib/types";
 import Settings from "../Settings";
 import SearchSongs from "../SearchSongs";
 import { analyzePlaylistGenres } from "@/utils/analyzePlaylistGenres";
+import { toast } from "sonner";
 
 interface UserHeaderProps {
   playlist: PlaylistProps;
@@ -404,15 +405,13 @@ export default function UserHeader({
           name: result.name || playlist.name,
           description: result.description || playlist.description || "",
         });
-        const { toast } = await import("react-toastify");
-        toast.success("Generated! Review and apply.");
+        toast.success("✨ Generated! Review and apply.");
       } else {
         throw new Error("Invalid AI response format");
       }
     } catch (error) {
       console.error("Error generating playlist details:", error);
-      const { toast } = await import("react-toastify");
-      toast.error("Failed to generate playlist details");
+      toast.error("❌ Failed to generate playlist details");
     } finally {
       setGeneratingAI(false);
     }
@@ -431,8 +430,7 @@ export default function UserHeader({
 
   const handleExportPlaylist = async () => {
     try {
-      const { toast } = await import("react-toastify");
-      toast.info("Preparing export...", { autoClose: 2000 });
+      toast.info("📦 Preparing export...");
 
       // Prepare JSON content
       const exportData = playlist.tracks.items.map((item) => {
@@ -458,15 +456,14 @@ export default function UserHeader({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast.success("Playlist exported as playlist.json!");
+      toast.success("✅ Playlist exported as playlist.json!");
       toast.info(
-        "Save it to your SpotWave/downloads folder, then run: .\\downloader.ps1",
-        { autoClose: 8000 }
+        "💡 Save it to your SpotWave/downloads folder, then run: .\\downloader.ps1",
+        { duration: 8000 }
       );
     } catch (error: any) {
       console.error("Export failed:", error);
-      const { toast } = await import("react-toastify");
-      toast.error("Failed to export playlist. Please try again.");
+      toast.error("❌ Failed to export playlist. Please try again.");
     }
   };
 
