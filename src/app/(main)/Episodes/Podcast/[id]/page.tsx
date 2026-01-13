@@ -9,9 +9,7 @@ import {
   removeEpisodesFromUser,
   checkUserSavedEpisodes,
 } from "@/utils/fetchEpisodes";
-import { Button } from "@/components/ui/";
-import { Card } from "@/components/ui/";
-import { Skeleton } from "@/components/ui/";
+import { Button, Card, Skeleton, Badge } from "@/components/ui/";
 import {
   Play,
   Heart,
@@ -20,6 +18,7 @@ import {
   Share2,
   MoreHorizontal,
   Calendar,
+  Music,
 } from "lucide-react";
 import { usePlayer } from "@/contexts/PlayerContext";
 
@@ -168,35 +167,40 @@ const PodcastDetailPage = () => {
   return (
     <div className="min-h-screen pb-20">
       {/* Header Section */}
-      <div className="relative p-6 md:p-10 flex flex-col md:flex-row gap-8 items-center md:items-end bg-gradient-to-b from-zinc-800/50 to-transparent">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="absolute top-6 left-6 text-zinc-400 hover:text-white"
-        >
-          <ArrowLeft className="mr-2 h-5 w-5" /> Back
-        </Button>
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand/30 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm border border-zinc-800/50 mb-10">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--brand-primary)/0.15),transparent_70%)]" />
 
-        <div className="relative w-64 h-64 flex-shrink-0 shadow-2xl group transition-transform duration-500 hover:scale-[1.02]">
-          <Image
-            src={show.images?.[0]?.url || "/default-episode.png"}
-            alt={show.name}
-            fill
-            className="object-cover rounded-2xl"
-          />
-        </div>
+        <div className="relative p-6 md:p-10 flex flex-col md:flex-row gap-8 items-center md:items-end">
+          <div className="relative w-64 h-64 flex-shrink-0 shadow-[0_20px_50px_rgba(0,0,0,0.5)] group transition-transform duration-500 hover:scale-[1.02]">
+            <Image
+              src={show.images?.[0]?.url || "/default-episode.png"}
+              alt={show.name}
+              fill
+              className="object-cover rounded-2xl ring-1 ring-white/10"
+            />
+          </div>
 
-        <div className="flex-1 space-y-4 text-center md:text-left">
-          <span className="text-brand font-bold uppercase tracking-widest text-xs">
-            Podcast Show
-          </span>
-          <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight">
-            {show.name}
-          </h1>
-          <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-zinc-400 font-medium">
-            <span className="text-white">{show.publisher}</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-zinc-700" />
-            <span>{show.total_episodes} Episodes</span>
+          <div className="flex-1 space-y-4 text-center md:text-left">
+            <Badge
+              variant="secondary"
+              className="bg-brand/20 text-brand border-brand/30 px-3 py-1 font-bold uppercase tracking-widest text-[10px]"
+            >
+              Podcast Show
+            </Badge>
+            <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight">
+              {show.name}
+            </h1>
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-zinc-400 font-medium pt-2">
+              <span className="text-white hover:text-brand transition-colors cursor-pointer">
+                {show.publisher}
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-zinc-700" />
+              <span className="flex items-center gap-1.5">
+                <Music className="w-4 h-4 text-brand" />
+                {show.total_episodes} Episodes
+              </span>
+            </div>
           </div>
         </div>
       </div>
