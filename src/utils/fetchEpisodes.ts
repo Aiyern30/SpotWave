@@ -28,6 +28,33 @@ export const fetchShowsByMarket = async (
   }
 };
 
+// Get Single Show Details
+export const fetchShowDetails = async (
+  token: string,
+  showId: string,
+  market: string = "MY"
+) => {
+  try {
+    const response = await fetch(
+      `https://api.spotify.com/v1/shows/${showId}?market=${market}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch show details");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching show details:", error);
+    return null;
+  }
+};
+
 // Fetch Podcast Categories for a country
 export const fetchPodcastCategories = async (
   token: string,
