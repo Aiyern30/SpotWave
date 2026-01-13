@@ -82,3 +82,30 @@ export const fetchCategorySearch = async (
     };
   }
 };
+
+// Fetch Playlists in a Category
+export const fetchCategoryPlaylists = async (
+  token: string,
+  categoryId: string
+) => {
+  try {
+    const response = await fetch(
+      `https://api.spotify.com/v1/browse/categories/${categoryId}/playlists?limit=20`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch category playlists");
+    }
+
+    const data = await response.json();
+    return data.playlists.items;
+  } catch (error) {
+    console.error("Error fetching category playlists:", error);
+    return [];
+  }
+};
