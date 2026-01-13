@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/Alert-dialog";
 import { IoIosHome } from "react-icons/io";
 import { FaUserCircle } from "react-icons/fa";
+import { LuLayoutGrid } from "react-icons/lu";
 import Link from "next/link";
 
 const Sidebar = ({
@@ -336,6 +337,7 @@ export default Sidebar;
 const items = [
   { title: "Home", Icon: IoIosHome, href: "/Home" },
   { title: "Explore", Icon: BiSolidCompass, href: "/Explore" },
+  { title: "Categories", Icon: LuLayoutGrid, href: "/Categories" },
   { title: "Playlists", Icon: BiSolidAlbum, href: "/Playlists" },
   { title: "Artists", Icon: RiUserVoiceFill, href: "/Artists" },
   { title: "Songs", Icon: BiSolidMusic, href: "/Songs" },
