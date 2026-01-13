@@ -10,6 +10,8 @@ import {
   fetchUserSavedEpisodes,
   saveEpisodesForUser,
   removeEpisodesFromUser,
+  fetchDiscoverPodcasts,
+  fetchShowEpisodes,
 } from "@/utils/fetchEpisodes";
 import { useRouter } from "next/navigation";
 
@@ -30,6 +32,7 @@ const EpisodesPage = () => {
   const [token, setToken] = useState<string>("");
   const [episodes, setEpisodes] = useState<EpisodeProps[]>([]);
   const [savedEpisodes, setSavedEpisodes] = useState<EpisodeProps[]>([]);
+  const [localShows, setLocalShows] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const router = useRouter();
@@ -45,30 +48,39 @@ const EpisodesPage = () => {
 
   const handleFetchEpisodes = useCallback(async () => {
     setLoading(true);
-    // Sample episode IDs - in production, you'd fetch from a show or user's library
-    const episodeIds = [
-      "512ojhOuo1ktJprKbVcKyQ",
-      "0Q86acNRm6V9GYx55SXKwf",
-      "4zugY5eJisugQj9rj8TYuh",
-      "1XRq3FZFfVJLPjCLtDlFAT",
-    ];
+    try {
+      const storedToken = localStorage.getItem("Token");
+      if (!storedToken) return;
 
-    const data = await fetchSeveralEpisodes(token, episodeIds);
-    const savedData = await fetchUserSavedEpisodes(token);
+      // 1. Fetch Discovery Shows for Malaysia
+      const shows = await fetchDiscoverPodcasts(storedToken);
+      setLocalShows(shows);
 
-    if (data) {
-      const filtered = data.filter((episode: any) => episode !== null);
-      setEpisodes(filtered);
+      // 2. Fetch Episodes from the first few local shows to populate "All Episodes"
+      let allEpisodes: EpisodeProps[] = [];
+      if (shows.length > 0) {
+        const topShows = shows.slice(0, 3);
+        const episodePromises = topShows.map((show: any) =>
+          fetchShowEpisodes(storedToken, show.id)
+        );
+        const episodesResults = await Promise.all(episodePromises);
+        allEpisodes = episodesResults.flat().slice(0, 15);
+      }
+      setEpisodes(allEpisodes);
+
+      // 3. Fetch User Saved Episodes
+      const savedData = await fetchUserSavedEpisodes(storedToken);
+      if (savedData) {
+        const saved = savedData.map((item: any) => item.episode);
+        setSavedEpisodes(saved);
+        setSavedIds(new Set(saved.map((episode: any) => episode.id)));
+      }
+    } catch (error) {
+      console.error("Error loading podcast content:", error);
+    } finally {
+      setLoading(false);
     }
-
-    if (savedData) {
-      const saved = savedData.map((item: any) => item.episode);
-      setSavedEpisodes(saved);
-      setSavedIds(new Set(saved.map((episode: any) => episode.id)));
-    }
-
-    setLoading(false);
-  }, [token]);
+  }, []);
 
   const handleToggleSave = async (episodeId: string) => {
     const isSaved = savedIds.has(episodeId);
@@ -214,70 +226,107 @@ const EpisodesPage = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10 animate-in fade-in duration-700 pb-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-orange-500/20 flex items-center justify-center">
-            <Radio className="h-6 w-6 text-orange-500" />
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-orange-500/20 flex items-center justify-center shadow-lg shadow-orange-500/5">
+            <Radio className="h-7 w-7 text-orange-500" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-white">Podcast Episodes</h1>
+            <h1 className="text-3xl font-bold text-white tracking-tight">
+              Podcast Discovery
+            </h1>
             <p className="text-zinc-400 text-sm mt-1">
-              {loading ? "Loading..." : `${episodes.length} episodes`}
+              Top local Malaysian shows and trending episodes.
             </p>
           </div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="border-zinc-700 hover:bg-zinc-800"
-          >
-            <Search className="h-4 w-4" />
-          </Button>
-        </div>
       </div>
 
-      {/* Saved Episodes Section */}
-      {savedEpisodes.length > 0 && !loading && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Heart className="h-5 w-5 bg-brand" />
-            <h2 className="text-xl font-bold text-white">
-              Your Saved Episodes
-            </h2>
-            <span className="text-zinc-400 text-sm">
-              ({savedEpisodes.length})
-            </span>
+      {loading ? (
+        <LoadingSkeleton />
+      ) : (
+        <>
+          {/* Local Malaysian Shows Section */}
+          {localShows.length > 0 && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-6 bg-brand rounded-full" />
+                  <h2 className="text-2xl font-bold text-white">
+                    Local Malaysian Shows
+                  </h2>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                {localShows.map((show) => (
+                  <Card
+                    key={show.id}
+                    onClick={() => router.push(`/Explore`)} // Redirect to explore or show page
+                    className="group bg-zinc-900/40 border-zinc-800/50 hover:bg-zinc-800/50 transition-all duration-300 cursor-pointer overflow-hidden"
+                  >
+                    <div className="p-4 space-y-4">
+                      <div className="relative aspect-square rounded-xl overflow-hidden shadow-2xl">
+                        <Image
+                          src={show.images?.[0]?.url || "/default-episode.png"}
+                          alt={show.name}
+                          fill
+                          className="object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="text-white font-semibold text-sm truncate group-hover:text-brand transition-colors">
+                          {show.name}
+                        </h3>
+                        <p className="text-zinc-500 text-xs truncate">
+                          {show.publisher}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Saved Episodes Section */}
+          {savedEpisodes.length > 0 && (
+            <div className="space-y-6 pt-4">
+              <div className="flex items-center gap-2 px-1">
+                <Heart className="h-6 w-6 text-brand fill-brand" />
+                <h2 className="text-2xl font-bold text-white">
+                  Your Saved Episodes
+                </h2>
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                {savedEpisodes.map((episode) => (
+                  <EpisodeCard key={episode.id} episode={episode} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Trending Episodes Section */}
+          <div className="space-y-6 pt-4">
+            <div className="flex items-center gap-2 px-1">
+              <Clock className="h-6 w-6 text-zinc-400" />
+              <h2 className="text-2xl font-bold text-white">
+                Trending Local Episodes
+              </h2>
+            </div>
+            {episodes.length === 0 && savedEpisodes.length === 0 ? (
+              <EmptyState />
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {episodes.map((episode) => (
+                  <EpisodeCard key={episode.id} episode={episode} />
+                ))}
+              </div>
+            )}
           </div>
-          <div className="space-y-3">
-            {savedEpisodes.map((episode) => (
-              <EpisodeCard key={episode.id} episode={episode} />
-            ))}
-          </div>
-        </div>
+        </>
       )}
-
-      {/* All Episodes Section */}
-      <div className="space-y-4">
-        {savedEpisodes.length > 0 && !loading && (
-          <h2 className="text-xl font-bold text-white">Recommended Episodes</h2>
-        )}
-
-        {loading ? (
-          <LoadingSkeleton />
-        ) : episodes.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <div className="space-y-3">
-            {episodes.map((episode) => (
-              <EpisodeCard key={episode.id} episode={episode} />
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 };
