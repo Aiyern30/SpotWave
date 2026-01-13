@@ -12,8 +12,11 @@ import {
   followShow,
   unfollowShow,
 } from "@/utils/fetchEpisodes";
-import { Button, Card, Skeleton, Badge } from "@/components/ui/";
 import {
+  Button,
+  Card,
+  Skeleton,
+  Badge,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -21,6 +24,10 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@/components/ui/";
 import {
   Play,
@@ -309,73 +316,91 @@ const PodcastDetailPage = () => {
               </span>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Action Bar */}
-      <div className="px-6 md:px-10 py-6 flex items-center gap-6">
-        <Button
-          onClick={handleToggleFollow}
-          className={`${
-            isFollowing
-              ? "bg-zinc-800 text-white border border-zinc-700"
-              : "bg-brand text-black"
-          } font-bold h-12 px-8 rounded-full hover:scale-105 transition-all shadow-lg shadow-brand/20 border-none`}
-        >
-          {isFollowing ? (
-            <>
-              <Check className="mr-2 h-5 w-5" /> Following
-            </>
-          ) : (
-            <>
-              <Plus className="mr-2 h-5 w-5" /> Follow
-            </>
-          )}
-        </Button>
-        <Button
-          onClick={handleShare}
-          variant="ghost"
-          size="icon"
-          className="h-12 w-12 rounded-full bg-brand text-black hover:bg-brand/80 hover:scale-105 transition-all duration-300 shadow-lg shadow-brand/20 border-none"
-        >
-          <Share2 className="h-5 w-5" />
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-12 w-12 rounded-full bg-brand text-black hover:bg-brand/80 hover:scale-105 transition-all duration-300 shadow-lg shadow-brand/20 border-none"
-            >
-              <MoreHorizontal className="h-5 w-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="start"
-            className="bg-zinc-900 border-zinc-800 w-48"
-          >
-            <DropdownMenuItem
-              onClick={handleShare}
-              className="text-white hover:bg-brand/10 cursor-pointer"
-            >
-              <Share2 className="mr-2 h-4 w-4" /> Share Show
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={handleToggleFollow}
-              className="text-white hover:bg-brand/10 cursor-pointer"
-            >
-              {isFollowing ? (
-                <>
-                  <X className="mr-2 h-4 w-4" /> Unfollow
-                </>
-              ) : (
-                <>
-                  <Heart className="mr-2 h-4 w-4" /> Follow
-                </>
-              )}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          {/* Header Action Buttons */}
+          <div className="flex flex-row md:flex-col gap-3 items-center md:items-end self-center md:self-end mt-4 md:mt-0">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleToggleFollow}
+                    variant="ghost"
+                    size="icon"
+                    className={`h-12 w-12 rounded-full transition-all duration-300 shadow-lg border-none hover:scale-105 ${
+                      isFollowing
+                        ? "bg-brand shadow-brand/20"
+                        : "bg-zinc-800/50 text-white hover:bg-zinc-700/50"
+                    }`}
+                  >
+                    {isFollowing ? (
+                      <Heart className="h-5 w-5 " />
+                    ) : (
+                      <Heart className="h-5 w-5" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  <p>{isFollowing ? "Following" : "Follow"}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleShare}
+                    variant="ghost"
+                    size="icon"
+                    className="h-12 w-12 rounded-full bg-brand text-black hover:bg-brand/80 hover:scale-105 transition-all duration-300 shadow-lg shadow-brand/20 border-none"
+                  >
+                    <Share2 className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  <p>Share Show</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-12 w-12 rounded-full bg-brand text-black hover:bg-brand/80 hover:scale-105 transition-all duration-300 shadow-lg shadow-brand/20 border-none"
+                >
+                  <MoreHorizontal className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="bg-zinc-900 border-zinc-800 w-48"
+              >
+                <DropdownMenuItem
+                  onClick={handleShare}
+                  className="text-white hover:bg-brand/10 cursor-pointer"
+                >
+                  <Share2 className="mr-2 h-4 w-4" /> Share Show
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleToggleFollow}
+                  className="text-white hover:bg-brand/10 cursor-pointer"
+                >
+                  {isFollowing ? (
+                    <>
+                      <X className="mr-2 h-4 w-4" /> Unfollow
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="mr-2 h-4 w-4" /> Follow
+                    </>
+                  )}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
       </div>
 
       <div className="px-6 md:px-10 grid grid-cols-1 lg:grid-cols-3 gap-10">
