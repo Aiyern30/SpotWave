@@ -432,14 +432,68 @@ export default function UserHeader({
     try {
       toast.info("📦 Preparing export...");
 
-      // Prepare JSON content
-      const exportData = playlist.tracks.items.map((item) => {
+      // Prepare JSON content with enhanced metadata for better YouTube matching
+      const exportData = playlist.tracks.items.map((item, index) => {
         const track = item.track;
         const artists = track.artists.map((a) => a.name).join(", ");
+        const primaryArtist = track.artists[0]?.name || "";
+
+        // Extract release year from album release date
+        const releaseYear = track.album.release_date
+          ? new Date(track.album.release_date).getFullYear()
+          : null;
+
+        // Format duration as MM:SS for reference
+        const durationSeconds = Math.floor(track.duration_ms / 1000);
+        const minutes = Math.floor(durationSeconds / 60);
+        const seconds = durationSeconds % 60;
+        const durationFormatted = `${minutes}:${seconds
+          .toString()
+          .padStart(2, "0")}`;
+
         return {
+          // Basic info
           title: track.name,
           artist: artists,
-          query: `${track.name} ${artists} audio`,
+          primaryArtist: primaryArtist,
+          album: track.album.name,
+
+          // Unique identifiers (ISRC is the most reliable for finding exact tracks)
+          isrc: track.external_ids?.isrc || null,
+          spotifyId: track.id,
+
+          // Metadata for verification
+          durationMs: track.duration_ms,
+          durationFormatted: durationFormatted,
+          releaseYear: releaseYear,
+          explicit: track.explicit,
+
+          // Search queries (ordered by accuracy)
+          queries: {
+            // Best: ISRC-based search (most accurate if available)
+            isrcQuery: track.external_ids?.isrc
+              ? `${track.name} ${primaryArtist} ISRC:${track.external_ids.isrc}`
+              : null,
+
+            // Good: Include album and year for better matching
+            detailedQuery: releaseYear
+              ? `${track.name} ${primaryArtist} ${track.album.name} ${releaseYear} audio`
+              : `${track.name} ${primaryArtist} ${track.album.name} audio`,
+
+            // Fallback: Basic query
+            basicQuery: `${track.name} ${artists} audio`,
+
+            // Topic channel (official audio)
+            topicQuery: `${track.name} ${primaryArtist} topic audio`,
+          },
+
+          // Default query for backward compatibility
+          query: track.external_ids?.isrc
+            ? `${track.name} ${primaryArtist} ${track.album.name} official audio`
+            : `${track.name} ${artists} ${track.album.name} audio`,
+
+          // Position in playlist
+          position: index + 1,
         };
       });
 
@@ -458,7 +512,7 @@ export default function UserHeader({
 
       toast.success("✅ Playlist exported as playlist.json!");
       toast.info(
-        "💡 Save it to your SpotWave/downloads folder, then run: .\\downloader.ps1",
+        "💡 Enhanced with ISRC codes for accurate matching! Save to SpotWave/downloads, then run: .\\downloader.ps1",
         { duration: 8000 }
       );
     } catch (error: any) {

@@ -39,6 +39,13 @@ export interface PlaylistTrack {
     duration_ms: number;
     uri: string;
     preview_url?: string | null;
+    explicit?: boolean;
+    external_ids?: {
+      isrc?: string;
+    };
+    external_urls?: {
+      spotify: string;
+    };
   };
   added_at: string;
 }
