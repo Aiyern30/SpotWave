@@ -17,11 +17,36 @@ if (-not (Test-Path $InputFile)) {
     exit
 }
 
+
 # 2. Check/Download yt-dlp
 if (-not (Test-Path $YtDlpExe)) {
     Write-Host "yt-dlp.exe not found. Downloading..." -ForegroundColor Yellow
     Invoke-WebRequest -Uri $YtDlpUrl -OutFile $YtDlpExe
     Write-Host "yt-dlp downloaded." -ForegroundColor Green
+}
+
+# 2.5 Check for ffmpeg (required for MP3 conversion)
+if (-not (Test-Path $FfmpegExe)) {
+    Write-Host "ffmpeg.exe not found. Downloading..." -ForegroundColor Yellow
+    Write-Host "This is a one-time download (~100MB)..." -ForegroundColor Yellow
+    
+    $ffmpegZip = ".\ffmpeg-essentials.zip"
+    Invoke-WebRequest -Uri $FfmpegUrl -OutFile $ffmpegZip
+    
+    # Extract ffmpeg.exe from the zip
+    Write-Host "Extracting ffmpeg..." -ForegroundColor Yellow
+    Expand-Archive -Path $ffmpegZip -DestinationPath ".\ffmpeg-temp" -Force
+    
+    # Find and move ffmpeg.exe to current directory
+    $ffmpegPath = Get-ChildItem -Path ".\ffmpeg-temp" -Recurse -Filter "ffmpeg.exe" | Select-Object -First 1
+    if ($ffmpegPath) {
+        Move-Item -Path $ffmpegPath.FullName -Destination $FfmpegExe -Force
+        Write-Host "ffmpeg extracted successfully." -ForegroundColor Green
+    }
+    
+    # Clean up
+    Remove-Item -Path $ffmpegZip -Force -ErrorAction SilentlyContinue
+    Remove-Item -Path ".\ffmpeg-temp" -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 # 3. Create downloads folder
@@ -95,14 +120,23 @@ foreach ($song in $playlist) {
         
         try {
             $ytSearchQuery = "ytsearch1:$searchQuery"
-            $outputTemplate = "$OutputDir\%(title)s.%(ext)s"
+            # Use our sanitized filename for output
+            $outputTemplate = "$OutputDir\$safeTitle.%(ext)s"
             
-            # Download with metadata
-            & $YtDlpExe --extract-audio --audio-format mp3 --audio-quality 0 --no-playlist `
-                --add-metadata --embed-thumbnail `
-                -o $outputTemplate $ytSearchQuery 2>&1 | Out-Null
+            # Download with metadata and force MP3 conversion
+            $ytdlpOutput = & $YtDlpExe `
+                --extract-audio `
+                --audio-format mp3 `
+                --audio-quality 0 `
+                --no-playlist `
+                --add-metadata `
+                --embed-thumbnail `
+                --postprocessor-args "ffmpeg:-ar 44100 -ac 2" `
+                -o $outputTemplate `
+                $ytSearchQuery 2>&1
             
-            if ($LASTEXITCODE -eq 0) {
+            # Check if the MP3 file was actually created
+            if ((Test-Path $outputFile) -and ($LASTEXITCODE -eq 0)) {
                 Write-Host "[$i/$($playlist.Count)] Downloaded: $safeTitle" -ForegroundColor Green
                 if ($song.album) {
                     Write-Host "  Album: $($song.album)" -ForegroundColor Gray
@@ -112,6 +146,11 @@ foreach ($song in $playlist) {
                 }
                 $downloaded = $true
                 $successCount++
+            } else {
+                # Download failed or file not created
+                if ($attemptNum -lt $searchQueries.Count) {
+                    Write-Host "  Attempt $attemptNum failed, trying next strategy..." -ForegroundColor Yellow
+                }
             }
         } catch {
             if ($attemptNum -lt $searchQueries.Count) {
