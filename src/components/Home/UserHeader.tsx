@@ -512,8 +512,8 @@ export default function UserHeader({
 
       toast.success("✅ Playlist exported as playlist.json!");
       toast.info(
-        "💡 Enhanced with ISRC codes for accurate matching! Save to SpotWave/downloads, then run: .\\downloader.ps1",
-        { duration: 8000 }
+        "💡 For best accuracy, use: .\\downloader-spotdl.ps1 (see DOWNLOAD_GUIDE.md)",
+        { duration: 10000 }
       );
     } catch (error: any) {
       console.error("Export failed:", error);
