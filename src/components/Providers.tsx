@@ -5,7 +5,7 @@ import { PlayerProvider } from "@/contexts/PlayerContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { MusicPlayer } from "@/components/MusicPlayer";
 import { FullScreenPlayer } from "@/components/FullScreenPlayer";
-import { Toaster } from "@/components/ui/Toaster";
+import { Toaster } from "@/components/ui/sonner";
 import AuthProvider from "@/app/AuthProvider";
 import InQueueWindow from "@/components/InQueueWindow";
 
@@ -30,7 +30,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             isOpen={isQueueOpen}
             onClose={() => setIsQueueOpen(false)}
           />
-          <Toaster />
+          <Toaster position="top-right" richColors />
           {children}
         </PlayerProvider>
       </ThemeProvider>
