@@ -134,6 +134,7 @@ export const FullScreenPlayer = ({
   const [lyrics, setLyrics] = useState<string | null>(null);
   const [syncedLyrics, setSyncedLyrics] = useState<LyricsLine[] | null>(null);
   const [loadingLyrics, setLoadingLyrics] = useState(false);
+  const [hasLyrics, setHasLyrics] = useState<boolean>(true);
   const [currentLyricIndex, setCurrentLyricIndex] = useState<number>(-1);
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
   const mobileLyricsContainerRef = useRef<HTMLDivElement>(null);
@@ -417,6 +418,8 @@ export const FullScreenPlayer = ({
     durationMs: number
   ) => {
     setLoadingLyrics(true);
+    // Reset hasLyrics so the button shows up while loading
+    setHasLyrics(true);
     try {
       const params = new URLSearchParams({
         artist_name: artist,
@@ -430,21 +433,31 @@ export const FullScreenPlayer = ({
       const data = await response.json();
 
       if (data.syncedLyrics && data.syncedLyrics.trim()) {
+        setHasLyrics(true);
         setSyncedLyrics(parseSyncedLyrics(data.syncedLyrics));
         setLyrics(
           data.plainLyrics ||
             data.syncedLyrics.replace(/\[\d{2}:\d{2}\.\d{2,3}\]/g, "").trim()
         );
       } else if (data.plainLyrics && data.plainLyrics.trim()) {
+        setHasLyrics(true);
         setLyrics(data.plainLyrics);
         setSyncedLyrics(null);
       } else {
+        setHasLyrics(false);
         setLyrics(data.instrumental ? "🎵 Instrumental" : "Lyrics not found");
         setSyncedLyrics(null);
+        if (viewModeRef.current === "lyrics") {
+          setViewMode("image");
+        }
       }
     } catch (error) {
+      setHasLyrics(false);
       setLyrics("Unable to fetch lyrics");
       setSyncedLyrics(null);
+      if (viewModeRef.current === "lyrics") {
+        setViewMode("image");
+      }
     } finally {
       setLoadingLyrics(false);
     }
@@ -837,19 +850,21 @@ export const FullScreenPlayer = ({
             <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setViewMode("lyrics")}
-            className={`h-8 w-8 sm:h-10 sm:w-10 transition-all ${
-              viewMode === "lyrics"
-                ? "text-brand bg-zinc-800"
-                : "text-white hover:text-brand hover:bg-zinc-800"
-            }`}
-            title="Lyrics"
-          >
-            <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
-          </Button>
+          {(loadingLyrics || hasLyrics) && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setViewMode("lyrics")}
+              className={`h-8 w-8 sm:h-10 sm:w-10 transition-all ${
+                viewMode === "lyrics"
+                  ? "text-brand bg-zinc-800"
+                  : "text-white hover:text-brand hover:bg-zinc-800"
+              }`}
+              title="Lyrics"
+            >
+              <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
+            </Button>
+          )}
           <div className="w-px h-4 sm:h-6 bg-zinc-700 mx-1" />
         </div>
         <Button
