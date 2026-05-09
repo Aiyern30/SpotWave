@@ -38,6 +38,7 @@ import {
   Maximize2,
   ChevronUp,
   Loader2,
+  MonitorSmartphone,
 } from "lucide-react";
 import {
   checkUserSavedTracks,
@@ -93,6 +94,8 @@ export const MusicPlayer = ({
     isConnecting,
     repeatMode,
     toggleRepeat,
+    activeDevice,
+    deviceId,
   } = usePlayer();
 
   const [isMuted, setIsMuted] = useState(false);
@@ -810,6 +813,14 @@ export const MusicPlayer = ({
           />
         </div>
       </div>
+
+      {/* Active Device Indicator */}
+      {activeDevice && activeDevice.id !== deviceId && (
+        <div className="absolute bottom-0 right-0 bg-brand text-black text-[11px] font-bold px-3 py-1 rounded-tl-lg flex items-center gap-1.5 shadow-lg z-[70] animate-in slide-in-from-bottom-2">
+          <MonitorSmartphone className="w-3.5 h-3.5" />
+          <span>Playing on {activeDevice.name}</span>
+        </div>
+      )}
 
       {/* Status Overlays - Only show on initial connection */}
       {isConnecting && !hasConnected && (

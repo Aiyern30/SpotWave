@@ -49,6 +49,8 @@ export default function SpotifyRippleVisualizer({
     analyser: globalAnalyser,
     dataArray: globalDataArray,
     isPlaying: isGlobalPlaying,
+    activeDevice,
+    deviceId,
   } = usePlayer();
 
   // Determine which audio source to use
@@ -220,7 +222,17 @@ export default function SpotifyRippleVisualizer({
 
     if (!analyser || !dataArray) return;
 
-    analyser.getByteFrequencyData(dataArray as any);
+    // Fetch to a temporary array so we don't overwrite synthetic context data with zeros
+    const tempData = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteFrequencyData(tempData as any);
+    
+    const sum = tempData.reduce((a, b) => a + b, 0);
+    if (sum > 0 || !useSpotifyAudio) {
+      // Only overwrite if we got real data or we are using the mic
+      for (let i = 0; i < dataArray.length; i++) {
+         dataArray[i] = tempData[i];
+      }
+    }
 
     // Calculate average amplitude
     const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
@@ -454,11 +466,11 @@ export default function SpotifyRippleVisualizer({
 
         {!isActive && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center text-gray-400">
+            <div className="text-center text-gray-400 p-8 bg-gray-900/80 rounded-2xl backdrop-blur-sm border border-gray-700">
               <Mic size={64} className="mx-auto mb-4 opacity-50" />
               {hasSpotifyAudio ? (
                 <>
-                  <p className="text-xl">
+                  <p className="text-xl font-semibold text-white">
                     Play music on Spotify to see visualizations
                   </p>
                   <p className="text-sm mt-2">
@@ -467,12 +479,25 @@ export default function SpotifyRippleVisualizer({
                 </>
               ) : (
                 <>
-                  <p className="text-xl">Click "Use Microphone" to begin</p>
+                  <p className="text-xl font-semibold text-white">Click "Use Microphone" to begin</p>
                   <p className="text-sm mt-2">
                     Make some noise and watch the ripples!
                   </p>
                 </>
               )}
+            </div>
+          </div>
+        )}
+        {isActive && activeDevice && activeDevice.id !== deviceId && useSpotifyAudio && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center text-gray-400 max-w-md p-8 bg-gray-900/80 rounded-2xl backdrop-blur-sm border border-gray-700">
+              <Volume2 size={64} className="mx-auto mb-4 opacity-50" />
+              <p className="text-xl font-semibold text-white">
+                Playing on {activeDevice.name}
+              </p>
+              <p className="text-sm mt-2">
+                Direct Spotify visualization is disabled during remote playback. Use the microphone to visualize room audio!
+              </p>
             </div>
           </div>
         )}

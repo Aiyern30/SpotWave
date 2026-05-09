@@ -116,6 +116,8 @@ export const FullScreenPlayer = ({
     toggleRepeat,
     analyser: globalAnalyser,
     dataArray: globalDataArray,
+    activeDevice,
+    deviceId,
   } = usePlayer();
 
   const [isMuted, setIsMuted] = useState(false);
@@ -134,6 +136,7 @@ export const FullScreenPlayer = ({
   const [lyrics, setLyrics] = useState<string | null>(null);
   const [syncedLyrics, setSyncedLyrics] = useState<LyricsLine[] | null>(null);
   const [loadingLyrics, setLoadingLyrics] = useState(false);
+  const [hasLyrics, setHasLyrics] = useState<boolean>(true);
   const [currentLyricIndex, setCurrentLyricIndex] = useState<number>(-1);
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
   const mobileLyricsContainerRef = useRef<HTMLDivElement>(null);
@@ -244,6 +247,11 @@ export const FullScreenPlayer = ({
       setUseSpotifyAudio(false);
     } catch (err) {
       console.error("Error setting up audio:", err);
+      alert(
+        err instanceof Error
+          ? `Could not access ${mode === "mic" ? "microphone" : "audio"}: ${err.message}`
+          : "Could not access audio source. Please ensure you have granted the necessary permissions."
+      );
     }
   };
 
@@ -417,6 +425,8 @@ export const FullScreenPlayer = ({
     durationMs: number
   ) => {
     setLoadingLyrics(true);
+    // Reset hasLyrics so the button shows up while loading
+    setHasLyrics(true);
     try {
       const params = new URLSearchParams({
         artist_name: artist,
@@ -430,21 +440,31 @@ export const FullScreenPlayer = ({
       const data = await response.json();
 
       if (data.syncedLyrics && data.syncedLyrics.trim()) {
+        setHasLyrics(true);
         setSyncedLyrics(parseSyncedLyrics(data.syncedLyrics));
         setLyrics(
           data.plainLyrics ||
             data.syncedLyrics.replace(/\[\d{2}:\d{2}\.\d{2,3}\]/g, "").trim()
         );
       } else if (data.plainLyrics && data.plainLyrics.trim()) {
+        setHasLyrics(true);
         setLyrics(data.plainLyrics);
         setSyncedLyrics(null);
       } else {
+        setHasLyrics(false);
         setLyrics(data.instrumental ? "🎵 Instrumental" : "Lyrics not found");
         setSyncedLyrics(null);
+        if (viewModeRef.current === "lyrics") {
+          setViewMode("image");
+        }
       }
     } catch (error) {
+      setHasLyrics(false);
       setLyrics("Unable to fetch lyrics");
       setSyncedLyrics(null);
+      if (viewModeRef.current === "lyrics") {
+        setViewMode("image");
+      }
     } finally {
       setLoadingLyrics(false);
     }
@@ -644,7 +664,18 @@ export const FullScreenPlayer = ({
           data = new Uint8Array(activeAnalyser.frequencyBinCount);
           dataRef.current = data;
         }
-        activeAnalyser.getByteFrequencyData(data as any);
+        
+        // Fetch to a temporary array so we don't overwrite synthetic context data with zeros
+        const tempData = new Uint8Array(activeAnalyser.frequencyBinCount);
+        activeAnalyser.getByteFrequencyData(tempData as any);
+        
+        const sum = tempData.reduce((a, b) => a + b, 0);
+        if (sum > 0 || !useSpotifyAudio) {
+          // Only overwrite if we got real data or we are using the mic
+          for (let i = 0; i < data.length; i++) {
+             data[i] = tempData[i];
+          }
+        }
       }
 
       if (!data || data.length === 0) {
@@ -781,13 +812,22 @@ export const FullScreenPlayer = ({
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      stopListening();
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
         animationRef.current = null;
       }
     };
   }, [isOpen, isPlaying, viewMode, useSpotifyAudio, captureMode]);
+
+  // Clean up audio capture only when the component unmounts or closes
+  useEffect(() => {
+    if (!isOpen) {
+      stopListening();
+    }
+    return () => {
+      stopListening();
+    };
+  }, [isOpen]);
 
   if (!isOpen || !currentTrack) return null;
 
@@ -837,19 +877,21 @@ export const FullScreenPlayer = ({
             <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setViewMode("lyrics")}
-            className={`h-8 w-8 sm:h-10 sm:w-10 transition-all ${
-              viewMode === "lyrics"
-                ? "text-brand bg-zinc-800"
-                : "text-white hover:text-brand hover:bg-zinc-800"
-            }`}
-            title="Lyrics"
-          >
-            <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
-          </Button>
+          {(loadingLyrics || hasLyrics) && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setViewMode("lyrics")}
+              className={`h-8 w-8 sm:h-10 sm:w-10 transition-all ${
+                viewMode === "lyrics"
+                  ? "text-brand bg-zinc-800"
+                  : "text-white hover:text-brand hover:bg-zinc-800"
+              }`}
+              title="Lyrics"
+            >
+              <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
+            </Button>
+          )}
           <div className="w-px h-4 sm:h-6 bg-zinc-700 mx-1" />
         </div>
         <Button
@@ -869,13 +911,24 @@ export const FullScreenPlayer = ({
             <div className="relative w-full aspect-square max-w-2xl mx-auto flex items-center justify-center bg-black/40 rounded-2xl overflow-hidden border border-zinc-800/50 shadow-2xl backdrop-blur-sm">
               <canvas ref={canvasRef} className="w-full h-full block" />
               {!isPlaying && (
-                <div className="relative z-10 text-center p-8">
-                  <Music className="h-24 w-24 text-brand mx-auto mb-4 opacity-50 animate-pulse" />
-                  <p className="text-zinc-400 font-medium text-lg mb-2">
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 bg-black/60 backdrop-blur-sm">
+                  <Music className="h-20 w-20 text-brand mx-auto mb-4 opacity-50 animate-pulse" />
+                  <p className="text-zinc-200 font-semibold text-lg mb-2">
                     Play music to see visualizations
                   </p>
-                  <p className="text-zinc-600 text-sm">
+                  <p className="text-zinc-400 text-sm">
                     Audio ripples powered by Spotify playback
+                  </p>
+                </div>
+              )}
+              {isPlaying && activeDevice && activeDevice.id !== deviceId && useSpotifyAudio && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 bg-black/70 backdrop-blur-md text-center">
+                  <Activity className="h-16 w-16 text-zinc-500 mx-auto mb-4" />
+                  <p className="text-zinc-200 font-semibold text-lg mb-2">
+                    Playing on {activeDevice.name}
+                  </p>
+                  <p className="text-zinc-400 text-sm max-w-xs mx-auto">
+                    Direct Spotify visualization is disabled during remote playback. Use your microphone to visualize room audio!
                   </p>
                 </div>
               )}
