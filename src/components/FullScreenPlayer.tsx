@@ -247,6 +247,11 @@ export const FullScreenPlayer = ({
       setUseSpotifyAudio(false);
     } catch (err) {
       console.error("Error setting up audio:", err);
+      alert(
+        err instanceof Error
+          ? `Could not access ${mode === "mic" ? "microphone" : "audio"}: ${err.message}`
+          : "Could not access audio source. Please ensure you have granted the necessary permissions."
+      );
     }
   };
 
@@ -807,13 +812,22 @@ export const FullScreenPlayer = ({
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      stopListening();
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
         animationRef.current = null;
       }
     };
   }, [isOpen, isPlaying, viewMode, useSpotifyAudio, captureMode]);
+
+  // Clean up audio capture only when the component unmounts or closes
+  useEffect(() => {
+    if (!isOpen) {
+      stopListening();
+    }
+    return () => {
+      stopListening();
+    };
+  }, [isOpen]);
 
   if (!isOpen || !currentTrack) return null;
 
