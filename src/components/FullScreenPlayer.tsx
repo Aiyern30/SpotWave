@@ -116,6 +116,8 @@ export const FullScreenPlayer = ({
     toggleRepeat,
     analyser: globalAnalyser,
     dataArray: globalDataArray,
+    activeDevice,
+    deviceId,
   } = usePlayer();
 
   const [isMuted, setIsMuted] = useState(false);
@@ -657,7 +659,18 @@ export const FullScreenPlayer = ({
           data = new Uint8Array(activeAnalyser.frequencyBinCount);
           dataRef.current = data;
         }
-        activeAnalyser.getByteFrequencyData(data as any);
+        
+        // Fetch to a temporary array so we don't overwrite synthetic context data with zeros
+        const tempData = new Uint8Array(activeAnalyser.frequencyBinCount);
+        activeAnalyser.getByteFrequencyData(tempData as any);
+        
+        const sum = tempData.reduce((a, b) => a + b, 0);
+        if (sum > 0 || !useSpotifyAudio) {
+          // Only overwrite if we got real data or we are using the mic
+          for (let i = 0; i < data.length; i++) {
+             data[i] = tempData[i];
+          }
+        }
       }
 
       if (!data || data.length === 0) {
@@ -884,13 +897,24 @@ export const FullScreenPlayer = ({
             <div className="relative w-full aspect-square max-w-2xl mx-auto flex items-center justify-center bg-black/40 rounded-2xl overflow-hidden border border-zinc-800/50 shadow-2xl backdrop-blur-sm">
               <canvas ref={canvasRef} className="w-full h-full block" />
               {!isPlaying && (
-                <div className="relative z-10 text-center p-8">
-                  <Music className="h-24 w-24 text-brand mx-auto mb-4 opacity-50 animate-pulse" />
-                  <p className="text-zinc-400 font-medium text-lg mb-2">
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 bg-black/60 backdrop-blur-sm">
+                  <Music className="h-20 w-20 text-brand mx-auto mb-4 opacity-50 animate-pulse" />
+                  <p className="text-zinc-200 font-semibold text-lg mb-2">
                     Play music to see visualizations
                   </p>
-                  <p className="text-zinc-600 text-sm">
+                  <p className="text-zinc-400 text-sm">
                     Audio ripples powered by Spotify playback
+                  </p>
+                </div>
+              )}
+              {isPlaying && activeDevice && activeDevice.id !== deviceId && useSpotifyAudio && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 bg-black/70 backdrop-blur-md text-center">
+                  <Activity className="h-16 w-16 text-zinc-500 mx-auto mb-4" />
+                  <p className="text-zinc-200 font-semibold text-lg mb-2">
+                    Playing on {activeDevice.name}
+                  </p>
+                  <p className="text-zinc-400 text-sm max-w-xs mx-auto">
+                    Direct Spotify visualization is disabled during remote playback. Use your microphone to visualize room audio!
                   </p>
                 </div>
               )}

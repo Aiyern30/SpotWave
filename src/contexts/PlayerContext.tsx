@@ -394,15 +394,23 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       // Check if hardware is silent (CORS/DRM issue)
       const sum = dataArr.reduce((a, b) => a + b, 0);
       if (sum === 0) {
-        // FALLBACK: Rhythmic heartbeat pulse (no API needed)
+        // FALLBACK: Pseudo-random beat generator (CORS bypass fallback)
         const now = Date.now();
-        const pulse = (Math.sin(now / 200) + 1) * 50;
-
+        // Simulate a 120 BPM beat (500ms per beat)
+        const beatMs = 500;
+        const beatPhase = (now % beatMs) / beatMs; // 0.0 to 1.0
+        
+        // Exponential decay for a sharp "kick drum" effect
+        const pulse = Math.pow(1 - beatPhase, 3) * 150; 
+        
         for (let i = 0; i < dataArr.length; i++) {
-          if (i < 5) {
-            dataArr[i] = 130 + pulse;
+          if (i < 8) {
+            // Bass frequencies
+            dataArr[i] = 50 + pulse + (Math.random() * 20);
           } else {
-            dataArr[i] = Math.max(0, 45 + pulse - i * 3);
+            // Mid/Treble frequencies
+            const falloff = Math.max(0, 1 - (i / dataArr.length));
+            dataArr[i] = (20 + pulse * 0.3) * falloff + (Math.random() * 40);
           }
         }
       }
