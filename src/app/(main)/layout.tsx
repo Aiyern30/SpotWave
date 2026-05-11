@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import InQueueWindow from "@/components/InQueueWindow";
 import Sidebar from "@/components/Sidebar";
 import { usePlayer } from "@/contexts/PlayerContext";
+import { useFullScreenPlayer } from "@/contexts/FullScreenPlayerContext";
 import { Breadcrumbs, SearchSection } from "@/components/Header";
 
 export default function MainLayout({
@@ -15,6 +16,7 @@ export default function MainLayout({
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { currentTrack, isConnecting } = usePlayer();
+  const { isFullScreenOpen } = useFullScreenPlayer();
   const isPlayerVisible = !!currentTrack || isConnecting;
 
   // Add state for InQueueWindow
@@ -24,14 +26,20 @@ export default function MainLayout({
 
   return (
     <div className="flex min-h-screen bg-black">
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen((prev) => !prev)}
-      />
+      {!isFullScreenOpen && (
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen((prev) => !prev)}
+        />
+      )}
       <div
         className={`flex-1 transition-all duration-300 ${
-          sidebarOpen ? "md:ml-64 ml-0" : "md:ml-16 ml-0"
-        } ${isPlayerVisible ? "pb-[90px]" : ""}`}
+          isFullScreenOpen
+            ? "md:ml-0 ml-0"
+            : sidebarOpen
+              ? "md:ml-64 ml-0"
+              : "md:ml-16 ml-0"
+        } ${isPlayerVisible && !isFullScreenOpen ? "pb-[90px]" : ""}`}
       >
         <div className="px-3 sm:px-6 lg:px-8 pt-20 lg:pt-6 space-y-6 flex flex-col">
           <Breadcrumbs />
@@ -43,7 +51,7 @@ export default function MainLayout({
           <main className="flex-1">{children}</main>
         </div>
 
-        {pathname !== "/Events" && (
+        {pathname !== "/Events" && !isFullScreenOpen && (
           <InQueueWindow
             isOpen={isQueueOpen}
             onClose={() => setIsQueueOpen(false)}

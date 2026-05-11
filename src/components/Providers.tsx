@@ -8,6 +8,7 @@ import { FullScreenPlayer } from "@/components/FullScreenPlayer";
 import { Toaster } from "@/components/ui/sonner";
 import AuthProvider from "@/app/AuthProvider";
 import InQueueWindow from "@/components/InQueueWindow";
+import { FullScreenPlayerProvider } from "@/contexts/FullScreenPlayerContext";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [isQueueOpen, setIsQueueOpen] = useState(false);
@@ -17,21 +18,24 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <AuthProvider>
       <ThemeProvider>
         <PlayerProvider>
-          {/* MusicPlayer and overlays here */}
-          <MusicPlayer
-            onToggleQueue={() => setIsQueueOpen((prev) => !prev)}
-            onToggleFullScreen={() => setIsFullScreenOpen((prev) => !prev)}
-          />
-          <FullScreenPlayer
-            isOpen={isFullScreenOpen}
-            onClose={() => setIsFullScreenOpen(false)}
-          />
-          <InQueueWindow
-            isOpen={isQueueOpen}
-            onClose={() => setIsQueueOpen(false)}
-          />
-          <Toaster position="top-right" richColors />
-          {children}
+          <FullScreenPlayerProvider
+            value={{ isFullScreenOpen, setIsFullScreenOpen }}
+          >
+            <MusicPlayer
+              onToggleQueue={() => setIsQueueOpen((prev) => !prev)}
+              onToggleFullScreen={() => setIsFullScreenOpen((prev) => !prev)}
+            />
+            <FullScreenPlayer
+              isOpen={isFullScreenOpen}
+              onClose={() => setIsFullScreenOpen(false)}
+            />
+            <InQueueWindow
+              isOpen={isQueueOpen}
+              onClose={() => setIsQueueOpen(false)}
+            />
+            <Toaster position="top-right" richColors />
+            {children}
+          </FullScreenPlayerProvider>
         </PlayerProvider>
       </ThemeProvider>
     </AuthProvider>

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { usePlayer } from "@/contexts/PlayerContext";
+import { useFullScreenPlayer } from "@/contexts/FullScreenPlayerContext";
 import {
   Button,
   Slider,
@@ -97,6 +98,7 @@ export const MusicPlayer = ({
     activeDevice,
     deviceId,
   } = usePlayer();
+  const { isFullScreenOpen } = useFullScreenPlayer();
 
   const [isMuted, setIsMuted] = useState(false);
   const [previousVolume, setPreviousVolume] = useState(volume);
@@ -432,7 +434,7 @@ export const MusicPlayer = ({
     }
   };
 
-  if (!isVisible) return null;
+  if (!isVisible || isFullScreenOpen) return null;
 
   return (
     <div
