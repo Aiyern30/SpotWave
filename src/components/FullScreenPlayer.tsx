@@ -644,6 +644,19 @@ export const FullScreenPlayer = ({
       );
     };
 
+  const trackImage = currentTrack?.album.images[0]?.url || "/default-artist.png";
+  const trackTitle = currentTrack?.name || "Now Playing";
+  const trackArtist = currentTrack?.artists.map((artist) => artist.name).join(", ") || "Spotify";
+  const visualLabel = useSpotifyAudio
+    ? "Spotify Audio"
+    : captureMode === "mic"
+      ? "Microphone"
+      : captureMode === "speaker"
+        ? "System Audio"
+        : "Capture Off";
+  const artGlow = 24 + sensitivity * 18;
+  const artFrame = 10 + Math.round(maxRipples / 2);
+
   // Stable Animation Loop
   useEffect(() => {
     if (!isOpen || !isPlaying) {
@@ -959,8 +972,55 @@ export const FullScreenPlayer = ({
         <div className="relative w-full">
           {/* Visualizer View */}
           <div className={viewMode === "visualizer" ? "block" : "hidden"}>
-            <div className="relative w-full aspect-square max-w-2xl mx-auto flex items-center justify-center bg-black/40 rounded-2xl overflow-hidden border border-zinc-800/50 shadow-2xl backdrop-blur-sm">
-              <canvas ref={canvasRef} className="w-full h-full block" />
+            <div className="relative w-full aspect-square max-w-2xl mx-auto flex items-center justify-center overflow-hidden rounded-[2rem] border border-white/10 bg-black/45 shadow-[0_24px_80px_rgba(0,0,0,0.5)] backdrop-blur-sm">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(34,197,94,0.22),transparent_36%),linear-gradient(180deg,rgba(255,255,255,0.04),transparent)]" />
+              <div
+                className="absolute inset-8 rounded-[1.75rem] border border-white/10 bg-black/30"
+                style={{
+                  boxShadow: `0 0 ${artGlow}px rgba(34, 197, 94, 0.18), inset 0 0 ${artGlow / 2}px rgba(255, 255, 255, 0.04)`,
+                }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center px-6">
+                <div className="relative h-[72%] w-[72%] max-w-[480px]">
+                  <div
+                    className="absolute inset-0 rounded-full bg-emerald-400/20 blur-3xl"
+                    style={{ opacity: 0.25 + sensitivity * 0.08 }}
+                  />
+                  <div
+                    className="absolute -inset-4 rounded-[2rem] border border-white/10"
+                    style={{
+                      boxShadow: `0 0 ${artGlow}px rgba(34, 197, 94, 0.16)`,
+                      borderRadius: `${28 + artFrame}px`,
+                    }}
+                  />
+                  <div className="relative h-full w-full overflow-hidden rounded-[2rem]">
+                    <Image
+                      src={trackImage}
+                      alt={trackTitle}
+                      fill
+                      className="object-cover shadow-[0_0_80px_rgba(0,0,0,0.8)]"
+                      priority
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 p-5">
+                      <div className="flex items-end justify-between gap-4">
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-emerald-200/70">
+                            Album Stage
+                          </p>
+                          <h3 className="mt-2 text-2xl font-semibold leading-tight text-white sm:text-3xl">
+                            {trackTitle}
+                          </h3>
+                          <p className="mt-1 text-sm text-white/70">{trackArtist}</p>
+                        </div>
+                        <div className="hidden rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/70 sm:block">
+                          {visualLabel}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
               {!isPlaying && (
                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 bg-black/60 backdrop-blur-sm">
                   <Music className="h-20 w-20 text-brand mx-auto mb-4 opacity-50 animate-pulse" />
@@ -968,7 +1028,7 @@ export const FullScreenPlayer = ({
                     Play music to see visualizations
                   </p>
                   <p className="text-zinc-400 text-sm">
-                    Audio ripples powered by Spotify playback
+                    Album art stage powered by Spotify playback
                   </p>
                 </div>
               )}
@@ -1045,7 +1105,7 @@ export const FullScreenPlayer = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
                     <label className="text-zinc-400 text-xs font-semibold uppercase tracking-wider flex items-center justify-between mb-3">
-                      <span>Sensitivity</span>
+                      <span>Glow</span>
                       <span className="text-brand">
                         {sensitivity.toFixed(1)}x
                       </span>
@@ -1061,7 +1121,7 @@ export const FullScreenPlayer = ({
                   </div>
                   <div>
                     <label className="text-zinc-400 text-xs font-semibold uppercase tracking-wider flex items-center justify-between mb-3">
-                      <span>Max Ripples</span>
+                      <span>Frame Depth</span>
                       <span className="text-brand">{maxRipples}</span>
                     </label>
                     <Slider

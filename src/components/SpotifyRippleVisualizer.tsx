@@ -105,7 +105,13 @@ export default function SpotifyRippleVisualizer({
         animationRef.current = null;
       }
     };
-  }, [isActive, useSpotifyAudio, hasSpotifyAudio, externalAnalyser, globalAnalyser]);
+  }, [
+    isActive,
+    useSpotifyAudio,
+    hasSpotifyAudio,
+    externalAnalyser,
+    globalAnalyser,
+  ]);
 
   const startListening = async (mode: "mic" | "speaker") => {
     try {
@@ -120,7 +126,9 @@ export default function SpotifyRippleVisualizer({
         stream.getVideoTracks().forEach((track) => track.stop());
 
         if (stream.getAudioTracks().length === 0) {
-          throw new Error("No audio found in system stream. Did you check 'Share audio'?");
+          throw new Error(
+            "No audio found in system stream. Did you check 'Share audio'?",
+          );
         }
       } else {
         stream = await navigator.mediaDevices.getUserMedia({
@@ -134,7 +142,9 @@ export default function SpotifyRippleVisualizer({
 
       streamRef.current = stream;
 
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioContext = new (
+        window.AudioContext || (window as any).webkitAudioContext
+      )();
       if (audioContext.state === "suspended") {
         await audioContext.resume();
       }
@@ -154,7 +164,9 @@ export default function SpotifyRippleVisualizer({
       setUseSpotifyAudio(false);
     } catch (err) {
       console.error("Error setting up audio:", err);
-      alert(err instanceof Error ? err.message : "Could not access audio source.");
+      alert(
+        err instanceof Error ? err.message : "Could not access audio source.",
+      );
     }
   };
 
@@ -200,7 +212,8 @@ export default function SpotifyRippleVisualizer({
     if (!ctx) return;
 
     const analyser =
-      externalAnalyser || (useSpotifyAudio ? globalAnalyser : analyserRef.current);
+      externalAnalyser ||
+      (useSpotifyAudio ? globalAnalyser : analyserRef.current);
 
     const dataArray =
       externalDataArray ||
@@ -292,7 +305,14 @@ export default function SpotifyRippleVisualizer({
     ctx.shadowColor = "rgba(34, 197, 94, 0.45)";
     ctx.shadowBlur = 48;
 
-    const orb = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, dynamicRadius + 6);
+    const orb = ctx.createRadialGradient(
+      centerX,
+      centerY,
+      0,
+      centerX,
+      centerY,
+      dynamicRadius + 6,
+    );
     orb.addColorStop(0, accent);
     orb.addColorStop(0.55, accentSoft);
     orb.addColorStop(1, "rgba(0, 0, 0, 0)");
@@ -368,8 +388,14 @@ export default function SpotifyRippleVisualizer({
 
   const trackImage = currentTrack?.album?.images?.[0]?.url;
   const trackTitle = currentTrack?.name ?? "Spotify Ripple Visualizer";
-  const trackArtist = currentTrack?.artists?.map((artist) => artist.name).join(", ") ?? "Play something to begin";
-  const visualLabel = useSpotifyAudio ? "Spotify Audio" : captureMode === "mic" ? "Microphone" : "System Audio";
+  const trackArtist =
+    currentTrack?.artists?.map((artist) => artist.name).join(", ") ??
+    "Play something to begin";
+  const visualLabel = useSpotifyAudio
+    ? "Spotify Audio"
+    : captureMode === "mic"
+      ? "Microphone"
+      : "System Audio";
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
@@ -387,12 +413,16 @@ export default function SpotifyRippleVisualizer({
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-semibold tracking-tight sm:text-xl">Ripple Visualizer</h1>
+                  <h1 className="text-lg font-semibold tracking-tight sm:text-xl">
+                    Ripple Visualizer
+                  </h1>
                   <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300">
                     Live
                   </span>
                 </div>
-                <p className="text-sm text-white/55">A stage for Spotify, mic, or system audio</p>
+                <p className="text-sm text-white/55">
+                  A stage for Spotify, mic, or system audio
+                </p>
               </div>
             </div>
 
@@ -403,11 +433,13 @@ export default function SpotifyRippleVisualizer({
               <div className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-white/70">
                 {isActive ? "Animating" : "Idle"}
               </div>
-              {activeDevice && activeDevice.id !== deviceId && useSpotifyAudio && (
-                <div className="rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-amber-200">
-                  Playing on {activeDevice.name}
-                </div>
-              )}
+              {activeDevice &&
+                activeDevice.id !== deviceId &&
+                useSpotifyAudio && (
+                  <div className="rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-amber-200">
+                    Playing on {activeDevice.name}
+                  </div>
+                )}
             </div>
           </div>
         </header>
@@ -419,12 +451,20 @@ export default function SpotifyRippleVisualizer({
               <div className="relative flex h-full min-h-[520px] flex-col overflow-hidden rounded-[1.5rem] border border-white/10 bg-black/45">
                 <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4 sm:px-6">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/45">Current Track</p>
-                    <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">{trackTitle}</h2>
-                    <p className="mt-1 text-sm text-white/55 sm:text-base">{trackArtist}</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/45">
+                      Current Track
+                    </p>
+                    <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+                      {trackTitle}
+                    </h2>
+                    <p className="mt-1 text-sm text-white/55 sm:text-base">
+                      {trackArtist}
+                    </p>
                   </div>
                   <div className="hidden rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/65 sm:block">
-                    {currentTrack?.artists?.length ? `${currentTrack.artists.length} artist${currentTrack.artists.length > 1 ? "s" : ""}` : "No track loaded"}
+                    {currentTrack?.artists?.length
+                      ? `${currentTrack.artists.length} artist${currentTrack.artists.length > 1 ? "s" : ""}`
+                      : "No track loaded"}
                   </div>
                 </div>
 
@@ -453,8 +493,12 @@ export default function SpotifyRippleVisualizer({
                         )}
                         <div className="absolute inset-0 bg-gradient-to-tr from-black/50 via-transparent to-transparent" />
                         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-4 py-4 text-left">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-emerald-200/80">Visual Energy</p>
-                          <p className="mt-1 text-sm text-white/75">{visualLabel}</p>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-emerald-200/80">
+                            Visual Energy
+                          </p>
+                          <p className="mt-1 text-sm text-white/75">
+                            {visualLabel}
+                          </p>
                         </div>
                       </div>
 
@@ -462,17 +506,24 @@ export default function SpotifyRippleVisualizer({
                         <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
                           <div className="mb-3 flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2 text-sm font-medium text-white/80">
-                              <Settings size={16} className="text-emerald-300" />
+                              <Settings
+                                size={16}
+                                className="text-emerald-300"
+                              />
                               Visual Controls
                             </div>
-                            <div className="text-xs uppercase tracking-[0.2em] text-white/35">Premium stage</div>
+                            <div className="text-xs uppercase tracking-[0.2em] text-white/35">
+                              Premium stage
+                            </div>
                           </div>
 
                           <div className="grid gap-4 sm:grid-cols-2">
                             <div>
                               <label className="mb-2 flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
                                 <span>Sensitivity</span>
-                                <span className="text-emerald-300">{sensitivity.toFixed(1)}x</span>
+                                <span className="text-emerald-300">
+                                  {sensitivity.toFixed(1)}x
+                                </span>
                               </label>
                               <input
                                 type="range"
@@ -480,7 +531,9 @@ export default function SpotifyRippleVisualizer({
                                 max="5"
                                 step="0.1"
                                 value={sensitivity}
-                                onChange={(e) => setSensitivity(parseFloat(e.target.value))}
+                                onChange={(e) =>
+                                  setSensitivity(parseFloat(e.target.value))
+                                }
                                 className="visual-slider w-full"
                               />
                             </div>
@@ -488,7 +541,9 @@ export default function SpotifyRippleVisualizer({
                             <div>
                               <label className="mb-2 flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-white/45">
                                 <span>Max Ripples</span>
-                                <span className="text-emerald-300">{rippleCount}</span>
+                                <span className="text-emerald-300">
+                                  {rippleCount}
+                                </span>
                               </label>
                               <input
                                 type="range"
@@ -496,7 +551,9 @@ export default function SpotifyRippleVisualizer({
                                 max="8"
                                 step="1"
                                 value={rippleCount}
-                                onChange={(e) => setRippleCount(parseInt(e.target.value))}
+                                onChange={(e) =>
+                                  setRippleCount(parseInt(e.target.value))
+                                }
                                 className="visual-slider w-full"
                               />
                             </div>
@@ -513,7 +570,11 @@ export default function SpotifyRippleVisualizer({
                                   : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
                               }`}
                             >
-                              {useSpotifyAudio ? <Volume2 size={16} /> : <Mic size={16} />}
+                              {useSpotifyAudio ? (
+                                <Volume2 size={16} />
+                              ) : (
+                                <Mic size={16} />
+                              )}
                               {useSpotifyAudio ? "Spotify Audio" : "Mic Mode"}
                             </button>
                           )}
@@ -533,13 +594,21 @@ export default function SpotifyRippleVisualizer({
                                   : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
                             }`}
                           >
-                            {captureMode === "speaker" ? <MicOff size={16} /> : <Volume2 size={16} />}
-                            {captureMode === "speaker" ? "Stop Share" : "Share Audio"}
+                            {captureMode === "speaker" ? (
+                              <MicOff size={16} />
+                            ) : (
+                              <Volume2 size={16} />
+                            )}
+                            {captureMode === "speaker"
+                              ? "Stop Share"
+                              : "Share Audio"}
                           </button>
 
                           <button
                             onClick={() =>
-                              captureMode === "mic" ? stopListening() : startListening("mic")
+                              captureMode === "mic"
+                                ? stopListening()
+                                : startListening("mic")
                             }
                             disabled={!!(useSpotifyAudio && hasSpotifyAudio)}
                             className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
@@ -550,7 +619,11 @@ export default function SpotifyRippleVisualizer({
                                   : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
                             }`}
                           >
-                            {captureMode === "mic" ? <MicOff size={16} /> : <Mic size={16} />}
+                            {captureMode === "mic" ? (
+                              <MicOff size={16} />
+                            ) : (
+                              <Mic size={16} />
+                            )}
                             {captureMode === "mic" ? "Stop Mic" : "Use Mic"}
                           </button>
                         </div>
@@ -561,8 +634,16 @@ export default function SpotifyRippleVisualizer({
 
                 <div className="border-t border-white/10 px-5 py-4 sm:px-6">
                   <div className="flex items-center justify-between gap-4 text-xs text-white/45">
-                    <span>{isActive ? "Audio locked in" : "Waiting for audio"}</span>
-                    <span>{useSpotifyAudio ? "Spotify layer active" : captureMode === "none" ? "Capture off" : "External capture active"}</span>
+                    <span>
+                      {isActive ? "Audio locked in" : "Waiting for audio"}
+                    </span>
+                    <span>
+                      {useSpotifyAudio
+                        ? "Spotify layer active"
+                        : captureMode === "none"
+                          ? "Capture off"
+                          : "External capture active"}
+                    </span>
                   </div>
                   <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/6">
                     <div
@@ -577,12 +658,16 @@ export default function SpotifyRippleVisualizer({
             <aside className="flex flex-col gap-4 rounded-[2rem] border border-white/10 bg-white/5 p-4 shadow-[0_20px_80px_rgba(0,0,0,0.38)] backdrop-blur-2xl sm:p-6">
               <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-4">
                 <div className="mb-3 flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/45">Now Playing</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/45">
+                    Now Playing
+                  </p>
                   <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold text-white/55">
                     {isActive ? "Live" : "Idle"}
                   </span>
                 </div>
-                <h3 className="text-xl font-semibold leading-tight text-white sm:text-2xl">{trackTitle}</h3>
+                <h3 className="text-xl font-semibold leading-tight text-white sm:text-2xl">
+                  {trackTitle}
+                </h3>
                 <p className="mt-2 text-sm text-white/55">{trackArtist}</p>
               </div>
 
@@ -600,7 +685,9 @@ export default function SpotifyRippleVisualizer({
               <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-4 text-sm text-white/60">
                 <p className="font-medium text-white/75">Design idea</p>
                 <p className="mt-2 leading-relaxed">
-                  This version uses the album art as a stage anchor, then layers the waveform, glow, and controls around it so it feels more like a premium music screen than a plain canvas.
+                  This version uses the album art as a stage anchor, then layers
+                  the waveform, glow, and controls around it so it feels more
+                  like a premium music screen than a plain canvas.
                 </p>
               </div>
             </aside>
@@ -614,7 +701,11 @@ export default function SpotifyRippleVisualizer({
           appearance: none;
           height: 8px;
           border-radius: 9999px;
-          background: linear-gradient(90deg, rgba(34, 197, 94, 0.95), rgba(34, 211, 238, 0.95));
+          background: linear-gradient(
+            90deg,
+            rgba(34, 197, 94, 0.95),
+            rgba(34, 211, 238, 0.95)
+          );
           outline: none;
           cursor: pointer;
           box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
