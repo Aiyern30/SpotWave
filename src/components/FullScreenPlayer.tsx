@@ -128,7 +128,7 @@ export const FullScreenPlayer = ({
   const [isLoadingTrack, setIsLoadingTrack] = useState(false);
 
   const [viewMode, setViewMode] = useState<"image" | "lyrics" | "visualizer">(
-    "image"
+    "image",
   );
   const [topTracks, setTopTracks] = useState<TopTrack[]>([]);
   const [loadingTopTracks, setLoadingTopTracks] = useState(false);
@@ -164,7 +164,7 @@ export const FullScreenPlayer = ({
   const localSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
 
   const [captureMode, setCaptureMode] = useState<"none" | "mic" | "speaker">(
-    "none"
+    "none",
   );
   const [useSpotifyAudio, setUseSpotifyAudio] = useState(true);
 
@@ -229,8 +229,9 @@ export const FullScreenPlayer = ({
       }
 
       localStreamRef.current = stream;
-      const audioContext = new (window.AudioContext ||
-        (window as any).webkitAudioContext)();
+      const audioContext = new (
+        window.AudioContext || (window as any).webkitAudioContext
+      )();
       if (audioContext.state === "suspended") await audioContext.resume();
       localAudioContextRef.current = audioContext;
 
@@ -250,7 +251,7 @@ export const FullScreenPlayer = ({
       alert(
         err instanceof Error
           ? `Could not access ${mode === "mic" ? "microphone" : "audio"}: ${err.message}`
-          : "Could not access audio source. Please ensure you have granted the necessary permissions."
+          : "Could not access audio source. Please ensure you have granted the necessary permissions.",
       );
     }
   };
@@ -343,7 +344,7 @@ export const FullScreenPlayer = ({
           currentTrack.artists[0].name,
           currentTrack.name,
           currentTrack.album.name,
-          currentTrack.duration_ms
+          currentTrack.duration_ms,
         );
       }
     }
@@ -366,7 +367,7 @@ export const FullScreenPlayer = ({
       [lyricsContainerRef, mobileLyricsContainerRef].forEach((ref) => {
         if (ref.current && newIndex >= 0) {
           const activeElement = ref.current.querySelector(
-            `[data-index="${newIndex}"]`
+            `[data-index="${newIndex}"]`,
           ) as HTMLElement;
           if (activeElement) {
             const container = ref.current;
@@ -390,7 +391,7 @@ export const FullScreenPlayer = ({
       const token = localStorage.getItem("Token");
       const response = await fetch(
         `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       const data = await response.json();
       setTopTracks(data.tracks?.slice(0, 10) || []);
@@ -422,7 +423,7 @@ export const FullScreenPlayer = ({
     artist: string,
     title: string,
     album: string,
-    durationMs: number
+    durationMs: number,
   ) => {
     setLoadingLyrics(true);
     // Reset hasLyrics so the button shows up while loading
@@ -435,7 +436,7 @@ export const FullScreenPlayer = ({
         duration: Math.round(durationMs / 1000).toString(),
       });
       const response = await fetch(
-        `https://lrclib.net/api/get?${params.toString()}`
+        `https://lrclib.net/api/get?${params.toString()}`,
       );
       const data = await response.json();
 
@@ -444,7 +445,7 @@ export const FullScreenPlayer = ({
         setSyncedLyrics(parseSyncedLyrics(data.syncedLyrics));
         setLyrics(
           data.plainLyrics ||
-            data.syncedLyrics.replace(/\[\d{2}:\d{2}\.\d{2,3}\]/g, "").trim()
+            data.syncedLyrics.replace(/\[\d{2}:\d{2}\.\d{2,3}\]/g, "").trim(),
         );
       } else if (data.plainLyrics && data.plainLyrics.trim()) {
         setHasLyrics(true);
@@ -530,7 +531,7 @@ export const FullScreenPlayer = ({
         `https://api.spotify.com/v1/tracks/${track.id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       const trackData = await response.json();
 
@@ -587,7 +588,7 @@ export const FullScreenPlayer = ({
     (artistId: string, artistName: string) => (e: React.MouseEvent) => {
       e.stopPropagation();
       router.push(
-        `/Artists/${artistId}?name=${encodeURIComponent(artistName)}`
+        `/Artists/${artistId}?name=${encodeURIComponent(artistName)}`,
       );
     };
 
@@ -664,16 +665,16 @@ export const FullScreenPlayer = ({
           data = new Uint8Array(activeAnalyser.frequencyBinCount);
           dataRef.current = data;
         }
-        
+
         // Fetch to a temporary array so we don't overwrite synthetic context data with zeros
         const tempData = new Uint8Array(activeAnalyser.frequencyBinCount);
         activeAnalyser.getByteFrequencyData(tempData as any);
-        
+
         const sum = tempData.reduce((a, b) => a + b, 0);
         if (sum > 0 || !useSpotifyAudio) {
           // Only overwrite if we got real data or we are using the mic
           for (let i = 0; i < data.length; i++) {
-             data[i] = tempData[i];
+            data[i] = tempData[i];
           }
         }
       }
@@ -740,7 +741,7 @@ export const FullScreenPlayer = ({
         0,
         centerX,
         centerY,
-        dynamicRadius
+        dynamicRadius,
       );
       grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.9)`);
       grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.3)`);
@@ -800,7 +801,7 @@ export const FullScreenPlayer = ({
           centerY + (Math.random() - 0.5) * canvas.height * 0.7,
           2,
           0,
-          Math.PI * 2
+          Math.PI * 2,
         );
         ctx.fill();
       }
@@ -833,9 +834,7 @@ export const FullScreenPlayer = ({
 
   return (
     <div
-      className={`fixed inset-0 bg-gradient-to-b from-zinc-900 via-zinc-800 to-black z-50 overflow-y-auto overflow-x-hidden ${
-        sidebarCompact ? "md:pl-16" : "md:pl-64"
-      } px-4 py-4 sm:py-6 space-y-4 sm:space-y-8 no-scrollbar transition-all duration-300`}
+      className={`fixed inset-0 bg-gradient-to-b from-zinc-900 via-zinc-800 to-black z-50 overflow-y-auto overflow-x-hidden px-3 md:px-4 py-4 sm:py-6 space-y-4 sm:space-y-8 no-scrollbar transition-all duration-300`}
     >
       <style jsx global>{`
         .no-scrollbar::-webkit-scrollbar {
@@ -921,17 +920,21 @@ export const FullScreenPlayer = ({
                   </p>
                 </div>
               )}
-              {isPlaying && activeDevice && activeDevice.id !== deviceId && useSpotifyAudio && (
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 bg-black/70 backdrop-blur-md text-center">
-                  <Activity className="h-16 w-16 text-zinc-500 mx-auto mb-4" />
-                  <p className="text-zinc-200 font-semibold text-lg mb-2">
-                    Playing on {activeDevice.name}
-                  </p>
-                  <p className="text-zinc-400 text-sm max-w-xs mx-auto">
-                    Direct Spotify visualization is disabled during remote playback. Use your microphone to visualize room audio!
-                  </p>
-                </div>
-              )}
+              {isPlaying &&
+                activeDevice &&
+                activeDevice.id !== deviceId &&
+                useSpotifyAudio && (
+                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 bg-black/70 backdrop-blur-md text-center">
+                    <Activity className="h-16 w-16 text-zinc-500 mx-auto mb-4" />
+                    <p className="text-zinc-200 font-semibold text-lg mb-2">
+                      Playing on {activeDevice.name}
+                    </p>
+                    <p className="text-zinc-400 text-sm max-w-xs mx-auto">
+                      Direct Spotify visualization is disabled during remote
+                      playback. Use your microphone to visualize room audio!
+                    </p>
+                  </div>
+                )}
             </div>
 
             {/* Visualizer Controls */}
@@ -1065,8 +1068,8 @@ export const FullScreenPlayer = ({
                         index === currentLyricIndex
                           ? "text-brand font-semibold text-lg sm:text-2xl"
                           : index < currentLyricIndex
-                          ? "text-zinc-500"
-                          : "text-zinc-300"
+                            ? "text-zinc-500"
+                            : "text-zinc-300"
                       }`}
                       style={
                         index === currentLyricIndex
@@ -1092,7 +1095,7 @@ export const FullScreenPlayer = ({
           </div>
         </div>
 
-        <div className="text-center space-y-2 pt-4 sm:pt-6">
+        <div className="text-center space-y-2 py-4 sm:py-6">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white px-4 leading-tight">
             {currentTrack.name}
           </h1>
@@ -1113,7 +1116,7 @@ export const FullScreenPlayer = ({
           </div>
         </div>
 
-        <div className="space-y-2 px-4 sm:px-0">
+        <div className="space-y-4 px-4 sm:px-0">
           <Slider
             value={[position]}
             max={duration}
@@ -1200,8 +1203,8 @@ export const FullScreenPlayer = ({
               repeatMode === "off"
                 ? "Repeat Off"
                 : repeatMode === "context"
-                ? "Repeat All"
-                : "Repeat One"
+                  ? "Repeat All"
+                  : "Repeat One"
             }
           >
             {repeatMode === "track" ? (
@@ -1259,8 +1262,8 @@ export const FullScreenPlayer = ({
                       index === currentLyricIndex
                         ? "text-brand font-bold text-xl scale-105 origin-left"
                         : index < currentLyricIndex
-                        ? "text-zinc-500"
-                        : "text-zinc-300"
+                          ? "text-zinc-500"
+                          : "text-zinc-300"
                     }`}
                   >
                     {line.text}
@@ -1449,8 +1452,8 @@ export const FullScreenPlayer = ({
                     onClick={() =>
                       router.push(
                         `/Albums/${track.album.id}?name=${encodeURIComponent(
-                          track.name
-                        )}`
+                          track.name,
+                        )}`,
                       )
                     }
                   />
@@ -1508,7 +1511,7 @@ export const FullScreenPlayer = ({
                     className="text-white hover:text-brand cursor-pointer hover:underline text-sm sm:text-base truncate ml-4"
                     onClick={() =>
                       router.push(
-                        `/Albums/${currentTrack.album.id}?name=${currentTrack.album.name}`
+                        `/Albums/${currentTrack.album.id}?name=${currentTrack.album.name}`,
                       )
                     }
                   >
