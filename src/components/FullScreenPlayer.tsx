@@ -173,6 +173,25 @@ export const FullScreenPlayer = ({
 
   const [sidebarCompact, setSidebarCompact] = useState(true);
 
+  // Smooth position interpolation for responsive slider
+  const [estimatedPosition, setEstimatedPosition] = useState(position);
+
+  // Sync estimated position with global position (source of truth)
+  useEffect(() => {
+    setEstimatedPosition(position);
+  }, [position]);
+
+  // Interpolate position every 100ms for smooth UI updates
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    const interval = setInterval(() => {
+      setEstimatedPosition((prev) => Math.min(prev + 100, duration));
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, duration]);
+
   // Visualizer settings Refs for stable animation loop
   const sensitivityRef = useRef(sensitivity);
   const maxRipplesRef = useRef(maxRipples);
@@ -1116,17 +1135,20 @@ export const FullScreenPlayer = ({
           </div>
         </div>
 
-        <div className="space-y-4 px-4 sm:px-0">
+        <div className="space-y-4 px-4 sm:px-0 w-full">
           <Slider
-            value={[position]}
+            value={[estimatedPosition]}
             max={duration}
             step={1000}
-            onValueChange={(val) => seekTo(val[0])}
+            onValueChange={(val) => {
+              setEstimatedPosition(val[0]); // Optimistic update
+              seekTo(val[0]);
+            }}
             className="cursor-pointer"
             disabled={!isReady || duration === 0}
           />
           <div className="flex justify-between text-xs text-zinc-400">
-            <span>{formatTime(position)}</span>
+            <span>{formatTime(estimatedPosition)}</span>
             <span>{formatTime(duration)}</span>
           </div>
         </div>
