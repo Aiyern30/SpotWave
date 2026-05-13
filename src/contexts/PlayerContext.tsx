@@ -61,6 +61,13 @@ let globalPlayerInstance: any = null;
 let globalDeviceId: string | null = null;
 let isGloballyInitialized = false;
 
+// Global polling state to prevent stacked intervals
+let globalPollingInterval: NodeJS.Timeout | null = null;
+let globalPollingToken: string | null = null;
+let globalPollingInFlight = false;
+let lastPlayerStateFetch: { data: any; timestamp: number } | null = null;
+const PLAYER_STATE_CACHE_TTL_MS = 500; // Cache for 500ms to deduplicate back-to-back requests
+
 export const usePlayer = () => {
   const context = useContext(PlayerContext);
   if (!context) {
@@ -472,11 +479,94 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [isPlaying, isPaused, player]);
 
   // Poll Spotify API for active device and global playback state
+  // Uses global interval to prevent stacked intervals from multiple component mounts
   useEffect(() => {
     if (!token) return;
 
     const fetchPlaybackState = async () => {
+      // Once our Web Playback SDK is ready, rely on SDK state events instead of
+      // polling /me/player continuously. This prevents idle network spam.
+      if (isReadyRef.current && deviceIdRef.current) {
+        return;
+      }
+
+      // If our own SDK device is already active, rely on SDK events and skip API polling.
+      // This prevents constant /me/player network traffic while idle.
+      const sdkDeviceId = deviceIdRef.current;
+      const activeId = activeDeviceRef.current?.id;
+      const isOwnSdkDeviceActive =
+        !!sdkDeviceId && !!activeId && activeId === sdkDeviceId;
+
+      if (isOwnSdkDeviceActive) {
+        return;
+      }
+
+      if (globalPollingInFlight) {
+        return;
+      }
+
+      globalPollingInFlight = true;
+
       try {
+        // Check cache first to avoid redundant requests
+        const now = Date.now();
+        if (
+          lastPlayerStateFetch &&
+          now - lastPlayerStateFetch.timestamp < PLAYER_STATE_CACHE_TTL_MS
+        ) {
+          // Use cached data within TTL
+          const data = lastPlayerStateFetch.data;
+          if (data && data.device) {
+            setActiveDevice({
+              id: data.device.id,
+              name: data.device.name,
+              type: data.device.type,
+            });
+
+            if (data.device.id !== deviceIdRef.current && data.item) {
+              setCurrentTrack({
+                id: data.item.id || "",
+                name: data.item.name,
+                artists: data.item.artists.map((artist: any) => ({
+                  name: artist.name,
+                  id: artist.uri?.split(":")[2] || "",
+                })),
+                album: {
+                  name: data.item.album.name,
+                  images: data.item.album.images || [],
+                  id: data.item.album.uri?.split(":")[2] || "",
+                  artists: data.item.artists.map((artist: any) => ({
+                    name: artist.name,
+                    id: artist.uri?.split(":")[2] || "",
+                  })),
+                  release_date: "",
+                  total_tracks: 0,
+                },
+                duration_ms: data.item.duration_ms,
+                explicit: false,
+                external_urls: {
+                  spotify: `https://open.spotify.com/track/${data.item.id}`,
+                },
+                popularity: 0,
+                preview_url: null,
+                track_number: 0,
+                disc_number: 0,
+                uri: data.item.uri,
+              });
+              setIsPlaying(data.is_playing);
+              setIsPaused(!data.is_playing);
+              setPosition(data.progress_ms);
+              setDuration(data.item.duration_ms);
+              if (data.device.volume_percent !== null) {
+                setVolumeState(data.device.volume_percent / 100);
+              }
+            }
+          } else {
+            setActiveDevice(null);
+          }
+          return;
+        }
+
         const response = await fetch("https://api.spotify.com/v1/me/player", {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -485,6 +575,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (response.status === 200) {
           const data = await response.json();
+          lastPlayerStateFetch = { data, timestamp: Date.now() };
+
           if (data && data.device) {
             setActiveDevice({
               id: data.device.id,
@@ -543,13 +635,32 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       } catch (error) {
         console.error("Error fetching playback state:", error);
+      } finally {
+        globalPollingInFlight = false;
       }
     };
 
-    fetchPlaybackState();
-    const interval = setInterval(fetchPlaybackState, 3000);
+    // Only set up polling if this is a new token or no polling is active
+    if (globalPollingToken !== token) {
+      globalPollingToken = token;
+      
+      // Clear any existing interval
+      if (globalPollingInterval) {
+        clearInterval(globalPollingInterval);
+      }
 
-    return () => clearInterval(interval);
+      // Fetch immediately on token change
+      fetchPlaybackState();
+
+      // Set up new global polling interval
+      globalPollingInterval = setInterval(fetchPlaybackState, 3000);
+    }
+
+    // Cleanup only when component unmounts or token changes
+    return () => {
+      // Don't clear global interval here; let it persist across component mounts
+      // This prevents stacked intervals. The interval will be replaced if token changes.
+    };
   }, [token]);
 
   // Helper function to wait for device to be ready with retry

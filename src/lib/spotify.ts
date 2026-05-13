@@ -8,32 +8,130 @@
 export const checkUserSavedTracks = async (
   trackIds: string[]
 ): Promise<boolean[]> => {
+  // Simple in-memory cache with TTL and request de-duplication to avoid
+  // repeatedly hitting Spotify for the same ids when multiple components
+  // render at once. Cache lives for the lifetime of the page.
+  const TTL_MS = 60 * 1000; // 60 seconds
+
+  // Module-level caches (created on first invocation)
+  if (!(globalThis as any).__spotify_saved_cache) {
+    (globalThis as any).__spotify_saved_cache = new Map<string, { value: boolean; ts: number }>();
+    (globalThis as any).__spotify_pending = new Map<string, Promise<boolean>>();
+  }
+
+  const cache: Map<string, { value: boolean; ts: number }> = (globalThis as any).__spotify_saved_cache;
+  const pending: Map<string, Promise<boolean>> = (globalThis as any).__spotify_pending;
+
   try {
-    const accessToken = await getAccessToken(); // Your function to get token
+    const now = Date.now();
+    const results: boolean[] = [];
 
-    // Convert array to comma-separated string
-    const idsParam = trackIds.join(",");
+    // Determine which ids we need to fetch
+    const idsToFetch: string[] = [];
+    const waitPromises: Promise<void>[] = [];
 
-    const response = await fetch(
-      `https://api.spotify.com/v1/me/tracks/contains?ids=${idsParam}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+    for (const id of trackIds) {
+      const cached = cache.get(id);
+      if (cached && now - cached.ts < TTL_MS) {
+        results.push(cached.value);
+        continue;
       }
-    );
 
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(
-        `Failed to check saved tracks: ${response.status} ${response.statusText} - ${errText}`
-      );
+      // If there's already a pending request for this id, wait for it
+      const p = pending.get(id);
+      if (p) {
+        // push a promise that fills in later
+        const wait = p.then((val) => {
+          results.push(val);
+        });
+        waitPromises.push(wait);
+        continue;
+      }
+
+      // Mark to fetch
+      idsToFetch.push(id);
     }
 
-    return await response.json();
+    // If there are ids to fetch, batch them (max 50 per Spotify API)
+    if (idsToFetch.length > 0) {
+      const accessToken = await getAccessToken();
+      const batches: string[][] = [];
+      for (let i = 0; i < idsToFetch.length; i += 50) {
+        batches.push(idsToFetch.slice(i, i + 50));
+      }
+
+      for (const batch of batches) {
+        const batchKeyPromises: Array<{ id: string; resolve: (v: boolean) => void; reject: (e: any) => void }> = [];
+
+        // create individual promises and store in pending map so other callers can join
+        for (const id of batch) {
+          let resolver: (v: boolean) => void;
+          let rejecter: (e: any) => void;
+          const p = new Promise<boolean>((res, rej) => {
+            resolver = res;
+            rejecter = rej;
+          }) as Promise<boolean>;
+          // @ts-ignore
+          pending.set(id, p);
+          batchKeyPromises.push({ id, resolve: resolver!, reject: rejecter! });
+        }
+
+        const idsParam = batch.join(",");
+        const response = await fetch(
+          `https://api.spotify.com/v1/me/tracks/contains?ids=${idsParam}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const errText = await response.text();
+          // reject all pending for this batch
+          for (const { id, reject } of batchKeyPromises) {
+            pending.delete(id);
+            reject(new Error(`Failed to check saved tracks: ${response.status} ${response.statusText} - ${errText}`));
+          }
+          continue;
+        }
+
+        const data: boolean[] = await response.json();
+
+        // store results in cache and resolve pending
+        for (let i = 0; i < batch.length; i++) {
+          const id = batch[i];
+          const val = !!data[i];
+          cache.set(id, { value: val, ts: Date.now() });
+          const p = pending.get(id);
+          if (p) {
+            pending.delete(id);
+            // resolve the promise stored earlier
+            (p as any).then = undefined; // no-op to appease TS (we will call resolver directly)
+          }
+          // call the resolver that we saved earlier
+          try {
+            batchKeyPromises[i].resolve(val);
+          } catch (e) {
+            // ignore resolver errors
+          }
+        }
+      }
+    }
+
+    // If we had any waits for pending promises, await them so results are filled
+    if (waitPromises.length > 0) await Promise.all(waitPromises);
+
+    // Build final results array from cache (respecting input order)
+    for (const id of trackIds) {
+      const c = cache.get(id);
+      if (c) results.push(c.value);
+      else results.push(false);
+    }
+
+    return results.slice(0, trackIds.length);
   } catch (error: any) {
-    console.warn("⚠️ Spotify API Error (Check Saved Tracks):", error.message);
-    // Return empty array instead of throwing to prevent component crashes
+    console.warn("⚠️ Spotify API Error (Check Saved Tracks):", error?.message || error);
     return trackIds.map(() => false);
   }
 };
