@@ -92,11 +92,15 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [player, setPlayer] = useState<any>(null);
   const [token, setToken] = useState<string>("");
   const [repeatMode, setRepeatMode] = useState<"off" | "context" | "track">(
-    "off"
+    "off",
   );
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const [dataArray, setDataArray] = useState<Uint8Array | null>(null);
-  const [activeDevice, setActiveDevice] = useState<{ id: string; name: string; type: string } | null>(null);
+  const [activeDevice, setActiveDevice] = useState<{
+    id: string;
+    name: string;
+    type: string;
+  } | null>(null);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
@@ -108,7 +112,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const silentAudioRef = useRef<HTMLAudioElement | null>(null);
   const isReadyRef = useRef<boolean>(false);
   const deviceIdRef = useRef<string | null>(null);
-  const activeDeviceRef = useRef<{ id: string; name: string; type: string } | null>(null);
+  const activeDeviceRef = useRef<{
+    id: string;
+    name: string;
+    type: string;
+  } | null>(null);
 
   // Sync refs with state
   useEffect(() => {
@@ -128,7 +136,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     if (typeof Audio !== "undefined") {
       // Short silent WAV
       silentAudioRef.current = new Audio(
-        "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAAABmYWN0BAAAAAAAAABkYXRhAAAAAA=="
+        "data:audio/wav;base64,UklGRjIAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAAABmYWN0BAAAAAAAAABkYXRhAAAAAA==",
       );
       silentAudioRef.current.loop = true;
       silentAudioRef.current.volume = 0.01; // Non-zero volume to force OS "Now Playing" recognition
@@ -245,7 +253,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           console.error("Spotify Player initialization error:", message);
           setIsConnecting(false);
           setIsReady(false);
-        }
+        },
       );
       inst.addListener(
         "authentication_error",
@@ -253,7 +261,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           console.error("Spotify Player authentication error:", message);
           setIsConnecting(false);
           setIsReady(false);
-        }
+        },
       );
       inst.addListener("account_error", ({ message }: { message: string }) => {
         console.error("Spotify Player account error:", message);
@@ -312,7 +320,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             console.log("Successfully connected to Spotify Player!");
           } else {
             console.error(
-              "Failed to connect to Spotify Player, retrying in 500ms..."
+              "Failed to connect to Spotify Player, retrying in 500ms...",
             );
             setTimeout(connectPlayer, 500);
           }
@@ -344,8 +352,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       audioElement.crossOrigin = "anonymous";
 
       if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext ||
-          (window as any).webkitAudioContext)();
+        audioContextRef.current = new (
+          window.AudioContext || (window as any).webkitAudioContext
+        )();
       }
 
       const audioContext = audioContextRef.current;
@@ -406,18 +415,18 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         // Simulate a 120 BPM beat (500ms per beat)
         const beatMs = 500;
         const beatPhase = (now % beatMs) / beatMs; // 0.0 to 1.0
-        
+
         // Exponential decay for a sharp "kick drum" effect
-        const pulse = Math.pow(1 - beatPhase, 3) * 150; 
-        
+        const pulse = Math.pow(1 - beatPhase, 3) * 150;
+
         for (let i = 0; i < dataArr.length; i++) {
           if (i < 8) {
             // Bass frequencies
-            dataArr[i] = 50 + pulse + (Math.random() * 20);
+            dataArr[i] = 50 + pulse + Math.random() * 20;
           } else {
             // Mid/Treble frequencies
-            const falloff = Math.max(0, 1 - (i / dataArr.length));
-            dataArr[i] = (20 + pulse * 0.3) * falloff + (Math.random() * 40);
+            const falloff = Math.max(0, 1 - i / dataArr.length);
+            dataArr[i] = (20 + pulse * 0.3) * falloff + Math.random() * 40;
           }
         }
       }
@@ -643,7 +652,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     // Only set up polling if this is a new token or no polling is active
     if (globalPollingToken !== token) {
       globalPollingToken = token;
-      
+
       // Clear any existing interval
       if (globalPollingInterval) {
         clearInterval(globalPollingInterval);
@@ -702,7 +711,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           // KICK: Aggressive reconnect if taking too long (> 3s)
           else if (Date.now() - startTime > 3000 && !isConnecting) {
             console.warn(
-              "Device taking long to ready, kicking connect() again..."
+              "Device taking long to ready, kicking connect() again...",
             );
             if (playerRef.current) {
               playerRef.current.connect();
@@ -711,7 +720,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         }, 500);
       });
     },
-    []
+    [],
   );
 
   // Helper function to transfer playback to our device
@@ -762,7 +771,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       const deviceReady = await waitForDevice();
       if (!deviceReady || !deviceIdRef.current) {
         console.error(
-          "Spotify device not ready. Please wait for the player to connect."
+          "Spotify device not ready. Please wait for the player to connect.",
         );
         return;
       }
@@ -786,7 +795,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
               "Content-Type": "application/json",
               Authorization: `Bearer ${currentToken}`,
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -811,7 +820,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         console.error("Error playing track:", error);
       }
     },
-    [deviceId, token, waitForDevice, transferPlayback]
+    [deviceId, token, waitForDevice, transferPlayback],
   );
 
   const playPlaylist = useCallback(
@@ -835,7 +844,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       const deviceReady = await waitForDevice();
       if (!deviceReady || !deviceIdRef.current) {
         console.error(
-          "Spotify device not ready. Please wait for the player to connect."
+          "Spotify device not ready. Please wait for the player to connect.",
         );
         return;
       }
@@ -865,7 +874,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
               "Content-Type": "application/json",
               Authorization: `Bearer ${currentToken}`,
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -886,16 +895,22 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         console.error("Error playing playlist:", error);
       }
     },
-    [deviceId, token, waitForDevice, transferPlayback]
+    [deviceId, token, waitForDevice, transferPlayback],
   );
 
   const pauseTrack = useCallback(async () => {
-    if (activeDeviceRef.current && activeDeviceRef.current.id !== deviceIdRef.current) {
+    if (
+      activeDeviceRef.current &&
+      activeDeviceRef.current.id !== deviceIdRef.current
+    ) {
       try {
-        await fetch(`https://api.spotify.com/v1/me/player/pause?device_id=${activeDeviceRef.current.id}`, {
-          method: "PUT",
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await fetch(
+          `https://api.spotify.com/v1/me/player/pause?device_id=${activeDeviceRef.current.id}`,
+          {
+            method: "PUT",
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         setIsPlaying(false);
         setIsPaused(true);
       } catch (error) {
@@ -914,12 +929,18 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [player, token]);
 
   const resumeTrack = useCallback(async () => {
-    if (activeDeviceRef.current && activeDeviceRef.current.id !== deviceIdRef.current) {
+    if (
+      activeDeviceRef.current &&
+      activeDeviceRef.current.id !== deviceIdRef.current
+    ) {
       try {
-        await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${activeDeviceRef.current.id}`, {
-          method: "PUT",
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await fetch(
+          `https://api.spotify.com/v1/me/player/play?device_id=${activeDeviceRef.current.id}`,
+          {
+            method: "PUT",
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         setIsPlaying(true);
         setIsPaused(false);
       } catch (error) {
@@ -940,12 +961,18 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [player, token]);
 
   const nextTrack = useCallback(async () => {
-    if (activeDeviceRef.current && activeDeviceRef.current.id !== deviceIdRef.current) {
+    if (
+      activeDeviceRef.current &&
+      activeDeviceRef.current.id !== deviceIdRef.current
+    ) {
       try {
-        await fetch(`https://api.spotify.com/v1/me/player/next?device_id=${activeDeviceRef.current.id}`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await fetch(
+          `https://api.spotify.com/v1/me/player/next?device_id=${activeDeviceRef.current.id}`,
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
       } catch (error) {
         console.error("Error skipping to next track via API:", error);
       }
@@ -960,12 +987,18 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [player, token]);
 
   const previousTrack = useCallback(async () => {
-    if (activeDeviceRef.current && activeDeviceRef.current.id !== deviceIdRef.current) {
+    if (
+      activeDeviceRef.current &&
+      activeDeviceRef.current.id !== deviceIdRef.current
+    ) {
       try {
-        await fetch(`https://api.spotify.com/v1/me/player/previous?device_id=${activeDeviceRef.current.id}`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await fetch(
+          `https://api.spotify.com/v1/me/player/previous?device_id=${activeDeviceRef.current.id}`,
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
       } catch (error) {
         console.error("Error skipping to previous track via API:", error);
       }
@@ -981,12 +1014,18 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const seekTo = useCallback(
     async (positionMs: number) => {
-      if (activeDeviceRef.current && activeDeviceRef.current.id !== deviceIdRef.current) {
+      if (
+        activeDeviceRef.current &&
+        activeDeviceRef.current.id !== deviceIdRef.current
+      ) {
         try {
-          await fetch(`https://api.spotify.com/v1/me/player/seek?position_ms=${positionMs}&device_id=${activeDeviceRef.current.id}`, {
-            method: "PUT",
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          await fetch(
+            `https://api.spotify.com/v1/me/player/seek?position_ms=${positionMs}&device_id=${activeDeviceRef.current.id}`,
+            {
+              method: "PUT",
+              headers: { Authorization: `Bearer ${token}` },
+            },
+          );
         } catch (error) {
           console.error("Error seeking via API:", error);
         }
@@ -999,7 +1038,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         });
       }
     },
-    [player, token]
+    [player, token],
   );
 
   const setVolume = useCallback(
@@ -1014,13 +1053,19 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       volumeTimeoutRef.current = setTimeout(async () => {
-        if (activeDeviceRef.current && activeDeviceRef.current.id !== deviceIdRef.current) {
+        if (
+          activeDeviceRef.current &&
+          activeDeviceRef.current.id !== deviceIdRef.current
+        ) {
           try {
             const volumePercent = Math.round(clampedVolume * 100);
-            await fetch(`https://api.spotify.com/v1/me/player/volume?volume_percent=${volumePercent}&device_id=${activeDeviceRef.current.id}`, {
-              method: "PUT",
-              headers: { Authorization: `Bearer ${token}` }
-            });
+            await fetch(
+              `https://api.spotify.com/v1/me/player/volume?volume_percent=${volumePercent}&device_id=${activeDeviceRef.current.id}`,
+              {
+                method: "PUT",
+                headers: { Authorization: `Bearer ${token}` },
+              },
+            );
           } catch (error) {
             console.error("Error setting volume via API:", error);
           }
@@ -1036,7 +1081,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       }, 100); // 100ms debounce
     },
-    [player, isReady, token]
+    [player, isReady, token],
   );
 
   // Set repeat mode on Spotify player
@@ -1052,7 +1097,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         if (response.ok) {
@@ -1064,7 +1109,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         console.error("Error setting repeat mode:", error);
       }
     },
-    [deviceId, token]
+    [deviceId, token],
   );
 
   // Handle repeat one functionality

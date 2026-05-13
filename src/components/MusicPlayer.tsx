@@ -450,15 +450,18 @@ export const MusicPlayer = ({
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-zinc-800 md:hidden">
         <div
           className="h-full bg-brand transition-all duration-300"
-          style={{ width: `${(estimatedPosition / duration) * 100}%` }}
+          style={{
+            width:
+              duration > 0 ? `${(estimatedPosition / duration) * 100}%` : "0%",
+          }}
         />
       </div>
 
-      <div className="h-[72px] md:h-[90px] flex items-center justify-between px-4 gap-4">
+      <div className="h-[68px] md:h-[90px] flex items-center justify-between px-3 md:px-4 gap-2 md:gap-4">
         {/* Left Section - Track Info */}
-        <div className="flex items-center gap-3 md:min-w-[240px] md:w-[30%] min-w-0 flex-1">
+        <div className="flex items-center gap-2.5 md:gap-3 md:min-w-[240px] md:w-[30%] min-w-0 flex-1 overflow-hidden">
           <div
-            className="w-12 h-12 lg:w-14 lg:h-14 rounded overflow-hidden flex-shrink-0 group relative cursor-pointer shadow-lg"
+            className="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 rounded overflow-hidden flex-shrink-0 group relative cursor-pointer shadow-lg"
             onClick={(e) => {
               e.stopPropagation();
               handleTrackClick();
@@ -486,33 +489,33 @@ export const MusicPlayer = ({
             )}
           </div>
 
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 overflow-hidden">
             {currentTrack ? (
               isQuizPage ? (
                 <>
-                  <h4 className="text-white text-sm font-medium truncate">
+                  <h4 className="text-white text-[13px] md:text-sm font-medium truncate">
                     Guess the Song!
                   </h4>
-                  <div className="text-zinc-400 text-xs truncate">
+                  <div className="text-zinc-400 text-[11px] md:text-xs truncate">
                     Playing from Quiz
                   </div>
                 </>
               ) : (
                 <>
                   <h4
-                    className="text-white text-sm font-medium truncate hover:underline cursor-pointer"
+                    className="text-white text-[13px] md:text-sm font-medium truncate hover:underline cursor-pointer"
                     onClick={handleTrackClick}
                   >
                     {currentTrack.name}
                   </h4>
-                  <div className="text-zinc-400 text-xs truncate flex items-center gap-1">
+                  <div className="text-zinc-400 text-[11px] md:text-xs truncate flex items-center gap-1">
                     {currentTrack.artists.map((artist, index) => (
                       <span
                         key={artist.id}
-                        className="inline-flex items-center"
+                        className="inline-flex items-center min-w-0"
                       >
                         <span
-                          className="hover:underline hover:text-white cursor-pointer transition-colors"
+                          className="hover:underline hover:text-white cursor-pointer transition-colors truncate"
                           onClick={handleArtistClick(artist.id, artist.name)}
                         >
                           {artist.name}
@@ -527,10 +530,12 @@ export const MusicPlayer = ({
               )
             ) : (
               <>
-                <h4 className="text-white text-sm font-medium">
+                <h4 className="text-white text-[13px] md:text-sm font-medium truncate">
                   Connecting to Spotify...
                 </h4>
-                <p className="text-zinc-400 text-xs">Setting up player</p>
+                <p className="text-zinc-400 text-[11px] md:text-xs truncate">
+                  Setting up player
+                </p>
               </>
             )}
           </div>
@@ -645,9 +650,9 @@ export const MusicPlayer = ({
         </div>
 
         {/* Right Section - Additional Controls & Mobile Minimal Controls */}
-        <div className="flex items-center justify-end gap-2 md:min-w-[240px] md:w-[30%]">
+        <div className="flex items-center justify-end gap-1 md:gap-2 md:min-w-[240px] md:w-[30%] flex-shrink-0">
           {/* Mobile Only Minimal Controls */}
-          <div className="flex md:hidden items-center gap-1">
+          <div className="flex md:hidden items-center gap-0.5">
             <Button
               onClick={(e) => {
                 e.stopPropagation();
@@ -655,13 +660,13 @@ export const MusicPlayer = ({
               }}
               size="icon"
               variant="ghost"
-              className="text-white hover:text-brand h-10 w-10"
+              className="text-white hover:text-brand h-9 w-9"
               disabled={!isReady}
             >
               {isPlaying ? (
-                <Pause className="h-6 w-6 fill-current" />
+                <Pause className="h-5 w-5 fill-current" />
               ) : (
-                <Play className="h-6 w-6 ml-0.5 fill-current" />
+                <Play className="h-5 w-5 ml-0.5 fill-current" />
               )}
             </Button>
             <Button
@@ -671,10 +676,10 @@ export const MusicPlayer = ({
                 e.stopPropagation();
                 nextTrack();
               }}
-              className="text-zinc-400 hover:text-white h-10 w-10"
+              className="text-zinc-400 hover:text-white h-9 w-9"
               disabled={!isReady}
             >
-              <SkipForward className="h-5 w-5 fill-current" />
+              <SkipForward className="h-4.5 w-4.5 fill-current" />
             </Button>
           </div>
           {!isQuizPage && (
@@ -821,10 +826,16 @@ export const MusicPlayer = ({
 
       {/* Active Device Indicator */}
       {activeDevice && activeDevice.id !== deviceId && (
-        <div className="absolute bottom-0 right-0 bg-brand text-black text-[11px] font-bold px-3 py-1 rounded-tl-lg flex items-center gap-1.5 shadow-lg z-[70] animate-in slide-in-from-bottom-2">
-          <MonitorSmartphone className="w-3.5 h-3.5" />
-          <span>Playing on {activeDevice.name}</span>
-        </div>
+        <>
+          <div className="absolute -top-8 left-2 right-2 bg-brand text-black text-[10px] font-bold px-2.5 py-1 rounded-md flex md:hidden items-center gap-1.5 shadow-lg z-[70] animate-in slide-in-from-bottom-2">
+            <MonitorSmartphone className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">Playing on {activeDevice.name}</span>
+          </div>
+          <div className="absolute bottom-0 right-0 bg-brand text-black text-[11px] font-bold px-3 py-1 rounded-tl-lg hidden md:flex items-center gap-1.5 shadow-lg z-[70] animate-in slide-in-from-bottom-2">
+            <MonitorSmartphone className="w-3.5 h-3.5" />
+            <span>Playing on {activeDevice.name}</span>
+          </div>
+        </>
       )}
 
       {/* Status Overlays - Only show on initial connection */}

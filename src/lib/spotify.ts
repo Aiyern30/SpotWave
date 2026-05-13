@@ -6,7 +6,7 @@
  * @returns Array of booleans indicating if each track is saved
  */
 export const checkUserSavedTracks = async (
-  trackIds: string[]
+  trackIds: string[],
 ): Promise<boolean[]> => {
   // Simple in-memory cache with TTL and request de-duplication to avoid
   // repeatedly hitting Spotify for the same ids when multiple components
@@ -15,12 +15,17 @@ export const checkUserSavedTracks = async (
 
   // Module-level caches (created on first invocation)
   if (!(globalThis as any).__spotify_saved_cache) {
-    (globalThis as any).__spotify_saved_cache = new Map<string, { value: boolean; ts: number }>();
+    (globalThis as any).__spotify_saved_cache = new Map<
+      string,
+      { value: boolean; ts: number }
+    >();
     (globalThis as any).__spotify_pending = new Map<string, Promise<boolean>>();
   }
 
-  const cache: Map<string, { value: boolean; ts: number }> = (globalThis as any).__spotify_saved_cache;
-  const pending: Map<string, Promise<boolean>> = (globalThis as any).__spotify_pending;
+  const cache: Map<string, { value: boolean; ts: number }> = (globalThis as any)
+    .__spotify_saved_cache;
+  const pending: Map<string, Promise<boolean>> = (globalThis as any)
+    .__spotify_pending;
 
   try {
     const now = Date.now();
@@ -61,7 +66,11 @@ export const checkUserSavedTracks = async (
       }
 
       for (const batch of batches) {
-        const batchKeyPromises: Array<{ id: string; resolve: (v: boolean) => void; reject: (e: any) => void }> = [];
+        const batchKeyPromises: Array<{
+          id: string;
+          resolve: (v: boolean) => void;
+          reject: (e: any) => void;
+        }> = [];
 
         // create individual promises and store in pending map so other callers can join
         for (const id of batch) {
@@ -83,7 +92,7 @@ export const checkUserSavedTracks = async (
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -91,7 +100,11 @@ export const checkUserSavedTracks = async (
           // reject all pending for this batch
           for (const { id, reject } of batchKeyPromises) {
             pending.delete(id);
-            reject(new Error(`Failed to check saved tracks: ${response.status} ${response.statusText} - ${errText}`));
+            reject(
+              new Error(
+                `Failed to check saved tracks: ${response.status} ${response.statusText} - ${errText}`,
+              ),
+            );
           }
           continue;
         }
@@ -131,7 +144,10 @@ export const checkUserSavedTracks = async (
 
     return results.slice(0, trackIds.length);
   } catch (error: any) {
-    console.warn("⚠️ Spotify API Error (Check Saved Tracks):", error?.message || error);
+    console.warn(
+      "⚠️ Spotify API Error (Check Saved Tracks):",
+      error?.message || error,
+    );
     return trackIds.map(() => false);
   }
 };
@@ -155,7 +171,7 @@ export const saveTracksForUser = async (trackIds: string[]): Promise<void> => {
 
     if (!response.ok) {
       throw new Error(
-        `Failed to save tracks: ${response.status} ${response.statusText}`
+        `Failed to save tracks: ${response.status} ${response.statusText}`,
       );
     }
   } catch (error) {
@@ -169,7 +185,7 @@ export const saveTracksForUser = async (trackIds: string[]): Promise<void> => {
  * @param trackIds - Array of Spotify track IDs to remove
  */
 export const removeTracksFromUser = async (
-  trackIds: string[]
+  trackIds: string[],
 ): Promise<void> => {
   try {
     const accessToken = await getAccessToken();
@@ -185,7 +201,7 @@ export const removeTracksFromUser = async (
 
     if (!response.ok) {
       throw new Error(
-        `Failed to remove tracks: ${response.status} ${response.statusText}`
+        `Failed to remove tracks: ${response.status} ${response.statusText}`,
       );
     }
   } catch (error) {
