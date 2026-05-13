@@ -58,7 +58,7 @@ import {
 import { useEffect, useState, useRef, useCallback } from "react";
 import type { Artist, Track } from "@/lib/types";
 import { usePlayer } from "@/contexts/PlayerContext";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 import { analyzePlaylistGenres } from "@/utils/analyzePlaylistGenres";
 import { getPlaylistRecommendations } from "@/utils/getPlaylistRecommendations";
 
@@ -612,6 +612,48 @@ export default function SearchSongs({
     await executeAddTrack(track);
   };
 
+  const executeRemoveTrack = async (track: Track) => {
+    setAddingTracks((prev) => new Set(prev).add(track.id));
+
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/playlists/${playlistID}/tracks`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ tracks: [{ uri: track.uri }] }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to remove track: ${response.status}`);
+      }
+
+      toast.success(`Removed "${track.name}" from playlist`);
+
+      // Update local existing tracks
+      setExistingTrackIds((prev) => prev.filter((id) => id !== track.id));
+
+      // Add back to recommendations lists so user can re-add if desired
+      setRecommendedTracks((prev) => [track, ...prev]);
+      setAiRecTracks((prev) => [track, ...prev]);
+
+      refetch(true);
+    } catch (error) {
+      console.error("Error removing track from playlist:", error);
+      toast.error("Failed to remove track from playlist");
+    } finally {
+      setAddingTracks((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(track.id);
+        return newSet;
+      });
+    }
+  };
+
   const handleTogglePlay = (track: Track) => {
     const isCurrentTrack = currentTrack?.id === track.id;
     if (isCurrentTrack && isGlobalPlaying) {
@@ -760,6 +802,7 @@ export default function SearchSongs({
                                   key={`rec-${track.id}`}
                                   track={track}
                                   onAdd={() => handleAddTrackToPlaylist(track)}
+                                  onRemove={() => executeRemoveTrack(track)}
                                   isAdding={addingTracks.has(track.id)}
                                   onPlay={() => handleTogglePlay(track)}
                                   isCurrentTrack={currentTrack?.id === track.id}
@@ -768,6 +811,7 @@ export default function SearchSongs({
                                     isGlobalPlaying
                                   }
                                   isSelected={selectedTrackIds.has(track.id)}
+                                  isAdded={existingTrackIds.includes(track.id)}
                                   onSelect={() =>
                                     toggleTrackSelection(track.id)
                                   }
@@ -794,6 +838,7 @@ export default function SearchSongs({
                                 key={`search-${track.id}`}
                                 track={track}
                                 onAdd={() => handleAddTrackToPlaylist(track)}
+                                onRemove={() => executeRemoveTrack(track)}
                                 isAdding={addingTracks.has(track.id)}
                                 onPlay={() => handleTogglePlay(track)}
                                 isCurrentTrack={currentTrack?.id === track.id}
@@ -802,6 +847,7 @@ export default function SearchSongs({
                                   isGlobalPlaying
                                 }
                                 isSelected={selectedTrackIds.has(track.id)}
+                                isAdded={existingTrackIds.includes(track.id)}
                                 onSelect={() => toggleTrackSelection(track.id)}
                               />
                             ))
@@ -955,6 +1001,7 @@ export default function SearchSongs({
                                 key={`ai-${track.id}`}
                                 track={track}
                                 onAdd={() => handleAddTrackToPlaylist(track)}
+                                onRemove={() => executeRemoveTrack(track)}
                                 isAdding={addingTracks.has(track.id)}
                                 onPlay={() => handleTogglePlay(track)}
                                 isCurrentTrack={currentTrack?.id === track.id}
@@ -963,6 +1010,7 @@ export default function SearchSongs({
                                   isGlobalPlaying
                                 }
                                 isSelected={selectedTrackIds.has(track.id)}
+                                isAdded={existingTrackIds.includes(track.id)}
                                 onSelect={() => toggleTrackSelection(track.id)}
                               />
                             ))}
@@ -1070,6 +1118,8 @@ interface TrackItemProps {
   isPlaying: boolean;
   isSelected?: boolean;
   onSelect?: () => void;
+  isAdded?: boolean;
+  onRemove?: () => void;
 }
 
 function TrackItem({
@@ -1081,6 +1131,8 @@ function TrackItem({
   isPlaying,
   isSelected,
   onSelect,
+  isAdded,
+  onRemove,
 }: TrackItemProps) {
   return (
     <div
@@ -1148,19 +1200,26 @@ function TrackItem({
         <Button
           onClick={(e) => {
             e.stopPropagation();
-            onAdd();
+            if (isAdded) {
+              if (!confirm(`Remove "${track.name}" from playlist?`)) return;
+              onRemove?.();
+            } else {
+              onAdd();
+            }
           }}
           disabled={isAdding}
           size="icon"
           variant="ghost"
           className={`h-9 w-9 rounded-xl transition-all border duration-300 flex-shrink-0 ${
-            isSelected
+            isSelected || isAdded
               ? "bg-brand border-brand text-brand-foreground shadow-lg shadow-brand/30"
               : "bg-zinc-800/40 border-zinc-700/50 text-zinc-500 hover:border-brand hover:text-brand hover:bg-brand/10"
           }`}
         >
           {isAdding ? (
             <Loader2 className="h-4 w-4 animate-spin" />
+          ) : isAdded ? (
+            <CheckCircle2 className="h-5 w-5 text-brand-foreground" />
           ) : (
             <Plus className="h-5 w-5" />
           )}
