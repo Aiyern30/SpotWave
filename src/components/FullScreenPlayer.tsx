@@ -140,6 +140,8 @@ export const FullScreenPlayer = ({
   const [currentLyricIndex, setCurrentLyricIndex] = useState<number>(-1);
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
   const mobileLyricsContainerRef = useRef<HTMLDivElement>(null);
+  const lastLyricsKeyRef = useRef<string | null>(null);
+  const lyricsRequestInFlightRef = useRef<string | null>(null);
 
   const [topTracksDisplayUI, setTopTracksDisplayUI] = useState<
     "Table" | "Grid"
@@ -353,21 +355,52 @@ export const FullScreenPlayer = ({
   }, [currentTrack]);
 
   useEffect(() => {
-    if (isOpen && currentTrack?.artists[0]?.id) {
-      const artistId = currentTrack.artists[0].id;
+    if (!isOpen || !currentTrack?.artists[0]?.id) return;
 
-      if (artistId !== currentArtistId || topTracks.length === 0) {
-        setCurrentArtistId(artistId);
-        fetchTopTracks(artistId);
-        fetchLyrics(
-          currentTrack.artists[0].name,
-          currentTrack.name,
-          currentTrack.album.name,
-          currentTrack.duration_ms,
-        );
-      }
+    const artistId = currentTrack.artists[0].id;
+    if (artistId !== currentArtistId || topTracks.length === 0) {
+      setCurrentArtistId(artistId);
+      fetchTopTracks(artistId);
     }
-  }, [isOpen, currentTrack?.artists[0]?.id]);
+  }, [
+    isOpen,
+    currentTrack?.artists[0]?.id,
+    currentArtistId,
+    topTracks.length,
+  ]);
+
+  useEffect(() => {
+    if (!isOpen || !currentTrack?.id) return;
+    const lyricsKey = `${currentTrack.id}:${currentTrack.name}:${currentTrack.album.name}:${currentTrack.duration_ms}`;
+
+    if (
+      lyricsKey === lastLyricsKeyRef.current ||
+      lyricsKey === lyricsRequestInFlightRef.current
+    ) {
+      return;
+    }
+
+    lastLyricsKeyRef.current = lyricsKey;
+    lyricsRequestInFlightRef.current = lyricsKey;
+
+    fetchLyrics(
+      currentTrack.artists[0].name,
+      currentTrack.name,
+      currentTrack.album.name,
+      currentTrack.duration_ms,
+    ).finally(() => {
+      if (lyricsRequestInFlightRef.current === lyricsKey) {
+        lyricsRequestInFlightRef.current = null;
+      }
+    });
+  }, [
+    isOpen,
+    currentTrack?.id,
+    currentTrack?.name,
+    currentTrack?.album.name,
+    currentTrack?.duration_ms,
+    currentTrack?.artists?.[0]?.name,
+  ]);
 
   useEffect(() => {
     if (!syncedLyrics || syncedLyrics.length === 0 || !isPlaying) return;

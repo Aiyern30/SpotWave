@@ -117,6 +117,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     name: string;
     type: string;
   } | null>(null);
+  const lastOwnDeviceSyncRef = useRef(0);
 
   // Sync refs with state
   useEffect(() => {
@@ -492,163 +493,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (!token) return;
 
-    const fetchPlaybackState = async () => {
-      // Once our Web Playback SDK is ready, rely on SDK state events instead of
-      // polling /me/player continuously. This prevents idle network spam.
-      if (isReadyRef.current && deviceIdRef.current) {
-        return;
-      }
-
-      // If our own SDK device is already active, rely on SDK events and skip API polling.
-      // This prevents constant /me/player network traffic while idle.
-      const sdkDeviceId = deviceIdRef.current;
-      const activeId = activeDeviceRef.current?.id;
-      const isOwnSdkDeviceActive =
-        !!sdkDeviceId && !!activeId && activeId === sdkDeviceId;
-
-      if (isOwnSdkDeviceActive) {
-        return;
-      }
-
-      if (globalPollingInFlight) {
-        return;
-      }
-
-      globalPollingInFlight = true;
-
-      try {
-        // Check cache first to avoid redundant requests
-        const now = Date.now();
-        if (
-          lastPlayerStateFetch &&
-          now - lastPlayerStateFetch.timestamp < PLAYER_STATE_CACHE_TTL_MS
-        ) {
-          // Use cached data within TTL
-          const data = lastPlayerStateFetch.data;
-          if (data && data.device) {
-            setActiveDevice({
-              id: data.device.id,
-              name: data.device.name,
-              type: data.device.type,
-            });
-
-            if (data.device.id !== deviceIdRef.current && data.item) {
-              setCurrentTrack({
-                id: data.item.id || "",
-                name: data.item.name,
-                artists: data.item.artists.map((artist: any) => ({
-                  name: artist.name,
-                  id: artist.uri?.split(":")[2] || "",
-                })),
-                album: {
-                  name: data.item.album.name,
-                  images: data.item.album.images || [],
-                  id: data.item.album.uri?.split(":")[2] || "",
-                  artists: data.item.artists.map((artist: any) => ({
-                    name: artist.name,
-                    id: artist.uri?.split(":")[2] || "",
-                  })),
-                  release_date: "",
-                  total_tracks: 0,
-                },
-                duration_ms: data.item.duration_ms,
-                explicit: false,
-                external_urls: {
-                  spotify: `https://open.spotify.com/track/${data.item.id}`,
-                },
-                popularity: 0,
-                preview_url: null,
-                track_number: 0,
-                disc_number: 0,
-                uri: data.item.uri,
-              });
-              setIsPlaying(data.is_playing);
-              setIsPaused(!data.is_playing);
-              setPosition(data.progress_ms);
-              setDuration(data.item.duration_ms);
-              if (data.device.volume_percent !== null) {
-                setVolumeState(data.device.volume_percent / 100);
-              }
-            }
-          } else {
-            setActiveDevice(null);
-          }
-          return;
-        }
-
-        const response = await fetch("https://api.spotify.com/v1/me/player", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.status === 200) {
-          const data = await response.json();
-          lastPlayerStateFetch = { data, timestamp: Date.now() };
-
-          if (data && data.device) {
-            setActiveDevice({
-              id: data.device.id,
-              name: data.device.name,
-              type: data.device.type,
-            });
-
-            // If the active device is NOT our Web Playback SDK, sync our state with the API
-            // Because the Web Playback SDK won't emit player_state_changed for other devices
-            if (data.device.id !== deviceIdRef.current) {
-              if (data.item) {
-                setCurrentTrack({
-                  id: data.item.id || "",
-                  name: data.item.name,
-                  artists: data.item.artists.map((artist: any) => ({
-                    name: artist.name,
-                    id: artist.uri?.split(":")[2] || "",
-                  })),
-                  album: {
-                    name: data.item.album.name,
-                    images: data.item.album.images || [],
-                    id: data.item.album.uri?.split(":")[2] || "",
-                    artists: data.item.artists.map((artist: any) => ({
-                      name: artist.name,
-                      id: artist.uri?.split(":")[2] || "",
-                    })),
-                    release_date: "",
-                    total_tracks: 0,
-                  },
-                  duration_ms: data.item.duration_ms,
-                  explicit: false,
-                  external_urls: {
-                    spotify: `https://open.spotify.com/track/${data.item.id}`,
-                  },
-                  popularity: 0,
-                  preview_url: null,
-                  track_number: 0,
-                  disc_number: 0,
-                  uri: data.item.uri,
-                });
-                setIsPlaying(data.is_playing);
-                setIsPaused(!data.is_playing);
-                setPosition(data.progress_ms);
-                setDuration(data.item.duration_ms);
-                if (data.device.volume_percent !== null) {
-                  setVolumeState(data.device.volume_percent / 100);
-                }
-              }
-            }
-          } else {
-            setActiveDevice(null);
-          }
-        } else if (response.status === 204) {
-          // No active device playing
-          setActiveDevice(null);
-        }
-      } catch (error) {
-        console.error("Error fetching playback state:", error);
-      } finally {
-        globalPollingInFlight = false;
-      }
-    };
-
     // Only set up polling if this is a new token or no polling is active
     if (globalPollingToken !== token) {
       globalPollingToken = token;
@@ -659,18 +503,33 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       // Fetch immediately on token change
-      fetchPlaybackState();
+      syncPlaybackState(true);
 
       // Set up new global polling interval
-      globalPollingInterval = setInterval(fetchPlaybackState, 3000);
+      globalPollingInterval = setInterval(() => syncPlaybackState(false), 3000);
     }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        syncPlaybackState(true);
+      }
+    };
+
+    const handleWindowFocus = () => {
+      syncPlaybackState(true);
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleWindowFocus);
 
     // Cleanup only when component unmounts or token changes
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleWindowFocus);
       // Don't clear global interval here; let it persist across component mounts
       // This prevents stacked intervals. The interval will be replaced if token changes.
     };
-  }, [token]);
+  }, [token, syncPlaybackState]);
 
   // Helper function to wait for device to be ready with retry
   const waitForDevice = useCallback(
@@ -1040,6 +899,157 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     },
     [player, token],
   );
+
+  async function syncPlaybackState(force = false) {
+      if (!token) return;
+
+      const sdkDeviceId = deviceIdRef.current;
+      const activeId = activeDeviceRef.current?.id;
+      const isOwnSdkDeviceActive =
+        !!sdkDeviceId && !!activeId && activeId === sdkDeviceId;
+
+      if (isOwnSdkDeviceActive) {
+        const now = Date.now();
+        if (!force && now - lastOwnDeviceSyncRef.current < 15000) {
+          return;
+        }
+        lastOwnDeviceSyncRef.current = now;
+      }
+
+      if (globalPollingInFlight) {
+        return;
+      }
+
+      globalPollingInFlight = true;
+
+      try {
+        const now = Date.now();
+        if (
+          !force &&
+          lastPlayerStateFetch &&
+          now - lastPlayerStateFetch.timestamp < PLAYER_STATE_CACHE_TTL_MS
+        ) {
+          const data = lastPlayerStateFetch.data;
+          if (data && data.device) {
+            setActiveDevice({
+              id: data.device.id,
+              name: data.device.name,
+              type: data.device.type,
+            });
+
+            if (data.device.id !== deviceIdRef.current && data.item) {
+              setCurrentTrack({
+                id: data.item.id || "",
+                name: data.item.name,
+                artists: data.item.artists.map((artist: any) => ({
+                  name: artist.name,
+                  id: artist.uri?.split(":")[2] || "",
+                })),
+                album: {
+                  name: data.item.album.name,
+                  images: data.item.album.images || [],
+                  id: data.item.album.uri?.split(":")[2] || "",
+                  artists: data.item.artists.map((artist: any) => ({
+                    name: artist.name,
+                    id: artist.uri?.split(":")[2] || "",
+                  })),
+                  release_date: "",
+                  total_tracks: 0,
+                },
+                duration_ms: data.item.duration_ms,
+                explicit: false,
+                external_urls: {
+                  spotify: `https://open.spotify.com/track/${data.item.id}`,
+                },
+                popularity: 0,
+                preview_url: null,
+                track_number: 0,
+                disc_number: 0,
+                uri: data.item.uri,
+              });
+              setIsPlaying(data.is_playing);
+              setIsPaused(!data.is_playing);
+              setPosition(data.progress_ms);
+              setDuration(data.item.duration_ms);
+              if (data.device.volume_percent !== null) {
+                setVolumeState(data.device.volume_percent / 100);
+              }
+            }
+          } else {
+            setActiveDevice(null);
+          }
+          return;
+        }
+
+        const response = await fetch("https://api.spotify.com/v1/me/player", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.status === 200) {
+          const data = await response.json();
+          lastPlayerStateFetch = { data, timestamp: Date.now() };
+
+          if (data && data.device) {
+            setActiveDevice({
+              id: data.device.id,
+              name: data.device.name,
+              type: data.device.type,
+            });
+
+            if (data.device.id !== deviceIdRef.current) {
+              if (data.item) {
+                setCurrentTrack({
+                  id: data.item.id || "",
+                  name: data.item.name,
+                  artists: data.item.artists.map((artist: any) => ({
+                    name: artist.name,
+                    id: artist.uri?.split(":")[2] || "",
+                  })),
+                  album: {
+                    name: data.item.album.name,
+                    images: data.item.album.images || [],
+                    id: data.item.album.uri?.split(":")[2] || "",
+                    artists: data.item.artists.map((artist: any) => ({
+                      name: artist.name,
+                      id: artist.uri?.split(":")[2] || "",
+                    })),
+                    release_date: "",
+                    total_tracks: 0,
+                  },
+                  duration_ms: data.item.duration_ms,
+                  explicit: false,
+                  external_urls: {
+                    spotify: `https://open.spotify.com/track/${data.item.id}`,
+                  },
+                  popularity: 0,
+                  preview_url: null,
+                  track_number: 0,
+                  disc_number: 0,
+                  uri: data.item.uri,
+                });
+                setIsPlaying(data.is_playing);
+                setIsPaused(!data.is_playing);
+                setPosition(data.progress_ms);
+                setDuration(data.item.duration_ms);
+                if (data.device.volume_percent !== null) {
+                  setVolumeState(data.device.volume_percent / 100);
+                }
+              }
+            }
+          } else {
+            setActiveDevice(null);
+          }
+        } else if (response.status === 204) {
+          setActiveDevice(null);
+        }
+      } catch (error) {
+        console.error("Error fetching playback state:", error);
+      } finally {
+        globalPollingInFlight = false;
+      }
+    }
 
   const setVolume = useCallback(
     (newVolume: number) => {
