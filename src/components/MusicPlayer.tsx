@@ -434,7 +434,10 @@ export const MusicPlayer = ({
     }
   };
 
-  if (!isVisible || isFullScreenOpen) return null;
+  // Don't show the docked player on the landing/login callback pages
+  const hideOnPaths = ["/", "/callback"];
+  if (!isVisible || isFullScreenOpen || hideOnPaths.includes(pathname || ""))
+    return null;
 
   return (
     <div
