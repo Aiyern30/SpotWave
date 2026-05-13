@@ -8,6 +8,19 @@ export async function POST(req: Request) {
       process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
       process.env.GOOGLE_API_KEY;
 
+    // Conditional logging helpers: only active during development
+    const isProd = process.env.NODE_ENV === "production";
+    const shouldLog = !isProd && process.env.SHOW_AI_ROUTE_LOGS !== "false";
+    const log = (...args: any[]) => {
+      if (shouldLog) console.log(...args);
+    };
+    const warn = (...args: any[]) => {
+      if (shouldLog) console.warn(...args);
+    };
+    const error = (...args: any[]) => {
+      if (shouldLog) console.error(...args);
+    };
+
     if (!apiKey) {
       console.error("❌ Gemini API Key Missing!");
       return NextResponse.json(
@@ -102,9 +115,7 @@ export async function POST(req: Request) {
 
     for (const attempt of attempts) {
       try {
-        console.log(
-          `🤖 Attempting AI Model: ${attempt.version}/${attempt.model}`
-        );
+          log(`🤖 Attempting AI Model: ${attempt.version}/${attempt.model}`);
 
         const url = `https://generativelanguage.googleapis.com/${attempt.version}/models/${attempt.model}:generateContent?key=${apiKey}`;
 
@@ -124,7 +135,7 @@ export async function POST(req: Request) {
 
         if (response.ok) {
           data = await response.json();
-          console.log(`✅ AI Success: ${attempt.model} (${attempt.version})`);
+          log(`✅ AI Success: ${attempt.model} (${attempt.version})`);
           break;
         } else {
           const status = response.status;
@@ -132,25 +143,20 @@ export async function POST(req: Request) {
           lastError = `Status ${status}: ${errText}`;
 
           if (status === 429) {
-            console.warn(
-              `⚠️ Rate Limit (429) for ${attempt.model}. Trying next...`
-            );
+            warn(`⚠️ Rate Limit (429) for ${attempt.model}. Trying next...`);
           } else {
-            console.warn(
-              `⚠️ AI Failed (${attempt.model}) [${status}]:`,
-              errText
-            );
+            warn(`⚠️ AI Failed (${attempt.model}) [${status}]:`, errText);
           }
 
           // If auth error, no point in trying other models with same key
           if (status === 401 || status === 403) {
-            console.error("❌ Auth/API Key error. Stopping attempts.");
+            error("❌ Auth/API Key error. Stopping attempts.");
             break;
           }
         }
       } catch (e: any) {
         lastError = e.message;
-        console.warn(`⚠️ Exception for ${attempt.model}:`, e.message);
+        warn(`⚠️ Exception for ${attempt.model}:`, e.message);
       }
     }
 
@@ -190,10 +196,7 @@ export async function POST(req: Request) {
     ];
 
     if (!data) {
-      console.error(
-        "❌ All AI models failed. Last error from provider:",
-        lastError
-      );
+      error("❌ All AI models failed. Last error from provider:", lastError);
 
       if (type === "playlist-naming") {
         return NextResponse.json({
@@ -215,14 +218,14 @@ export async function POST(req: Request) {
     let text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!text) {
-      console.warn("⚠️ AI returned empty candidate, using fallbacks.");
+      warn("⚠️ AI returned empty candidate, using fallbacks.");
       return NextResponse.json({
         recommendations:
           type === "ideas" ? fallbackSuggestions : ["Jay Chou", "Taylor Swift"],
       });
     }
 
-    console.log("📝 Raw AI response:", text);
+    log("📝 Raw AI response:", text);
 
     let recommendations;
     try {
@@ -244,9 +247,7 @@ export async function POST(req: Request) {
         try {
           recommendations = JSON.parse(jsonBody);
         } catch (parseError) {
-          console.error(
-            "Failed to parse extracted JSON block, using fallbacks."
-          );
+          error("Failed to parse extracted JSON block, using fallbacks.");
           if (type === "playlist-naming") {
             recommendations = {
               name: "AI Generated Playlist",
@@ -266,7 +267,7 @@ export async function POST(req: Request) {
           }
         }
       } else {
-        console.warn("No JSON found in response, using fallbacks.");
+        warn("No JSON found in response, using fallbacks.");
         if (type === "playlist-naming") {
           recommendations = {
             name: "AI Generated Playlist",
@@ -321,7 +322,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ recommendations });
   } catch (error: any) {
-    console.error("❌ Critical AI Route Error:", error);
+    error("❌ Critical AI Route Error:", error);
     return NextResponse.json(
       { error: "Something went wrong. Please try again later." },
       { status: 500 }
