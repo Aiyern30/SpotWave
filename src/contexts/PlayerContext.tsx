@@ -1063,14 +1063,14 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       volumeTimeoutRef.current = setTimeout(async () => {
-        if (
-          activeDeviceRef.current &&
-          activeDeviceRef.current.id !== deviceIdRef.current
-        ) {
+        // Prioritize active device if available, otherwise use current deviceId
+        const targetDeviceId = activeDeviceRef.current?.id || deviceIdRef.current;
+        
+        if (targetDeviceId) {
           try {
             const volumePercent = Math.round(clampedVolume * 100);
             await fetch(
-              `https://api.spotify.com/v1/me/player/volume?volume_percent=${volumePercent}&device_id=${activeDeviceRef.current.id}`,
+              `https://api.spotify.com/v1/me/player/volume?volume_percent=${volumePercent}&device_id=${targetDeviceId}`,
               {
                 method: "PUT",
                 headers: { Authorization: `Bearer ${token}` },
