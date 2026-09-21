@@ -274,7 +274,7 @@ const ArtistQuizPage = () => {
           </div>
 
           {aiArtists.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="media-grid animate-in fade-in slide-in-from-bottom-4 duration-500">
               {aiArtists.map((artist) => (
                 <Card
                   key={artist.id}
@@ -327,7 +327,7 @@ const ArtistQuizPage = () => {
               <Loader2 className="h-8 w-8 animate-spin bg-brand" />
             </div>
           ) : followedArtists.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+            <div className="media-grid">
               {followedArtists.map((artist) => (
                 <Card
                   key={artist.id}

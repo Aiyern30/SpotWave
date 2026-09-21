@@ -33,7 +33,7 @@ export default function MainLayout({
         />
       )}
       <div
-        className={`flex-1 transition-all duration-300 ${
+        className={`min-w-0 flex-1 transition-all duration-300 ${
           isFullScreenOpen
             ? "md:ml-0 ml-0"
             : sidebarOpen
@@ -48,7 +48,7 @@ export default function MainLayout({
               <SearchSection />
             </div>
           )}
-          <main className="flex-1">{children}</main>
+          <main className="min-w-0 flex-1">{children}</main>
         </div>
 
         {pathname !== "/Events" && !isFullScreenOpen && (

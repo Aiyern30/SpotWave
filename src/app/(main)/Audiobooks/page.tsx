@@ -106,7 +106,7 @@ const AudiobooksPage = () => {
   }, [token, handleFetchAudiobooks]);
 
   const LoadingSkeleton = () => (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
+    <div className="media-grid">
       {[...Array(12)].map((_, i) => (
         <div key={i} className="space-y-3">
           <Skeleton className="w-full aspect-square rounded-lg bg-zinc-800" />
@@ -121,7 +121,7 @@ const AudiobooksPage = () => {
     const isSaved = savedIds.has(audiobook.id);
 
     return (
-      <Card className="group relative bg-zinc-900/50 hover:bg-zinc-800/70 border border-zinc-800 transition-all duration-300 hover:scale-105 cursor-pointer overflow-hidden">
+      <Card className="group relative bg-zinc-900/50 hover:bg-zinc-800/70 border border-zinc-800 transition-all duration-300 cursor-pointer overflow-hidden">
         <div className="relative w-full aspect-square">
           <Image
             src={audiobook.images?.[0]?.url || "/default-audiobook.png"}
@@ -129,7 +129,7 @@ const AudiobooksPage = () => {
             fill
             className="object-cover rounded-t-lg"
           />
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center touch-action-reveal">
             <Button
               onClick={(e) => {
                 e.stopPropagation();
@@ -233,7 +233,7 @@ const AudiobooksPage = () => {
               ({savedAudiobooks.length})
             </span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
+          <div className="media-grid">
             {savedAudiobooks.map((audiobook) => (
               <AudiobookCard key={audiobook.id} audiobook={audiobook} />
             ))}
@@ -252,7 +252,7 @@ const AudiobooksPage = () => {
               Recommended for You
             </h2>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
+          <div className="media-grid">
             {recommendations.slice(0, 6).map((audiobook) => (
               <AudiobookCard key={audiobook.id} audiobook={audiobook} />
             ))}
@@ -278,7 +278,7 @@ const AudiobooksPage = () => {
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
+          <div className="media-grid">
             {recommendations.map((audiobook) => (
               <AudiobookCard key={audiobook.id} audiobook={audiobook} />
             ))}
@@ -302,7 +302,7 @@ const AudiobooksPage = () => {
         ) : audiobooks.length === 0 && savedAudiobooks.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
+          <div className="media-grid">
             {audiobooks.map((audiobook) => (
               <AudiobookCard key={audiobook.id} audiobook={audiobook} />
             ))}

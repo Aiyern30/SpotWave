@@ -1,5 +1,7 @@
 "use client";
 
+import { TablePlayButton } from "@/components/TablePlayButton";
+
 import { useEffect, useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -150,7 +152,7 @@ export const FullScreenPlayer = ({
   const [currentPlayingTrackId, setCurrentPlayingTrackId] = useState<
     string | null
   >(null);
-  const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
+
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -1463,23 +1465,17 @@ export const FullScreenPlayer = ({
                 <TableBody>
                   {topTracks.map((track, index) => {
                     const isThisTrack = currentPlayingTrackId === track.id;
-                    const isHovered = hoveredTrackId === track.id;
+
                     return (
                       <TableRow
                         key={track.id}
                         className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
                         onClick={() => handlePlayPauseTopTrack(track)}
-                        onMouseEnter={() => setHoveredTrackId(track.id)}
-                        onMouseLeave={() => setHoveredTrackId(null)}
+
+
                       >
                         <TableCell className="text-center py-2 sm:py-3 align-middle">
-                          <span
-                            className={`text-xs sm:text-sm font-medium ${
-                              isThisTrack ? "text-brand" : "text-zinc-400"
-                            }`}
-                          >
-                            {index + 1}
-                          </span>
+                          <TablePlayButton index={index + 1} title={track.name} playing={isTrackPlaying(track.id)} onPlay={() => handlePlayPauseTopTrack(track)} />
                         </TableCell>
                         <TableCell className="text-center py-2 sm:py-3 align-middle">
                           <div className="relative w-10 h-10 sm:w-12 sm:h-12 mx-auto rounded-md overflow-hidden group/image">
@@ -1493,29 +1489,7 @@ export const FullScreenPlayer = ({
                               className="object-cover w-10 h-10 sm:w-12 sm:h-12 rounded-md"
                               alt={track.name}
                             />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center rounded-md">
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-brand hover:bg-brand/80 text-brand-foreground shadow-xl"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handlePlayPauseTopTrack(track);
-                                }}
-                              >
-                                {isTrackPlaying(track.id) ? (
-                                  <Pause
-                                    className="h-3 w-3 sm:h-4 sm:w-4"
-                                    fill="currentColor"
-                                  />
-                                ) : (
-                                  <Play
-                                    className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5"
-                                    fill="currentColor"
-                                  />
-                                )}
-                              </Button>
-                            </div>
+
                           </div>
                         </TableCell>
                         <TableCell className="py-2 sm:py-3 align-middle">
@@ -1547,7 +1521,7 @@ export const FullScreenPlayer = ({
               </Table>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+            <div className="media-grid">
               {topTracks.map((track, index) => {
                 const isThisTrack = currentPlayingTrackId === track.id;
                 return (

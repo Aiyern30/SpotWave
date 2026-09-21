@@ -239,7 +239,7 @@ const FollowingArtists = () => {
                       >
                         <TableCell className="py-3 sm:py-4 max-w-0">
                           <div className="flex items-center space-x-3">
-                            <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex-shrink-0 group/image">
+                            <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 group/image">
                               <Image
                                 src={artist.image || "/placeholder.svg"}
                                 width={48}
@@ -247,11 +247,12 @@ const FollowingArtists = () => {
                                 className="object-cover rounded-full"
                                 alt={artist.name}
                               />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center rounded-full">
+                              <div className="absolute inset-0 bg-black/40 touch-action-reveal transition-opacity duration-200 flex items-center justify-center rounded-full">
                                 <Button
                                   size="icon"
                                   variant="ghost"
-                                  className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-brand hover:bg-brand/80 text-brand-foreground shadow-xl"
+                                  aria-label={`${isThisArtist && isPlaying ? "Pause" : "Play"} ${artist.name}`}
+                                  className="h-11 w-11 rounded-full bg-brand hover:bg-brand/80 text-brand-foreground shadow-xl"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handlePlayPauseArtist(artist.id);
@@ -303,14 +304,14 @@ const FollowingArtists = () => {
       ) : (
         <div>
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 px-1">
+            <div className="media-grid px-1">
               {Array(12)
                 .fill(0)
                 .map((_, i) => (
                   <div key={i} className="space-y-3">
-                    <Skeleton className="w-[170px] h-[170px] mx-auto rounded-full bg-zinc-800" />
-                    <Skeleton className="h-5 w-36 mx-auto bg-zinc-800" />
-                    <Skeleton className="h-4 w-32 mx-auto bg-zinc-800" />
+                    <Skeleton className="w-full aspect-square rounded-full bg-zinc-800" />
+                    <Skeleton className="h-5 w-3/4 bg-zinc-800" />
+                    <Skeleton className="h-4 w-2/3 bg-zinc-800" />
                   </div>
                 ))}
             </div>
@@ -329,7 +330,7 @@ const FollowingArtists = () => {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+            <div className="media-grid">
               {memoizedFollowedArtists.map((artist) => {
                 const isThisArtist = currentArtistId === artist.id;
 

@@ -126,7 +126,7 @@ const EventsPage = () => {
         </div>
 
         {loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6 pt-0">
+          <div className="event-grid p-3 sm:p-6 pt-0">
             {[...Array(9)].map((_, index) => (
               <SkeletonEventCard key={index} />
             ))}
@@ -138,7 +138,7 @@ const EventsPage = () => {
         {!loading &&
         selectedSource === "TICKETMASTER" &&
         ticketMasterEvents.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+          <div className="event-grid p-3 sm:p-6">
             {ticketMasterEvents.map((event) => (
               <Card
                 key={event.id}
@@ -175,7 +175,7 @@ const EventsPage = () => {
         ) : selectedSource === "PREDICTHQ" &&
           !loading &&
           predictHQEvents.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+          <div className="event-grid p-3 sm:p-6">
             {predictHQEvents.map((event) => (
               <Card
                 key={event.id}

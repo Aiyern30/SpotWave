@@ -229,7 +229,7 @@ const PlaylistQuizPage = () => {
           </div>
 
           {aiPlaylists.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="media-grid animate-in fade-in slide-in-from-bottom-4 duration-500">
               {aiPlaylists.map((playlist) => (
                 <Card
                   key={playlist.id}
@@ -289,7 +289,7 @@ const PlaylistQuizPage = () => {
           </div>
 
           {loadingMy ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            <div className="media-grid">
               {[...Array(5)].map((_, i) => (
                 <div
                   key={i}
@@ -298,7 +298,7 @@ const PlaylistQuizPage = () => {
               ))}
             </div>
           ) : myPlaylists.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            <div className="media-grid">
               {myPlaylists.map((playlist) => (
                 <Card
                   key={playlist.id}

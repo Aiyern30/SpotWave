@@ -1,5 +1,7 @@
 "use client";
 
+import { TablePlayButton } from "@/components/TablePlayButton";
+
 import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -156,7 +158,7 @@ const ArtistProfilePage = () => {
   const [playingTrackId, setPlayingTrackId] = useState<string | null>(null);
   const { toast } = useToast();
   const [isFollowing, setIsFollowing] = useState(false);
-  const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
+
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
   const [isBioExpanded, setIsBioExpanded] = useState(false);
   const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
@@ -764,41 +766,12 @@ const ArtistProfilePage = () => {
                         key={track.id}
                         className="border-zinc-800 hover:bg-zinc-800/50 transition-colors cursor-pointer group"
                         onClick={() => handleSongClick(track.id, track.name)}
-                        onMouseEnter={() => setHoveredTrackId(track.id)}
-                        onMouseLeave={() => setHoveredTrackId(null)}
+
+
                       >
                         <TableCell className="text-center">
-                          {hoveredTrackId === track.id ? (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="w-8 h-8 p-0 rounded-full hover:bg-brand hover:text-brand-foreground"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handlePlayPauseTrack(track);
-                              }}
-                            >
-                              {isTrackPlaying(track.id) ? (
-                                <Pause
-                                  className="w-3 h-3"
-                                  fill="currentColor"
-                                />
-                              ) : (
-                                <Play className="w-3 h-3" fill="currentColor" />
-                              )}
-                            </Button>
-                          ) : (
-                            <span
-                              className={`text-sm ${
-                                isTrackPlaying(track.id)
-                                  ? "text-brand"
-                                  : "text-zinc-400"
-                              }`}
-                            >
-                              {index + 1}
-                            </span>
-                          )}
-                        </TableCell>
+                          <TablePlayButton index={index + 1} title={track.name} playing={isTrackPlaying(track.id)} onPlay={() => handlePlayPauseTrack(track)} />
+                      </TableCell>
                         <TableCell className="max-w-0 py-4">
                           <div className="flex items-center space-x-3 min-w-0">
                             <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
@@ -955,7 +928,7 @@ const ArtistProfilePage = () => {
                 </Table>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6">
+              <div className="media-grid">
                 {topTracks.map((track, index) => {
                   return (
                     <PlaylistCard
@@ -1107,7 +1080,7 @@ const ArtistProfilePage = () => {
 
             {albumsDisplayUI === "Table" ? (
               <div className="overflow-x-auto bg-zinc-900/50 rounded-xl border border-zinc-800/50">
-                <Table className="table-layout-fixed">
+                <Table className="table-fixed">
                   <TableHeader>
                     <TableRow className="border-zinc-800 hover:bg-transparent">
                       <TableHead className="text-zinc-400">Album</TableHead>
@@ -1230,7 +1203,7 @@ const ArtistProfilePage = () => {
                 </Table>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6">
+              <div className="media-grid">
                 {albums.map((album) => (
                   <PlaylistCard
                     key={album.id}
@@ -1332,7 +1305,7 @@ const ArtistProfilePage = () => {
               <h3 className="text-2xl font-semibold text-white">
                 Similar Artists
               </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              <div className="media-grid">
                 {artistDetails?.similar.artist.map((similarArtist) => (
                   <TooltipProvider key={similarArtist.id}>
                     <div
@@ -1381,7 +1354,7 @@ const ArtistProfilePage = () => {
 
           <div className="space-y-4">
             <Skeleton className="h-8 w-48" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5">
+            <div className="media-grid">
               {Array(6)
                 .fill(0)
                 .map((_, index) => (

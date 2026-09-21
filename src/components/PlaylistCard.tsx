@@ -53,7 +53,7 @@ export default function PlaylistCard({
   onResume,
   onClick,
   menu,
-  fluid = false,
+  fluid = true,
   view = "Grid",
 }: PlaylistCardProps) {
   const [imageError, setImageError] = useState(false);
@@ -112,7 +112,7 @@ export default function PlaylistCard({
   return (
     <TooltipProvider>
       <Card
-        className={`group bg-zinc-900/50 border border-zinc-800/70 hover:border-brand/50 hover:bg-brand/5 transition-colors cursor-pointer relative overflow-hidden w-full min-w-0 ${fluid ? "h-full" : "max-w-[140px] sm:max-w-[200px] mx-auto"}`}
+        className={`group bg-zinc-900/50 border border-zinc-800/70 hover:border-brand/50 hover:bg-brand/5 transition-colors cursor-pointer relative overflow-hidden w-full min-w-0 ${fluid ? "h-full" : "h-full"}`}
         onClick={handleCardClick}
       >
         <CardHeader className={fluid ? "p-3 pb-0" : "pb-3"}>

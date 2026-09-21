@@ -1,5 +1,7 @@
 "use client";
 
+import { TablePlayButton } from "@/components/TablePlayButton";
+
 import type React from "react";
 
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
@@ -67,7 +69,7 @@ const AlbumsIDPage = () => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [hoveredArtist, setHoveredArtist] = useState<string | null>(null);
   const [playingTrack, setPlayingTrack] = useState<string | null>(null);
-  const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
+
   const [isSaved, setIsSaved] = useState<boolean>(false);
   const [artistImage, setArtistImage] = useState<string | null>(null);
   const [isCheckingSaved, setIsCheckingSaved] = useState<boolean>(true);
@@ -430,7 +432,7 @@ const AlbumsIDPage = () => {
 
           {displayUI === "Table" ? (
             <div className="overflow-x-auto rounded-lg border border-zinc-800">
-              <Table className="table-layout-fixed">
+              <Table className="table-fixed">
                 <TableHeader>
                   <TableRow className="border-zinc-800 hover:bg-transparent">
                     <TableHead className="w-12 text-center text-zinc-400">
@@ -450,8 +452,8 @@ const AlbumsIDPage = () => {
                     <TableRow
                       key={item.id}
                       className="border-zinc-800 hover:bg-zinc-800/50 transition-colors cursor-pointer group"
-                      onMouseEnter={() => setHoveredTrackId(item.id)}
-                      onMouseLeave={() => setHoveredTrackId(null)}
+
+
                       onClick={() =>
                         router.push(
                           `/Songs/${item.id}?name=${encodeURIComponent(
@@ -461,33 +463,7 @@ const AlbumsIDPage = () => {
                       }
                     >
                       <TableCell className="text-center">
-                        {hoveredTrackId === item.id ? (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="w-8 h-8 p-0 rounded-full hover:bg-brand hover:text-brand-foreground"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePlayPauseTrack(item);
-                            }}
-                          >
-                            {isTrackPlaying(item.id) ? (
-                              <Pause className="w-3 h-3" fill="currentColor" />
-                            ) : (
-                              <Play className="w-3 h-3" fill="currentColor" />
-                            )}
-                          </Button>
-                        ) : (
-                          <span
-                            className={`text-sm ${
-                              isTrackPlaying(item.id)
-                                ? "text-brand"
-                                : "text-zinc-400"
-                            }`}
-                          >
-                            {startIndex + index + 1}
-                          </span>
-                        )}
+                        <TablePlayButton index={startIndex + index + 1} title={item.name} playing={isTrackPlaying(item.id)} onPlay={() => handlePlayPauseTrack(item)} />
                       </TableCell>
 
                       <TableCell className="max-w-0">
@@ -570,7 +546,7 @@ const AlbumsIDPage = () => {
               </Table>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6">
+            <div className="media-grid">
               {paginatedItems.map((item, index) => {
                 const isThisTrack = currentTrackId === item.id;
                 return (

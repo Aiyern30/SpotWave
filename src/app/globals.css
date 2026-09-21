@@ -294,3 +294,77 @@
 @media (any-pointer: coarse), (hover: none) {
   .touch-action-reveal { opacity: 1; }
 }
+
+/* Artwork collections size columns from their actual container, so opening
+   the sidebar or nesting a grid cannot squeeze eight cards into a narrow row. */
+.media-grid {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 8.5rem), 1fr));
+  gap: 0.75rem;
+  align-items: stretch;
+}
+.media-grid > * { min-width: 0; width: 100%; }
+@media (min-width: 640px) {
+  .media-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr));
+    gap: 1rem;
+  }
+}
+@media (min-width: 1280px) {
+  .media-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
+    gap: 1.25rem;
+  }
+}
+
+.event-grid {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  gap: 1.5rem;
+}
+.event-grid > * { min-width: 0; }
+
+/* Stable playback controls: hover changes opacity, never table dimensions. */
+.table-play-control {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: hsl(var(--brand-primary));
+  vertical-align: middle;
+  touch-action: manipulation;
+}
+.table-play-control:focus-visible {
+  outline: 2px solid hsl(var(--brand-primary));
+  outline-offset: 2px;
+}
+.table-play-control:hover { background: rgb(255 255 255 / 0.08); }
+.table-track-number, .table-play-icon { grid-area: 1 / 1; }
+.table-track-number { opacity: 0; color: rgb(161 161 170); font-variant-numeric: tabular-nums; }
+.table-play-icon { display: grid; place-items: center; opacity: 1; }
+.music-table thead { background: rgb(255 255 255 / 0.025); }
+.music-table thead tr:hover { background: transparent; }
+@media (hover: hover) and (pointer: fine) {
+  .table-play-control:not([data-playing="true"]) .table-track-number { opacity: 1; }
+  .table-play-control:not([data-playing="true"]) .table-play-icon { opacity: 0; }
+  tr:hover .table-play-control .table-track-number,
+  tr:focus-within .table-play-control .table-track-number { opacity: 0; }
+  tr:hover .table-play-control .table-play-icon,
+  tr:focus-within .table-play-control .table-play-icon { opacity: 1; }
+}
+@media (any-pointer: coarse) {
+  .table-play-control .table-track-number { opacity: 0 !important; }
+  .table-play-control .table-play-icon { opacity: 1 !important; }
+}
+.music-table:has(.table-play-control) th:first-child,
+.music-table:has(.table-play-control) td:first-child {
+  width: 68px;
+  min-width: 68px;
+  padding-inline: 12px;
+}

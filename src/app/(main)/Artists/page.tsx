@@ -1,5 +1,7 @@
 "use client";
 
+import { TablePlayButton } from "@/components/TablePlayButton";
+
 import { useEffect, useState, useMemo, useCallback } from "react";
 import PlaylistCard from "@/components/PlaylistCard";
 import {
@@ -57,7 +59,7 @@ const Page = () => {
   const router = useRouter();
   const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } =
     usePlayer();
-  const [hoveredArtistId, setHoveredArtistId] = useState<string | null>(null);
+
   const [currentArtistId, setCurrentArtistId] = useState<string | null>(null);
 
   const LASTFM_API_KEY = process.env.NEXT_PUBLIC_LASTFM_API_KEY;
@@ -272,13 +274,13 @@ const Page = () => {
   );
 
   const GridSkeleton = () => (
-    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+    <div className="media-grid">
       {Array(10)
         .fill(0)
         .map((_, index) => (
           <div
             key={index}
-            className="space-y-3 w-full max-w-[140px] sm:max-w-[200px]"
+            className="space-y-3 w-full min-w-0"
           >
             <Skeleton className="w-full aspect-square rounded-lg bg-zinc-800" />
             <Skeleton className="h-4 w-3/4 bg-zinc-800" />
@@ -404,18 +406,12 @@ const Page = () => {
                           <TableRow
                             key={artist.id || index}
                             onClick={() => handleClick(artist.id, artist.name)}
-                            onMouseEnter={() => setHoveredArtistId(artist.id)}
-                            onMouseLeave={() => setHoveredArtistId(null)}
+
+
                             className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
                           >
                             <TableCell className="text-center py-3 sm:py-4">
-                              <span
-                                className={`text-xs sm:text-sm font-medium ${
-                                  isThisArtist ? "text-brand" : "text-zinc-400"
-                                }`}
-                              >
-                                {index + 1}
-                              </span>
+                              <TablePlayButton index={index + 1} title={artist.name} playing={isArtistPlaying(artist.id)} onPlay={() => handlePlayPauseArtist(artist.id)} />
                             </TableCell>
                             <TableCell className="py-3 sm:py-4">
                               <div className="flex items-center space-x-2 sm:space-x-3">
@@ -430,29 +426,7 @@ const Page = () => {
                                       {artist.name[0]}
                                     </AvatarFallback>
                                   </Avatar>
-                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-brand hover:bg-brand text-black shadow-xl"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handlePlayPauseArtist(artist.id);
-                                      }}
-                                    >
-                                      {isArtistPlaying(artist.id) ? (
-                                        <Pause
-                                          className="h-3 w-3 sm:h-4 sm:w-4"
-                                          fill="currentColor"
-                                        />
-                                      ) : (
-                                        <Play
-                                          className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5"
-                                          fill="currentColor"
-                                        />
-                                      )}
-                                    </Button>
-                                  </div>
+
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <div
@@ -529,7 +503,7 @@ const Page = () => {
             )}
 
             {displayUI === "Grid" && (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+              <div className="media-grid">
                 {memoizedArtists.map((artist, index) => {
                   const imageUrl = artist.image[0]["#text"];
                   const isThisArtist = currentArtistId === artist.id;

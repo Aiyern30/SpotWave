@@ -1,6 +1,7 @@
 /* eslint-disable react/no-unescaped-entities */
 "use client";
 
+import { TablePlayButton } from "@/components/TablePlayButton";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -69,7 +70,7 @@ const PlaylistPage = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [displayUI, setDisplayUI] = useState<string>("Table");
-  const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
+
   const [token, setToken] = useState<string>("");
   const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
   const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
@@ -116,7 +117,7 @@ const PlaylistPage = () => {
         } else {
           console.error(
             "Failed to fetch playlist details:",
-            playlistResponse.status
+            playlistResponse.status,
           );
         }
 
@@ -129,7 +130,7 @@ const PlaylistPage = () => {
         if (!silent) setLoading(false);
       }
     },
-    [token, playlistId]
+    [token, playlistId],
   );
 
   const fetchUserPlaylists = useCallback(async () => {
@@ -140,7 +141,7 @@ const PlaylistPage = () => {
         `https://api.spotify.com/v1/users/${userProfile.id}/playlists`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       if (response.ok) {
         const data = await response.json();
@@ -197,7 +198,7 @@ const PlaylistPage = () => {
         });
       }
     },
-    [playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying]
+    [playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying],
   );
 
   const handleArtistClick = (artistId: string, artistName: string) => {
@@ -218,7 +219,7 @@ const PlaylistPage = () => {
         `https://api.spotify.com/v1/me/tracks/contains?ids=${trackIds}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       if (response.ok) {
         const data = await response.json();
@@ -238,7 +239,7 @@ const PlaylistPage = () => {
   const handleAddToPlaylist = async (
     trackUri: string,
     playlistId: string,
-    playlistName: string
+    playlistName: string,
   ) => {
     try {
       const response = await fetch(
@@ -250,7 +251,7 @@ const PlaylistPage = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ uris: [trackUri] }),
-        }
+        },
       );
       if (response.ok) {
         const { toast } = await import("react-toastify");
@@ -267,7 +268,7 @@ const PlaylistPage = () => {
 
   const handleRemoveFromPlaylist = async (
     trackUri: string,
-    trackName: string
+    trackName: string,
   ) => {
     try {
       const response = await fetch(
@@ -279,7 +280,7 @@ const PlaylistPage = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ tracks: [{ uri: trackUri }] }),
-        }
+        },
       );
       if (response.ok) {
         const { toast } = await import("react-toastify");
@@ -306,7 +307,7 @@ const PlaylistPage = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       if (response.ok) {
         const { toast } = await import("react-toastify");
@@ -330,7 +331,7 @@ const PlaylistPage = () => {
       toast.error(
         isLiked
           ? "Failed to remove from Liked Songs"
-          : "Failed to save to Liked Songs"
+          : "Failed to save to Liked Songs",
       );
     }
   };
@@ -344,7 +345,7 @@ const PlaylistPage = () => {
 
   const memoizedTracks = useMemo(
     () => playlist?.tracks?.items || [],
-    [playlist?.tracks?.items]
+    [playlist?.tracks?.items],
   );
 
   const isCurrentTrackPlaying = (trackId: string) => {
@@ -484,50 +485,20 @@ const PlaylistPage = () => {
                 {memoizedTracks.map((playlistTrack, index) => {
                   const { track } = playlistTrack;
                   const isCurrentlyPlaying = isCurrentTrackPlaying(track.id);
-                  const isHovered = hoveredTrackId === track.id;
 
                   return (
                     <TableRow
                       key={track.id}
                       className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
                       onClick={() => handlePlayPause(track)}
-                      onMouseEnter={() => setHoveredTrackId(track.id)}
-                      onMouseLeave={() => setHoveredTrackId(null)}
                     >
                       <TableCell className="text-center py-3 sm:py-4">
-                        {isHovered ? (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:bg-brand hover:text-brand-foreground"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handlePlayPause(track);
-                            }}
-                          >
-                            {isCurrentlyPlaying ? (
-                              <Pause
-                                className="w-3 h-3 sm:w-4 sm:h-4"
-                                fill="currentColor"
-                              />
-                            ) : (
-                              <Play
-                                className="w-3 h-3 sm:w-4 sm:h-4"
-                                fill="currentColor"
-                              />
-                            )}
-                          </Button>
-                        ) : (
-                          <span
-                            className={`text-xs sm:text-sm font-medium ${
-                              isCurrentlyPlaying
-                                ? "text-brand"
-                                : "text-zinc-400"
-                            }`}
-                          >
-                            {index + 1}
-                          </span>
-                        )}
+                        <TablePlayButton
+                          index={index + 1}
+                          title={track.name}
+                          playing={isCurrentlyPlaying}
+                          onPlay={() => handlePlayPause(track)}
+                        />
                       </TableCell>
 
                       <TableCell className="py-3 sm:py-4 max-w-0">
@@ -587,7 +558,7 @@ const PlaylistPage = () => {
                       <TableCell className="hidden xl:table-cell py-3 sm:py-4">
                         <span className="text-zinc-400 text-sm">
                           {new Date(
-                            playlistTrack.added_at
+                            playlistTrack.added_at,
                           ).toLocaleDateString()}
                         </span>
                       </TableCell>
@@ -628,7 +599,7 @@ const PlaylistPage = () => {
                                       handleAddToPlaylist(
                                         track.uri,
                                         pl.id,
-                                        pl.name
+                                        pl.name,
                                       );
                                     }}
                                     className="text-white hover:bg-brand/20 hover:text-brand"
@@ -681,7 +652,7 @@ const PlaylistPage = () => {
                                 e.stopPropagation();
                                 handleArtistClick(
                                   track.artists[0].id,
-                                  track.artists[0].name
+                                  track.artists[0].name,
                                 );
                               }}
                               className="text-white hover:bg-brand/20 hover:text-brand"
@@ -695,7 +666,7 @@ const PlaylistPage = () => {
                                 e.stopPropagation();
                                 handleAlbumClick(
                                   track.album.id,
-                                  track.album.name
+                                  track.album.name,
                                 );
                               }}
                               className="text-white hover:bg-brand/20 hover:text-brand"
@@ -714,7 +685,7 @@ const PlaylistPage = () => {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+        <div className="media-grid">
           {memoizedTracks.map((playlistTrack, index) => {
             const { track } = playlistTrack;
             return (
@@ -732,7 +703,7 @@ const PlaylistPage = () => {
                 onClick={(id) => {
                   // Navigate to song details
                   router.push(
-                    `/Songs/${id}?name=${encodeURIComponent(track.name)}`
+                    `/Songs/${id}?name=${encodeURIComponent(track.name)}`,
                   );
                 }}
                 menu={
@@ -814,7 +785,7 @@ const PlaylistPage = () => {
                           e.stopPropagation();
                           handleArtistClick(
                             track.artists[0].id,
-                            track.artists[0].name
+                            track.artists[0].name,
                           );
                         }}
                         className="text-white hover:bg-brand/20 hover:text-brand"

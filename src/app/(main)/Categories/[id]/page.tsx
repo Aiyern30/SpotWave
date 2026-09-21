@@ -1,5 +1,7 @@
 "use client";
 
+import { TablePlayButton } from "@/components/TablePlayButton";
+
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -45,7 +47,7 @@ export default function CategoryDetailPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
+
 
   const {
     playTrack,
@@ -237,40 +239,18 @@ export default function CategoryDetailPage() {
               <TableBody>
                 {tracks.slice(0, 10).map((track, index) => {
                   const isPlayingThis = isTrackPlaying(track.id);
-                  const isHovered = hoveredTrackId === track.id;
+
 
                   return (
                     <TableRow
                       key={track.id}
                       className="border-zinc-800/30 hover:bg-zinc-800/30 transition-all cursor-pointer group"
                       onClick={() => handlePlayPauseTrack(track)}
-                      onMouseEnter={() => setHoveredTrackId(track.id)}
-                      onMouseLeave={() => setHoveredTrackId(null)}
+
+
                     >
                       <TableCell className="text-center py-4">
-                        {isHovered ? (
-                          <div className="flex justify-center">
-                            {isPlayingThis ? (
-                              <Pause
-                                className="w-4 h-4 text-brand"
-                                fill="currentColor"
-                              />
-                            ) : (
-                              <Play
-                                className="w-4 h-4 text-white ml-0.5"
-                                fill="currentColor"
-                              />
-                            )}
-                          </div>
-                        ) : (
-                          <span
-                            className={`text-sm ${
-                              isPlayingThis ? "text-brand" : "text-zinc-500"
-                            }`}
-                          >
-                            {index + 1}
-                          </span>
-                        )}
+                        <TablePlayButton index={index + 1} title={track.name} playing={isPlayingThis} onPlay={() => handlePlayPauseTrack(track)} />
                       </TableCell>
                       <TableCell className="py-4 max-w-0">
                         <div className="flex items-center gap-3">
@@ -322,7 +302,7 @@ export default function CategoryDetailPage() {
               Featured Playlists
             </h2>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-6">
+          <div className="media-grid">
             {playlists.slice(0, 16).map((playlist) => (
               <PlaylistCard
                 key={playlist.id}
@@ -352,7 +332,7 @@ export default function CategoryDetailPage() {
             <Disc className="h-5 w-5 text-purple-500" />
             Popular Albums
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-6">
+          <div className="media-grid">
             {albums.slice(0, 16).map((album) => (
               <PlaylistCard
                 key={album.id}

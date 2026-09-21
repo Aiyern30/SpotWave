@@ -1,5 +1,7 @@
 "use client";
 
+import { TablePlayButton } from "@/components/TablePlayButton";
+
 import { useEffect, useState, useMemo, useCallback } from "react";
 import PlaylistCard from "@/components/PlaylistCard";
 import {
@@ -67,7 +69,7 @@ const Page = () => {
   const [numTracks, setNumTracks] = useState<number>(10);
   const [displayUI, setDisplayUI] = useState<DisplayUIProps | string>("Table");
   const [loading, setLoading] = useState<boolean>(false);
-  const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
+
   const [currentTrackId, setCurrentTrackId] = useState<string | null>(null);
 
   const [token, setToken] = useState<string>("");
@@ -414,13 +416,13 @@ const Page = () => {
   );
 
   const GridSkeleton = () => (
-    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+    <div className="media-grid">
       {Array(10)
         .fill(0)
         .map((_, index) => (
           <div
             key={index}
-            className="space-y-3 w-full max-w-[140px] sm:max-w-[200px]"
+            className="space-y-3 w-full min-w-0"
           >
             <Skeleton className="w-full aspect-square rounded-lg bg-zinc-800" />
             <Skeleton className="h-4 w-3/4 bg-zinc-800" />
@@ -520,7 +522,7 @@ const Page = () => {
             {displayUI === "Table" ? (
               <div className="overflow-x-auto rounded-lg border border-zinc-800/50">
                 <div className="bg-zinc-900/30">
-                  <Table className="table-layout-fixed">
+                  <Table className="table-fixed">
                     <TableCaption className="text-zinc-400 pb-4">
                       A list of top tracks from Last.fm
                     </TableCaption>
@@ -557,18 +559,12 @@ const Page = () => {
                                 )}`
                               )
                             }
-                            onMouseEnter={() => setHoveredTrackId(track.id)}
-                            onMouseLeave={() => setHoveredTrackId(null)}
+
+
                             className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
                           >
                             <TableCell className="text-center py-3 sm:py-4">
-                              <span
-                                className={`text-xs sm:text-sm font-medium ${
-                                  isThisTrack ? "bg-brand" : "text-zinc-400"
-                                }`}
-                              >
-                                {index + 1}
-                              </span>
+                              <TablePlayButton index={index + 1} title={track.name} playing={isTrackPlaying(track.id)} onPlay={() => handlePlayPauseTrack(track.id, track.name, track.artist.name)} />
                             </TableCell>
                             <TableCell className="py-3 sm:py-4 max-w-0">
                               <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
@@ -583,40 +579,14 @@ const Page = () => {
                                     className="object-cover"
                                     alt={track.name}
                                   />
-                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-brand hover:bg-brand text-black shadow-xl"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handlePlayPauseTrack(
-                                          track.id,
-                                          track.name,
-                                          track.artist.name
-                                        );
-                                      }}
-                                    >
-                                      {isTrackPlaying(track.id) ? (
-                                        <Pause
-                                          className="h-3 w-3 sm:h-4 sm:w-4"
-                                          fill="currentColor"
-                                        />
-                                      ) : (
-                                        <Play
-                                          className="h-3 w-3 sm:h-4 sm:w-4 ml-0.5"
-                                          fill="currentColor"
-                                        />
-                                      )}
-                                    </Button>
-                                  </div>
+
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <div
                                     className={`font-medium truncate transition-colors text-sm sm:text-base ${
                                       isThisTrack
-                                        ? "bg-brand"
-                                        : "text-white hover:bg-brand"
+                                        ? "text-brand"
+                                        : "text-white hover:text-brand"
                                     }`}
                                   >
                                     {track.name}
@@ -687,7 +657,7 @@ const Page = () => {
                                                 pl.name
                                               );
                                             }}
-                                            className="text-white hover:bg-brand/20 hover:text-brand"
+                                            className="text-white hover:text-brand/20 hover:text-brand"
                                           >
                                             {pl.name}
                                           </DropdownMenuItem>
@@ -703,7 +673,7 @@ const Page = () => {
                                           track.name
                                         );
                                       }}
-                                      className="text-white hover:bg-brand/20 hover:text-brand"
+                                      className="text-white hover:text-brand/20 hover:text-brand"
                                     >
                                       <Heart
                                         className={`mr-2 h-4 w-4 ${
@@ -732,7 +702,7 @@ const Page = () => {
                                           );
                                         }
                                       }}
-                                      className="text-white hover:bg-brand/20 hover:text-brand"
+                                      className="text-white hover:text-brand/20 hover:text-brand"
                                     >
                                       <User className="mr-2 h-4 w-4" />
                                       Go to artist
@@ -746,7 +716,7 @@ const Page = () => {
                                           "_blank"
                                         );
                                       }}
-                                      className="text-white hover:bg-brand/20 hover:text-brand"
+                                      className="text-white hover:text-brand/20 hover:text-brand"
                                     >
                                       <ExternalLink className="mr-2 h-4 w-4" />
                                       Open in Spotify
@@ -763,7 +733,7 @@ const Page = () => {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+              <div className="media-grid">
                 {memoizedTracks.map((track, index) => {
                   const isThisTrack = currentTrackId === track.id;
                   return (
@@ -817,7 +787,7 @@ const Page = () => {
                                           pl.name
                                         );
                                       }}
-                                      className="text-white hover:bg-brand/20 hover:text-brand"
+                                      className="text-white hover:text-brand/20 hover:text-brand"
                                     >
                                       {pl.name}
                                     </DropdownMenuItem>
@@ -830,7 +800,7 @@ const Page = () => {
                                   e.stopPropagation();
                                   handleSaveToLiked(track.id!, track.name);
                                 }}
-                                className="text-white hover:bg-brand/20 hover:text-brand"
+                                className="text-white hover:text-brand/20 hover:text-brand"
                               >
                                 <Heart
                                   className={`mr-2 h-4 w-4 ${
@@ -859,7 +829,7 @@ const Page = () => {
                                     );
                                   }
                                 }}
-                                className="text-white hover:bg-brand/20 hover:text-brand"
+                                className="text-white hover:text-brand/20 hover:text-brand"
                               >
                                 <User className="mr-2 h-4 w-4" />
                                 Go to artist
@@ -873,7 +843,7 @@ const Page = () => {
                                     "_blank"
                                   );
                                 }}
-                                className="text-white hover:bg-brand/20 hover:text-brand"
+                                className="text-white hover:text-brand/20 hover:text-brand"
                               >
                                 <ExternalLink className="mr-2 h-4 w-4" />
                                 Open in Spotify

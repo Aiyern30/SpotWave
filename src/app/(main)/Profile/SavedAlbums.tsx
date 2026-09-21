@@ -63,7 +63,7 @@ const SavedAlbums = () => {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+      <div className="media-grid">
         {Array(12)
           .fill(0)
           .map((_, i) => (
@@ -92,7 +92,7 @@ const SavedAlbums = () => {
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+    <div className="media-grid">
       {savedAlbums.map((item) => {
         const { album } = item;
         const isCurrentAlbum = currentTrack?.uri?.includes(album.id);
