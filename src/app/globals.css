@@ -282,3 +282,15 @@
 ::-webkit-scrollbar-button {
   display: none; /* Hide up/down buttons */
 }
+
+/* Touch and hybrid devices get visible actions. Only mouse-only devices hide
+   them; keyboard focus always reveals controls without an initial hover. */
+.touch-action-reveal { opacity: 1; }
+@media (hover: hover) and (pointer: fine) and (any-pointer: fine) {
+  .touch-action-reveal { opacity: 0; }
+  .group:hover .touch-action-reveal,
+  .group:focus-within .touch-action-reveal { opacity: 1; }
+}
+@media (any-pointer: coarse), (hover: none) {
+  .touch-action-reveal { opacity: 1; }
+}

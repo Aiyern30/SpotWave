@@ -1,4 +1,6 @@
 "use client";
+import ViewSelector from "@/components/ViewSelector";
+import { useCollectionView } from "@/hooks/useCollectionView";
 
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -43,7 +45,7 @@ const PublicLibrary = ({ userId }: { userId?: string }) => {
     userId || null
   );
   const [loading, setLoading] = useState(true);
-  const [displayUI, setDisplayUI] = useState<string>("Grid");
+  const [displayUI, setDisplayUI] = useCollectionView("spotwave:view:profile", ["Grid", "Table"] as const, "Grid");
   const [currentPlaylistUri, setCurrentPlaylistUri] = useState<string | null>(
     null
   );
@@ -136,40 +138,9 @@ const PublicLibrary = ({ userId }: { userId?: string }) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-2xl font-bold text-white">Playlists</h2>
-        <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-label="Table view"
-            aria-pressed={displayUI === "Table"}
-            onClick={() => setDisplayUI("Table")}
-            className={`h-9 px-3 transition-all ${
-              displayUI === "Table"
-                ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
-                : "text-zinc-400 hover:text-white hover:bg-zinc-800"
-            }`}
-          >
-            <PiTable className="h-5 w-5 sm:mr-2" />
-            <span className="hidden sm:inline">Table</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-label="Grid view"
-            aria-pressed={displayUI === "Grid"}
-            onClick={() => setDisplayUI("Grid")}
-            className={`h-9 px-3 transition-all ${
-              displayUI === "Grid"
-                ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
-                : "text-zinc-400 hover:text-white hover:bg-zinc-800"
-            }`}
-          >
-            <LuLayoutGrid className="h-5 w-5 sm:mr-2" />
-            <span className="hidden sm:inline">Grid</span>
-          </Button>
-        </div>
+        <ViewSelector value={displayUI} onChange={setDisplayUI} options={["Grid", "Table"]} />
       </div>
 
       {displayUI === "Table" ? (
@@ -239,11 +210,12 @@ const PublicLibrary = ({ userId }: { userId?: string }) => {
                                 className="object-cover"
                                 alt={playlist.name}
                               />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                              <div className="absolute inset-0 bg-black/40 touch-action-reveal transition-opacity duration-200 flex items-center justify-center">
                                 <Button
                                   size="icon"
+                                  aria-label={`${isThisPlaylist && isPlaying ? "Pause" : "Play"} ${playlist.name}`}
                                   variant="ghost"
-                                  className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-brand hover:bg-brand/80 text-brand-foreground shadow-xl"
+                                  className="h-11 w-11 rounded-full bg-brand hover:bg-brand/80 text-brand-foreground shadow-xl"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handlePlayPausePlaylist(playlist.id);

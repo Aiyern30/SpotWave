@@ -1,4 +1,6 @@
 "use client";
+import ViewSelector from "@/components/ViewSelector";
+import { useCollectionView } from "@/hooks/useCollectionView";
 import { useEffect, useState, useCallback } from "react";
 import HomeMediaCard from "@/components/HomeMediaCard";
 import { Button } from "@/components/ui/";
@@ -31,6 +33,7 @@ type UserProfile = {
 };
 
 const Page = () => {
+  const [view, setView] = useCollectionView("spotwave:view:home", ["Grid", "List"] as const, "Grid");
   const [token, setToken] = useState<string>("");
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [playlists, setPlaylists] = useState<PlaylistsProps[]>([]);
@@ -168,6 +171,7 @@ const Page = () => {
 
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-10 pb-10 sm:space-y-12">
+      <div className="flex justify-end"><ViewSelector value={view} onChange={setView} options={["Grid", "List"]} label="Home collection view" /></div>
       <section aria-labelledby="playlists-heading" className="space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -182,7 +186,7 @@ const Page = () => {
           </Button>
         </div>
         {createError && <p role="alert" className="text-sm text-red-300">{createError}</p>}
-        {loadingPlaylists ? <MediaGridSkeleton /> : playlistError ? (
+        {loadingPlaylists ? <MediaGridSkeleton view={view} /> : playlistError ? (
           <div role="alert" className="rounded-xl border border-zinc-800 p-6 text-zinc-300">
             <p>{playlistError}</p>
             <Button variant="outline" className="mt-4" onClick={handleFetchAllProfilePlaylist}>Try again</Button>
@@ -194,9 +198,9 @@ const Page = () => {
             <p className="mt-2 text-sm text-zinc-400">Create your first playlist using the button above.</p>
           </div>
         ) : (
-          <div className={mediaGridClass}>
+          <div className={view === "Grid" ? mediaGridClass : "space-y-2"}>
             {playlists.map((playlist) => (
-              <HomeMediaCard key={playlist.id} title={playlist.title} image={playlist.image}
+              <HomeMediaCard view={view} key={playlist.id} title={playlist.title} image={playlist.image}
                 subtitle={playlist.description || "Playlist"}
                 href={`/Playlists/${playlist.id}?name=${encodeURIComponent(playlist.title)}`}
                 isPlaying={currentPlaylistUri === `spotify:playlist:${playlist.id}` && isPlaying}
@@ -216,10 +220,10 @@ const Page = () => {
             See All <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
-        {loadingCategories ? <MediaGridSkeleton /> : categories.length ? (
-          <div className={mediaGridClass}>
+        {loadingCategories ? <MediaGridSkeleton view={view} /> : categories.length ? (
+          <div className={view === "Grid" ? mediaGridClass : "space-y-2"}>
             {categories.map((category) => (
-              <HomeMediaCard key={category.id} title={category.name} subtitle="Explore category"
+              <HomeMediaCard view={view} key={category.id} title={category.name} subtitle="Explore category"
                 image={category.icons?.[0]?.url || ""}
                 href={`/Categories/${category.id}?name=${encodeURIComponent(category.name)}`} />
             ))}

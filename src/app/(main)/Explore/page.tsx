@@ -1,4 +1,6 @@
 "use client";
+import ViewSelector from "@/components/ViewSelector";
+import { useCollectionView } from "@/hooks/useCollectionView";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import PlaylistCard from "@/components/PlaylistCard";
@@ -19,6 +21,7 @@ import { fetchRecentlyPlayed } from "@/utils/Artist/fetchRecentlyPlayed";
 import { usePlayer } from "@/contexts/PlayerContext";
 
 const Page = () => {
+  const [view, setView] = useCollectionView("spotwave:view:explore", ["Grid", "List"] as const, "Grid");
   const [token, setToken] = useState<string>("");
   const [followedArtists, setFollowedArtists] = useState<Artist[]>([]);
   const [favoriteArtists, setFavoriteArtists] = useState<Artist[]>([]);
@@ -223,6 +226,8 @@ const Page = () => {
           <h1 className="text-xl sm:text-3xl font-bold text-white tracking-tight">
             Explore Your Music
           </h1>
+          <div className="flex flex-wrap items-center gap-3">
+          <ViewSelector value={view} onChange={setView} options={["Grid", "List"]} label="Explore collection view" />
           <Button
             onClick={handleToggleAll}
             variant="outline"
@@ -230,6 +235,7 @@ const Page = () => {
           >
             {allOpen ? "Collapse All" : "Expand All"}
           </Button>
+          </div>
         </div>
 
         <Accordion
@@ -253,18 +259,19 @@ const Page = () => {
               </div>
             </AccordionTrigger>
             <AccordionContent className="text-white p-4">
-              {isLoading ? <MediaGridSkeleton /> : memoizedFollowedArtists.length === 0 ? (
+              {isLoading ? <MediaGridSkeleton view={view} /> : memoizedFollowedArtists.length === 0 ? (
                 <EmptyState
                   icon={Users}
                   title="No Followed Artists"
                   description="Start following artists to see them here. Discover new music and keep track of your favorite artists."
                 />
               ) : (
-                <div className={mediaGridClass}>
+                <div className={view === "Grid" ? mediaGridClass : "space-y-2"}>
                   {memoizedFollowedArtists.map((artist) => {
                     const isThisArtist = currentArtistId === artist.id;
                     return (
                       <PlaylistCard
+                        view={view}
       fluid
                         key={artist.id}
                         id={artist.id}
@@ -304,18 +311,19 @@ const Page = () => {
               </div>
             </AccordionTrigger>
             <AccordionContent className="text-white p-4">
-              {isLoading ? <MediaGridSkeleton /> : memoizedFavoriteArtists.length === 0 ? (
+              {isLoading ? <MediaGridSkeleton view={view} /> : memoizedFavoriteArtists.length === 0 ? (
                 <EmptyState
                   icon={Music}
                   title="No Favorite Artists"
                   description="Your top artists will appear here based on your listening habits. Keep listening to build your favorites!"
                 />
               ) : (
-                <div className={mediaGridClass}>
+                <div className={view === "Grid" ? mediaGridClass : "space-y-2"}>
                   {memoizedFavoriteArtists.map((artist) => {
                     const isThisArtist = currentArtistId === artist.id;
                     return (
                       <PlaylistCard
+                        view={view}
       fluid
                         key={artist.id}
                         id={artist.id}
@@ -355,18 +363,19 @@ const Page = () => {
               </div>
             </AccordionTrigger>
             <AccordionContent className="text-white p-4">
-              {isLoading ? <MediaGridSkeleton /> : memoizedRecentTracks.length === 0 ? (
+              {isLoading ? <MediaGridSkeleton view={view} /> : memoizedRecentTracks.length === 0 ? (
                 <EmptyState
                   icon={Clock}
                   title="No Recent Tracks"
                   description="Your recently played tracks will appear here. Start listening to music to see your history!"
                 />
               ) : (
-                <div className={mediaGridClass}>
+                <div className={view === "Grid" ? mediaGridClass : "space-y-2"}>
                   {memoizedRecentTracks.map((tracks, index) => {
                     const isThisTrack = currentTrackId === tracks.track.id;
                     return (
                       <PlaylistCard
+                        view={view}
       fluid
                         key={`${tracks.track.id}-${index}`}
                         id={tracks.track.id}

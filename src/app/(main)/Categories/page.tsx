@@ -1,4 +1,6 @@
 "use client";
+import ViewSelector from "@/components/ViewSelector";
+import { useCollectionView } from "@/hooks/useCollectionView";
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import {
@@ -66,11 +68,12 @@ const CategoryCard = ({
                 fill
                 className="object-cover transition-transform duration-500 group-hover/image:scale-110"
               />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/image:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/40 touch-action-reveal transition-opacity duration-200 flex items-center justify-center">
                 <Button
                   size="icon"
+                  aria-label={`Play ${category.name}`}
                   variant="ghost"
-                  className="h-8 w-8 rounded-full bg-brand hover:bg-brand/80 text-brand-foreground shadow-xl"
+                  className="h-11 w-11 rounded-full bg-brand hover:bg-brand/80 text-brand-foreground shadow-xl"
                   onClick={(e) => {
                     e.stopPropagation();
                     onPlay(category.id);
@@ -128,7 +131,7 @@ const CategoriesPage = () => {
   const [token, setToken] = useState<string>("");
   const [categories, setCategories] = useState<CategoryProps[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [displayUI, setDisplayUI] = useState<DisplayUIProps>("Grid");
+  const [displayUI, setDisplayUI] = useCollectionView("spotwave:view:categories", ["Grid", "Table"] as const, "Grid");
   const { playPlaylist, currentTrack, isPlaying } = usePlayer();
   const router = useRouter();
 
@@ -229,38 +232,7 @@ const CategoriesPage = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50 shadow-inner">
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-label="Table view"
-            aria-pressed={displayUI === "Table"}
-            onClick={() => setDisplayUI("Table")}
-            className={`h-9 px-3 transition-all ${
-              displayUI === "Table"
-                ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
-                : "text-zinc-400 hover:text-white hover:bg-zinc-800"
-            }`}
-          >
-            <PiTable className="h-5 w-5 sm:mr-2" />
-            <span className="hidden sm:inline">Table</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-label="Grid view"
-            aria-pressed={displayUI === "Grid"}
-            onClick={() => setDisplayUI("Grid")}
-            className={`h-9 px-3 transition-all ${
-              displayUI === "Grid"
-                ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
-                : "text-zinc-400 hover:text-white hover:bg-zinc-800"
-            }`}
-          >
-            <LuLayoutGrid className="h-5 w-5 sm:mr-2" />
-            <span className="hidden sm:inline">Grid</span>
-          </Button>
-        </div>
+        <ViewSelector value={displayUI} onChange={setDisplayUI} options={["Grid", "Table"]} />
       </div>
 
       {loading ? (

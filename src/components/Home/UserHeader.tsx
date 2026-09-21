@@ -799,10 +799,9 @@ export default function UserHeader({
                             if (!open) setGeneratedContent(null);
                           }}
                         >
-                          <DialogContent className="bg-zinc-950 border-zinc-800 text-white sm:max-w-[450px] overflow-hidden shadow-2xl">
-                            <div className="absolute inset-0 bg-gradient-to-br from-brand/10 via-transparent to-purple-900/10 pointer-events-none" />
-                            <DialogHeader className="relative z-10">
-                              <DialogTitle className="flex items-center gap-3 text-2xl font-bold bg-gradient-to-r from-brand to-purple-400 bg-clip-text text-transparent">
+                          <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-2xl border-zinc-800 bg-zinc-950 p-0 text-white shadow-2xl sm:max-w-[450px]">
+                            <DialogHeader className="shrink-0 border-b border-zinc-800 px-5 py-4 pr-12 text-left sm:px-6 sm:pr-12">
+                              <DialogTitle className="flex items-center gap-3 text-xl font-bold text-zinc-100">
                                 <Sparkles className="h-6 w-6 text-brand" />
                                 AI Magic Renamer
                               </DialogTitle>
@@ -812,19 +811,20 @@ export default function UserHeader({
                               </DialogDescription>
                             </DialogHeader>
 
-                            <div className="grid gap-6 py-6 relative z-10">
+                            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-5 [scrollbar-gutter:stable] sm:px-6">
                               <div className="space-y-3">
-                                <label className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+                                <label htmlFor="ai-renamer-prompt" className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
                                   <Edit3 className="h-4 w-4 text-brand/70" />
                                   Custom Vibe (Optional)
                                 </label>
                                 <Input
+                                  id="ai-renamer-prompt"
                                   placeholder="e.g. 'Chill late night drive', 'Gym beast mode'"
                                   value={userAiPrompt}
                                   onChange={(e) =>
                                     setUserAiPrompt(e.target.value)
                                   }
-                                  className="bg-zinc-900/80 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-brand focus:ring-4 focus:ring-brand/10 rounded-xl"
+                                  className="bg-zinc-900/80 border-zinc-700 text-white placeholder:text-zinc-400 focus:border-brand focus:ring-4 focus:ring-brand/10 rounded-xl"
                                 />
                               </div>
 
@@ -903,10 +903,11 @@ export default function UserHeader({
                               {generatedContent && (
                                 <div className="space-y-5 pt-6 border-t border-zinc-800 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                   <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-brand uppercase tracking-[0.2em] px-1">
+                                    <label htmlFor="ai-renamer-name" className="text-sm font-semibold text-brand">
                                       Proposed Name
                                     </label>
                                     <Input
+                                      id="ai-renamer-name"
                                       value={generatedContent.name}
                                       onChange={(e) =>
                                         setGeneratedContent((prev) =>
@@ -919,10 +920,11 @@ export default function UserHeader({
                                     />
                                   </div>
                                   <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-brand uppercase tracking-[0.2em] px-1">
+                                    <label htmlFor="ai-renamer-description" className="text-sm font-semibold text-brand">
                                       Proposed Vibe Description
                                     </label>
                                     <Textarea
+                                      id="ai-renamer-description"
                                       value={generatedContent.description}
                                       onChange={(e) =>
                                         setGeneratedContent((prev) =>
@@ -941,12 +943,12 @@ export default function UserHeader({
                               )}
                             </div>
 
-                            <DialogFooter className="flex-col sm:flex-row gap-3 pt-4 relative z-10">
+                            <DialogFooter className="shrink-0 flex-col gap-3 border-t border-zinc-800 bg-zinc-950 px-5 py-4 sm:flex-row sm:px-6">
                               {!generatedContent ? (
                                 <Button
                                   onClick={generatePlaylistNameAndDescription}
                                   disabled={generatingAI}
-                                  className="w-full h-12 bg-brand hover:bg-brand/90 text-brand-foreground font-black uppercase tracking-widest rounded-xl shadow-xl shadow-brand/20"
+                                  className="w-full h-12 bg-brand hover:bg-brand/90 text-brand-foreground font-semibold whitespace-nowrap rounded-xl "
                                 >
                                   {generatingAI ? (
                                     <>
@@ -961,7 +963,7 @@ export default function UserHeader({
                                   )}
                                 </Button>
                               ) : (
-                                <div className="flex gap-3 w-full">
+                                <div className="grid w-full grid-cols-2 gap-3">
                                   <Button
                                     variant="outline"
                                     onClick={generatePlaylistNameAndDescription}
@@ -972,7 +974,7 @@ export default function UserHeader({
                                   </Button>
                                   <Button
                                     onClick={applyGeneratedContent}
-                                    className="flex-1 h-12 bg-brand hover:bg-brand/90 text-brand-foreground font-black uppercase tracking-widest rounded-xl shadow-xl shadow-brand/20"
+                                    className="flex-1 h-12 bg-brand hover:bg-brand/90 text-brand-foreground font-semibold whitespace-nowrap rounded-xl "
                                   >
                                     Apply
                                   </Button>

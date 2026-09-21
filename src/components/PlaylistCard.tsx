@@ -35,6 +35,7 @@ interface PlaylistCardProps {
   onClick?: (id: string, title: string) => void;
   menu?: React.ReactNode;
   fluid?: boolean;
+  view?: "Grid" | "List";
 }
 
 export default function PlaylistCard({
@@ -53,6 +54,7 @@ export default function PlaylistCard({
   onClick,
   menu,
   fluid = false,
+  view = "Grid",
 }: PlaylistCardProps) {
   const [imageError, setImageError] = useState(false);
   const router = useRouter();
@@ -90,6 +92,23 @@ export default function PlaylistCard({
   // Determine if the card represents the current track (playing or paused)
   const isCurrentTrack = isPlaying || isPaused;
 
+  if (view === "List") {
+    return (
+      <article className="group flex min-w-0 items-center gap-3 rounded-xl border border-zinc-800/70 bg-zinc-900/50 p-3 hover:border-brand/50">
+        <button type="button" onClick={handleCardClick} className="flex min-w-0 flex-1 items-center gap-4 rounded-lg text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
+          {image && !imageError ? <Image src={image} alt="" width={56} height={56} className="h-14 w-14 shrink-0 rounded-lg object-cover" onError={() => setImageError(true)} /> : <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-zinc-800"><Music className="h-6 w-6 text-zinc-400" /></span>}
+          <span className="min-w-0 flex-1">
+            <span className={`block truncate text-sm font-semibold ${isCurrentTrack ? "text-brand" : "text-zinc-100"}`}>{title}</span>
+            <span className="mt-1 block truncate text-sm text-zinc-400">{description || badge || ""}</span>
+          </span>
+        </button>
+        {duration && <span className="hidden text-xs text-zinc-400 sm:block">{duration}</span>}
+        {(onPlay || onPause || onResume) && <button type="button" onClick={handlePlayPauseClick} aria-label={`${isPlaying ? "Pause" : "Play"} ${title}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand text-brand-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">{isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}</button>}
+        {menu}
+      </article>
+    );
+  }
+
   return (
     <TooltipProvider>
       <Card
@@ -116,7 +135,7 @@ export default function PlaylistCard({
 
             {/* Play/Pause Button Overlay */}
             {(onPlay || onPause || onResume) && (
-              <div className="absolute inset-0 bg-black/40 opacity-100 sm:opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
+              <div className="absolute bottom-2 right-2 touch-action-reveal transition-opacity duration-200 flex items-center justify-center">
                 <Button
                   size="sm"
                   className="bg-brand hover:bg-brand/80 text-brand-foreground rounded-full w-12 h-12 p-0 shadow-xl motion-safe:hover:scale-105 motion-safe:transition-transform"
@@ -154,7 +173,7 @@ export default function PlaylistCard({
             {/* Menu Button Overlay */}
             {menu && (
               <div
-                className="absolute bottom-2 right-2 opacity-100 sm:opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 z-20"
+                className="absolute bottom-2 left-2 touch-action-reveal transition-opacity duration-300 [&_button]:min-h-11 [&_button]:min-w-11"
                 onClick={(e) => e.stopPropagation()}
               >
                 {menu}
