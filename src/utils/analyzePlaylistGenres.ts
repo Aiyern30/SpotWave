@@ -51,7 +51,7 @@ export async function analyzePlaylistGenres(
       })
       .filter(Boolean) as number[];
 
-    // Prepare metadata context for Gemini AI to generate a natural summary
+    // Prepare metadata context for AI to generate a natural summary
     const context = {
       playlistGenres: genres.slice(0, 25),
       sampleArtists: artistData.slice(0, 15).map((a) => ({

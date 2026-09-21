@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const { type, context } = await req.json();
+    const openRouterKey = process.env.OPENROUTER_API_KEY;
     const apiKey =
       process.env.GEMINI_API_KEY ||
       process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
@@ -21,12 +22,12 @@ export async function POST(req: Request) {
       if (shouldLog) console.error(...args);
     };
 
-    if (!apiKey) {
-      console.error("❌ Gemini API Key Missing!");
+    if (!openRouterKey && !apiKey) {
+      console.error("AI provider key missing");
       return NextResponse.json(
         {
           error:
-            "Gemini API key not configured. Please add GEMINI_API_KEY to your .env.local",
+            "AI not configured. Add OPENROUTER_API_KEY to your server environment.",
         },
         { status: 500 }
       );
@@ -53,9 +54,10 @@ export async function POST(req: Request) {
         context || "General popular music"
       }. Return ONLY a JSON array of objects with 'song' and 'artist' keys. Example: [{"song": "Bohemian Rhapsody", "artist": "Queen"}]`;
     } else if (type === "ai-search") {
-      const countMatch = context.match(/count:(\d+)/);
+      const searchContext = typeof context === "string" ? context : "";
+      const countMatch = searchContext.match(/count:(\d+)/);
       const count = countMatch ? countMatch[1] : "10";
-      const cleanContext = context.replace(/count:\d+/, "").trim();
+      const cleanContext = searchContext.replace(/count:\d+/, "").trim();
 
       prompt = `${systemInstruction} Suggest exactly ${count} specific and high-quality songs for a music playlist.
       User Prompt/Context: "${cleanContext}".
@@ -80,15 +82,15 @@ export async function POST(req: Request) {
       Example: {"genres": ["Pop", "R&B"], "moods": ["Chilly", "Energetic"], "eras": ["Modern"], "artistStyles": ["Polished"], "searchTerms": ["Pop hits"]}`;
     } else if (type === "playlist-naming") {
       const lengthInstruction =
-        context.length === "short"
+        context?.length === "short"
           ? "Keep the description very short and punchy (max 10 words)."
           : "Make the description detailed and expressive (2-3 sentences).";
 
-      const userContext = context.userPrompt
-        ? `User specific vibe request: "${context.userPrompt}".`
+      const userContext = context?.userPrompt
+        ? `User specific vibe request: "${context?.userPrompt}".`
         : "";
 
-      prompt = `${systemInstruction} Based on this playlist information: ${context.playlistInfo}. ${userContext} ${lengthInstruction} Generate a creative and catchy playlist name and a description. Return ONLY a JSON object with 'name' and 'description' keys. Example: {"name": "Sunset Vibes", "description": "Chill beats and mellow tracks perfect for watching the sunset."}`;
+      prompt = `${systemInstruction} Based on this playlist information: ${context?.playlistInfo}. ${userContext} ${lengthInstruction} Generate a creative and catchy playlist name and a description. Return ONLY a JSON object with 'name' and 'description' keys. Example: {"name": "Sunset Vibes", "description": "Chill beats and mellow tracks perfect for watching the sunset."}`;
     } else {
       prompt = `${systemInstruction} Suggest 5 ideas for a music quiz. Context: ${
         context || "General popular music"
@@ -113,7 +115,49 @@ export async function POST(req: Request) {
     let lastError = "";
     let data: any = null;
 
-    for (const attempt of attempts) {
+    // Every AI feature uses this route. OpenRouter always gets the first attempt.
+    if (openRouterKey) {
+      try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${openRouterKey}`,
+            "Content-Type": "application/json",
+            "X-Title": "SpotWave",
+          },
+          signal: AbortSignal.timeout(30000),
+          body: JSON.stringify({
+            model: process.env.OPENROUTER_MODEL || "openrouter/auto",
+            messages: [
+              { role: "system", content: systemInstruction },
+              { role: "user", content: prompt },
+            ],
+            temperature: 0.8,
+            max_tokens: 4096,
+          }),
+        });
+        if (!response.ok) {
+          lastError = `OpenRouter returned HTTP ${response.status}`;
+        } else {
+          const completion = await response.json();
+          const content = completion.choices?.[0]?.message?.content;
+          if (typeof content !== "string" || !content.trim()) {
+            throw new Error("Empty response");
+          }
+          const cleaned = content.replace(/```(?:json)?\s*/g, "").trim();
+          const parsed = JSON.parse(cleaned);
+          if (!parsed || typeof parsed !== "object") throw new Error("Invalid JSON result");
+          // Keep the existing response normalization shared by both providers.
+          data = { candidates: [{ content: { parts: [{ text: JSON.stringify(parsed) }] } }] };
+          log("AI success: OpenRouter");
+        }
+      } catch {
+        lastError = "OpenRouter response unavailable or invalid";
+      }
+      if (!data) warn(lastError, "Trying configured Gemini fallback.");
+    }
+
+    for (const attempt of data || !apiKey ? [] : attempts) {
       try {
           log(`🤖 Attempting AI Model: ${attempt.version}/${attempt.model}`);
 
@@ -121,6 +165,7 @@ export async function POST(req: Request) {
 
         const response = await fetch(url, {
           method: "POST",
+          signal: AbortSignal.timeout(10000),
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
@@ -139,7 +184,7 @@ export async function POST(req: Request) {
           break;
         } else {
           const status = response.status;
-          const errText = await response.text();
+          const errText = "Provider request failed";
           lastError = `Status ${status}: ${errText}`;
 
           if (status === 429) {
@@ -155,8 +200,8 @@ export async function POST(req: Request) {
           }
         }
       } catch (e: any) {
-        lastError = e.message;
-        warn(`⚠️ Exception for ${attempt.model}:`, e.message);
+        lastError = "Gemini request failed";
+        warn(`AI fallback failed: ${attempt.model}`);
       }
     }
 
@@ -225,7 +270,7 @@ export async function POST(req: Request) {
       });
     }
 
-    log("📝 Raw AI response:", text);
+
 
     let recommendations;
     try {
@@ -322,7 +367,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ recommendations });
   } catch (error: any) {
-    error("❌ Critical AI Route Error:", error);
+    console.error("AI request failed");
     return NextResponse.json(
       { error: "Something went wrong. Please try again later." },
       { status: 500 }

@@ -14,7 +14,7 @@ SpotWave is a premium music exploration platform that transforms your Spotify li
 
 ### 🤖 AI-Powered Intelligence
 
-- **Gemini AI Recommendations**: Get personalized track suggestions and creative quiz ideas powered by Google's Gemini AI.
+- **AI Recommendations**: Get personalized track suggestions and creative quiz ideas through OpenRouter, with Gemini as a fallback.
 - **Intuitive Playlist Generation**: Smart analysis of your listening habits and genres to suggest creative playlist names and descriptions.
 - **Genre Analysis**: Deeper insights into your library with automated genre categorization.
 
@@ -60,7 +60,7 @@ chmod +x downloader.sh
 | :------------- | :----------------------------------------------------------------------------------------------------------------------------- |
 | **Frontend**   | [Next.js](https://nextjs.org/), [React](https://reactjs.org/), [TypeScript](https://www.typescriptlang.org/)                   |
 | **Styling**    | [Tailwind CSS](https://tailwindcss.com/), [Shadcn UI](https://ui.shadcn.com/), [Framer Motion](https://www.framer.com/motion/) |
-| **AI/ML**      | [Google Gemini API](https://ai.google.dev/), [Last.fm API](https://www.last.fm/api)                                            |
+| **AI/ML**      | [OpenRouter](https://openrouter.ai/docs/quickstart), [Google Gemini API](https://ai.google.dev/), [Last.fm API](https://www.last.fm/api)                                            |
 | **Music Data** | [Spotify Web API](https://developer.spotify.com/documentation/web-api/)                                                        |
 | **Visuals**    | [Lottie React](https://github.com/LottieFiles/lottie-react), Web Audio API                                                     |
 | **Deployment** | [Vercel](https://vercel.com/)                                                                                                  |
@@ -94,11 +94,16 @@ chmod +x downloader.sh
 
     ```env
     NEXT_PUBLIC_LASTFM_API_KEY=your_lastfm_key
+    OPENROUTER_API_KEY=your_openrouter_key
+    OPENROUTER_MODEL=openrouter/auto
+    # Optional fallback when OpenRouter is unavailable
     GEMINI_API_KEY=your_gemini_key
     NEXT_PUBLIC_SPOTIFY_CLIENT_ID=your_spotify_client_id
 
     # Add other required Spotify credentials
     ```
+
+    AI keys are server-only. Keep them in `.env.local` (never `NEXT_PUBLIC_` variables). All AI tools use OpenRouter first; `OPENROUTER_MODEL` optionally selects a specific model. Configure the same environment variables on your deployment host.
 
 4.  **Run the development server:**
 

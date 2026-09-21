@@ -58,7 +58,7 @@ const ArtistQuizPage = () => {
     if (!token) return;
     setIsAiLoading(true);
     try {
-      // 1. Get names from Gemini
+      // 1. Get names from AI
       const response = await fetch("/api/ai-recommendations", {
         method: "POST",
         body: JSON.stringify({

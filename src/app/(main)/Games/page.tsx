@@ -7,7 +7,7 @@ const GamesPage = () => {
   const quizOptions = [
     {
       title: "AI Generated",
-      description: "Ask Gemini to generate any quiz",
+      description: "Ask AI to generate any quiz",
       icon: Sparkles,
       href: "/Games/ai-generated",
     },
