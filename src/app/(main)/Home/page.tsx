@@ -1,13 +1,10 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import Image from "next/image";
-import PlaylistCard from "@/components/PlaylistCard";
-import { Card, CardContent } from "@/components/ui/";
+import HomeMediaCard from "@/components/HomeMediaCard";
 import { Button } from "@/components/ui/";
-import { Skeleton } from "@/components/ui/";
+import { mediaGridClass, MediaGridSkeleton } from "@/components/MediaGrid";
 import { useRouter } from "next/navigation";
-import { IoMdAdd } from "react-icons/io";
-import { Music, Radio } from "lucide-react";
+import { Plus, ArrowRight, Music } from "lucide-react";
 import { fetchUserProfile } from "@/utils/fetchProfile";
 import { CreatePlaylist } from "@/utils/createPlaylist";
 import { fetchSpotifyPlaylists } from "@/utils/fetchAllPlaylist";
@@ -42,6 +39,10 @@ const Page = () => {
   const [loadingPlaylists, setLoadingPlaylists] = useState<boolean>(true);
   const [loadingCategories, setLoadingCategories] = useState<boolean>(true);
 
+  const [playlistError, setPlaylistError] = useState("");
+  const [createError, setCreateError] = useState("");
+  const [signedOut, setSignedOut] = useState(false);
+
   const [creating, setCreating] = useState<boolean>(false);
   const [currentPlaylistUri, setCurrentPlaylistUri] = useState<string | null>(
     null
@@ -50,14 +51,6 @@ const Page = () => {
   const router = useRouter();
   const { playPlaylist, pauseTrack, resumeTrack, currentTrack, isPlaying } =
     usePlayer();
-
-  const handleClick = (id: string, name: string) => {
-    router.push(`/Playlists/${id}?name=${encodeURIComponent(name)}`);
-  };
-
-  const handleCategoryClick = (id: string, name: string) => {
-    router.push(`/Categories/${id}?name=${encodeURIComponent(name)}`);
-  };
 
   const handleFetchUserProfile = useCallback(async () => {
     const profile = await fetchUserProfile(token);
@@ -71,15 +64,18 @@ const Page = () => {
   // Fetch Playlists
   const handleFetchAllProfilePlaylist = useCallback(async () => {
     setLoadingPlaylists(true);
+    setPlaylistError("");
     const data = await fetchSpotifyPlaylists(token);
     if (data) {
-      const formattedPlaylists = data.map((playlist: any) => ({
+      const formattedPlaylists = data.filter((playlist) => playlist?.id).map((playlist) => ({
         id: playlist?.id,
         image: playlist?.images?.[0]?.url || "",
         title: playlist?.name || "",
         description: playlist?.description || "",
       }));
       setPlaylists(formattedPlaylists);
+    } else {
+      setPlaylistError("Your playlists could not be loaded. Please try again.");
     }
     setLoadingPlaylists(false);
   }, [token]);
@@ -95,10 +91,14 @@ const Page = () => {
   }, [token]);
 
   const handleCreatePlaylist = async () => {
+    if (creating || !userID) return;
+    setCreateError("");
     setCreating(true);
     const playlistResponse = await CreatePlaylist(userID, token);
     if (playlistResponse) {
       await handleFetchAllProfilePlaylist();
+    } else {
+      setCreateError("Playlist could not be created. Please try again.");
     }
     setCreating(false);
   };
@@ -138,6 +138,10 @@ const Page = () => {
     const storedToken = localStorage.getItem("Token");
     if (storedToken) {
       setToken(storedToken);
+    } else {
+      setSignedOut(true);
+      setLoadingPlaylists(false);
+      setLoadingCategories(false);
     }
   }, []);
 
@@ -154,157 +158,79 @@ const Page = () => {
     handleFetchCategories,
   ]);
 
-  const CreatePlaylistCard = () => (
-    <Card
-      className="relative w-full max-w-[140px] sm:max-w-[200px] h-[165px] sm:h-[290px] cursor-pointer bg-zinc-900/30 hover:bg-zinc-800/50 border-2 border-dashed border-zinc-700 hover:border-brand/50 transition-all duration-300 hover:scale-105 flex flex-col items-center justify-center group mx-auto"
-      onClick={handleCreatePlaylist}
-    >
-      <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-5">
-        <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-zinc-800/50 group-hover:bg-brand/20 flex items-center justify-center transition-all duration-300 border border-zinc-700 group-hover:border-brand/50">
-          {creating ? (
-            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-2 border-brand border-t-transparent" />
-          ) : (
-            <IoMdAdd
-              size={24}
-              className="sm:w-9 sm:h-9 text-brand group-hover:scale-110 transition-transform"
-            />
-          )}
-        </div>
-        <p className="text-zinc-400 group-hover:text-white text-xs sm:text-base font-medium transition-colors px-2 text-center">
-          {creating ? "Creating..." : "Create Playlist"}
-        </p>
-      </div>
-    </Card>
-  );
-
-  const LoadingSkeleton = ({ count = 8 }: { count?: number }) => (
-    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
-      {[...Array(count)].map((_, i) => (
-        <div
-          key={i}
-          className="space-y-2 sm:space-y-4 w-full max-w-[140px] sm:max-w-[200px]"
-        >
-          <Skeleton className="w-full aspect-square rounded-lg bg-zinc-800" />
-          <Skeleton className="h-4 sm:h-5 w-3/4 bg-zinc-800" />
-          <Skeleton className="hidden sm:block h-4 w-2/3 bg-zinc-800" />
-        </div>
-      ))}
+  if (signedOut) return (
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-8 text-zinc-100">
+      <h1 className="text-2xl font-semibold">Your music starts here</h1>
+      <p className="mt-2 text-zinc-400">Sign in to see your playlists and discover something new.</p>
+      <Button className="mt-6" onClick={() => router.push("/")}>Sign in</Button>
     </div>
   );
 
-  const GenericCard = ({
-    item,
-    type,
-    onClick,
-  }: {
-    item: any;
-    type: string;
-    onClick?: (id: string, name: string) => void;
-  }) => (
-    <Card
-      className="relative w-full max-w-[140px] sm:max-w-[200px] h-[165px] sm:h-[290px] cursor-pointer bg-zinc-900/50 hover:bg-zinc-800/70 border border-zinc-800 transition-all duration-300 hover:scale-105 group mx-auto overflow-hidden"
-      onClick={() => onClick && onClick(item.id, item.name || item.title)}
-    >
-      <div className="relative w-full h-[100px] sm:h-[200px]">
-        <Image
-          src={
-            item.image ||
-            item.icons?.[0]?.url ||
-            item.images?.[0]?.url ||
-            "/default-artist.png"
-          }
-          alt={item.name || item.title}
-          fill
-          className="object-cover"
-        />
-      </div>
-      <CardContent className="p-2 sm:p-4">
-        <h3 className="text-white text-xs sm:text-sm font-semibold truncate">
-          {item.name || item.title}
-        </h3>
-        <p className="text-zinc-400 text-[10px] sm:text-xs truncate mt-1">
-          {type === "category" && "Browse"}
-        </p>
-      </CardContent>
-    </Card>
-  );
-
   return (
-    <div className="space-y-8 sm:space-y-12">
-      {/* Playlists Section */}
-      <div className="space-y-3 sm:space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-1 sm:px-2">
-          <h1 className="text-xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2">
-            <Music className="h-6 w-6 text-brand" />
-            Your Playlists
-          </h1>
-          <p className="text-zinc-400 text-xs sm:text-sm font-medium">
-            {playlists.length} playlist{playlists.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        {loadingPlaylists ? (
-          <LoadingSkeleton count={8} />
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
-            <CreatePlaylistCard />
-            {playlists.map((playlist) => {
-              const playlistUri = `spotify:playlist:${playlist.id}`;
-              const isThisPlaylist = currentPlaylistUri === playlistUri;
-              return (
-                <PlaylistCard
-                  key={playlist.id}
-                  id={playlist.id}
-                  image={playlist.image}
-                  title={playlist.title}
-                  description={playlist.description}
-                  isPlaying={isThisPlaylist && isPlaying}
-                  isPaused={isThisPlaylist && !isPlaying}
-                  onPlay={handlePlayPlaylist}
-                  onPause={pauseTrack}
-                  onResume={resumeTrack}
-                  onClick={handleClick}
-                />
-              );
-            })}
+    <div className="mx-auto w-full max-w-[1400px] space-y-10 pb-10 sm:space-y-12">
+      <section aria-labelledby="playlists-heading" className="space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 id="playlists-heading" className="text-2xl font-semibold tracking-tight text-zinc-100 sm:text-3xl">Your Playlists</h1>
+            <p className="mt-1.5 text-sm text-zinc-400">
+              {loadingPlaylists ? "Getting your music ready" : `${playlists.length} playlist${playlists.length !== 1 ? "s" : ""} in your collection`}
+            </p>
           </div>
-        )}
-      </div>
-
-      {/* Browse Categories Section */}
-      <div className="space-y-3 sm:space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-1 sm:px-2">
-          <div className="flex items-center gap-4">
-            <h2 className="text-xl sm:text-3xl font-bold text-white tracking-tight flex items-center gap-2">
-              <Radio className="h-6 w-6 text-brand" />
-              Browse Categories
-            </h2>
-            <Button
-              variant="outline"
-              className="font-semibold text-sm sm:text-base transition-colors"
-              onClick={() => router.push("/Categories")}
-            >
-              See All
-            </Button>
-          </div>
-          <p className="text-zinc-400 text-xs sm:text-sm font-medium">
-            {categories.length} categories
-          </p>
+          <Button onClick={handleCreatePlaylist} disabled={creating || !userID} className="h-10 shrink-0 gap-2 whitespace-nowrap rounded-full bg-brand px-4 text-brand-foreground hover:bg-brand/90 active:scale-[0.98]">
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            {creating ? "Creating..." : "Create Playlist"}
+          </Button>
         </div>
-        {loadingCategories ? (
-          <LoadingSkeleton count={8} />
+        {createError && <p role="alert" className="text-sm text-red-300">{createError}</p>}
+        {loadingPlaylists ? <MediaGridSkeleton /> : playlistError ? (
+          <div role="alert" className="rounded-xl border border-zinc-800 p-6 text-zinc-300">
+            <p>{playlistError}</p>
+            <Button variant="outline" className="mt-4" onClick={handleFetchAllProfilePlaylist}>Try again</Button>
+          </div>
+        ) : playlists.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-zinc-700 bg-zinc-900/30 px-6 py-12 text-center">
+            <Music className="mx-auto mb-4 h-8 w-8 text-brand" aria-hidden="true" />
+            <h2 className="font-semibold text-zinc-100">Make room for your favorites</h2>
+            <p className="mt-2 text-sm text-zinc-400">Create your first playlist using the button above.</p>
+          </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
-            {categories.map((category) => (
-              <GenericCard
-                key={category.id}
-                item={category}
-                type="category"
-                onClick={handleCategoryClick}
-              />
+          <div className={mediaGridClass}>
+            {playlists.map((playlist) => (
+              <HomeMediaCard key={playlist.id} title={playlist.title} image={playlist.image}
+                subtitle={playlist.description || "Playlist"}
+                href={`/Playlists/${playlist.id}?name=${encodeURIComponent(playlist.title)}`}
+                isPlaying={currentPlaylistUri === `spotify:playlist:${playlist.id}` && isPlaying}
+                onPlay={() => handlePlayPlaylist(playlist.id)} />
             ))}
           </div>
         )}
-      </div>
+      </section>
+
+      <section aria-labelledby="categories-heading" className="space-y-5 border-t border-zinc-800/70 pt-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 id="categories-heading" className="text-xl font-semibold tracking-tight text-zinc-100 sm:text-2xl">Browse Categories</h2>
+            <p className="mt-1.5 text-sm text-zinc-400">Find a sound for whatever comes next.</p>
+          </div>
+          <Button variant="ghost" className="shrink-0 gap-2 whitespace-nowrap rounded-full text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100" onClick={() => router.push("/Categories")}>
+            See All <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </div>
+        {loadingCategories ? <MediaGridSkeleton /> : categories.length ? (
+          <div className={mediaGridClass}>
+            {categories.map((category) => (
+              <HomeMediaCard key={category.id} title={category.name} subtitle="Explore category"
+                image={category.icons?.[0]?.url || ""}
+                href={`/Categories/${category.id}?name=${encodeURIComponent(category.name)}`} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-zinc-800 p-6 text-sm text-zinc-400">
+            <p>No categories are available right now.</p>
+            <Button variant="outline" className="mt-4" onClick={handleFetchCategories}>Try again</Button>
+          </div>
+        )}
+      </section>
     </div>
   );
 };

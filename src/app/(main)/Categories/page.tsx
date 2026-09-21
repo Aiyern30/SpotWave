@@ -21,6 +21,7 @@ import Link from "next/link";
 import { DisplayUIProps } from "@/lib/types";
 import { usePlayer } from "@/contexts/PlayerContext";
 import PlaylistCard from "@/components/PlaylistCard";
+import { mediaGridClass, MediaGridSkeleton } from "@/components/MediaGrid";
 import { fetchCategoryPlaylists } from "@/utils/fetchCategories";
 
 type CategoryProps = {
@@ -111,6 +112,7 @@ const CategoryCard = ({
 
   return (
     <PlaylistCard
+      fluid
       id={category.id}
       title={category.name}
       image={category.icons?.[0]?.url || "/default-category.png"}
@@ -201,7 +203,7 @@ const CategoriesPage = () => {
       </div>
       <Button
         onClick={() => handleFetchCategories()}
-        className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-6 mt-4"
+        className="bg-brand hover:bg-brand/90 text-brand-foreground font-semibold px-6 py-6 mt-4"
       >
         Retry
       </Button>
@@ -209,7 +211,7 @@ const CategoriesPage = () => {
   );
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 pb-10">
+    <div className="mx-auto w-full max-w-[1400px] space-y-8 pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-brand/20 flex items-center justify-center">
@@ -231,6 +233,8 @@ const CategoriesPage = () => {
           <Button
             variant="ghost"
             size="sm"
+            aria-label="Table view"
+            aria-pressed={displayUI === "Table"}
             onClick={() => setDisplayUI("Table")}
             className={`h-9 px-3 transition-all ${
               displayUI === "Table"
@@ -244,6 +248,8 @@ const CategoriesPage = () => {
           <Button
             variant="ghost"
             size="sm"
+            aria-label="Grid view"
+            aria-pressed={displayUI === "Grid"}
             onClick={() => setDisplayUI("Grid")}
             className={`h-9 px-3 transition-all ${
               displayUI === "Grid"
@@ -258,7 +264,7 @@ const CategoriesPage = () => {
       </div>
 
       {loading ? (
-        <LoadingSkeleton />
+        displayUI === "Grid" ? <MediaGridSkeleton count={12} /> : <LoadingSkeleton />
       ) : categories.length === 0 ? (
         <EmptyState />
       ) : displayUI === "Table" ? (
@@ -291,7 +297,7 @@ const CategoriesPage = () => {
           </Table>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4 sm:gap-6 justify-items-center">
+        <div className={mediaGridClass}>
           {categories.map((category) => (
             <CategoryCard
               key={category.id}

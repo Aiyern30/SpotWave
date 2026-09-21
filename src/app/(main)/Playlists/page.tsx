@@ -5,7 +5,7 @@ import PublicLibrary from "../Profile/PublicLibrary";
 
 export default function PlaylistsPage() {
   return (
-    <div className="space-y-8 animate-in fade-in duration-700 pb-10">
+    <div className="mx-auto w-full max-w-[1400px] space-y-8 pb-10">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">

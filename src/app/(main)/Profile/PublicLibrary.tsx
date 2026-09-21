@@ -30,6 +30,7 @@ import { PiTable } from "react-icons/pi";
 import { LuLayoutGrid } from "react-icons/lu";
 import Image from "next/image";
 import PlaylistCard from "@/components/PlaylistCard";
+import { mediaGridClass, MediaGridSkeleton } from "@/components/MediaGrid";
 import { usePlayer } from "@/contexts/PlayerContext";
 
 const PublicLibrary = ({ userId }: { userId?: string }) => {
@@ -141,6 +142,8 @@ const PublicLibrary = ({ userId }: { userId?: string }) => {
           <Button
             variant="ghost"
             size="sm"
+            aria-label="Table view"
+            aria-pressed={displayUI === "Table"}
             onClick={() => setDisplayUI("Table")}
             className={`h-9 px-3 transition-all ${
               displayUI === "Table"
@@ -154,6 +157,8 @@ const PublicLibrary = ({ userId }: { userId?: string }) => {
           <Button
             variant="ghost"
             size="sm"
+            aria-label="Grid view"
+            aria-pressed={displayUI === "Grid"}
             onClick={() => setDisplayUI("Grid")}
             className={`h-9 px-3 transition-all ${
               displayUI === "Grid"
@@ -295,17 +300,7 @@ const PublicLibrary = ({ userId }: { userId?: string }) => {
       ) : (
         <div>
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 px-1">
-              {Array(12)
-                .fill(0)
-                .map((_, i) => (
-                  <div key={i} className="space-y-3">
-                    <Skeleton className="w-[170px] h-[170px] mx-auto rounded-lg bg-zinc-800" />
-                    <Skeleton className="h-5 w-36 mx-auto bg-zinc-800" />
-                    <Skeleton className="h-4 w-32 mx-auto bg-zinc-800" />
-                  </div>
-                ))}
-            </div>
+            <MediaGridSkeleton count={12} />
           ) : publicPlaylists.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 space-y-4">
               <div className="w-24 h-24 rounded-full bg-zinc-800 flex items-center justify-center">
@@ -321,13 +316,14 @@ const PublicLibrary = ({ userId }: { userId?: string }) => {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+            <div className={mediaGridClass}>
               {publicPlaylists.map((playlist) => {
                 const playlistUri = `spotify:playlist:${playlist.id}`;
                 const isThisPlaylist = currentPlaylistUri === playlistUri;
 
                 return (
                   <PlaylistCard
+      fluid
                     key={playlist.id}
                     id={playlist.id}
                     image={playlist.images?.[0]?.url || ""}

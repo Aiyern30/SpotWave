@@ -34,6 +34,7 @@ interface PlaylistCardProps {
   onResume?: () => void; // Add onResume prop
   onClick?: (id: string, title: string) => void;
   menu?: React.ReactNode;
+  fluid?: boolean;
 }
 
 export default function PlaylistCard({
@@ -51,6 +52,7 @@ export default function PlaylistCard({
   onResume,
   onClick,
   menu,
+  fluid = false,
 }: PlaylistCardProps) {
   const [imageError, setImageError] = useState(false);
   const router = useRouter();
@@ -91,10 +93,10 @@ export default function PlaylistCard({
   return (
     <TooltipProvider>
       <Card
-        className="group bg-zinc-900/50 border-zinc-800 hover:bg-zinc-800/50 transition-all duration-300 cursor-pointer relative overflow-hidden w-full max-w-[140px] sm:max-w-[200px] mx-auto"
+        className={`group bg-zinc-900/50 border border-zinc-800/70 hover:border-brand/50 hover:bg-brand/5 transition-colors cursor-pointer relative overflow-hidden w-full min-w-0 ${fluid ? "h-full" : "max-w-[140px] sm:max-w-[200px] mx-auto"}`}
         onClick={handleCardClick}
       >
-        <CardHeader className="pb-3">
+        <CardHeader className={fluid ? "p-3 pb-0" : "pb-3"}>
           <div className="relative">
             {imageError || !image ? (
               <div className="w-full aspect-square bg-zinc-800 rounded-lg flex items-center justify-center">
@@ -108,17 +110,17 @@ export default function PlaylistCard({
                 alt={title}
                 className="w-full aspect-square object-cover rounded-lg"
                 onError={() => setImageError(true)}
-                priority
                 unoptimized
               />
             )}
 
             {/* Play/Pause Button Overlay */}
             {(onPlay || onPause || onResume) && (
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/40 opacity-100 sm:opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
                 <Button
                   size="sm"
-                  className="bg-brand hover:bg-brand/80 text-brand-foreground rounded-full w-12 h-12 p-0 shadow-xl hover:scale-110 transition-transform"
+                  className="bg-brand hover:bg-brand/80 text-brand-foreground rounded-full w-12 h-12 p-0 shadow-xl motion-safe:hover:scale-105 motion-safe:transition-transform"
+                  aria-label={`${isPlaying ? "Pause" : "Play"} ${title}`}
                   onClick={handlePlayPauseClick}
                 >
                   {isPlaying ? (
@@ -139,7 +141,7 @@ export default function PlaylistCard({
 
             {/* Currently Playing/Paused Indicator */}
             {isPlaying && (
-              <Badge className="absolute top-2 right-2 bg-brand text-brand-foreground text-xs font-bold animate-pulse">
+              <Badge className="absolute top-2 right-2 bg-brand text-brand-foreground text-xs font-bold motion-safe:animate-pulse">
                 Playing
               </Badge>
             )}
@@ -152,7 +154,7 @@ export default function PlaylistCard({
             {/* Menu Button Overlay */}
             {menu && (
               <div
-                className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20"
+                className="absolute bottom-2 right-2 opacity-100 sm:opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300 z-20"
                 onClick={(e) => e.stopPropagation()}
               >
                 {menu}
@@ -161,17 +163,17 @@ export default function PlaylistCard({
           </div>
         </CardHeader>
 
-        <CardContent className="pt-0 space-y-2">
+        <CardContent className={fluid ? "min-h-[84px] pt-3 space-y-1" : "pt-0 space-y-2"}>
           <Tooltip>
             <TooltipTrigger asChild>
               <CardTitle
-                className={`text-base font-semibold truncate transition-colors ${
+                className={`text-sm sm:text-base leading-5 font-semibold truncate transition-colors ${
                   isCurrentTrack
                     ? "text-brand"
                     : "text-white group-hover:text-brand"
                 }`}
               >
-                {title}
+                <button type="button" className="block w-full truncate text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" onClick={(event) => { event.stopPropagation(); handleCardClick(); }}>{title}</button>
               </CardTitle>
             </TooltipTrigger>
             <TooltipContent>
@@ -179,9 +181,9 @@ export default function PlaylistCard({
             </TooltipContent>
           </Tooltip>
 
-          {description && (
-            <div className="text-sm text-zinc-400 truncate leading-relaxed">
-              {description}
+          {(description || fluid) && (
+            <div className="text-xs sm:text-sm text-zinc-400 truncate leading-5">
+              {description || "\u00a0"}
             </div>
           )}
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import PlaylistCard from "@/components/PlaylistCard";
+import { mediaGridClass, MediaGridSkeleton } from "@/components/MediaGrid";
 import {
   Accordion,
   AccordionContent,
@@ -216,7 +217,7 @@ const Page = () => {
   );
 
   return (
-    <div className="space-y-4 sm:space-y-8">
+    <div className="mx-auto w-full max-w-[1400px] space-y-8 pb-10">
       <div className="space-y-3 sm:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-1 sm:px-2">
           <h1 className="text-xl sm:text-3xl font-bold text-white tracking-tight">
@@ -225,7 +226,7 @@ const Page = () => {
           <Button
             onClick={handleToggleAll}
             variant="outline"
-            className="bg-zinc-800/50 border-zinc-700 text-zinc-300 hover:bg-brand hover:text-black hover:border-green-500 w-fit transition-all"
+            className="bg-zinc-800/50 border-zinc-700 text-zinc-300 hover:bg-brand hover:text-brand-foreground hover:border-brand w-fit transition-all"
           >
             {allOpen ? "Collapse All" : "Expand All"}
           </Button>
@@ -242,7 +243,7 @@ const Page = () => {
             value="item-1"
             className="bg-zinc-900/30 rounded-lg border border-zinc-800/50"
           >
-            <AccordionTrigger className="px-4 text-white hover:bg-brand transition-colors">
+            <AccordionTrigger className="rounded-lg px-4 text-zinc-100 hover:bg-brand/10 hover:text-brand transition-colors">
               <div className="flex items-center space-x-2">
                 <Users className="h-5 w-5" />
                 <span>Your Followed Artists</span>
@@ -252,18 +253,19 @@ const Page = () => {
               </div>
             </AccordionTrigger>
             <AccordionContent className="text-white p-4">
-              {memoizedFollowedArtists.length === 0 ? (
+              {isLoading ? <MediaGridSkeleton /> : memoizedFollowedArtists.length === 0 ? (
                 <EmptyState
                   icon={Users}
                   title="No Followed Artists"
                   description="Start following artists to see them here. Discover new music and keep track of your favorite artists."
                 />
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+                <div className={mediaGridClass}>
                   {memoizedFollowedArtists.map((artist) => {
                     const isThisArtist = currentArtistId === artist.id;
                     return (
                       <PlaylistCard
+      fluid
                         key={artist.id}
                         id={artist.id}
                         image={artist.image || "/default-artist.png"}
@@ -292,7 +294,7 @@ const Page = () => {
             value="item-2"
             className="bg-zinc-900/30 rounded-lg border border-zinc-800/50"
           >
-            <AccordionTrigger className="px-4 text-white hover:bg-brand transition-colors">
+            <AccordionTrigger className="rounded-lg px-4 text-zinc-100 hover:bg-brand/10 hover:text-brand transition-colors">
               <div className="flex items-center space-x-2">
                 <Music className="h-5 w-5" />
                 <span>Your Favorite Artists</span>
@@ -302,18 +304,19 @@ const Page = () => {
               </div>
             </AccordionTrigger>
             <AccordionContent className="text-white p-4">
-              {memoizedFavoriteArtists.length === 0 ? (
+              {isLoading ? <MediaGridSkeleton /> : memoizedFavoriteArtists.length === 0 ? (
                 <EmptyState
                   icon={Music}
                   title="No Favorite Artists"
                   description="Your top artists will appear here based on your listening habits. Keep listening to build your favorites!"
                 />
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+                <div className={mediaGridClass}>
                   {memoizedFavoriteArtists.map((artist) => {
                     const isThisArtist = currentArtistId === artist.id;
                     return (
                       <PlaylistCard
+      fluid
                         key={artist.id}
                         id={artist.id}
                         image={artist.image || "/default-artist.png"}
@@ -342,28 +345,29 @@ const Page = () => {
             value="item-3"
             className="bg-zinc-900/30 rounded-lg border border-zinc-800/50"
           >
-            <AccordionTrigger className="px-4 text-white hover:bg-brand transition-colors">
+            <AccordionTrigger className="rounded-lg px-4 text-zinc-100 hover:bg-brand/10 hover:text-brand transition-colors">
               <div className="flex items-center space-x-2">
                 <Clock className="h-5 w-5" />
-                <span>Your Recently Listening</span>
+                <span>Recently Played</span>
                 <span className="text-zinc-400 text-sm">
                   ({memoizedRecentTracks.length})
                 </span>
               </div>
             </AccordionTrigger>
             <AccordionContent className="text-white p-4">
-              {memoizedRecentTracks.length === 0 ? (
+              {isLoading ? <MediaGridSkeleton /> : memoizedRecentTracks.length === 0 ? (
                 <EmptyState
                   icon={Clock}
                   title="No Recent Tracks"
                   description="Your recently played tracks will appear here. Start listening to music to see your history!"
                 />
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-8 gap-3 sm:gap-6 justify-items-center">
+                <div className={mediaGridClass}>
                   {memoizedRecentTracks.map((tracks, index) => {
                     const isThisTrack = currentTrackId === tracks.track.id;
                     return (
                       <PlaylistCard
+      fluid
                         key={`${tracks.track.id}-${index}`}
                         id={tracks.track.id}
                         image={
