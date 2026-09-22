@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import Sidebar from "@/components/Sidebar";
 import { EventData } from "@/lib/events"; // TicketMaster EventData type
 import { fetchEvents } from "@/utils/Events/fetchEvent"; // Your TicketMaster fetch function
 import {
@@ -37,7 +36,6 @@ const EventsPage = () => {
   console.log("predictHQEvents", predictHQEvents);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [selectedEventData, setSelectedEventData] =
     useState<PredictHQEventData | null>(null);
@@ -100,16 +98,8 @@ const EventsPage = () => {
   );
 
   return (
-    <div className="flex h-screen">
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen((prev) => !prev)}
-      />
-      <div
-        className={`flex-1 transition-all ml-16 duration-300 ${
-          sidebarOpen ? "lg:ml-64 ml-16" : "lg:ml-16"
-        }`}
-      >
+    <div className="flex min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="p-6">
           <Select
             value={selectedSource}

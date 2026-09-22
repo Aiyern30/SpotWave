@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import InQueueWindow from "@/components/InQueueWindow";
 import Sidebar from "@/components/Sidebar";
@@ -15,6 +15,16 @@ export default function MainLayout({
 }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCompact, setSidebarCompact] = useState(true);
+  const closeSidebar = useCallback(() => setSidebarOpen(false), []);
+  useEffect(() => {
+    try { setSidebarCompact(localStorage.getItem("sidebar-compact") !== "false"); } catch {}
+  }, []);
+  const toggleSidebarCompact = () => {
+    const next = !sidebarCompact;
+    setSidebarCompact(next);
+    try { localStorage.setItem("sidebar-compact", String(next)); } catch {}
+  };
   const { currentTrack, isConnecting } = usePlayer();
   const { isFullScreenOpen } = useFullScreenPlayer();
   const isPlayerVisible = !!currentTrack || isConnecting;
@@ -25,23 +35,26 @@ export default function MainLayout({
   const isGamePage = pathname.startsWith("/Games/") && pathname !== "/Games";
 
   return (
-    <div className="flex min-h-screen bg-black">
+    <div className="flex min-h-[100dvh] bg-black">
       {!isFullScreenOpen && (
         <Sidebar
           isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen((prev) => !prev)}
+          onClose={closeSidebar}
+          onOpen={() => setSidebarOpen(true)}
+          compact={sidebarCompact}
+          onToggleCompact={toggleSidebarCompact}
         />
       )}
       <div
-        className={`min-w-0 flex-1 transition-all duration-300 ${
+        className={`min-w-0 flex-1 ${
           isFullScreenOpen
             ? "md:ml-0 ml-0"
-            : sidebarOpen
+            : !sidebarCompact
               ? "md:ml-64 ml-0"
-              : "md:ml-16 ml-0"
+              : "md:ml-[72px] ml-0"
         } ${isPlayerVisible && !isFullScreenOpen ? "pb-[90px]" : ""}`}
       >
-        <div className="px-3 sm:px-6 lg:px-8 pt-20 lg:pt-6 space-y-6 flex flex-col">
+        <div className="px-3 sm:px-6 lg:px-8 pt-20 md:pt-6 space-y-6 flex flex-col">
           <Breadcrumbs />
           {!isGamePage && (
             <div className="animate-in fade-in slide-in-from-top-4 duration-700">
