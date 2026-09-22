@@ -97,7 +97,7 @@ export const Breadcrumbs = () => {
             <BreadcrumbItem>
               <BreadcrumbLink
                 asChild
-                className="text-zinc-400 hover:text-white transition-colors"
+                className="text-muted-foreground hover:text-brand transition-colors"
               >
                 <Link
                   href="/Home"
@@ -120,13 +120,13 @@ export const Breadcrumbs = () => {
                   <BreadcrumbSeparator className="text-zinc-600" />
                   <BreadcrumbItem>
                     {isLast && name ? (
-                      <BreadcrumbPage className="text-white font-medium">
+                      <BreadcrumbPage className="text-brand font-medium">
                         {name}
                       </BreadcrumbPage>
                     ) : (
                       <BreadcrumbLink
                         asChild
-                        className="text-zinc-400 hover:text-white transition-colors capitalize"
+                        className="text-muted-foreground hover:text-brand transition-colors capitalize"
                       >
                         <Link
                           href={href}
@@ -156,7 +156,7 @@ export const Breadcrumbs = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-transparent border-zinc-700 text-white hover:bg-zinc-800 hover:bg-brand">
+            <AlertDialogCancel className="bg-transparent border-zinc-700 text-white hover:bg-zinc-800 hover:bg-brand hover:text-brand-foreground">
               Continue Quiz
             </AlertDialogCancel>
             <AlertDialogAction
@@ -187,9 +187,9 @@ export const SearchSection = () => {
     try {
       const response = await fetch(
         `https://api.spotify.com/v1/search?q=${encodeURIComponent(
-          term
+          term,
         )}&type=artist&limit=3`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       if (!response.ok) return [];
       const data = await response.json();
@@ -214,9 +214,9 @@ export const SearchSection = () => {
     try {
       const response = await fetch(
         `https://api.spotify.com/v1/search?q=${encodeURIComponent(
-          term
+          term,
         )}&type=track&limit=10`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       if (!response.ok) return [];
       const data = await response.json();
@@ -242,7 +242,7 @@ export const SearchSection = () => {
     try {
       const response = await fetch(
         `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       if (!response.ok) return [];
       const data = await response.json();
@@ -290,7 +290,7 @@ export const SearchSection = () => {
         }
         if (songs.length > 0) {
           const filteredSongs = songs.filter(
-            (song) => !songIdsInTopTracks.has(song.id)
+            (song) => !songIdsInTopTracks.has(song.id),
           );
           if (filteredSongs.length > 0) {
             results.push({ type: "song", items: filteredSongs.slice(0, 5) });
@@ -304,7 +304,7 @@ export const SearchSection = () => {
         setIsSearching(false);
       }
     },
-    [searchTerm]
+    [searchTerm],
   );
 
   useEffect(() => {
@@ -328,7 +328,7 @@ export const SearchSection = () => {
   const handleResultClick = (
     id: string,
     type: "song" | "artist",
-    name: string
+    name: string,
   ) => {
     if (type === "song") {
       router.push(`/Songs/${id}?name=${encodeURIComponent(name)}`);
@@ -343,7 +343,7 @@ export const SearchSection = () => {
   return (
     <form onSubmit={handleSearch} className="relative w-full max-w-2xl">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-brand" />
         <Input
           type="text"
           placeholder="What do you want to play?"
@@ -352,11 +352,11 @@ export const SearchSection = () => {
           ref={inputRef}
           onBlur={handleInputBlur}
           onFocus={() => searchTerm.trim() && setDropdownVisible(true)}
-          className="pl-10 bg-zinc-800/50 border-zinc-700 text-white placeholder:text-zinc-400 focus:border-green-500 focus:ring-green-500/20 h-12"
+          className="pl-10 bg-zinc-800/50 border-zinc-700 text-white placeholder:text-zinc-400 focus:border-brand focus:ring-brand/20 h-12"
         />
         {isSearching && (
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-            <div className="animate-spin rounded-full h-4 w-4 border-2 border-green-500 border-t-transparent" />
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-brand border-t-transparent" />
           </div>
         )}
       </div>
@@ -378,7 +378,7 @@ export const SearchSection = () => {
                         handleResultClick(
                           result.artist.id,
                           "artist",
-                          result.artist.name
+                          result.artist.name,
                         );
                       }}
                     >
