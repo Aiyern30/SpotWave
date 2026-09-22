@@ -57,19 +57,18 @@ import {
   Disc,
   User,
 } from "lucide-react";
-import { PiTable } from "react-icons/pi";
-import { LuLayoutGrid } from "react-icons/lu";
 import { formatSongDuration } from "@/utils/function";
 import { fetchUserProfile } from "@/utils/fetchProfile";
 import { usePlayer } from "@/contexts/PlayerContext";
 import type { PlaylistProps, PlaylistTrack, UserProfile } from "@/lib/types";
 import UserHeader from "@/components/Home/UserHeader";
+import ViewSelector, { type CollectionView } from "@/components/ViewSelector";
 
 const PlaylistPage = () => {
   const [playlist, setPlaylist] = useState<PlaylistProps | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [displayUI, setDisplayUI] = useState<string>("Table");
+  const [displayUI, setDisplayUI] = useState<CollectionView>("Table");
 
   const [token, setToken] = useState<string>("");
   const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
@@ -426,41 +425,17 @@ const PlaylistPage = () => {
         <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
           Songs
         </h2>
-        <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setDisplayUI("Table")}
-            className={`h-9 px-3 transition-all ${
-              displayUI === "Table"
-                ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
-                : "text-zinc-400 hover:text-white hover:bg-zinc-800"
-            }`}
-          >
-            <PiTable className="h-5 w-5 sm:mr-2" />
-            <span className="hidden sm:inline">Table</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setDisplayUI("Grid")}
-            className={`h-9 px-3 transition-all ${
-              displayUI === "Grid"
-                ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
-                : "text-zinc-400 hover:text-white hover:bg-zinc-800"
-            }`}
-          >
-            <LuLayoutGrid className="h-5 w-5 sm:mr-2" />
-            <span className="hidden sm:inline">Grid</span>
-          </Button>
-        </div>
+        <ViewSelector
+          value={displayUI}
+          onChange={setDisplayUI}
+          options={["Table", "Grid"]}
+        />
       </div>
 
       {/* Songs Display */}
       {displayUI === "Table" ? (
-        <div className="overflow-x-auto rounded-lg border border-zinc-800/50">
-          <div className="bg-zinc-900/30">
-            <Table className="w-full">
+        <div className="bg-zinc-900/30">
+          <Table className="w-full">
               <TableHeader>
                 <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
                   <TableHead className="w-12 text-center text-zinc-400 font-medium text-xs sm:text-sm">
@@ -491,10 +466,18 @@ const PlaylistPage = () => {
                       key={track.id}
                       className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
                       onActivate={() => handlePlayPause(track)}
-                        aria-label={`${isCurrentlyPlaying ? "Pause" : "Play"} ${track.name}`}
+                      aria-label={`${isCurrentlyPlaying ? "Pause" : "Play"} ${track.name}`}
                     >
                       <TableCell className="text-center py-3 sm:py-4">
-                        <span className={isCurrentlyPlaying ? "text-brand tabular-nums text-xs" : "text-zinc-500 tabular-nums text-xs"}>{index + 1}</span>
+                        <span
+                          className={
+                            isCurrentlyPlaying
+                              ? "text-brand tabular-nums text-xs"
+                              : "text-zinc-500 tabular-nums text-xs"
+                          }
+                        >
+                          {index + 1}
+                        </span>
                       </TableCell>
 
                       <TableCell className="py-3 sm:py-4 max-w-0">
@@ -677,8 +660,7 @@ const PlaylistPage = () => {
                   );
                 })}
               </TableBody>
-            </Table>
-          </div>
+          </Table>
         </div>
       ) : (
         <div className="media-grid">

@@ -97,7 +97,7 @@ export const Breadcrumbs = () => {
             <BreadcrumbItem>
               <BreadcrumbLink
                 asChild
-                className="text-muted-foreground hover:text-brand transition-colors"
+                className="transition-colors"
               >
                 <Link
                   href="/Home"
@@ -124,7 +124,7 @@ export const Breadcrumbs = () => {
                     ) : (
                       <BreadcrumbLink
                         asChild
-                        className="text-muted-foreground hover:text-brand transition-colors capitalize"
+                        className="transition-colors capitalize"
                       >
                         <Link
                           href={href}
