@@ -357,7 +357,7 @@ const Page = () => {
 
   // Add loading skeleton components
   const TableSkeleton = () => (
-    <div className="bg-zinc-900/30 rounded-lg border border-zinc-800/50">
+    <div className="music-table-shell bg-zinc-900/30 rounded-lg border">
       <Table>
         <TableHeader>
           <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
@@ -480,7 +480,7 @@ const Page = () => {
           </div>
 
           {/* Enhanced View Selector */}
-          <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
+          <div className="theme-selector-shell flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border">
             <Button
               variant="ghost"
               size="sm"
@@ -520,7 +520,7 @@ const Page = () => {
         ) : (
           <>
             {displayUI === "Table" ? (
-              <div className="overflow-x-auto rounded-lg border border-zinc-800/50">
+              <div className="music-table-shell overflow-x-auto rounded-lg border">
                 <div className="bg-zinc-900/30">
                   <Table className="table-fixed">
                     <TableCaption className="text-zinc-400 pb-4">

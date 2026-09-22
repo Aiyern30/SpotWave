@@ -375,6 +375,15 @@
 .table-track-number, .table-play-icon { grid-area: 1 / 1; }
 .table-track-number { opacity: 0; color: rgb(161 161 170); font-variant-numeric: tabular-nums; }
 .table-play-icon { display: grid; place-items: center; opacity: 1; }
+.music-table-shell {
+  border-color: hsl(var(--brand-primary) / 0.3) !important;
+}
+.theme-selector-shell {
+  border-color: hsl(var(--brand-primary) / 0.3) !important;
+}
+.music-table tbody tr {
+  border-color: hsl(var(--brand-primary) / 0.18) !important;
+}
 .music-table thead {
   background: linear-gradient(
     135deg,
