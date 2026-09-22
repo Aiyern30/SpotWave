@@ -1,5 +1,7 @@
 "use client";
 
+import LyricsPanel from "@/components/LyricsPanel";
+
 import { SongTableRow } from "@/components/SongTableRow";
 
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -51,11 +53,6 @@ import {
 interface FullScreenPlayerProps {
   isOpen: boolean;
   onClose: () => void;
-}
-
-interface LyricsLine {
-  time: number;
-  text: string;
 }
 
 interface Ripple {
@@ -135,15 +132,14 @@ export const FullScreenPlayer = ({
   const [topTracks, setTopTracks] = useState<TopTrack[]>([]);
   const [loadingTopTracks, setLoadingTopTracks] = useState(false);
 
-  const [lyrics, setLyrics] = useState<string | null>(null);
-  const [syncedLyrics, setSyncedLyrics] = useState<LyricsLine[] | null>(null);
-  const [loadingLyrics, setLoadingLyrics] = useState(false);
-  const [hasLyrics, setHasLyrics] = useState<boolean>(true);
-  const [currentLyricIndex, setCurrentLyricIndex] = useState<number>(-1);
-  const lyricsContainerRef = useRef<HTMLDivElement>(null);
-  const mobileLyricsContainerRef = useRef<HTMLDivElement>(null);
-  const lastLyricsKeyRef = useRef<string | null>(null);
-  const lyricsRequestInFlightRef = useRef<string | null>(null);
+  const [wideLyrics, setWideLyrics] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 1024px)");
+    const update = () => setWideLyrics(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
 
   const [topTracksDisplayUI, setTopTracksDisplayUI] = useState<
     "Table" | "Grid"
@@ -369,74 +365,6 @@ export const FullScreenPlayer = ({
     topTracks.length,
   ]);
 
-  useEffect(() => {
-    if (!isOpen || !currentTrack?.id) return;
-    const lyricsKey = `${currentTrack.id}:${currentTrack.name}:${currentTrack.album.name}:${currentTrack.duration_ms}`;
-
-    if (
-      lyricsKey === lastLyricsKeyRef.current ||
-      lyricsKey === lyricsRequestInFlightRef.current
-    ) {
-      return;
-    }
-
-    lastLyricsKeyRef.current = lyricsKey;
-    lyricsRequestInFlightRef.current = lyricsKey;
-
-    fetchLyrics(
-      currentTrack.artists[0].name,
-      currentTrack.name,
-      currentTrack.album.name,
-      currentTrack.duration_ms,
-    ).finally(() => {
-      if (lyricsRequestInFlightRef.current === lyricsKey) {
-        lyricsRequestInFlightRef.current = null;
-      }
-    });
-  }, [
-    isOpen,
-    currentTrack?.id,
-    currentTrack?.name,
-    currentTrack?.album.name,
-    currentTrack?.duration_ms,
-    currentTrack?.artists?.[0]?.name,
-  ]);
-
-  useEffect(() => {
-    if (!syncedLyrics || syncedLyrics.length === 0 || !isPlaying) return;
-
-    const adjustedPosition = position + 300;
-    let newIndex = -1;
-    for (let i = syncedLyrics.length - 1; i >= 0; i--) {
-      if (adjustedPosition >= syncedLyrics[i].time) {
-        newIndex = i;
-        break;
-      }
-    }
-
-    if (newIndex !== currentLyricIndex) {
-      setCurrentLyricIndex(newIndex);
-      [lyricsContainerRef, mobileLyricsContainerRef].forEach((ref) => {
-        if (ref.current && newIndex >= 0) {
-          const activeElement = ref.current.querySelector(
-            `[data-index="${newIndex}"]`,
-          ) as HTMLElement;
-          if (activeElement) {
-            const container = ref.current;
-            const targetScroll =
-              activeElement.offsetTop -
-              container.clientHeight / 2 +
-              activeElement.clientHeight / 2;
-            container.scrollTo({
-              top: targetScroll,
-              behavior: "smooth",
-            });
-          }
-        }
-      });
-    }
-  }, [position, syncedLyrics, currentLyricIndex, isPlaying]);
-
   const fetchTopTracks = async (artistId: string) => {
     setLoadingTopTracks(true);
     try {
@@ -451,75 +379,6 @@ export const FullScreenPlayer = ({
       console.error("Error fetching top tracks:", error);
     } finally {
       setLoadingTopTracks(false);
-    }
-  };
-
-  const parseSyncedLyrics = (lrcText: string): LyricsLine[] => {
-    const lines: LyricsLine[] = [];
-    const lrcLines = lrcText.split("\n");
-    for (const line of lrcLines) {
-      const match = line.match(/\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/);
-      if (match) {
-        const minutes = parseInt(match[1]);
-        const seconds = parseInt(match[2]);
-        const centiseconds = parseInt(match[3].padEnd(3, "0"));
-        const time = (minutes * 60 + seconds) * 1000 + centiseconds;
-        const text = match[4].trim();
-        if (text) lines.push({ time, text });
-      }
-    }
-    return lines.sort((a, b) => a.time - b.time);
-  };
-
-  const fetchLyrics = async (
-    artist: string,
-    title: string,
-    album: string,
-    durationMs: number,
-  ) => {
-    setLoadingLyrics(true);
-    // Reset hasLyrics so the button shows up while loading
-    setHasLyrics(true);
-    try {
-      const params = new URLSearchParams({
-        artist_name: artist,
-        track_name: title,
-        album_name: album,
-        duration: Math.round(durationMs / 1000).toString(),
-      });
-      const response = await fetch(
-        `https://lrclib.net/api/get?${params.toString()}`,
-      );
-      const data = await response.json();
-
-      if (data.syncedLyrics && data.syncedLyrics.trim()) {
-        setHasLyrics(true);
-        setSyncedLyrics(parseSyncedLyrics(data.syncedLyrics));
-        setLyrics(
-          data.plainLyrics ||
-            data.syncedLyrics.replace(/\[\d{2}:\d{2}\.\d{2,3}\]/g, "").trim(),
-        );
-      } else if (data.plainLyrics && data.plainLyrics.trim()) {
-        setHasLyrics(true);
-        setLyrics(data.plainLyrics);
-        setSyncedLyrics(null);
-      } else {
-        setHasLyrics(false);
-        setLyrics(data.instrumental ? "🎵 Instrumental" : "Lyrics not found");
-        setSyncedLyrics(null);
-        if (viewModeRef.current === "lyrics") {
-          setViewMode("image");
-        }
-      }
-    } catch (error) {
-      setHasLyrics(false);
-      setLyrics("Unable to fetch lyrics");
-      setSyncedLyrics(null);
-      if (viewModeRef.current === "lyrics") {
-        setViewMode("image");
-      }
-    } finally {
-      setLoadingLyrics(false);
     }
   };
 
@@ -941,7 +800,7 @@ export const FullScreenPlayer = ({
             <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
 
-          {(loadingLyrics || hasLyrics) && (
+          {(
             <Button
               variant="ghost"
               size="icon"
@@ -1162,47 +1021,8 @@ export const FullScreenPlayer = ({
             </div>
           </div>
           <div className={viewMode === "lyrics" ? "hidden lg:block" : "hidden"}>
-            <div className="w-full min-h-[400px] sm:min-h-[600px] bg-zinc-900/50 rounded-2xl p-4 sm:p-8 backdrop-blur-sm overflow-hidden">
-              {loadingLyrics ? (
-                <div className="flex justify-center items-center h-[400px] sm:h-[600px]">
-                  <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-brand" />
-                </div>
-              ) : syncedLyrics && syncedLyrics.length > 0 ? (
-                <div
-                  ref={lyricsContainerRef}
-                  className="h-[400px] sm:h-[600px] overflow-y-auto overflow-x-hidden scroll-smooth space-y-3 sm:space-y-4 pr-2 sm:pr-4 no-scrollbar"
-                >
-                  {syncedLyrics.map((line, index) => (
-                    <div
-                      key={index}
-                      data-index={index}
-                      className={`text-sm sm:text-base leading-relaxed transition-all duration-300 py-1 break-words ${
-                        index === currentLyricIndex
-                          ? "text-brand font-semibold text-lg sm:text-2xl"
-                          : index < currentLyricIndex
-                            ? "text-zinc-500"
-                            : "text-zinc-300"
-                      }`}
-                      style={
-                        index === currentLyricIndex
-                          ? {
-                              transform: "scale(1.05)",
-                              transformOrigin: "left center",
-                            }
-                          : undefined
-                      }
-                    >
-                      {line.text}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="h-[400px] sm:h-[600px] overflow-y-auto overflow-x-hidden pr-2 sm:pr-4">
-                  <pre className="text-zinc-300 text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words">
-                    {lyrics}
-                  </pre>
-                </div>
-              )}
+            <div className="h-[600px] overflow-hidden rounded-2xl border border-white/5 bg-zinc-950">
+              {wideLyrics && <LyricsPanel active={isOpen && viewMode === "lyrics"} />}
             </div>
           </div>
         </div>
@@ -1353,45 +1173,9 @@ export const FullScreenPlayer = ({
           </div>
         </div>
 
-        {/* Mobile Lyrics Integration (shows after controls) */}
-        <div className="lg:hidden block px-4 pt-4">
-          <div className="w-full bg-zinc-900/50 rounded-2xl p-6 backdrop-blur-sm overflow-hidden border border-zinc-800/50">
-            <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-              <FileText className="h-4 w-4 text-brand" />
-              Lyrics
-            </h3>
-            {loadingLyrics ? (
-              <div className="flex justify-center items-center h-[300px]">
-                <Loader2 className="h-6 w-6 animate-spin text-brand" />
-              </div>
-            ) : syncedLyrics && syncedLyrics.length > 0 ? (
-              <div
-                ref={mobileLyricsContainerRef}
-                className="h-[400px] overflow-y-auto overflow-x-hidden scroll-smooth space-y-4 pr-2 no-scrollbar"
-              >
-                {syncedLyrics.map((line, index) => (
-                  <div
-                    key={index}
-                    data-index={index}
-                    className={`text-lg leading-relaxed transition-all duration-300 py-1 break-words ${
-                      index === currentLyricIndex
-                        ? "text-brand font-bold text-xl scale-105 origin-left"
-                        : index < currentLyricIndex
-                          ? "text-zinc-500"
-                          : "text-zinc-300"
-                    }`}
-                  >
-                    {line.text}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="h-[300px] overflow-y-auto overflow-x-hidden pr-2">
-                <pre className="text-zinc-300 text-base leading-relaxed whitespace-pre-wrap font-sans">
-                  {lyrics}
-                </pre>
-              </div>
-            )}
+        <div className="px-4 pt-4 lg:hidden">
+          <div className="h-[min(650px,80dvh)] overflow-hidden rounded-2xl border border-white/5 bg-zinc-950">
+            {!wideLyrics && <LyricsPanel active={isOpen} />}
           </div>
         </div>
       </div>

@@ -17,6 +17,7 @@ interface PlayerContextType {
   isPlaying: boolean;
   isPaused: boolean;
   position: number;
+  positionUpdatedAt: number;
   duration: number;
   volume: number;
 
@@ -82,7 +83,12 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [position, setPosition] = useState(0);
+  const [position, setPositionState] = useState(0);
+  const [positionUpdatedAt, setPositionUpdatedAt] = useState(0);
+  const setPosition = useCallback((value: number) => {
+    setPositionState(value);
+    setPositionUpdatedAt(performance.now());
+  }, []);
   const [duration, setDuration] = useState(0);
   const [volume, setVolumeState] = useState(0.5);
   const [queue, setQueue] = useState<Track[]>([]);
@@ -471,6 +477,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!isPlaying || isPaused) return;
 
     const interval = setInterval(() => {
+      if (activeDeviceRef.current && activeDeviceRef.current.id !== deviceIdRef.current) return;
       if (player && typeof player.getCurrentState === "function") {
         player
           .getCurrentState()
@@ -878,13 +885,16 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         activeDeviceRef.current.id !== deviceIdRef.current
       ) {
         try {
-          await fetch(
+          const response = await fetch(
             `https://api.spotify.com/v1/me/player/seek?position_ms=${positionMs}&device_id=${activeDeviceRef.current.id}`,
             {
               method: "PUT",
               headers: { Authorization: `Bearer ${token}` },
             },
           );
+          if (!response.ok) throw new Error(`Seek failed: ${response.status}`);
+          lastPlayerStateFetch = null;
+          setPosition(positionMs);
         } catch (error) {
           console.error("Error seeking via API:", error);
         }
@@ -892,7 +902,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       if (player && typeof player.seek === "function") {
-        player.seek(positionMs).catch((error: any) => {
+        player.seek(positionMs).then(() => setPosition(positionMs)).catch((error: any) => {
           console.error("Error seeking:", error);
         });
       }
@@ -969,7 +979,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
               });
               setIsPlaying(data.is_playing);
               setIsPaused(!data.is_playing);
-              setPosition(data.progress_ms);
+              setPosition(Math.min(data.item.duration_ms, data.progress_ms + (data.is_playing ? now - lastPlayerStateFetch.timestamp : 0)));
               setDuration(data.item.duration_ms);
               if (data.device.volume_percent !== null) {
                 setVolumeState(data.device.volume_percent / 100);
@@ -1245,6 +1255,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     isPlaying,
     isPaused,
     position,
+    positionUpdatedAt,
     duration,
     volume,
     playTrack,

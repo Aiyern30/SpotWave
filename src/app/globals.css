@@ -380,3 +380,17 @@
   min-width: 40px;
   padding-inline: 8px;
 }
+
+.lyrics-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #71717a transparent;
+  scrollbar-gutter: stable;
+  overflow-wrap: anywhere;
+}
+.lyrics-scroll::-webkit-scrollbar { width: 6px; }
+.lyrics-scroll::-webkit-scrollbar-track { background: transparent; }
+.lyrics-scroll::-webkit-scrollbar-thumb { background: #71717a; border-radius: 999px; }
+.lyrics-scroll::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
+@media (prefers-reduced-motion: reduce) {
+  .lyrics-scroll, .lyrics-scroll * { scroll-behavior: auto; transition: none; }
+}
