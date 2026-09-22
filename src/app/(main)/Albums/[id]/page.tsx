@@ -431,7 +431,7 @@ const AlbumsIDPage = () => {
           </div>
 
           {displayUI === "Table" ? (
-            <div className="overflow-x-auto rounded-lg border border-zinc-800">
+            <div>
               <Table className="table-fixed">
                 <TableHeader>
                   <TableRow className="border-zinc-800 hover:bg-transparent">

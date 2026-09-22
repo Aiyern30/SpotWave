@@ -739,7 +739,7 @@ const ArtistProfilePage = () => {
             </div>
 
             {tracksDisplayUI === "Table" ? (
-              <div className="overflow-x-auto bg-zinc-900/50 rounded-xl border border-zinc-800/50">
+              <div className="bg-zinc-900/50">
                 <Table className="w-full">
                   <TableHeader>
                     <TableRow className="border-zinc-800 hover:bg-transparent">
@@ -1078,7 +1078,7 @@ const ArtistProfilePage = () => {
             </div>
 
             {albumsDisplayUI === "Table" ? (
-              <div className="overflow-x-auto bg-zinc-900/50 rounded-xl border border-zinc-800/50">
+              <div className="bg-zinc-900/50">
                 <Table className="table-fixed">
                   <TableHeader>
                     <TableRow className="border-zinc-800 hover:bg-transparent">

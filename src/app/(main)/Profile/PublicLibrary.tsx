@@ -144,7 +144,7 @@ const PublicLibrary = ({ userId }: { userId?: string }) => {
       </div>
 
       {displayUI === "Table" ? (
-        <div className="overflow-x-auto rounded-lg border border-zinc-800/50">
+        <div>
           {loading ? (
             <div className="space-y-3">
               {Array(5)

@@ -377,7 +377,7 @@ const Page = () => {
         ) : (
           <>
             {displayUI === "Table" && (
-              <div className="overflow-x-auto rounded-lg border border-zinc-800/50">
+              <div>
                 <div className="bg-zinc-900/30">
                   <Table>
                     <TableCaption className="text-zinc-400 pb-4">

@@ -240,7 +240,7 @@ const CategoriesPage = () => {
       ) : categories.length === 0 ? (
         <EmptyState />
       ) : displayUI === "Table" ? (
-        <div className="overflow-x-auto rounded-xl border border-zinc-800/50 bg-zinc-900/10 shadow-sm">
+        <div className="bg-zinc-900/10 shadow-sm">
           <Table className="w-full">
             <TableHeader>
               <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">

@@ -357,7 +357,7 @@ const Page = () => {
 
   // Add loading skeleton components
   const TableSkeleton = () => (
-    <div className="music-table-shell bg-zinc-900/30 rounded-lg border">
+    <div className="bg-zinc-900/30">
       <Table>
         <TableHeader>
           <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
@@ -517,7 +517,7 @@ const Page = () => {
         ) : (
           <>
             {displayUI === "Table" ? (
-              <div className="music-table-shell overflow-x-auto rounded-lg border">
+              <div>
                 <div className="bg-zinc-900/30">
                   <Table className="table-fixed">
                     <TableCaption className="text-zinc-400 pb-4">

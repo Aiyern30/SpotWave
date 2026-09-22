@@ -218,7 +218,7 @@ export default function CategoryDetailPage() {
             <Music className="h-5 w-5 text-brand" />
             Top Tracks
           </h2>
-          <div className="overflow-x-auto rounded-xl border border-zinc-800/50 bg-zinc-900/40 backdrop-blur-sm">
+          <div className="bg-zinc-900/40 backdrop-blur-sm">
             <Table>
               <TableHeader>
                 <TableRow className="border-zinc-800/50 hover:bg-transparent">
