@@ -88,7 +88,7 @@ const Page = () => {
       tracks.map(async (track) => {
         const spotifyData = await searchTrackOnSpotify(
           track.name,
-          track.artist.name
+          track.artist.name,
         );
         return spotifyData
           ? {
@@ -103,7 +103,7 @@ const Page = () => {
               },
             }
           : track;
-      })
+      }),
     );
     return updatedTracks;
   }, []);
@@ -113,7 +113,7 @@ const Page = () => {
       setLoading(true);
       try {
         const response = await fetch(
-          `https://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks&limit=${limit}&api_key=${apiKey}&format=json`
+          `https://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks&limit=${limit}&api_key=${apiKey}&format=json`,
         );
         const data: TopTracksResponseLASTFM = await response.json();
 
@@ -128,7 +128,7 @@ const Page = () => {
       }
       setLoading(false);
     },
-    [fetchSpotifyData]
+    [fetchSpotifyData],
   );
 
   useEffect(() => {
@@ -153,7 +153,7 @@ const Page = () => {
         try {
           const response = await fetch(
             `https://api.spotify.com/v1/users/${userProfile.id}/playlists`,
-            { headers: { Authorization: `Bearer ${token}` } }
+            { headers: { Authorization: `Bearer ${token}` } },
           );
           if (response.ok) {
             const data = await response.json();
@@ -182,7 +182,7 @@ const Page = () => {
           const idsToCheck = spotifyIds.slice(0, 50).join(",");
           const response = await fetch(
             `https://api.spotify.com/v1/me/tracks/contains?ids=${idsToCheck}`,
-            { headers: { Authorization: `Bearer ${token}` } }
+            { headers: { Authorization: `Bearer ${token}` } },
           );
           if (response.ok) {
             const data = await response.json();
@@ -203,7 +203,7 @@ const Page = () => {
   const handleAddToPlaylist = async (
     trackUri: string,
     playlistId: string,
-    playlistName: string
+    playlistName: string,
   ) => {
     try {
       const response = await fetch(
@@ -215,7 +215,7 @@ const Page = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ uris: [trackUri] }), // Spotify URI
-        }
+        },
       );
       if (response.ok) {
         const { toast } = await import("react-toastify");
@@ -238,7 +238,7 @@ const Page = () => {
         {
           method: isLiked ? "DELETE" : "PUT",
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       if (response.ok) {
         const { toast } = await import("react-toastify");
@@ -297,7 +297,7 @@ const Page = () => {
           `https://api.spotify.com/v1/tracks/${spotifyData.id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -340,7 +340,7 @@ const Page = () => {
         console.error("Error playing track:", error);
       }
     },
-    [playTrack]
+    [playTrack],
   );
 
   // Wrapper for PlaylistCard compatibility
@@ -352,7 +352,7 @@ const Page = () => {
         handlePlayTrack(trackId, track.name, track.artist.name);
       }
     },
-    [memoizedTracks, handlePlayTrack]
+    [memoizedTracks, handlePlayTrack],
   );
 
   // Add loading skeleton components
@@ -420,10 +420,7 @@ const Page = () => {
       {Array(10)
         .fill(0)
         .map((_, index) => (
-          <div
-            key={index}
-            className="space-y-3 w-full min-w-0"
-          >
+          <div key={index} className="space-y-3 w-full min-w-0">
             <Skeleton className="w-full aspect-square rounded-lg bg-zinc-800" />
             <Skeleton className="h-4 w-3/4 bg-zinc-800" />
             <Skeleton className="h-3 w-2/3 bg-zinc-800" />
@@ -448,7 +445,7 @@ const Page = () => {
         await handlePlayTrack(trackId, trackName, artistName);
       }
     },
-    [currentTrackId, isPlaying, pauseTrack, resumeTrack, handlePlayTrack]
+    [currentTrackId, isPlaying, pauseTrack, resumeTrack, handlePlayTrack],
   );
 
   // Helper function to check if track is currently playing
@@ -552,12 +549,26 @@ const Page = () => {
                         return (
                           <SongTableRow
                             key={track.id || index}
-                            onActivate={() => handlePlayPauseTrack(track.id, track.name, track.artist.name)}
-                        aria-label={`${isTrackPlaying(track.id) ? "Pause" : "Play"} ${track.name}`}
+                            onActivate={() =>
+                              handlePlayPauseTrack(
+                                track.id,
+                                track.name,
+                                track.artist.name,
+                              )
+                            }
+                            aria-label={`${isTrackPlaying(track.id) ? "Pause" : "Play"} ${track.name}`}
                             className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
                           >
                             <TableCell className="text-center py-3 sm:py-4">
-                              <span className={isTrackPlaying(track.id) ? "text-brand tabular-nums text-xs" : "text-zinc-500 tabular-nums text-xs"}>{index + 1}</span>
+                              <span
+                                className={
+                                  isTrackPlaying(track.id)
+                                    ? "text-brand tabular-nums text-xs"
+                                    : "text-zinc-500 tabular-nums text-xs"
+                                }
+                              >
+                                {index + 1}
+                              </span>
                             </TableCell>
                             <TableCell className="py-3 sm:py-4 max-w-0">
                               <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
@@ -572,7 +583,6 @@ const Page = () => {
                                     className="object-cover"
                                     alt={track.name}
                                   />
-
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <div
@@ -596,8 +606,8 @@ const Page = () => {
                                     `/Artists/${
                                       track.artist.id
                                     }?name=${encodeURIComponent(
-                                      track.artist.name
-                                    )}`
+                                      track.artist.name,
+                                    )}`,
                                   );
                                 }}
                               >
@@ -647,7 +657,7 @@ const Page = () => {
                                               handleAddToPlaylist(
                                                 `spotify:track:${track.id}`,
                                                 pl.id,
-                                                pl.name
+                                                pl.name,
                                               );
                                             }}
                                             className="text-white hover:text-brand/20 hover:text-brand"
@@ -663,7 +673,7 @@ const Page = () => {
                                         e.stopPropagation();
                                         handleSaveToLiked(
                                           track.id!,
-                                          track.name
+                                          track.name,
                                         );
                                       }}
                                       className="text-white hover:text-brand/20 hover:text-brand"
@@ -690,8 +700,8 @@ const Page = () => {
                                             `/Artists/${
                                               track.artist.id
                                             }?name=${encodeURIComponent(
-                                              track.artist.name
-                                            )}`
+                                              track.artist.name,
+                                            )}`,
                                           );
                                         }
                                       }}
@@ -706,7 +716,7 @@ const Page = () => {
                                         e.stopPropagation();
                                         window.open(
                                           `https://open.spotify.com/track/${track.id}`,
-                                          "_blank"
+                                          "_blank",
                                         );
                                       }}
                                       className="text-white hover:text-brand/20 hover:text-brand"
@@ -743,7 +753,7 @@ const Page = () => {
                       onResume={resumeTrack}
                       onClick={(id, name) =>
                         router.push(
-                          `/Songs/${id}?name=${encodeURIComponent(name)}`
+                          `/Songs/${id}?name=${encodeURIComponent(name)}`,
                         )
                       }
                       menu={
@@ -777,7 +787,7 @@ const Page = () => {
                                         handleAddToPlaylist(
                                           `spotify:track:${track.id}`,
                                           pl.id,
-                                          pl.name
+                                          pl.name,
                                         );
                                       }}
                                       className="text-white hover:text-brand/20 hover:text-brand"
@@ -817,8 +827,8 @@ const Page = () => {
                                       `/Artists/${
                                         track.artist.id
                                       }?name=${encodeURIComponent(
-                                        track.artist.name
-                                      )}`
+                                        track.artist.name,
+                                      )}`,
                                     );
                                   }
                                 }}
@@ -833,7 +843,7 @@ const Page = () => {
                                   e.stopPropagation();
                                   window.open(
                                     `https://open.spotify.com/track/${track.id}`,
-                                    "_blank"
+                                    "_blank",
                                   );
                                 }}
                                 className="text-white hover:text-brand/20 hover:text-brand"
