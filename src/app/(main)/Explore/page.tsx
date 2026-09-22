@@ -247,7 +247,7 @@ const Page = () => {
           {/* Followed Artists */}
           <AccordionItem
             value="item-1"
-            className="bg-zinc-900/30 rounded-lg border border-zinc-800/50"
+            className="bg-zinc-900/30"
           >
             <AccordionTrigger className="rounded-lg px-4 text-zinc-100 hover:bg-brand/10 hover:text-brand transition-colors">
               <div className="flex items-center space-x-2">
@@ -299,7 +299,7 @@ const Page = () => {
           {/* Favorite Artists */}
           <AccordionItem
             value="item-2"
-            className="bg-zinc-900/30 rounded-lg border border-zinc-800/50"
+            className="bg-zinc-900/30"
           >
             <AccordionTrigger className="rounded-lg px-4 text-zinc-100 hover:bg-brand/10 hover:text-brand transition-colors">
               <div className="flex items-center space-x-2">
@@ -351,7 +351,7 @@ const Page = () => {
           {/* Recently Played Tracks */}
           <AccordionItem
             value="item-3"
-            className="bg-zinc-900/30 rounded-lg border border-zinc-800/50"
+            className="bg-zinc-900/30"
           >
             <AccordionTrigger className="rounded-lg px-4 text-zinc-100 hover:bg-brand/10 hover:text-brand transition-colors">
               <div className="flex items-center space-x-2">
