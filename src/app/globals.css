@@ -368,3 +368,15 @@
   min-width: 68px;
   padding-inline: 12px;
 }
+
+/* Song rows are the playback target; their numbers stay quiet on every device. */
+.music-table tr[tabindex="0"]:focus-visible {
+  outline: 2px solid hsl(var(--brand-primary));
+  outline-offset: -2px;
+}
+.music-table:has(tr[tabindex="0"]) th:first-child,
+.music-table:has(tr[tabindex="0"]) td:first-child {
+  width: 40px;
+  min-width: 40px;
+  padding-inline: 8px;
+}

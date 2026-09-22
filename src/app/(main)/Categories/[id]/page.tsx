@@ -1,6 +1,6 @@
 "use client";
 
-import { TablePlayButton } from "@/components/TablePlayButton";
+import { SongTableRow } from "@/components/SongTableRow";
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
@@ -242,15 +242,16 @@ export default function CategoryDetailPage() {
 
 
                   return (
-                    <TableRow
+                    <SongTableRow
                       key={track.id}
                       className="border-zinc-800/30 hover:bg-zinc-800/30 transition-all cursor-pointer group"
-                      onClick={() => handlePlayPauseTrack(track)}
+                      onActivate={() => handlePlayPauseTrack(track)}
+                        aria-label={`${isPlayingThis ? "Pause" : "Play"} ${track.name}`}
 
 
                     >
                       <TableCell className="text-center py-4">
-                        <TablePlayButton index={index + 1} title={track.name} playing={isPlayingThis} onPlay={() => handlePlayPauseTrack(track)} />
+                        <span className={isPlayingThis ? "text-brand tabular-nums text-xs" : "text-zinc-500 tabular-nums text-xs"}>{index + 1}</span>
                       </TableCell>
                       <TableCell className="py-4 max-w-0">
                         <div className="flex items-center gap-3">
@@ -284,7 +285,7 @@ export default function CategoryDetailPage() {
                       <TableCell className="hidden sm:table-cell text-right text-zinc-400 text-sm">
                         {formatSongDuration(track.duration_ms)}
                       </TableCell>
-                    </TableRow>
+                    </SongTableRow>
                   );
                 })}
               </TableBody>

@@ -1,6 +1,6 @@
 "use client";
 
-import { TablePlayButton } from "@/components/TablePlayButton";
+import { SongTableRow } from "@/components/SongTableRow";
 
 import type React from "react";
 
@@ -449,21 +449,14 @@ const AlbumsIDPage = () => {
                 </TableHeader>
                 <TableBody>
                   {paginatedItems.map((item, index) => (
-                    <TableRow
+                    <SongTableRow
                       key={item.id}
                       className="border-zinc-800 hover:bg-zinc-800/50 transition-colors cursor-pointer group"
-
-
-                      onClick={() =>
-                        router.push(
-                          `/Songs/${item.id}?name=${encodeURIComponent(
-                            item.name
-                          )}`
-                        )
-                      }
+                      onActivate={() => handlePlayPauseTrack(item)}
+                        aria-label={`${isTrackPlaying(item.id) ? "Pause" : "Play"} ${item.name}`}
                     >
                       <TableCell className="text-center">
-                        <TablePlayButton index={startIndex + index + 1} title={item.name} playing={isTrackPlaying(item.id)} onPlay={() => handlePlayPauseTrack(item)} />
+                        <span className={isTrackPlaying(item.id) ? "text-brand tabular-nums text-xs" : "text-zinc-500 tabular-nums text-xs"}>{startIndex + index + 1}</span>
                       </TableCell>
 
                       <TableCell className="max-w-0">
@@ -540,7 +533,7 @@ const AlbumsIDPage = () => {
                       <TableCell className="hidden md:table-cell text-right text-zinc-400 text-sm">
                         {formatSongDuration(item.duration_ms)}
                       </TableCell>
-                    </TableRow>
+                    </SongTableRow>
                   ))}
                 </TableBody>
               </Table>

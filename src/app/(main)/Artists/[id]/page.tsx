@@ -1,6 +1,6 @@
 "use client";
 
-import { TablePlayButton } from "@/components/TablePlayButton";
+import { SongTableRow } from "@/components/SongTableRow";
 
 import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
@@ -762,15 +762,14 @@ const ArtistProfilePage = () => {
                   </TableHeader>
                   <TableBody>
                     {topTracks.map((track, index) => (
-                      <TableRow
+                      <SongTableRow
                         key={track.id}
                         className="border-zinc-800 hover:bg-zinc-800/50 transition-colors cursor-pointer group"
-                        onClick={() => handleSongClick(track.id, track.name)}
-
-
+                        onActivate={() => handlePlayPauseTrack(track)}
+                        aria-label={`${isTrackPlaying(track.id) ? "Pause" : "Play"} ${track.name}`}
                       >
                         <TableCell className="text-center">
-                          <TablePlayButton index={index + 1} title={track.name} playing={isTrackPlaying(track.id)} onPlay={() => handlePlayPauseTrack(track)} />
+                          <span className={isTrackPlaying(track.id) ? "text-brand tabular-nums text-xs" : "text-zinc-500 tabular-nums text-xs"}>{index + 1}</span>
                       </TableCell>
                         <TableCell className="max-w-0 py-4">
                           <div className="flex items-center space-x-3 min-w-0">
@@ -922,7 +921,7 @@ const ArtistProfilePage = () => {
                         <TableCell className="hidden md:table-cell text-right text-zinc-400 text-sm">
                           {formatSongDuration(track.duration_ms)}
                         </TableCell>
-                      </TableRow>
+                      </SongTableRow>
                     ))}
                   </TableBody>
                 </Table>

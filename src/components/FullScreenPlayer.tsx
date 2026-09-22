@@ -1,6 +1,6 @@
 "use client";
 
-import { TablePlayButton } from "@/components/TablePlayButton";
+import { SongTableRow } from "@/components/SongTableRow";
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import Image from "next/image";
@@ -152,8 +152,6 @@ export const FullScreenPlayer = ({
   const [currentPlayingTrackId, setCurrentPlayingTrackId] = useState<
     string | null
   >(null);
-
-
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const bgCanvasRef = useRef<HTMLCanvasElement>(null);
   const ripplesRef = useRef<Ripple[]>([]);
@@ -1467,15 +1465,14 @@ export const FullScreenPlayer = ({
                     const isThisTrack = currentPlayingTrackId === track.id;
 
                     return (
-                      <TableRow
+                      <SongTableRow
                         key={track.id}
                         className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
-                        onClick={() => handlePlayPauseTopTrack(track)}
-
-
+                        onActivate={() => handlePlayPauseTopTrack(track)}
+                        aria-label={`${isTrackPlaying(track.id) ? "Pause" : "Play"} ${track.name}`}
                       >
                         <TableCell className="text-center py-2 sm:py-3 align-middle">
-                          <TablePlayButton index={index + 1} title={track.name} playing={isTrackPlaying(track.id)} onPlay={() => handlePlayPauseTopTrack(track)} />
+                          <span className={isTrackPlaying(track.id) ? "text-brand tabular-nums text-xs" : "text-zinc-500 tabular-nums text-xs"}>{index + 1}</span>
                         </TableCell>
                         <TableCell className="text-center py-2 sm:py-3 align-middle">
                           <div className="relative w-10 h-10 sm:w-12 sm:h-12 mx-auto rounded-md overflow-hidden group/image">
@@ -1514,7 +1511,7 @@ export const FullScreenPlayer = ({
                         <TableCell className="hidden sm:table-cell text-right text-zinc-400 text-xs sm:text-sm py-2 sm:py-3 align-middle">
                           {formatTime(track.duration_ms)}
                         </TableCell>
-                      </TableRow>
+                      </SongTableRow>
                     );
                   })}
                 </TableBody>

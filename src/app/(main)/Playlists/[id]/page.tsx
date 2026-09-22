@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unescaped-entities */
 "use client";
 
-import { TablePlayButton } from "@/components/TablePlayButton";
+import { SongTableRow } from "@/components/SongTableRow";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -487,18 +487,14 @@ const PlaylistPage = () => {
                   const isCurrentlyPlaying = isCurrentTrackPlaying(track.id);
 
                   return (
-                    <TableRow
+                    <SongTableRow
                       key={track.id}
                       className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
-                      onClick={() => handlePlayPause(track)}
+                      onActivate={() => handlePlayPause(track)}
+                        aria-label={`${isCurrentlyPlaying ? "Pause" : "Play"} ${track.name}`}
                     >
                       <TableCell className="text-center py-3 sm:py-4">
-                        <TablePlayButton
-                          index={index + 1}
-                          title={track.name}
-                          playing={isCurrentlyPlaying}
-                          onPlay={() => handlePlayPause(track)}
-                        />
+                        <span className={isCurrentlyPlaying ? "text-brand tabular-nums text-xs" : "text-zinc-500 tabular-nums text-xs"}>{index + 1}</span>
                       </TableCell>
 
                       <TableCell className="py-3 sm:py-4 max-w-0">
@@ -677,7 +673,7 @@ const PlaylistPage = () => {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
-                    </TableRow>
+                    </SongTableRow>
                   );
                 })}
               </TableBody>
