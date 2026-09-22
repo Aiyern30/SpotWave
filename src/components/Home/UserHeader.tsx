@@ -556,7 +556,7 @@ export default function UserHeader({
       </span>
 
       {/* Enhanced Playlist Header */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand/30 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm border border-zinc-800/50">
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand/30 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm border border-brand/20">
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--brand-primary)/0.15),transparent_70%)]" />
 
@@ -603,13 +603,13 @@ export default function UserHeader({
                         <Button
                           variant="secondary"
                           size="lg"
-                          className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm"
+                          className="bg-brand/10 hover:bg-brand/20 text-white border-brand/30 backdrop-blur-sm"
                         >
                           <Camera className="h-5 w-5 mr-2" />
                           Change Photo
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="bg-zinc-900 border-zinc-800 max-w-md">
+                      <DialogContent className="bg-zinc-900 border-brand/20 max-w-md">
                         <DialogHeader>
                           <DialogTitle className="text-white">
                             Update Playlist Cover
@@ -622,7 +622,7 @@ export default function UserHeader({
                             className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                               dragActive
                                 ? "border-brand bg-brand/10"
-                                : "border-zinc-700 hover:border-zinc-600"
+                                : "border-brand/30 hover:border-brand/60"
                             }`}
                             onDragEnter={handleDrag}
                             onDragLeave={handleDrag}
@@ -661,7 +661,7 @@ export default function UserHeader({
                           <Button
                             onClick={() => fileInputRef.current?.click()}
                             variant="default"
-                            className="w-full border-zinc-700 text-white hover:bg-zinc-800"
+                            className="w-full border-brand/30 text-white hover:bg-brand/10"
                             disabled={uploading}
                           >
                             <Upload className="h-4 w-4 mr-2" />
@@ -739,7 +739,7 @@ export default function UserHeader({
                           setInputValue(playlist.name);
                           setNameEditing(false);
                         }}
-                        className="border-zinc-700 bg-zinc-800/50 text-white hover:bg-zinc-800 hover:text-white rounded-xl px-6"
+                        className="border-brand/30 bg-zinc-800/50 text-white hover:bg-brand/10 hover:text-white rounded-xl px-6"
                       >
                         <X className="h-5 w-5 mr-2" />
                         Cancel
@@ -799,8 +799,8 @@ export default function UserHeader({
                             if (!open) setGeneratedContent(null);
                           }}
                         >
-                          <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-2xl border-zinc-800 bg-zinc-950 p-0 text-white shadow-2xl sm:max-w-[450px]">
-                            <DialogHeader className="shrink-0 border-b border-zinc-800 px-5 py-4 pr-12 text-left sm:px-6 sm:pr-12">
+                          <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-2xl border-brand/20 bg-zinc-950 p-0 text-white shadow-2xl sm:max-w-[450px]">
+                            <DialogHeader className="shrink-0 border-b border-brand/20 px-5 py-4 pr-12 text-left sm:px-6 sm:pr-12">
                               <DialogTitle className="flex items-center gap-3 text-xl font-bold text-zinc-100">
                                 <Sparkles className="h-6 w-6 text-brand" />
                                 AI Magic Renamer
@@ -824,7 +824,7 @@ export default function UserHeader({
                                   onChange={(e) =>
                                     setUserAiPrompt(e.target.value)
                                   }
-                                  className="bg-zinc-900/80 border-zinc-700 text-white placeholder:text-zinc-400 focus:border-brand focus:ring-4 focus:ring-brand/10 rounded-xl"
+                                  className="bg-zinc-900/80 border-brand/30 text-white placeholder:text-zinc-400 focus:border-brand focus:ring-4 focus:ring-brand/10 rounded-xl"
                                 />
                               </div>
 
@@ -841,7 +841,7 @@ export default function UserHeader({
                                     className={`flex-1 p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
                                       descriptionLength === "short"
                                         ? "bg-brand/20 border-brand shadow-lg shadow-brand/20"
-                                        : "bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:bg-zinc-900"
+                                        : "bg-zinc-900/50 border-brand/20 text-zinc-500 hover:border-brand/40 hover:bg-brand/5"
                                     }`}
                                   >
                                     <div className="flex items-center gap-2 mb-1">
@@ -872,7 +872,7 @@ export default function UserHeader({
                                     className={`flex-1 p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
                                       descriptionLength === "long"
                                         ? "bg-brand/20 border-brand shadow-lg shadow-brand/20"
-                                        : "bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:bg-zinc-900"
+                                        : "bg-zinc-900/50 border-brand/20 text-zinc-500 hover:border-brand/40 hover:bg-brand/5"
                                     }`}
                                   >
                                     <div className="flex items-center gap-2 mb-1">
@@ -901,7 +901,7 @@ export default function UserHeader({
                               </div>
 
                               {generatedContent && (
-                                <div className="space-y-5 pt-6 border-t border-zinc-800 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="space-y-5 pt-6 border-t border-brand/20 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                   <div className="space-y-2">
                                     <label htmlFor="ai-renamer-name" className="text-sm font-semibold text-brand">
                                       Proposed Name
@@ -943,7 +943,7 @@ export default function UserHeader({
                               )}
                             </div>
 
-                            <DialogFooter className="shrink-0 flex-col gap-3 border-t border-zinc-800 bg-zinc-950 px-5 py-4 sm:flex-row sm:px-6">
+                            <DialogFooter className="shrink-0 flex-col gap-3 border-t border-brand/20 bg-zinc-950 px-5 py-4 sm:flex-row sm:px-6">
                               {!generatedContent ? (
                                 <Button
                                   onClick={generatePlaylistNameAndDescription}
@@ -968,7 +968,7 @@ export default function UserHeader({
                                     variant="outline"
                                     onClick={generatePlaylistNameAndDescription}
                                     disabled={generatingAI}
-                                    className="flex-1 h-12 border-zinc-700 bg-zinc-900/50 text-white hover:bg-zinc-800 rounded-xl font-bold"
+                                    className="flex-1 h-12 border-brand/30 bg-zinc-900/50 text-white hover:bg-brand/10 rounded-xl font-bold"
                                   >
                                     Reroll
                                   </Button>
@@ -1152,7 +1152,7 @@ export default function UserHeader({
                     <Sparkles className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-zinc-950/95 border-zinc-800/50 max-w-xl backdrop-blur-2xl shadow-2xl">
+                <DialogContent className="bg-zinc-950/95 border-brand/20 max-w-xl backdrop-blur-2xl shadow-2xl">
                   {/* ... rest of content ... */}
                   <DialogHeader>
                     <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-brand via-blue-400 to-purple-400 bg-clip-text text-transparent flex items-center justify-between">
@@ -1287,7 +1287,7 @@ export default function UserHeader({
 
       {/* Enhanced Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-brand/30 to-zinc-800/50 border-zinc-800/50 backdrop-blur-sm hover:bg-zinc-800/30 transition-all duration-300">
+        <Card className="bg-gradient-to-br from-brand/30 to-zinc-800/50 border-brand/20 backdrop-blur-sm hover:bg-zinc-800/30 transition-all duration-300">
           <CardContent className="p-6">
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-brand/20 rounded-xl ring-1 ring-brand/30">
@@ -1305,7 +1305,7 @@ export default function UserHeader({
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-brand/30 to-zinc-800/50 border-zinc-800/50 backdrop-blur-sm hover:bg-zinc-800/30 transition-all duration-300">
+        <Card className="bg-gradient-to-br from-brand/30 to-zinc-800/50 border-brand/20 backdrop-blur-sm hover:bg-zinc-800/30 transition-all duration-300">
           <CardContent className="p-6">
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-brand/20 rounded-xl ring-1 ring-brand/30">

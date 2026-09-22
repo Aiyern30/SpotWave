@@ -12,7 +12,7 @@ export default function ViewSelector<T extends CollectionView>({ value, onChange
   label?: string;
 }) {
   return (
-    <div role="group" aria-label={label} className="inline-flex w-fit shrink-0 gap-1 rounded-xl border border-zinc-800 bg-zinc-900/60 p-1">
+    <div role="group" aria-label={label} className="inline-flex w-fit shrink-0 gap-1 rounded-xl border border-brand/30 bg-zinc-900/60 p-1">
       {options.map((view) => {
         const Icon: LucideIcon = icons[view];
         return <button key={view} type="button" aria-label={`${view} view`} aria-pressed={value === view} onClick={() => onChange(view)}
