@@ -283,6 +283,28 @@
   display: none; /* Hide up/down buttons */
 }
 
+.search-results-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--brand-primary)) transparent;
+}
+
+.search-results-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.search-results-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.search-results-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--brand-primary));
+  border-radius: 999px;
+}
+
+.search-results-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--brand-primary) / 0.8);
+}
+
 /* Touch and hybrid devices get visible actions. Only mouse-only devices hide
    them; keyboard focus always reveals controls without an initial hover. */
 .touch-action-reveal { opacity: 1; }

@@ -102,8 +102,7 @@ export const Breadcrumbs = () => {
                 <Link
                   href="/Home"
                   onClick={(e) => handleNavigation(e, "/Home")}
-                >
-                </Link>
+                ></Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             {breadcrumbSegments.map((segment, index) => {
@@ -362,7 +361,7 @@ export const SearchSection = () => {
       {dropdownVisible && searchResults.length > 0 && (
         <div
           ref={dropdownRef}
-          className="absolute mt-2 w-full bg-zinc-900 border border-zinc-800 rounded-lg shadow-2xl max-h-[500px] overflow-auto z-50"
+          className="search-results-scrollbar absolute mt-2 w-full bg-zinc-900 border border-zinc-800 rounded-lg shadow-2xl max-h-[500px] overflow-auto z-50"
         >
           <div className="p-2 space-y-1">
             {searchResults.map((result, idx) => {
@@ -370,7 +369,7 @@ export const SearchSection = () => {
                 return (
                   <div key={result.artist.id} className="space-y-1">
                     <Card
-                      className="bg-zinc-800/50 hover:bg-zinc-700/50 border-zinc-700/50 cursor-pointer transition-all duration-200 group"
+                      className="bg-zinc-800/50 hover:bg-brand/20 hover:border-brand/40 border-zinc-700/50 cursor-pointer transition-all duration-200 group"
                       onMouseDown={(e) => {
                         e.stopPropagation();
                         handleResultClick(
@@ -396,7 +395,7 @@ export const SearchSection = () => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center space-x-2">
-                              <User className="h-4 w-4 bg-brand" />
+                              <User className="h-4 w-4 text-brand" />
                               <p className="font-semibold text-white truncate">
                                 {result.artist.name}
                               </p>
@@ -409,7 +408,7 @@ export const SearchSection = () => {
                     {result.topTracks.map((track) => (
                       <Card
                         key={track.id}
-                        className="bg-zinc-800/30 hover:bg-zinc-700/30 border-zinc-700/30 cursor-pointer transition-all duration-200 group"
+                        className="bg-zinc-800/30 hover:bg-brand/20 hover:border-brand/40 border-zinc-700/30 cursor-pointer transition-all duration-200 group"
                         onMouseDown={(e) => {
                           e.stopPropagation();
                           handleResultClick(track.id, "song", track.name);
@@ -448,7 +447,7 @@ export const SearchSection = () => {
                 return result.items.map((track) => (
                   <Card
                     key={track.id}
-                    className="bg-zinc-800/30 hover:bg-zinc-700/30 border-zinc-700/30 cursor-pointer transition-all duration-200 group"
+                    className="bg-zinc-800/30 hover:bg-brand/20 hover:border-brand/40 border-zinc-700/30 cursor-pointer transition-all duration-200 group"
                     onMouseDown={(e) => {
                       e.stopPropagation();
                       handleResultClick(track.id, "song", track.name);
