@@ -103,7 +103,6 @@ export const Breadcrumbs = () => {
                   href="/Home"
                   onClick={(e) => handleNavigation(e, "/Home")}
                 >
-                  Home
                 </Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
@@ -142,7 +141,6 @@ export const Breadcrumbs = () => {
             })}
           </BreadcrumbList>
         </Breadcrumb>
-
         <ThemeSwitcher />
       </div>
 
@@ -399,7 +397,7 @@ export const SearchSection = () => {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center space-x-2">
                               <User className="h-4 w-4 bg-brand" />
-                              <p className="font-semibold text-white truncate group-hover:bg-brand transition-colors">
+                              <p className="font-semibold text-white truncate">
                                 {result.artist.name}
                               </p>
                             </div>
@@ -432,7 +430,7 @@ export const SearchSection = () => {
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-white text-sm truncate group-hover:bg-brand transition-colors">
+                              <p className="font-medium text-white text-sm truncate">
                                 {track.name}
                               </p>
                               <p className="text-xs text-zinc-400 truncate">
@@ -471,7 +469,7 @@ export const SearchSection = () => {
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-white text-sm truncate group-hover:bg-brand transition-colors">
+                          <p className="font-medium text-white text-sm truncate">
                             {track.name}
                           </p>
                           <p className="text-xs text-zinc-400 truncate">
