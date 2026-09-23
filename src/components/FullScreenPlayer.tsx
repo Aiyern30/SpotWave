@@ -1,10 +1,12 @@
 "use client";
 
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import styles from "./FullScreenPlayer.module.css";
 import LyricsPanel from "@/components/LyricsPanel";
 
 import { SongTableRow } from "@/components/SongTableRow";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { usePlayer } from "@/contexts/PlayerContext";
@@ -18,7 +20,6 @@ import {
   Volume2,
   VolumeX,
   Heart,
-  Shuffle,
   Repeat,
   Repeat1,
   Loader2,
@@ -29,9 +30,6 @@ import {
   FileText,
   Activity,
   TrendingUp,
-  Mic,
-  MicOff,
-  Settings,
 } from "lucide-react";
 import {
   checkUserSavedTracks,
@@ -119,6 +117,15 @@ export const FullScreenPlayer = ({
     deviceId,
   } = usePlayer();
 
+  const [reduceMotion, setReduceMotion] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduceMotion(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
   const [isMuted, setIsMuted] = useState(false);
   const [previousVolume, setPreviousVolume] = useState(volume);
   const [localVolume, setLocalVolume] = useState(volume);
@@ -131,15 +138,6 @@ export const FullScreenPlayer = ({
   );
   const [topTracks, setTopTracks] = useState<TopTrack[]>([]);
   const [loadingTopTracks, setLoadingTopTracks] = useState(false);
-
-  const [wideLyrics, setWideLyrics] = useState(false);
-  useEffect(() => {
-    const media = window.matchMedia("(min-width: 1024px)");
-    const update = () => setWideLyrics(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
 
   const [topTracksDisplayUI, setTopTracksDisplayUI] = useState<
     "Table" | "Grid"
@@ -169,7 +167,7 @@ export const FullScreenPlayer = ({
   const [sensitivity, setSensitivity] = useState(1.5);
   const [maxRipples, setMaxRipples] = useState(8);
 
-  const [sidebarCompact, setSidebarCompact] = useState(true);
+
 
   // Smooth position interpolation for responsive slider
   const [estimatedPosition, setEstimatedPosition] = useState(position);
@@ -181,14 +179,14 @@ export const FullScreenPlayer = ({
 
   // Interpolate position every 100ms for smooth UI updates
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isOpen || !isPlaying) return;
 
     const interval = setInterval(() => {
       setEstimatedPosition((prev) => Math.min(prev + 100, duration));
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isPlaying, duration]);
+  }, [isOpen, isPlaying, duration]);
 
   // Visualizer settings Refs for stable animation loop
   const sensitivityRef = useRef(sensitivity);
@@ -212,7 +210,7 @@ export const FullScreenPlayer = ({
     if (inactiveCanvas) {
       const ctx = inactiveCanvas.getContext("2d");
       if (ctx) {
-        ctx.fillStyle = "#000000";
+        ctx.fillStyle = "#09090b";
         ctx.fillRect(0, 0, inactiveCanvas.width, inactiveCanvas.height);
       }
     }
@@ -290,19 +288,6 @@ export const FullScreenPlayer = ({
     setCaptureMode("none");
     setUseSpotifyAudio(true);
   };
-
-  useEffect(() => {
-    const stored = localStorage.getItem("sidebar-compact");
-    setSidebarCompact(stored !== "false");
-
-    const handleStorage = () => {
-      const updated = localStorage.getItem("sidebar-compact");
-      setSidebarCompact(updated !== "false");
-    };
-
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, []);
 
   useEffect(() => {
     setLocalVolume(volume);
@@ -505,7 +490,6 @@ export const FullScreenPlayer = ({
 
   const trackImage = currentTrack?.album.images[0]?.url || "/default-artist.png";
   const trackTitle = currentTrack?.name || "Now Playing";
-  const trackArtist = currentTrack?.artists.map((artist) => artist.name).join(", ") || "Spotify";
   const visualLabel = useSpotifyAudio
     ? "Spotify Audio"
     : captureMode === "mic"
@@ -513,12 +497,9 @@ export const FullScreenPlayer = ({
       : captureMode === "speaker"
         ? "System Audio"
         : "Capture Off";
-  const artGlow = 24 + sensitivity * 18;
-  const artFrame = 10 + Math.round(maxRipples / 2);
-
   // Stable Animation Loop
   useEffect(() => {
-    if (!isOpen || !isPlaying) {
+    if (!isOpen || !isPlaying || viewMode !== "visualizer" || reduceMotion) {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
         animationRef.current = null;
@@ -528,7 +509,7 @@ export const FullScreenPlayer = ({
         if (canvas) {
           const ctx = canvas.getContext("2d");
           if (ctx) {
-            ctx.fillStyle = "#000000";
+            ctx.fillStyle = "#09090b";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
           }
         }
@@ -571,7 +552,7 @@ export const FullScreenPlayer = ({
       if (!ctx) return;
 
       // Clear canvas (Solid black like the reference for "sharp" look)
-      ctx.fillStyle = "#000000";
+      ctx.fillStyle = "#09090b";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       let data = dataRef.current;
@@ -742,7 +723,7 @@ export const FullScreenPlayer = ({
         animationRef.current = null;
       }
     };
-  }, [isOpen, isPlaying, viewMode, useSpotifyAudio, captureMode]);
+  }, [isOpen, isPlaying, viewMode, useSpotifyAudio, captureMode, reduceMotion]);
 
   // Clean up audio capture only when the component unmounts or closes
   useEffect(() => {
@@ -757,431 +738,119 @@ export const FullScreenPlayer = ({
   if (!isOpen || !currentTrack) return null;
 
   return (
-    <div
-      className={`fixed inset-0 bg-gradient-to-b from-zinc-900 via-zinc-800 to-black z-50 overflow-y-auto overflow-x-hidden px-3 md:px-4 py-4 sm:py-6 space-y-4 sm:space-y-8 no-scrollbar transition-all duration-300`}
-    >
-      <style jsx global>{`
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
+    <DialogPrimitive.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Content className={styles.player} aria-describedby={undefined}>
+          <DialogPrimitive.Title className="sr-only">Now playing: {trackTitle}</DialogPrimitive.Title>
+          <header className={styles.header}>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-zinc-100">Now playing</p>
+              <p className="truncate text-xs text-zinc-400">{activeDevice?.name || "Spotify"}</p>
+            </div>
+            <div className={styles.tabs} role="group" aria-label="Player view">
+              {([
+                ["image", ImageIcon, "Artwork"],
+                ["lyrics", FileText, "Lyrics"],
+                ["visualizer", Activity, "Visualizer"],
+              ] as const).map(([mode, Icon, label]) => (
+                <button key={mode} type="button" aria-label={label} aria-pressed={viewMode === mode}
+                  className={styles.tab} onClick={() => setViewMode(mode)}>
+                  <Icon className="h-4 w-4" /><span className="hidden sm:inline">{label}</span>
+                </button>
+              ))}
+            </div>
+            <DialogPrimitive.Close asChild>
+              <button type="button" className={styles.iconButton} aria-label="Close full-screen player"><X className="h-5 w-5" /></button>
+            </DialogPrimitive.Close>
+          </header>
 
-      <div className="fixed top-2 sm:top-4 right-2 sm:right-4 flex items-center gap-1 sm:gap-2 z-10">
-        <div className="hidden lg:flex items-center gap-1 sm:gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setViewMode("visualizer")}
-            className={`h-8 w-8 sm:h-10 sm:w-10 transition-all ${
-              viewMode === "visualizer"
-                ? "text-brand bg-zinc-800"
-                : "text-white hover:text-brand hover:bg-zinc-800"
-            }`}
-            title="Visualizer"
-          >
-            <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setViewMode("image")}
-            className={`h-8 w-8 sm:h-10 sm:w-10 transition-all ${
-              viewMode === "image"
-                ? "text-brand bg-zinc-800"
-                : "text-white hover:text-brand hover:bg-zinc-800"
-            }`}
-            title="Album Art"
-          >
-            <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-          </Button>
-
-          {(
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setViewMode("lyrics")}
-              className={`h-8 w-8 sm:h-10 sm:w-10 transition-all ${
-                viewMode === "lyrics"
-                  ? "text-brand bg-zinc-800"
-                  : "text-white hover:text-brand hover:bg-zinc-800"
-              }`}
-              title="Lyrics"
-            >
-              <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
-          )}
-          <div className="w-px h-4 sm:h-6 bg-zinc-700 mx-1" />
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          className="text-white hover:text-brand hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10"
-        >
-          <X className="h-5 w-5 sm:h-6 sm:w-6" />
-        </Button>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-4 sm:px-8 py-4 sm:py-8">
-        <div className="relative w-full">
-          {/* Visualizer View */}
-          <div className={viewMode === "visualizer" ? "block" : "hidden"}>
-            <div className="relative w-full aspect-square max-w-2xl mx-auto flex items-center justify-center overflow-hidden rounded-[2rem] border border-white/10 bg-black/45 shadow-[0_24px_80px_rgba(0,0,0,0.5)] backdrop-blur-sm">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(34,197,94,0.22),transparent_36%),linear-gradient(180deg,rgba(255,255,255,0.04),transparent)]" />
-              <div
-                className="absolute inset-8 rounded-[1.75rem] border border-white/10 bg-black/30"
-                style={{
-                  boxShadow: `0 0 ${artGlow}px rgba(34, 197, 94, 0.18), inset 0 0 ${artGlow / 2}px rgba(255, 255, 255, 0.04)`,
-                }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center px-6">
-                <div className="relative h-[72%] w-[72%] max-w-[480px]">
-                  <div
-                    className="absolute inset-0 rounded-full bg-emerald-400/20 blur-3xl"
-                    style={{ opacity: 0.25 + sensitivity * 0.08 }}
-                  />
-                  <div
-                    className="absolute -inset-4 rounded-[2rem] border border-white/10"
-                    style={{
-                      boxShadow: `0 0 ${artGlow}px rgba(34, 197, 94, 0.16)`,
-                      borderRadius: `${28 + artFrame}px`,
-                    }}
-                  />
-                  <div className="relative h-full w-full overflow-hidden rounded-[2rem]">
-                    <Image
-                      src={trackImage}
-                      alt={trackTitle}
-                      fill
-                      className="object-cover shadow-[0_0_80px_rgba(0,0,0,0.8)]"
-                      priority
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
-                    <div className="absolute inset-x-0 bottom-0 p-5">
-                      <div className="flex items-end justify-between gap-4">
-                        <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-emerald-200/70">
-                            Album Stage
-                          </p>
-                          <h3 className="mt-2 text-2xl font-semibold leading-tight text-white sm:text-3xl">
-                            {trackTitle}
-                          </h3>
-                          <p className="mt-1 text-sm text-white/70">{trackArtist}</p>
-                        </div>
-                        <div className="hidden rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/70 sm:block">
-                          {visualLabel}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {!isPlaying && (
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 bg-black/60 backdrop-blur-sm">
-                  <Music className="h-20 w-20 text-brand mx-auto mb-4 opacity-50 animate-pulse" />
-                  <p className="text-zinc-200 font-semibold text-lg mb-2">
-                    Play music to see visualizations
-                  </p>
-                  <p className="text-zinc-400 text-sm">
-                    Album art stage powered by Spotify playback
-                  </p>
+          <main className={styles.stage}>
+            <div className={styles.media}>
+              {viewMode === "image" && (
+                <div className={styles.artwork}>
+                  <Image src={trackImage} alt={`${currentTrack.album.name} album artwork`} fill priority
+                    sizes="(min-width: 1024px) 44vw, 85vw" className="object-cover" />
                 </div>
               )}
-              {isPlaying &&
-                activeDevice &&
-                activeDevice.id !== deviceId &&
-                useSpotifyAudio && (
-                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 bg-black/70 backdrop-blur-md text-center">
-                    <Activity className="h-16 w-16 text-zinc-500 mx-auto mb-4" />
-                    <p className="text-zinc-200 font-semibold text-lg mb-2">
-                      Playing on {activeDevice.name}
-                    </p>
-                    <p className="text-zinc-400 text-sm max-w-xs mx-auto">
-                      Direct Spotify visualization is disabled during remote
-                      playback. Use your microphone to visualize room audio!
-                    </p>
-                  </div>
-                )}
-            </div>
-
-            {/* Visualizer Controls */}
-            {isPlaying && (
-              <div className="mt-6 space-y-6 bg-zinc-900/50 rounded-xl p-6 border border-zinc-800">
-                <div className="flex flex-wrap gap-3 pb-4 border-b border-zinc-800/50">
-                  <Button
-                    variant={captureMode === "speaker" ? "default" : "outline"}
-                    size="sm"
-                    className={
-                      captureMode === "speaker"
-                        ? "bg-brand text-white"
-                        : "text-zinc-400"
-                    }
-                    onClick={() =>
-                      captureMode === "speaker"
-                        ? stopListening()
-                        : startListening("speaker")
-                    }
-                  >
-                    <Volume2 className="h-4 w-4 mr-2" />
-                    {captureMode === "speaker"
-                      ? "Sharing Audio"
-                      : "Share Audio"}
-                  </Button>
-                  <Button
-                    variant={captureMode === "mic" ? "default" : "outline"}
-                    size="sm"
-                    className={
-                      captureMode === "mic"
-                        ? "bg-brand text-white"
-                        : "text-zinc-400"
-                    }
-                    onClick={() =>
-                      captureMode === "mic"
-                        ? stopListening()
-                        : startListening("mic")
-                    }
-                  >
-                    <Mic className="h-4 w-4 mr-2" />
-                    {captureMode === "mic" ? "Mic Active" : "Use Mic"}
-                  </Button>
-                  {captureMode !== "none" && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-400 hover:text-red-300 hover:bg-red-950/20"
-                      onClick={stopListening}
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Stop Capture
-                    </Button>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div>
-                    <label className="text-zinc-400 text-xs font-semibold uppercase tracking-wider flex items-center justify-between mb-3">
-                      <span>Glow</span>
-                      <span className="text-brand">
-                        {sensitivity.toFixed(1)}x
-                      </span>
-                    </label>
-                    <Slider
-                      value={[sensitivity]}
-                      min={0.5}
-                      max={3}
-                      step={0.1}
-                      onValueChange={(val) => setSensitivity(val[0])}
-                      className="cursor-pointer"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-zinc-400 text-xs font-semibold uppercase tracking-wider flex items-center justify-between mb-3">
-                      <span>Frame Depth</span>
-                      <span className="text-brand">{maxRipples}</span>
-                    </label>
-                    <Slider
-                      value={[maxRipples]}
-                      min={3}
-                      max={15}
-                      step={1}
-                      onValueChange={(val) => setMaxRipples(val[0])}
-                      className="cursor-pointer"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Album Art View (also shown on mobile below visualizer) */}
-          <div className={viewMode === "image" ? "block" : "block lg:hidden"}>
-            <div className="relative w-full aspect-square max-w-2xl mx-auto flex items-center justify-center">
-              {/* Background ripples */}
-              <canvas
-                ref={bgCanvasRef}
-                className="absolute inset-0 w-full h-full pointer-events-none z-0"
-                style={{ filter: "blur(3px)", opacity: 0.6 }}
-              />
-
-              <div className="relative w-4/5 h-4/5 z-10">
-                <Image
-                  src={
-                    currentTrack.album.images[0]?.url || "/default-artist.png"
-                  }
-                  fill
-                  className="object-cover rounded-2xl shadow-[0_0_80px_rgba(0,0,0,0.8)]"
-                  alt={currentTrack.name}
-                  priority
-                />
-              </div>
-            </div>
-          </div>
-          <div className={viewMode === "lyrics" ? "hidden lg:block" : "hidden"}>
-            <div className="h-[600px] overflow-hidden rounded-2xl border border-white/5 bg-zinc-950">
-              {wideLyrics && <LyricsPanel active={isOpen && viewMode === "lyrics"} />}
-            </div>
-          </div>
-        </div>
-
-        <div className="text-center space-y-2 py-4 sm:py-6">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white px-4 leading-tight">
-            {currentTrack.name}
-          </h1>
-          <div className="text-base sm:text-lg md:text-xl text-zinc-400 flex items-center justify-center flex-wrap gap-1 sm:gap-2 px-4">
-            {currentTrack.artists.map((artist, index) => (
-              <span key={artist.id} className="inline-flex items-center">
-                <span
-                  className="hover:underline hover:text-white cursor-pointer transition-colors"
-                  onClick={handleArtistClick(artist.id, artist.name)}
-                >
-                  {artist.name}
-                </span>
-                {index < currentTrack.artists.length - 1 && (
-                  <span className="mx-1">,</span>
-                )}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-4 px-4 sm:px-0 w-full">
-          <Slider
-            value={[estimatedPosition]}
-            max={duration}
-            step={1000}
-            onValueChange={(val) => {
-              setEstimatedPosition(val[0]); // Optimistic update
-              seekTo(val[0]);
-            }}
-            className="cursor-pointer"
-            disabled={!isReady || duration === 0}
-          />
-          <div className="flex justify-between text-xs text-zinc-400">
-            <span>{formatTime(estimatedPosition)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-center gap-2 sm:gap-4 flex-wrap px-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleToggleSave}
-            className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10 transition-all"
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-brand" />
-            ) : isSaved ? (
-              <Heart className="h-4 w-4 sm:h-5 sm:w-5 fill-brand text-brand" />
-            ) : (
-              <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
-            )}
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10 transition-all hidden sm:flex"
-          >
-            <Shuffle className="h-3 w-3 sm:h-4 sm:w-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={previousTrack}
-            className="text-white hover:text-brand hover:bg-zinc-800 h-10 w-10 sm:h-12 sm:w-12 transition-all"
-            disabled={!isReady}
-          >
-            <SkipBack className="h-5 w-5 sm:h-6 sm:w-6 fill-current" />
-          </Button>
-
-          <Button
-            onClick={isPlaying ? pauseTrack : resumeTrack}
-            size="icon"
-            className="bg-white hover:bg-brand hover:scale-105 text-black h-12 w-12 sm:h-14 sm:w-14 rounded-full transition-all"
-            disabled={!isReady || isLoadingTrack}
-          >
-            {isLoadingTrack ? (
-              <Loader2 className="h-6 w-6 sm:h-7 sm:w-7 animate-spin" />
-            ) : isPlaying ? (
-              <Pause className="h-6 w-6 sm:h-7 sm:w-7 fill-current" />
-            ) : (
-              <Play className="h-6 w-6 sm:h-7 sm:w-7 ml-0.5 fill-current" />
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={nextTrack}
-            className="text-white hover:bg-brand hover:bg-zinc-800 h-10 w-10 sm:h-12 sm:w-12 transition-all"
-            disabled={!isReady}
-          >
-            <SkipForward className="h-5 w-5 sm:h-6 sm:w-6 fill-current" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleRepeat}
-            className={`h-8 w-8 sm:h-10 sm:w-10 transition-all hidden sm:flex ${
-              repeatMode === "off"
-                ? "text-zinc-400 hover:bg-brand hover:bg-zinc-800"
-                : "bg-brand hover:bg-brand hover:bg-zinc-800"
-            }`}
-            title={
-              repeatMode === "off"
-                ? "Repeat Off"
-                : repeatMode === "context"
-                  ? "Repeat All"
-                  : "Repeat One"
-            }
-          >
-            {repeatMode === "track" ? (
-              <Repeat1 className="h-4 w-4 sm:h-5 sm:w-5" />
-            ) : (
-              <Repeat className="h-4 w-4 sm:h-5 sm:w-5" />
-            )}
-          </Button>
-
-          <div className="items-center gap-2 hidden sm:flex">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleMute}
-              className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-8 w-8 sm:h-10 sm:w-10 transition-all"
-            >
-              {isMuted || localVolume === 0 ? (
-                <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" />
-              ) : (
-                <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" />
+              {viewMode === "lyrics" && (
+                <div className={styles.lyrics}><LyricsPanel active={isOpen} /></div>
               )}
-            </Button>
-            <Slider
-              value={[localVolume]}
-              max={1}
-              step={0.01}
-              onValueChange={handleVolumeChange}
-              className="w-20 sm:w-24 cursor-pointer"
-              disabled={!isReady}
-            />
-          </div>
-        </div>
+              {viewMode === "visualizer" && (
+                <div className={styles.visualizer}>
+                  <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden="true" />
+                  <div className="absolute inset-x-4 bottom-5 text-center text-sm text-zinc-300">
+                    {reduceMotion ? "Visualization paused for reduced motion" : !isPlaying ? "Play music to start the visualizer" : activeDevice && activeDevice.id !== deviceId && useSpotifyAudio
+                      ? `Playing on ${activeDevice.name}. Choose an audio source below to visualize it.` : visualLabel}
+                  </div>
+                </div>
+              )}
+            </div>
 
-        <div className="px-4 pt-4 lg:hidden">
-          <div className="h-[min(650px,80dvh)] overflow-hidden rounded-2xl border border-white/5 bg-zinc-950">
-            {!wideLyrics && <LyricsPanel active={isOpen} />}
-          </div>
-        </div>
-      </div>
+            <div className={styles.controls}>
+              <div className="min-w-0">
+                <p className="mb-3 truncate text-sm text-zinc-400">{currentTrack.album.name}</p>
+                <h1 className={styles.title}>{trackTitle}</h1>
+                <div className="mt-3 flex flex-wrap gap-x-2 gap-y-1 text-base text-zinc-300">
+                  {currentTrack.artists.map((artist, index) => (
+                    <button key={artist.id} className="rounded-sm text-left hover:text-brand hover:underline focus-visible:outline focus-visible:outline-brand"
+                      onClick={(event) => { handleArtistClick(artist.id, artist.name)(event); onClose(); }}>
+                      {artist.name}{index < currentTrack.artists.length - 1 ? "," : ""}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-7">
+                <Slider aria-label="Playback position" value={[Math.min(estimatedPosition, duration)]} max={Math.max(duration, 1)} step={1000}
+                  onValueChange={(value) => { setEstimatedPosition(value[0]); seekTo(value[0]); }}
+                  className="h-6 cursor-pointer" disabled={!isReady || duration === 0} />
+                <div className="mt-1 flex justify-between text-xs tabular-nums text-zinc-400">
+                  <span>{formatTime(estimatedPosition)}</span><span>{formatTime(duration)}</span>
+                </div>
+              </div>
+
+              <div className={styles.transport}>
+                <button className={styles.iconButton} onClick={handleToggleSave} disabled={isSaving}
+                  aria-label={isSaved ? "Remove from Liked Songs" : "Save to Liked Songs"} aria-pressed={!!isSaved}>
+                  {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Heart className={`h-5 w-5 ${isSaved ? "fill-brand text-brand" : ""}`} />}
+                </button>
+                <button className={styles.iconButton} onClick={previousTrack} disabled={!isReady} aria-label="Previous track"><SkipBack className="h-6 w-6 fill-current" /></button>
+                <button className={styles.playButton} onClick={isPlaying ? pauseTrack : resumeTrack} disabled={!isReady || isLoadingTrack} aria-label={isPlaying ? "Pause" : "Play"}>
+                  {isLoadingTrack ? <Loader2 className="h-6 w-6 animate-spin" /> : isPlaying ? <Pause className="h-6 w-6 fill-current" /> : <Play className="ml-0.5 h-6 w-6 fill-current" />}
+                </button>
+                <button className={styles.iconButton} onClick={nextTrack} disabled={!isReady} aria-label="Next track"><SkipForward className="h-6 w-6 fill-current" /></button>
+                <button className={styles.iconButton} onClick={toggleRepeat} disabled={!isReady} aria-label={`Repeat: ${repeatMode}`} aria-pressed={repeatMode !== "off"}>
+                  {repeatMode === "track" ? <Repeat1 className="h-5 w-5" /> : <Repeat className="h-5 w-5" />}
+                </button>
+              </div>
+
+              <div className={styles.volume}>
+                <button className={styles.iconButton} onClick={handleMute} disabled={!isReady} aria-label={localVolume === 0 ? "Unmute" : "Mute"}>
+                  {localVolume === 0 ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                </button>
+                <Slider aria-label="Volume" value={[localVolume]} max={1} step={0.01} onValueChange={handleVolumeChange} disabled={!isReady} className="h-6" />
+                <span className="w-8 text-right text-xs tabular-nums text-zinc-400">{Math.round(localVolume * 100)}%</span>
+              </div>
+
+              {viewMode === "visualizer" && (
+                <details className={styles.settings}>
+                  <summary className="cursor-pointer text-sm font-medium text-zinc-300">Visualizer settings</summary>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button variant="ghost" className="border border-brand/25 text-zinc-100 hover:bg-brand/15 hover:text-zinc-100" onClick={() => captureMode === "speaker" ? stopListening() : startListening("speaker")}>Share audio</Button>
+                    <Button variant="ghost" className="border border-brand/25 text-zinc-100 hover:bg-brand/15 hover:text-zinc-100" onClick={() => captureMode === "mic" ? stopListening() : startListening("mic")}>Use microphone</Button>
+                    {captureMode !== "none" && <Button variant="ghost" className="text-red-300 hover:bg-red-500/10 hover:text-red-300" onClick={stopListening}>Stop capture</Button>}
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-5">
+                    <div><label className="text-xs text-zinc-400">Sensitivity</label><Slider aria-label="Visualizer sensitivity" value={[sensitivity]} min={0.5} max={3} step={0.1} onValueChange={(v) => setSensitivity(v[0])} className="mt-2 h-6" /></div>
+                    <div><label className="text-xs text-zinc-400">Ripple count</label><Slider aria-label="Ripple count" value={[maxRipples]} min={3} max={15} step={1} onValueChange={(v) => setMaxRipples(v[0])} className="mt-2 h-6" /></div>
+                  </div>
+                </details>
+              )}
+            </div>
+          </main>
 
       {/* Full Width Sections */}
-      <div className="w-full px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8 pb-16">
+      <div className={styles.discovery}>
         {/* Top Tracks Section with Table/Grid Toggle */}
         <div className="pt-4 sm:pt-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
@@ -1393,6 +1062,8 @@ export const FullScreenPlayer = ({
           </Card>
         </div>
       </div>
-    </div>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 };
