@@ -169,7 +169,7 @@ const ArtistProfilePage = () => {
   useEffect(() => {
     if (artistProfile?.id && followedArtists.length > 0) {
       setIsFollowing(
-        followedArtists.some((artist) => artist.id === artistProfile.id)
+        followedArtists.some((artist) => artist.id === artistProfile.id),
       );
     }
   }, [artistProfile, followedArtists]);
@@ -213,7 +213,7 @@ const ArtistProfilePage = () => {
 
     try {
       const response = await fetch(
-        `http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${artistName}&api_key=${apiKey}&format=json`
+        `http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${artistName}&api_key=${apiKey}&format=json`,
       );
 
       if (!response.ok) {
@@ -236,7 +236,7 @@ const ArtistProfilePage = () => {
             id: foundArtist?.id || null,
             image: foundArtist?.image || null,
           };
-        }
+        },
       );
 
       return {
@@ -305,7 +305,7 @@ const ArtistProfilePage = () => {
         `https://api.spotify.com/v1/artists/${id}/albums?include_groups=album,single&market=US&limit=10`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -330,17 +330,17 @@ const ArtistProfilePage = () => {
         try {
           const response = await fetch(
             `https://api.spotify.com/v1/search?q=${encodeURIComponent(
-              name
+              name,
             )}&type=artist&limit=1`,
             {
               headers: { Authorization: `Bearer ${token}` },
-            }
+            },
           );
 
           if (!response.ok) {
             console.error(
               `Failed to search artist '${name}':`,
-              response.statusText
+              response.statusText,
             );
             return { name, id: null, image: null };
           }
@@ -422,7 +422,7 @@ const ArtistProfilePage = () => {
         `https://api.spotify.com/v1/albums/${albumId}/tracks?limit=1`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -439,7 +439,7 @@ const ArtistProfilePage = () => {
           `https://api.spotify.com/v1/tracks/${firstTrack.id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
 
         if (trackResponse.ok) {
@@ -495,7 +495,7 @@ const ArtistProfilePage = () => {
         try {
           const response = await fetch(
             `https://api.spotify.com/v1/users/${userProfile.id}/playlists`,
-            { headers: { Authorization: `Bearer ${token}` } }
+            { headers: { Authorization: `Bearer ${token}` } },
           );
           if (response.ok) {
             const data = await response.json();
@@ -517,7 +517,7 @@ const ArtistProfilePage = () => {
           const trackIds = topTracks.map((t) => t.id).join(",");
           const response = await fetch(
             `https://api.spotify.com/v1/me/tracks/contains?ids=${trackIds}`,
-            { headers: { Authorization: `Bearer ${token}` } }
+            { headers: { Authorization: `Bearer ${token}` } },
           );
           if (response.ok) {
             const data = await response.json();
@@ -538,7 +538,7 @@ const ArtistProfilePage = () => {
   const handleAddToPlaylist = async (
     trackUri: string,
     playlistId: string,
-    playlistName: string
+    playlistName: string,
   ) => {
     try {
       const response = await fetch(
@@ -550,7 +550,7 @@ const ArtistProfilePage = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ uris: [trackUri] }),
-        }
+        },
       );
       if (response.ok) {
         const { toast } = await import("react-toastify");
@@ -573,7 +573,7 @@ const ArtistProfilePage = () => {
         {
           method: isLiked ? "DELETE" : "PUT",
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       if (response.ok) {
         const { toast } = await import("react-toastify");
@@ -746,8 +746,16 @@ const ArtistProfilePage = () => {
                         aria-label={`${isTrackPlaying(track.id) ? "Pause" : "Play"} ${track.name}`}
                       >
                         <TableCell className="text-center">
-                          <span className={isTrackPlaying(track.id) ? "text-brand tabular-nums text-xs" : "text-zinc-500 tabular-nums text-xs"}>{index + 1}</span>
-                      </TableCell>
+                          <span
+                            className={
+                              isTrackPlaying(track.id)
+                                ? "text-brand tabular-nums text-xs"
+                                : "text-zinc-500 tabular-nums text-xs"
+                            }
+                          >
+                            {index + 1}
+                          </span>
+                        </TableCell>
                         <TableCell className="max-w-0 py-4">
                           <div className="flex items-center space-x-3 min-w-0">
                             <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
@@ -779,7 +787,7 @@ const ArtistProfilePage = () => {
                                     e.stopPropagation();
                                     handleArtistClick(
                                       artistProfile.id,
-                                      artistProfile.name
+                                      artistProfile.name,
                                     );
                                   }}
                                 >
@@ -796,7 +804,7 @@ const ArtistProfilePage = () => {
                               e.stopPropagation();
                               handleAlbumClick(
                                 track.album.id,
-                                track.album.name
+                                track.album.name,
                               );
                             }}
                           >
@@ -837,7 +845,7 @@ const ArtistProfilePage = () => {
                                         handleAddToPlaylist(
                                           `spotify:track:${track.id}`,
                                           pl.id,
-                                          pl.name
+                                          pl.name,
                                         );
                                       }}
                                       className="text-white hover:bg-brand/20 "
@@ -874,7 +882,7 @@ const ArtistProfilePage = () => {
                                   e.stopPropagation();
                                   handleAlbumClick(
                                     track.album.id,
-                                    track.album.name
+                                    track.album.name,
                                   );
                                 }}
                                 className="text-white hover:bg-brand/20"
@@ -888,7 +896,7 @@ const ArtistProfilePage = () => {
                                   e.stopPropagation();
                                   window.open(
                                     `https://open.spotify.com/track/${track.id}`,
-                                    "_blank"
+                                    "_blank",
                                   );
                                 }}
                                 className="text-white hover:bg-brand/20"
@@ -952,7 +960,7 @@ const ArtistProfilePage = () => {
                                       handleAddToPlaylist(
                                         `spotify:track:${track.id}`,
                                         pl.id,
-                                        pl.name
+                                        pl.name,
                                       );
                                     }}
                                     className="text-white hover:bg-brand/20"
@@ -989,7 +997,7 @@ const ArtistProfilePage = () => {
                                 e.stopPropagation();
                                 handleAlbumClick(
                                   track.album.id,
-                                  track.album.name
+                                  track.album.name,
                                 );
                               }}
                               className="text-white hover:bg-brand/20"
@@ -1003,7 +1011,7 @@ const ArtistProfilePage = () => {
                                 e.stopPropagation();
                                 window.open(
                                   `https://open.spotify.com/track/${track.id}`,
-                                  "_blank"
+                                  "_blank",
                                 );
                               }}
                               className="text-white hover:bg-brand/20"
@@ -1082,7 +1090,7 @@ const ArtistProfilePage = () => {
                                     e.stopPropagation();
                                     handleArtistClick(
                                       artistProfile.id,
-                                      artistProfile.name
+                                      artistProfile.name,
                                     );
                                   }}
                                 >
@@ -1140,7 +1148,7 @@ const ArtistProfilePage = () => {
                                   e.stopPropagation();
                                   window.open(
                                     `https://open.spotify.com/album/${album.id}`,
-                                    "_blank"
+                                    "_blank",
                                   );
                                 }}
                                 className="text-white hover:bg-brand/20"
@@ -1165,7 +1173,7 @@ const ArtistProfilePage = () => {
                     image={album.images[0]?.url || "/default-artist.png"}
                     title={album.name}
                     description={`${new Date(
-                      album.release_date
+                      album.release_date,
                     ).getFullYear()} • ${album.total_tracks} tracks`}
                     badge={album.album_type}
                     onPlay={() => handlePlayAlbum(album.id)}
@@ -1204,7 +1212,7 @@ const ArtistProfilePage = () => {
                               e.stopPropagation();
                               window.open(
                                 `https://open.spotify.com/album/${album.id}`,
-                                "_blank"
+                                "_blank",
                               );
                             }}
                             className="text-white hover:bg-brand/20"

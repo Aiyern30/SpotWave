@@ -77,11 +77,11 @@ const Page = () => {
             };
           }
           return artist;
-        })
+        }),
       );
       return updatedArtists;
     },
-    []
+    [],
   );
 
   const fetchTopArtists = useCallback(
@@ -89,13 +89,13 @@ const Page = () => {
       setLoading(true);
       try {
         const response = await fetch(
-          `https://ws.audioscrobbler.com/2.0/?method=chart.gettopartists&limit=${limit}&api_key=${apiKey}&format=json`
+          `https://ws.audioscrobbler.com/2.0/?method=chart.gettopartists&limit=${limit}&api_key=${apiKey}&format=json`,
         );
         const data: ArtistsResponseLASTFM = await response.json();
 
         if (response.ok) {
           const artistsWithImages = await fetchSpotifyImages(
-            data.artists.artist
+            data.artists.artist,
           );
           setArtists(artistsWithImages.slice(0, limit));
         } else {
@@ -106,11 +106,11 @@ const Page = () => {
       }
       setLoading(false);
     },
-    [fetchSpotifyImages]
+    [fetchSpotifyImages],
   );
 
   const searchArtistOnSpotify = async (
-    artistName: string
+    artistName: string,
   ): Promise<{ id: string; imageUrl: string } | null> => {
     const token = localStorage.getItem("Token");
 
@@ -122,13 +122,13 @@ const Page = () => {
     try {
       const response = await fetch(
         `https://api.spotify.com/v1/search?q=${encodeURIComponent(
-          artistName
+          artistName,
         )}&type=artist`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       const data = await response.json();
@@ -142,7 +142,7 @@ const Page = () => {
     } catch (error) {
       console.error(
         `Error fetching artist data from Spotify for ${artistName}:`,
-        error
+        error,
       );
     }
     return null;
@@ -222,7 +222,7 @@ const Page = () => {
         console.error("Error playing artist:", error);
       }
     },
-    [playTrack]
+    [playTrack],
   );
 
   // Add loading skeleton component
@@ -276,10 +276,7 @@ const Page = () => {
       {Array(10)
         .fill(0)
         .map((_, index) => (
-          <div
-            key={index}
-            className="space-y-3 w-full min-w-0"
-          >
+          <div key={index} className="space-y-3 w-full min-w-0">
             <Skeleton className="w-full aspect-square rounded-lg bg-zinc-800" />
             <Skeleton className="h-4 w-3/4 bg-zinc-800" />
             <Skeleton className="h-3 w-2/3 bg-zinc-800" />
@@ -303,7 +300,7 @@ const Page = () => {
         await handlePlayArtist(artistId);
       }
     },
-    [currentArtistId, isPlaying, pauseTrack, resumeTrack, handlePlayArtist]
+    [currentArtistId, isPlaying, pauseTrack, resumeTrack, handlePlayArtist],
   );
 
   // Helper function to check if artist is currently playing
@@ -381,12 +378,15 @@ const Page = () => {
                           <TableRow
                             key={artist.id || index}
                             onClick={() => handleClick(artist.id, artist.name)}
-
-
                             className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
                           >
                             <TableCell className="text-center py-3 sm:py-4">
-                              <TablePlayButton index={index + 1} title={artist.name} playing={isArtistPlaying(artist.id)} onPlay={() => handlePlayPauseArtist(artist.id)} />
+                              <TablePlayButton
+                                index={index + 1}
+                                title={artist.name}
+                                playing={isArtistPlaying(artist.id)}
+                                onPlay={() => handlePlayPauseArtist(artist.id)}
+                              />
                             </TableCell>
                             <TableCell className="py-3 sm:py-4">
                               <div className="flex items-center space-x-2 sm:space-x-3">
@@ -401,7 +401,6 @@ const Page = () => {
                                       {artist.name[0]}
                                     </AvatarFallback>
                                   </Avatar>
-
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <div
@@ -458,7 +457,7 @@ const Page = () => {
                                       e.stopPropagation();
                                       window.open(
                                         `https://open.spotify.com/artist/${artist.id}`,
-                                        "_blank"
+                                        "_blank",
                                       );
                                     }}
                                     className="text-white hover:bg-brand/20 "
@@ -529,7 +528,7 @@ const Page = () => {
                                 e.stopPropagation();
                                 window.open(
                                   `https://open.spotify.com/artist/${artist.id}`,
-                                  "_blank"
+                                  "_blank",
                                 );
                               }}
                               className="text-white hover:bg-brand/20 "
