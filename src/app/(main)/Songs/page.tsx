@@ -633,7 +633,8 @@ const Page = () => {
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="h-8 w-8 bg-brand/10 hover:bg-brand hover:text-black rounded-full transition-all"
+                                      aria-label={`More options for ${track.name}`}
+                                      className="touch-action-reveal h-10 w-10 sm:h-8 sm:w-8 rounded-lg border border-transparent text-zinc-400 hover:border-brand/30 hover:bg-brand/15 hover:text-zinc-100 focus-visible:ring-brand data-[state=open]:opacity-100 data-[state=open]:border-brand/30 data-[state=open]:bg-brand/15 data-[state=open]:text-zinc-100"
                                       onClick={(e) => e.stopPropagation()}
                                     >
                                       <MoreHorizontal className="h-4 w-4" />
@@ -660,7 +661,7 @@ const Page = () => {
                                                 pl.name,
                                               );
                                             }}
-                                            className="text-white hover:text-brand/20 hover:text-brand"
+                                            className="text-white hover:text-brand"
                                           >
                                             {pl.name}
                                           </DropdownMenuItem>
@@ -676,7 +677,7 @@ const Page = () => {
                                           track.name,
                                         );
                                       }}
-                                      className="text-white hover:text-brand/20 hover:text-brand"
+                                      className="text-white hover:text-brand"
                                     >
                                       <Heart
                                         className={`mr-2 h-4 w-4 ${
@@ -705,7 +706,7 @@ const Page = () => {
                                           );
                                         }
                                       }}
-                                      className="text-white hover:text-brand/20 hover:text-brand"
+                                      className="text-white hover:text-brand"
                                     >
                                       <User className="mr-2 h-4 w-4" />
                                       Go to artist
@@ -719,7 +720,7 @@ const Page = () => {
                                           "_blank",
                                         );
                                       }}
-                                      className="text-white hover:text-brand/20 hover:text-brand"
+                                      className="text-white hover:text-brand"
                                     >
                                       <ExternalLink className="mr-2 h-4 w-4" />
                                       Open in Spotify
@@ -763,7 +764,8 @@ const Page = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 bg-brand/10 hover:bg-brand hover:text-black rounded-full backdrop-blur-sm shadow-sm transition-all"
+                                aria-label={`More options for ${track.name}`}
+                                className="h-10 w-10 sm:h-8 sm:w-8 rounded-lg border border-white/15 bg-zinc-950/90 text-zinc-100 hover:border-brand/50 hover:bg-zinc-900 hover:text-brand focus-visible:ring-brand data-[state=open]:border-brand/50 data-[state=open]:text-brand"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <MoreHorizontal className="h-4 w-4" />
@@ -790,7 +792,7 @@ const Page = () => {
                                           pl.name,
                                         );
                                       }}
-                                      className="text-white hover:text-brand/20 hover:text-brand"
+                                      className="text-white hover:text-brand"
                                     >
                                       {pl.name}
                                     </DropdownMenuItem>
@@ -803,7 +805,7 @@ const Page = () => {
                                   e.stopPropagation();
                                   handleSaveToLiked(track.id!, track.name);
                                 }}
-                                className="text-white hover:text-brand/20 hover:text-brand"
+                                className="text-white hover:text-brand"
                               >
                                 <Heart
                                   className={`mr-2 h-4 w-4 ${
@@ -832,7 +834,7 @@ const Page = () => {
                                     );
                                   }
                                 }}
-                                className="text-white hover:text-brand/20 hover:text-brand"
+                                className="text-white hover:text-brand"
                               >
                                 <User className="mr-2 h-4 w-4" />
                                 Go to artist
@@ -846,7 +848,7 @@ const Page = () => {
                                     "_blank",
                                   );
                                 }}
-                                className="text-white hover:text-brand/20 hover:text-brand"
+                                className="text-white hover:text-brand"
                               >
                                 <ExternalLink className="mr-2 h-4 w-4" />
                                 Open in Spotify

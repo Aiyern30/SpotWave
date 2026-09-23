@@ -774,15 +774,15 @@ const ArtistProfilePage = () => {
                               <div
                                 className={`font-medium truncate transition-colors ${
                                   isTrackPlaying(track.id)
-                                    ? "bg-brand"
-                                    : "text-white group-hover:bg-brand"
+                                    ? "text-brand"
+                                    : "text-white group-hover:text-brand"
                                 }`}
                               >
                                 {track.name}
                               </div>
                               <div className="text-zinc-400 text-sm truncate">
                                 <span
-                                  className="hover:underline hover:bg-brand transition-colors cursor-pointer"
+                                  className="hover:underline hover:text-brand transition-colors cursor-pointer"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleArtistClick(
@@ -1080,12 +1080,12 @@ const ArtistProfilePage = () => {
                               />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="text-white font-medium truncate group-hover:bg-brand transition-colors">
+                              <div className="text-white font-medium truncate group-hover:text-brand transition-colors">
                                 {album.name}
                               </div>
                               <div className="text-zinc-400 text-sm truncate">
                                 <span
-                                  className="hover:underline hover:bg-brand transition-colors cursor-pointer"
+                                  className="hover:underline hover:text-brand transition-colors cursor-pointer"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleArtistClick(
