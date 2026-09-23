@@ -460,10 +460,10 @@ const Page = () => {
         <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
             <Select onValueChange={handleSelectChange} defaultValue="10">
-              <SelectTrigger className="w-full sm:w-48 bg-zinc-800/50 border-zinc-700 text-zinc-300 hover:bg-zinc-800 transition-colors">
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Select number of tracks" />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-800 border-zinc-700">
+              <SelectContent>
                 <SelectItem value="10">Top 10</SelectItem>
                 <SelectItem value="20">Top 20</SelectItem>
                 <SelectItem value="30">Top 30</SelectItem>
