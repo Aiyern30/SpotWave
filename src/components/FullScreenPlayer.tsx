@@ -2,6 +2,7 @@
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import styles from "./FullScreenPlayer.module.css";
+import { useTrackLyrics } from "@/hooks/useTrackLyrics";
 import LyricsPanel from "@/components/LyricsPanel";
 
 import { SongTableRow } from "@/components/SongTableRow";
@@ -136,6 +137,12 @@ export const FullScreenPlayer = ({
   const [viewMode, setViewMode] = useState<"image" | "lyrics" | "visualizer">(
     "image",
   );
+  const { hasLyrics, data: lyricsData } = useTrackLyrics(currentTrack, isOpen);
+  const visibleView = viewMode === "lyrics" && !hasLyrics ? "image" : viewMode;
+  useEffect(() => {
+    if (lyricsData && !hasLyrics) setViewMode(mode => mode === "lyrics" ? "image" : mode);
+  }, [lyricsData, hasLyrics]);
+
   const [topTracks, setTopTracks] = useState<TopTrack[]>([]);
   const [loadingTopTracks, setLoadingTopTracks] = useState(false);
 
@@ -752,8 +759,8 @@ export const FullScreenPlayer = ({
                 ["image", ImageIcon, "Artwork"],
                 ["lyrics", FileText, "Lyrics"],
                 ["visualizer", Activity, "Visualizer"],
-              ] as const).map(([mode, Icon, label]) => (
-                <button key={mode} type="button" aria-label={label} aria-pressed={viewMode === mode}
+              ] as const).filter(([mode]) => mode !== "lyrics" || hasLyrics).map(([mode, Icon, label]) => (
+                <button key={mode} type="button" aria-label={label} aria-pressed={visibleView === mode}
                   className={styles.tab} onClick={() => setViewMode(mode)}>
                   <Icon className="h-4 w-4" /><span className="hidden sm:inline">{label}</span>
                 </button>
@@ -764,15 +771,16 @@ export const FullScreenPlayer = ({
             </DialogPrimitive.Close>
           </header>
 
+          <div className={styles.scrollContent}>
           <main className={styles.stage}>
             <div className={styles.media}>
-              {viewMode === "image" && (
+              {visibleView === "image" && (
                 <div className={styles.artwork}>
                   <Image src={trackImage} alt={`${currentTrack.album.name} album artwork`} fill priority
-                    sizes="(min-width: 1024px) 44vw, 85vw" className="object-cover" />
+                    sizes="(min-width: 768px) 70vh, 90vw" className="object-cover" />
                 </div>
               )}
-              {viewMode === "lyrics" && (
+              {visibleView === "lyrics" && (
                 <div className={styles.lyrics}><LyricsPanel active={isOpen} /></div>
               )}
               {viewMode === "visualizer" && (
@@ -786,52 +794,7 @@ export const FullScreenPlayer = ({
               )}
             </div>
 
-            <div className={styles.controls}>
-              <div className="min-w-0">
-                <p className="mb-3 truncate text-sm text-zinc-400">{currentTrack.album.name}</p>
-                <h1 className={styles.title}>{trackTitle}</h1>
-                <div className="mt-3 flex flex-wrap gap-x-2 gap-y-1 text-base text-zinc-300">
-                  {currentTrack.artists.map((artist, index) => (
-                    <button key={artist.id} className="rounded-sm text-left hover:text-brand hover:underline focus-visible:outline focus-visible:outline-brand"
-                      onClick={(event) => { handleArtistClick(artist.id, artist.name)(event); onClose(); }}>
-                      {artist.name}{index < currentTrack.artists.length - 1 ? "," : ""}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-7">
-                <Slider aria-label="Playback position" value={[Math.min(estimatedPosition, duration)]} max={Math.max(duration, 1)} step={1000}
-                  onValueChange={(value) => { setEstimatedPosition(value[0]); seekTo(value[0]); }}
-                  className="h-6 cursor-pointer" disabled={!isReady || duration === 0} />
-                <div className="mt-1 flex justify-between text-xs tabular-nums text-zinc-400">
-                  <span>{formatTime(estimatedPosition)}</span><span>{formatTime(duration)}</span>
-                </div>
-              </div>
-
-              <div className={styles.transport}>
-                <button className={styles.iconButton} onClick={handleToggleSave} disabled={isSaving}
-                  aria-label={isSaved ? "Remove from Liked Songs" : "Save to Liked Songs"} aria-pressed={!!isSaved}>
-                  {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Heart className={`h-5 w-5 ${isSaved ? "fill-brand text-brand" : ""}`} />}
-                </button>
-                <button className={styles.iconButton} onClick={previousTrack} disabled={!isReady} aria-label="Previous track"><SkipBack className="h-6 w-6 fill-current" /></button>
-                <button className={styles.playButton} onClick={isPlaying ? pauseTrack : resumeTrack} disabled={!isReady || isLoadingTrack} aria-label={isPlaying ? "Pause" : "Play"}>
-                  {isLoadingTrack ? <Loader2 className="h-6 w-6 animate-spin" /> : isPlaying ? <Pause className="h-6 w-6 fill-current" /> : <Play className="ml-0.5 h-6 w-6 fill-current" />}
-                </button>
-                <button className={styles.iconButton} onClick={nextTrack} disabled={!isReady} aria-label="Next track"><SkipForward className="h-6 w-6 fill-current" /></button>
-                <button className={styles.iconButton} onClick={toggleRepeat} disabled={!isReady} aria-label={`Repeat: ${repeatMode}`} aria-pressed={repeatMode !== "off"}>
-                  {repeatMode === "track" ? <Repeat1 className="h-5 w-5" /> : <Repeat className="h-5 w-5" />}
-                </button>
-              </div>
-
-              <div className={styles.volume}>
-                <button className={styles.iconButton} onClick={handleMute} disabled={!isReady} aria-label={localVolume === 0 ? "Unmute" : "Mute"}>
-                  {localVolume === 0 ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                </button>
-                <Slider aria-label="Volume" value={[localVolume]} max={1} step={0.01} onValueChange={handleVolumeChange} disabled={!isReady} className="h-6" />
-                <span className="w-8 text-right text-xs tabular-nums text-zinc-400">{Math.round(localVolume * 100)}%</span>
-              </div>
-
+          </main>
               {viewMode === "visualizer" && (
                 <details className={styles.settings}>
                   <summary className="cursor-pointer text-sm font-medium text-zinc-300">Visualizer settings</summary>
@@ -846,8 +809,7 @@ export const FullScreenPlayer = ({
                   </div>
                 </details>
               )}
-            </div>
-          </main>
+
 
       {/* Full Width Sections */}
       <div className={styles.discovery}>
@@ -1062,6 +1024,57 @@ export const FullScreenPlayer = ({
           </Card>
         </div>
       </div>
+          </div>
+          <footer className={styles.playbackDock} aria-label="Playback controls">
+            <div className={styles.trackSummary}>
+              <div className="min-w-0">
+                <p className="hidden">{currentTrack.album.name}</p>
+                <h1 className={styles.title}>{trackTitle}</h1>
+                <div className="mt-1 flex gap-1 overflow-hidden whitespace-nowrap text-xs text-zinc-400">
+                  {currentTrack.artists.map((artist, index) => (
+                    <button key={artist.id} className="rounded-sm text-left hover:text-brand hover:underline focus-visible:outline focus-visible:outline-brand"
+                      onClick={(event) => { handleArtistClick(artist.id, artist.name)(event); onClose(); }}>
+                      {artist.name}{index < currentTrack.artists.length - 1 ? "," : ""}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+              <div className={styles.progress}>
+                <Slider aria-label="Playback position" value={[Math.min(estimatedPosition, duration)]} max={Math.max(duration, 1)} step={1000}
+                  onValueChange={(value) => { setEstimatedPosition(value[0]); seekTo(value[0]); }}
+                  className="h-6 cursor-pointer" disabled={!isReady || duration === 0} />
+                <div className="mt-1 flex justify-between text-xs tabular-nums text-zinc-400">
+                  <span>{formatTime(estimatedPosition)}</span><span>{formatTime(duration)}</span>
+                </div>
+              </div>
+
+              <div className={styles.transport}>
+                <button className={styles.iconButton} onClick={handleToggleSave} disabled={isSaving}
+                  aria-label={isSaved ? "Remove from Liked Songs" : "Save to Liked Songs"} aria-pressed={!!isSaved}>
+                  {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Heart className={`h-5 w-5 ${isSaved ? "fill-brand text-brand" : ""}`} />}
+                </button>
+                <button className={styles.iconButton} onClick={previousTrack} disabled={!isReady} aria-label="Previous track"><SkipBack className="h-6 w-6 fill-current" /></button>
+                <button className={styles.playButton} onClick={isPlaying ? pauseTrack : resumeTrack} disabled={!isReady || isLoadingTrack} aria-label={isPlaying ? "Pause" : "Play"}>
+                  {isLoadingTrack ? <Loader2 className="h-6 w-6 animate-spin" /> : isPlaying ? <Pause className="h-6 w-6 fill-current" /> : <Play className="ml-0.5 h-6 w-6 fill-current" />}
+                </button>
+                <button className={styles.iconButton} onClick={nextTrack} disabled={!isReady} aria-label="Next track"><SkipForward className="h-6 w-6 fill-current" /></button>
+                <button className={styles.iconButton} onClick={toggleRepeat} disabled={!isReady} aria-label={`Repeat: ${repeatMode}`} aria-pressed={repeatMode !== "off"}>
+                  {repeatMode === "track" ? <Repeat1 className="h-5 w-5" /> : <Repeat className="h-5 w-5" />}
+                </button>
+              </div>
+
+              <div className={styles.volume}>
+                <button className={styles.iconButton} onClick={handleMute} disabled={!isReady} aria-label={localVolume === 0 ? "Unmute" : "Mute"}>
+                  {localVolume === 0 ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                </button>
+                <Slider aria-label="Volume" value={[localVolume]} max={1} step={0.01} onValueChange={handleVolumeChange} disabled={!isReady} className="h-6" />
+                <span className="w-8 text-right text-xs tabular-nums text-zinc-400">{Math.round(localVolume * 100)}%</span>
+              </div>
+
+          </footer>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>

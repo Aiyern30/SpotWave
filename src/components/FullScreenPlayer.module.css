@@ -24,3 +24,43 @@
 @media (prefers-reduced-motion: no-preference) { .iconButton, .tab, .playButton { transition: background-color 150ms, transform 150ms; } .playButton:active { transform: scale(.96); } }
 @media (max-width: 1023px) { .stage { grid-template-columns: minmax(0, 1fr); max-width: 620px; gap: 28px; min-height: auto; padding-top: 24px; padding-bottom: 32px; } .artwork { max-width: min(420px, 42dvh); } .lyrics { height: 50dvh; } .visualizer { max-width: 420px; margin: auto; } .title { font-size: 28px; } }
 @media (max-width: 380px) { .header { gap: 8px; padding: 12px; } .tab { padding: 8px; min-width: 36px; } .transport { gap: 6px; } .stage { padding-inline: 20px; } }
+
+/* The middle pane scrolls; the header and playback dock retain viewport space. */
+.player { display: flex; flex-direction: column; overflow: hidden; height: 100dvh; }
+.header { flex-shrink: 0; position: relative; }
+.scrollContent { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: hsl(var(--brand-primary) / .4) transparent; }
+.stage { min-height: 100%; padding-block: 28px; }
+.artwork { max-width: min(540px, 48dvh); }
+.lyrics { height: min(560px, 55dvh); }
+.playbackDock { flex-shrink: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 360px) minmax(0, 1fr); align-items: center; gap: 12px 28px; border-top: 1px solid hsl(var(--brand-primary) / .2); background: #121214; padding: 12px clamp(16px, 4vw, 64px) 16px; }
+.progress { grid-column: 1 / -1; width: 100%; max-width: 800px; margin: auto; }
+.playbackDock .transport { grid-column: 2; width: 100%; margin: 0 auto; }
+.playbackDock .volume { grid-column: 3; width: 100%; max-width: 220px; margin: 0 0 0 auto; }
+.playbackDock .playButton { height: 52px; width: 52px; }
+@media (max-width: 767px) { .playbackDock { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 8px 20px; } .playbackDock .transport, .playbackDock .volume { grid-column: 1; } .playbackDock .volume { max-width: 200px; margin: auto; } .playbackDock .volume .iconButton { height: 32px; } .stage { min-height: auto; gap: 20px; } .artwork { max-width: min(360px, 35dvh); } }
+@media (max-height: 500px) and (orientation: landscape) { .playbackDock { grid-template-columns: minmax(0, 1fr) minmax(240px, 320px); gap: 8px 24px; } .progress { grid-column: 1; } .playbackDock .transport { grid-column: 2; grid-row: 1; } .playbackDock .volume { display: none; } }
+
+/* Each view owns the full central stage; track metadata lives in the dock. */
+.scrollContent { container-type: size; }
+.stage { display: flex; align-items: center; justify-content: center; width: 100%; max-width: 1600px; height: 100%; min-height: 280px; padding: 20px clamp(16px, 3vw, 48px); }
+.media { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; min-height: 0; }
+.artwork { width: min(100%, 720px, calc(100cqh - 40px)); max-width: none; flex-shrink: 0; }
+.lyrics { width: 100%; max-width: 1100px; height: 100%; min-height: 0; border: 0; border-radius: 0; }
+.visualizer { width: 100%; height: 100%; max-width: none; aspect-ratio: auto; border: 0; }
+.settings { width: calc(100% - 40px); max-width: 760px; margin: 0 auto 32px; padding: 20px; border: 1px solid hsl(var(--brand-primary) / .2); border-radius: 12px; }
+.trackSummary { grid-column: 1; grid-row: 2; min-width: 0; }
+.trackSummary .title { font-size: 16px; line-height: 1.4; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 767px) {
+  .stage { max-width: none; gap: 0; padding: 12px; }
+  .artwork { width: min(100%, 640px, calc(100cqh - 24px)); }
+  .trackSummary { grid-row: 1; text-align: center; }
+  .trackSummary > div > div { justify-content: center; }
+  .playbackDock .progress { grid-row: 2; }
+  .playbackDock .transport { grid-row: 3; }
+  .playbackDock .volume { grid-row: 4; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .trackSummary { grid-column: 1; grid-row: 1; text-align: left; }
+  .playbackDock .progress { grid-column: 1; grid-row: 2; }
+  .playbackDock .transport { grid-column: 2; grid-row: 1 / 3; }
+}
