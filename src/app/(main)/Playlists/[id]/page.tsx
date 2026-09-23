@@ -554,22 +554,23 @@ const PlaylistPage = () => {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                              aria-label={`More options for ${track.name}`}
+                              className="touch-action-reveal h-10 w-10 sm:h-8 sm:w-8 rounded-lg border border-transparent text-zinc-400 hover:border-brand/30 hover:bg-brand/15 hover:text-zinc-100 focus-visible:ring-brand data-[state=open]:opacity-100 data-[state=open]:border-brand/30 data-[state=open]:bg-brand/15 data-[state=open]:text-zinc-100"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <MoreHorizontal className="h-4 w-4 text-zinc-400" />
+                              <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent
                             align="end"
-                            className="w-56 bg-zinc-900 border-zinc-800"
+                            className="w-64"
                           >
                             <DropdownMenuSub>
-                              <DropdownMenuSubTrigger className="">
+                              <DropdownMenuSubTrigger>
                                 <ListPlus className="mr-2 h-4 w-4" />
                                 Add to playlist
                               </DropdownMenuSubTrigger>
-                              <DropdownMenuSubContent className="bg-zinc-900 border-zinc-800 max-h-[300px] overflow-y-auto">
+                              <DropdownMenuSubContent className="w-64">
                                 {userPlaylists.map((pl) => (
                                   <DropdownMenuItem
                                     key={pl.id}
@@ -581,7 +582,6 @@ const PlaylistPage = () => {
                                         pl.name,
                                       );
                                     }}
-                                    className="text-white hover:bg-brand/20 hover:text-brand"
                                   >
                                     {pl.name}
                                   </DropdownMenuItem>
@@ -598,7 +598,7 @@ const PlaylistPage = () => {
                                     name: track.name,
                                   });
                                 }}
-                                className="text-red-400 hover:bg-red-500/20 hover:text-red-300"
+                                className="text-red-400 focus:bg-red-500/15 focus:text-red-300 data-[highlighted]:bg-red-500/15 data-[highlighted]:text-red-300"
                               >
                                 <Ban className="mr-2 h-4 w-4" />
                                 Remove from this playlist
@@ -610,7 +610,6 @@ const PlaylistPage = () => {
                                 e.stopPropagation();
                                 handleSaveToLiked(track.id, track.name);
                               }}
-                              className="text-white hover:bg-brand/20 hover:text-brand"
                             >
                               <Heart
                                 className={`mr-2 h-4 w-4 ${
@@ -624,7 +623,7 @@ const PlaylistPage = () => {
                                 : "Save to Liked Songs"}
                             </DropdownMenuItem>
 
-                            <DropdownMenuSeparator className="bg-zinc-800" />
+                            <DropdownMenuSeparator />
 
                             <DropdownMenuItem
                               onClick={(e) => {
@@ -634,7 +633,6 @@ const PlaylistPage = () => {
                                   track.artists[0].name,
                                 );
                               }}
-                              className="text-white hover:bg-brand/20 hover:text-brand"
                             >
                               <User className="mr-2 h-4 w-4" />
                               Go to artist
@@ -648,7 +646,6 @@ const PlaylistPage = () => {
                                   track.album.name,
                                 );
                               }}
-                              className="text-white hover:bg-brand/20 hover:text-brand"
                             >
                               <Disc className="mr-2 h-4 w-4" />
                               Go to album
@@ -690,7 +687,8 @@ const PlaylistPage = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 bg-black/60 hover:bg-black/80 text-white rounded-full backdrop-blur-sm shadow-sm"
+                        aria-label={`More options for ${track.name}`}
+                        className="h-10 w-10 sm:h-8 sm:w-8 rounded-lg border border-white/15 bg-zinc-950/90 text-zinc-100 hover:border-brand/50 hover:bg-zinc-900 hover:text-brand focus-visible:ring-brand data-[state=open]:border-brand/50 data-[state=open]:text-brand"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <MoreHorizontal className="h-4 w-4" />
@@ -698,14 +696,14 @@ const PlaylistPage = () => {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="end"
-                      className="w-56 bg-zinc-900 border-zinc-800"
+                      className="w-64"
                     >
                       <DropdownMenuSub>
-                        <DropdownMenuSubTrigger className="">
+                        <DropdownMenuSubTrigger>
                           <ListPlus className="mr-2 h-4 w-4" />
                           Add to playlist
                         </DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent className="bg-zinc-900 border-zinc-800 max-h-[300px] overflow-y-auto">
+                        <DropdownMenuSubContent className="w-64">
                           {userPlaylists.map((pl) => (
                             <DropdownMenuItem
                               key={pl.id}
@@ -713,7 +711,6 @@ const PlaylistPage = () => {
                                 e.stopPropagation();
                                 handleAddToPlaylist(track.uri, pl.id, pl.name);
                               }}
-                              className="text-white hover:bg-brand/20 hover:text-brand"
                             >
                               {pl.name}
                             </DropdownMenuItem>
@@ -730,7 +727,7 @@ const PlaylistPage = () => {
                               name: track.name,
                             });
                           }}
-                          className="text-red-400 hover:bg-red-500/20 hover:text-red-300"
+                          className="text-red-400 focus:bg-red-500/15 focus:text-red-300 data-[highlighted]:bg-red-500/15 data-[highlighted]:text-red-300"
                         >
                           <Ban className="mr-2 h-4 w-4" />
                           Remove from this playlist
@@ -742,12 +739,11 @@ const PlaylistPage = () => {
                           e.stopPropagation();
                           handleSaveToLiked(track.id, track.name);
                         }}
-                        className="text-white hover:bg-brand/20 hover:text-brand"
                       >
                         <Heart
                           className={`mr-2 h-4 w-4 ${
                             likedTracks.has(track.id)
-                              ? "fill-green-500 bg-brand"
+                              ? "fill-brand text-brand"
                               : ""
                           }`}
                         />
@@ -756,7 +752,7 @@ const PlaylistPage = () => {
                           : "Save to Liked Songs"}
                       </DropdownMenuItem>
 
-                      <DropdownMenuSeparator className="bg-zinc-800" />
+                      <DropdownMenuSeparator />
 
                       <DropdownMenuItem
                         onClick={(e) => {
@@ -766,7 +762,6 @@ const PlaylistPage = () => {
                             track.artists[0].name,
                           );
                         }}
-                        className="text-white hover:bg-brand/20 hover:text-brand"
                       >
                         <User className="mr-2 h-4 w-4" />
                         Go to artist
@@ -777,7 +772,6 @@ const PlaylistPage = () => {
                           e.stopPropagation();
                           handleAlbumClick(track.album.id, track.album.name);
                         }}
-                        className="text-white hover:bg-brand/20 hover:text-brand"
                       >
                         <Disc className="mr-2 h-4 w-4" />
                         Go to album
