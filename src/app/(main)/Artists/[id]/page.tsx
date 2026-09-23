@@ -731,12 +731,10 @@ const ArtistProfilePage = () => {
                       <TableHead className="hidden lg:table-cell text-zinc-400 w-[30%]">
                         Album
                       </TableHead>
-                      <TableHead className="hidden sm:table-cell w-12 text-center text-zinc-400">
-                        Action
-                      </TableHead>
                       <TableHead className="hidden md:table-cell w-20 text-right text-zinc-400">
                         <Clock className="w-4 h-4 ml-auto" />
                       </TableHead>
+                      <TableHead className="hidden sm:table-cell w-12 text-right text-zinc-400" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -805,13 +803,17 @@ const ArtistProfilePage = () => {
                             {track.album.name}
                           </div>
                         </TableCell>
-                        <TableCell className="hidden sm:table-cell text-center">
+                        <TableCell className="hidden md:table-cell text-right text-zinc-400 text-sm">
+                          {formatSongDuration(track.duration_ms)}
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-zinc-400 hover:text-white"
+                                aria-label={`More options for ${track.name}`}
+                                className="touch-action-reveal h-10 w-10 sm:h-8 sm:w-8 rounded-lg border border-transparent text-zinc-400 hover:border-brand/30 hover:bg-brand/15 hover:text-zinc-100 focus-visible:ring-brand data-[state=open]:opacity-100 data-[state=open]:border-brand/30 data-[state=open]:bg-brand/15 data-[state=open]:text-zinc-100"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <MoreHorizontal className="h-4 w-4" />
@@ -896,9 +898,6 @@ const ArtistProfilePage = () => {
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell text-right text-zinc-400 text-sm">
-                          {formatSongDuration(track.duration_ms)}
                         </TableCell>
                       </SongTableRow>
                     ))}
@@ -1046,12 +1045,10 @@ const ArtistProfilePage = () => {
                       <TableHead className="hidden md:table-cell text-zinc-400">
                         Release Date
                       </TableHead>
-                      <TableHead className="hidden lg:table-cell text-center text-zinc-400">
-                        Action
-                      </TableHead>
                       <TableHead className="hidden lg:table-cell text-right text-zinc-400">
                         Tracks
                       </TableHead>
+                      <TableHead className="hidden lg:table-cell text-right text-zinc-400" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1105,13 +1102,19 @@ const ArtistProfilePage = () => {
                             {new Date(album.release_date).getFullYear()}
                           </span>
                         </TableCell>
-                        <TableCell className="hidden lg:table-cell text-center">
+                        <TableCell className="hidden lg:table-cell text-right">
+                          <span className="text-zinc-400 text-sm">
+                            {album.total_tracks} tracks
+                          </span>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 bg-brand/10 hover:bg-brand hover:text-black rounded-full transition-all"
+                                aria-label={`More options for ${album.name}`}
+                                className="touch-action-reveal h-10 w-10 sm:h-8 sm:w-8 rounded-lg border border-transparent text-zinc-400 hover:border-brand/30 hover:bg-brand/15 hover:text-zinc-100 focus-visible:ring-brand data-[state=open]:opacity-100 data-[state=open]:border-brand/30 data-[state=open]:bg-brand/15 data-[state=open]:text-zinc-100"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <MoreHorizontal className="h-4 w-4" />
@@ -1147,11 +1150,6 @@ const ArtistProfilePage = () => {
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-right">
-                          <span className="text-zinc-400 text-sm">
-                            {album.total_tracks} tracks
-                          </span>
                         </TableCell>
                       </TableRow>
                     ))}
