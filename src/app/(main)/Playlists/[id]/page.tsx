@@ -436,227 +436,221 @@ const PlaylistPage = () => {
       {displayUI === "Table" ? (
         <div className="bg-zinc-900/30">
           <Table className="w-full">
-              <TableHeader>
-                <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
-                  <TableHead className="w-12 text-center text-zinc-400 font-medium text-xs sm:text-sm">
-                    #
-                  </TableHead>
-                  <TableHead className="text-zinc-400 font-medium text-xs sm:text-sm w-[40%] sm:w-[45%]">
-                    Title
-                  </TableHead>
-                  <TableHead className="hidden lg:table-cell text-zinc-400 font-medium text-xs sm:text-sm w-[25%] sm:w-[30%]">
-                    Album
-                  </TableHead>
-                  <TableHead className="hidden xl:table-cell text-zinc-400 font-medium text-xs sm:text-sm w-[15%]">
-                    Date added
-                  </TableHead>
-                  <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium text-xs sm:text-sm w-20">
-                    <Clock className="h-4 w-4 ml-auto" />
-                  </TableHead>
-                  <TableHead className="w-12 text-zinc-400 font-medium text-xs sm:text-sm"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {memoizedTracks.map((playlistTrack, index) => {
-                  const { track } = playlistTrack;
-                  const isCurrentlyPlaying = isCurrentTrackPlaying(track.id);
+            <TableHeader>
+              <TableRow className="border-zinc-800/50 hover:bg-zinc-800/30">
+                <TableHead className="w-12 text-center text-zinc-400 font-medium text-xs sm:text-sm">
+                  #
+                </TableHead>
+                <TableHead className="text-zinc-400 font-medium text-xs sm:text-sm w-[40%] sm:w-[45%]">
+                  Title
+                </TableHead>
+                <TableHead className="hidden lg:table-cell text-zinc-400 font-medium text-xs sm:text-sm w-[25%] sm:w-[30%]">
+                  Album
+                </TableHead>
+                <TableHead className="hidden xl:table-cell text-zinc-400 font-medium text-xs sm:text-sm w-[15%]">
+                  Date added
+                </TableHead>
+                <TableHead className="hidden md:table-cell text-right text-zinc-400 font-medium text-xs sm:text-sm w-20">
+                  <Clock className="h-4 w-4 ml-auto" />
+                </TableHead>
+                <TableHead className="w-12 text-zinc-400 font-medium text-xs sm:text-sm"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {memoizedTracks.map((playlistTrack, index) => {
+                const { track } = playlistTrack;
+                const isCurrentlyPlaying = isCurrentTrackPlaying(track.id);
 
-                  return (
-                    <SongTableRow
-                      key={track.id}
-                      className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
-                      onActivate={() => handlePlayPause(track)}
-                      aria-label={`${isCurrentlyPlaying ? "Pause" : "Play"} ${track.name}`}
-                    >
-                      <TableCell className="text-center py-3 sm:py-4">
-                        <span
-                          className={
-                            isCurrentlyPlaying
-                              ? "text-brand tabular-nums text-xs"
-                              : "text-zinc-500 tabular-nums text-xs"
-                          }
-                        >
-                          {index + 1}
-                        </span>
-                      </TableCell>
+                return (
+                  <SongTableRow
+                    key={track.id}
+                    className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
+                    onActivate={() => handlePlayPause(track)}
+                    aria-label={`${isCurrentlyPlaying ? "Pause" : "Play"} ${track.name}`}
+                  >
+                    <TableCell className="text-center py-3 sm:py-4">
+                      <span
+                        className={
+                          isCurrentlyPlaying
+                            ? "text-brand tabular-nums text-xs"
+                            : "text-zinc-500 tabular-nums text-xs"
+                        }
+                      >
+                        {index + 1}
+                      </span>
+                    </TableCell>
 
-                      <TableCell className="py-3 sm:py-4 max-w-0">
-                        <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0">
-                            <Image
-                              src={
-                                track.album.images[0]?.url || "/placeholder.svg"
-                              }
-                              width={48}
-                              height={48}
-                              className="object-cover"
-                              alt={track.name}
-                            />
+                    <TableCell className="py-3 sm:py-4 max-w-0">
+                      <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden flex-shrink-0">
+                          <Image
+                            src={
+                              track.album.images[0]?.url || "/placeholder.svg"
+                            }
+                            width={48}
+                            height={48}
+                            className="object-cover"
+                            alt={track.name}
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div
+                            className={`font-medium truncate hover:text-brand transition-colors text-sm sm:text-base ${
+                              isCurrentlyPlaying ? "text-brand" : "text-white"
+                            }`}
+                          >
+                            {track.name}
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <div
-                              className={`font-medium truncate hover:text-brand transition-colors text-sm sm:text-base ${
-                                isCurrentlyPlaying ? "text-brand" : "text-white"
-                              }`}
-                            >
-                              {track.name}
-                            </div>
-                            <div className="text-zinc-400 text-xs sm:text-sm truncate">
-                              {track.artists.map((artist, artistIndex) => (
-                                <span key={artist.id}>
-                                  <button
-                                    className="hover:underline hover:text-white transition-colors"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleArtistClick(artist.id, artist.name);
-                                    }}
-                                  >
-                                    {artist.name}
-                                  </button>
-                                  {artistIndex < track.artists.length - 1 &&
-                                    ", "}
-                                </span>
-                              ))}
-                            </div>
+                          <div className="text-zinc-400 text-xs sm:text-sm truncate">
+                            {track.artists.map((artist, artistIndex) => (
+                              <span key={artist.id}>
+                                <button
+                                  className="hover:underline hover:text-white transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleArtistClick(artist.id, artist.name);
+                                  }}
+                                >
+                                  {artist.name}
+                                </button>
+                                {artistIndex < track.artists.length - 1 && ", "}
+                              </span>
+                            ))}
                           </div>
                         </div>
-                      </TableCell>
+                      </div>
+                    </TableCell>
 
-                      <TableCell className="hidden lg:table-cell py-3 sm:py-4">
-                        <button
-                          className="text-zinc-400 hover:text-white hover:underline transition-colors truncate text-sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAlbumClick(track.album.id, track.album.name);
-                          }}
-                        >
-                          {track.album.name}
-                        </button>
-                      </TableCell>
+                    <TableCell className="hidden lg:table-cell py-3 sm:py-4">
+                      <button
+                        className="text-zinc-400 hover:text-white hover:underline transition-colors truncate text-sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAlbumClick(track.album.id, track.album.name);
+                        }}
+                      >
+                        {track.album.name}
+                      </button>
+                    </TableCell>
 
-                      <TableCell className="hidden xl:table-cell py-3 sm:py-4">
-                        <span className="text-zinc-400 text-sm">
-                          {new Date(
-                            playlistTrack.added_at,
-                          ).toLocaleDateString()}
-                        </span>
-                      </TableCell>
+                    <TableCell className="hidden xl:table-cell py-3 sm:py-4">
+                      <span className="text-zinc-400 text-sm">
+                        {new Date(playlistTrack.added_at).toLocaleDateString()}
+                      </span>
+                    </TableCell>
 
-                      <TableCell className="hidden md:table-cell text-right py-3 sm:py-4">
-                        <span className="text-zinc-400 text-sm">
-                          {formatSongDuration(track.duration_ms)}
-                        </span>
-                      </TableCell>
+                    <TableCell className="hidden md:table-cell text-right py-3 sm:py-4">
+                      <span className="text-zinc-400 text-sm">
+                        {formatSongDuration(track.duration_ms)}
+                      </span>
+                    </TableCell>
 
-                      <TableCell className="py-3 sm:py-4 text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              aria-label={`More options for ${track.name}`}
-                              className="touch-action-reveal h-10 w-10 sm:h-8 sm:w-8 rounded-lg border border-transparent text-zinc-400 hover:border-brand/30 hover:bg-brand/15 hover:text-zinc-100 focus-visible:ring-brand data-[state=open]:opacity-100 data-[state=open]:border-brand/30 data-[state=open]:bg-brand/15 data-[state=open]:text-zinc-100"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="end"
-                            className="w-64"
+                    <TableCell className="py-3 sm:py-4 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`More options for ${track.name}`}
+                            className="touch-action-reveal h-10 w-10 sm:h-8 sm:w-8 rounded-lg border border-transparent text-zinc-400 hover:border-brand/30 hover:bg-brand/15 hover:text-zinc-100 focus-visible:ring-brand data-[state=open]:opacity-100 data-[state=open]:border-brand/30 data-[state=open]:bg-brand/15 data-[state=open]:text-zinc-100"
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            <DropdownMenuSub>
-                              <DropdownMenuSubTrigger>
-                                <ListPlus className="mr-2 h-4 w-4" />
-                                Add to playlist
-                              </DropdownMenuSubTrigger>
-                              <DropdownMenuSubContent className="w-64">
-                                {userPlaylists.map((pl) => (
-                                  <DropdownMenuItem
-                                    key={pl.id}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleAddToPlaylist(
-                                        track.uri,
-                                        pl.id,
-                                        pl.name,
-                                      );
-                                    }}
-                                  >
-                                    {pl.name}
-                                  </DropdownMenuItem>
-                                ))}
-                              </DropdownMenuSubContent>
-                            </DropdownMenuSub>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-64">
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>
+                              <ListPlus className="mr-2 h-4 w-4" />
+                              Add to playlist
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent className="w-64 max-h-[40vh] mr-4 overflow-y-auto">
+                              {userPlaylists.map((pl) => (
+                                <DropdownMenuItem
+                                  key={pl.id}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAddToPlaylist(
+                                      track.uri,
+                                      pl.id,
+                                      pl.name,
+                                    );
+                                  }}
+                                >
+                                  {pl.name}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
 
-                            {isOwner && (
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setTrackToRemove({
-                                    uri: track.uri,
-                                    name: track.name,
-                                  });
-                                }}
-                                className="text-red-400 focus:bg-red-500/15 focus:text-red-300 data-[highlighted]:bg-red-500/15 data-[highlighted]:text-red-300"
-                              >
-                                <Ban className="mr-2 h-4 w-4" />
-                                Remove from this playlist
-                              </DropdownMenuItem>
-                            )}
-
+                          {isOwner && (
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleSaveToLiked(track.id, track.name);
+                                setTrackToRemove({
+                                  uri: track.uri,
+                                  name: track.name,
+                                });
                               }}
+                              className="text-red-400 focus:bg-red-500/15 focus:text-red-300 data-[highlighted]:bg-red-500/15 data-[highlighted]:text-red-300"
                             >
-                              <Heart
-                                className={`mr-2 h-4 w-4 ${
-                                  likedTracks.has(track.id)
-                                    ? "fill-brand text-brand"
-                                    : ""
-                                }`}
-                              />
-                              {likedTracks.has(track.id)
-                                ? "Remove from Liked Songs"
-                                : "Save to Liked Songs"}
+                              <Ban className="mr-2 h-4 w-4" />
+                              Remove from this playlist
                             </DropdownMenuItem>
+                          )}
 
-                            <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSaveToLiked(track.id, track.name);
+                            }}
+                          >
+                            <Heart
+                              className={`mr-2 h-4 w-4 ${
+                                likedTracks.has(track.id)
+                                  ? "fill-brand text-brand"
+                                  : ""
+                              }`}
+                            />
+                            {likedTracks.has(track.id)
+                              ? "Remove from Liked Songs"
+                              : "Save to Liked Songs"}
+                          </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleArtistClick(
-                                  track.artists[0].id,
-                                  track.artists[0].name,
-                                );
-                              }}
-                            >
-                              <User className="mr-2 h-4 w-4" />
-                              Go to artist
-                            </DropdownMenuItem>
+                          <DropdownMenuSeparator />
 
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAlbumClick(
-                                  track.album.id,
-                                  track.album.name,
-                                );
-                              }}
-                            >
-                              <Disc className="mr-2 h-4 w-4" />
-                              Go to album
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </SongTableRow>
-                  );
-                })}
-              </TableBody>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleArtistClick(
+                                track.artists[0].id,
+                                track.artists[0].name,
+                              );
+                            }}
+                          >
+                            <User className="mr-2 h-4 w-4" />
+                            Go to artist
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAlbumClick(
+                                track.album.id,
+                                track.album.name,
+                              );
+                            }}
+                          >
+                            <Disc className="mr-2 h-4 w-4" />
+                            Go to album
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </SongTableRow>
+                );
+              })}
+            </TableBody>
           </Table>
         </div>
       ) : (
@@ -694,16 +688,13 @@ const PlaylistPage = () => {
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="w-64"
-                    >
+                    <DropdownMenuContent align="end" className="w-64">
                       <DropdownMenuSub>
                         <DropdownMenuSubTrigger>
                           <ListPlus className="mr-2 h-4 w-4" />
                           Add to playlist
                         </DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent className="w-64">
+                        <DropdownMenuSubContent className="w-64 max-h-[50vh] overflow-y-auto">
                           {userPlaylists.map((pl) => (
                             <DropdownMenuItem
                               key={pl.id}
