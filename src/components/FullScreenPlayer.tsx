@@ -3,6 +3,7 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import styles from "./FullScreenPlayer.module.css";
 import { useTrackLyrics } from "@/hooks/useTrackLyrics";
+import AudioVisualizer from "@/components/AudioVisualizer";
 import LyricsPanel from "@/components/LyricsPanel";
 
 import { SongTableRow } from "@/components/SongTableRow";
@@ -54,16 +55,6 @@ interface FullScreenPlayerProps {
   onClose: () => void;
 }
 
-interface Ripple {
-  x: number;
-  y: number;
-  radius: number;
-  maxRadius: number;
-  alpha: number;
-  color: string;
-  speed: number;
-}
-
 interface TopTrack {
   id: string;
   name: string;
@@ -113,7 +104,6 @@ export const FullScreenPlayer = ({
     repeatMode,
     toggleRepeat,
     analyser: globalAnalyser,
-    dataArray: globalDataArray,
     activeDevice,
     deviceId,
   } = usePlayer();
@@ -153,13 +143,6 @@ export const FullScreenPlayer = ({
   const [currentPlayingTrackId, setCurrentPlayingTrackId] = useState<
     string | null
   >(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const bgCanvasRef = useRef<HTMLCanvasElement>(null);
-  const ripplesRef = useRef<Ripple[]>([]);
-  const animationRef = useRef<number | null>(null);
-  const lastBassRef = useRef<number>(0);
-  const dataRef = useRef<Uint8Array | null>(null);
-
   // Audio capture refs (for Share Audio/Mic)
   const localAudioContextRef = useRef<AudioContext | null>(null);
   const localAnalyserRef = useRef<AnalyserNode | null>(null);
@@ -169,7 +152,7 @@ export const FullScreenPlayer = ({
   const [captureMode, setCaptureMode] = useState<"none" | "mic" | "speaker">(
     "none",
   );
-  const [useSpotifyAudio, setUseSpotifyAudio] = useState(true);
+  const captureRequest = useRef(0);
 
   const [sensitivity, setSensitivity] = useState(1.5);
   const [maxRipples, setMaxRipples] = useState(8);
@@ -195,39 +178,9 @@ export const FullScreenPlayer = ({
     return () => clearInterval(interval);
   }, [isOpen, isPlaying, duration]);
 
-  // Visualizer settings Refs for stable animation loop
-  const sensitivityRef = useRef(sensitivity);
-  const maxRipplesRef = useRef(maxRipples);
-  const viewModeRef = useRef(viewMode);
-  const themeColorRef = useRef(currentTheme.color);
-
-  useEffect(() => {
-    sensitivityRef.current = sensitivity;
-  }, [sensitivity]);
-
-  useEffect(() => {
-    maxRipplesRef.current = maxRipples;
-  }, [maxRipples]);
-
-  useEffect(() => {
-    viewModeRef.current = viewMode;
-    // Clear the canvas that is no longer active
-    const inactiveCanvas =
-      viewMode === "visualizer" ? bgCanvasRef.current : canvasRef.current;
-    if (inactiveCanvas) {
-      const ctx = inactiveCanvas.getContext("2d");
-      if (ctx) {
-        ctx.fillStyle = "#09090b";
-        ctx.fillRect(0, 0, inactiveCanvas.width, inactiveCanvas.height);
-      }
-    }
-  }, [viewMode]);
-
-  useEffect(() => {
-    themeColorRef.current = currentTheme.color;
-  }, [currentTheme.color]);
-
   const startListening = async (mode: "mic" | "speaker") => {
+    stopListening();
+    const request = ++captureRequest.current;
     try {
       let stream: MediaStream;
       if (mode === "speaker") {
@@ -250,12 +203,20 @@ export const FullScreenPlayer = ({
         });
       }
 
+      if (request !== captureRequest.current) {
+        stream.getTracks().forEach(track => track.stop());
+        return;
+      }
       localStreamRef.current = stream;
+      stream.getAudioTracks().forEach(track => track.addEventListener("ended", () => {
+        if (localStreamRef.current === stream) stopListening();
+      }, { once: true }));
       const audioContext = new (
         window.AudioContext || (window as any).webkitAudioContext
       )();
-      if (audioContext.state === "suspended") await audioContext.resume();
       localAudioContextRef.current = audioContext;
+      if (audioContext.state === "suspended") await audioContext.resume();
+      if (request !== captureRequest.current) return;
 
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
@@ -267,8 +228,10 @@ export const FullScreenPlayer = ({
       source.connect(analyser);
 
       setCaptureMode(mode);
-      setUseSpotifyAudio(false);
+
     } catch (err) {
+      if (request !== captureRequest.current) return;
+      stopListening();
       console.error("Error setting up audio:", err);
       alert(
         err instanceof Error
@@ -279,6 +242,7 @@ export const FullScreenPlayer = ({
   };
 
   const stopListening = () => {
+    captureRequest.current += 1;
     if (localSourceRef.current) {
       localSourceRef.current.disconnect();
       localSourceRef.current = null;
@@ -293,17 +257,13 @@ export const FullScreenPlayer = ({
     }
     localAnalyserRef.current = null;
     setCaptureMode("none");
-    setUseSpotifyAudio(true);
+
   };
 
   useEffect(() => {
     setLocalVolume(volume);
   }, [volume]);
 
-  // Sync audio data to ref for stable animation loop
-  useEffect(() => {
-    dataRef.current = globalDataArray;
-  }, [globalDataArray]);
 
   useEffect(() => {
     if (isOpen) {
@@ -497,241 +457,6 @@ export const FullScreenPlayer = ({
 
   const trackImage = currentTrack?.album.images[0]?.url || "/default-artist.png";
   const trackTitle = currentTrack?.name || "Now Playing";
-  const visualLabel = useSpotifyAudio
-    ? "Spotify Audio"
-    : captureMode === "mic"
-      ? "Microphone"
-      : captureMode === "speaker"
-        ? "System Audio"
-        : "Capture Off";
-  // Stable Animation Loop
-  useEffect(() => {
-    if (!isOpen || !isPlaying || viewMode !== "visualizer" || reduceMotion) {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-        animationRef.current = null;
-      }
-      // Clear canvases when stopped
-      [canvasRef.current, bgCanvasRef.current].forEach((canvas) => {
-        if (canvas) {
-          const ctx = canvas.getContext("2d");
-          if (ctx) {
-            ctx.fillStyle = "#09090b";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-          }
-        }
-      });
-      ripplesRef.current = [];
-      return;
-    }
-
-    const handleResize = () => {
-      [canvasRef.current, bgCanvasRef.current].forEach((canvas) => {
-        if (canvas && canvas.parentElement) {
-          const { clientWidth, clientHeight } = canvas.parentElement;
-          if (clientWidth > 0 && clientHeight > 0) {
-            canvas.width = clientWidth;
-            canvas.height = clientHeight;
-          }
-        }
-      });
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-
-    const animate = () => {
-      // Prioritize active canvas
-      const isVisualizer = viewModeRef.current === "visualizer";
-      const canvas = isVisualizer ? canvasRef.current : bgCanvasRef.current;
-
-      if (!canvas) {
-        animationRef.current = requestAnimationFrame(animate);
-        return;
-      }
-
-      // If dimensions are 0, try to resize again
-      if (canvas.width === 0 || canvas.height === 0) {
-        handleResize();
-      }
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      // Clear canvas (Solid black like the reference for "sharp" look)
-      ctx.fillStyle = "#09090b";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      let data = dataRef.current;
-
-      // Determine which analyser to use
-      const activeAnalyser =
-        !useSpotifyAudio && localAnalyserRef.current
-          ? localAnalyserRef.current
-          : globalAnalyser;
-
-      // Physical analyser poll for maximum smoothness
-      if (activeAnalyser) {
-        // Ensure buffer matches analyser resolution
-        if (!data || data.length !== activeAnalyser.frequencyBinCount) {
-          data = new Uint8Array(activeAnalyser.frequencyBinCount);
-          dataRef.current = data;
-        }
-
-        // Fetch to a temporary array so we don't overwrite synthetic context data with zeros
-        const tempData = new Uint8Array(activeAnalyser.frequencyBinCount);
-        activeAnalyser.getByteFrequencyData(tempData as any);
-
-        const sum = tempData.reduce((a, b) => a + b, 0);
-        if (sum > 0 || !useSpotifyAudio) {
-          // Only overwrite if we got real data or we are using the mic
-          for (let i = 0; i < data.length; i++) {
-            data[i] = tempData[i];
-          }
-        }
-      }
-
-      if (!data || data.length === 0) {
-        animationRef.current = requestAnimationFrame(animate);
-        return;
-      }
-
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const currentSensitivity = sensitivityRef.current;
-      const currentMaxRipples = maxRipplesRef.current;
-
-      // Metrics
-      const average = data.reduce((a, b) => a + b, 0) / data.length;
-      // Match SpotifyRippleVisualizer bass calculation (first 8 bins)
-      const bass = data.slice(0, 8).reduce((a, b) => a + b, 0) / 8;
-      const treble = data.slice(32, 64).reduce((a, b) => a + b, 0) / 32;
-
-      // Center Circle
-      const baseRadius = 80;
-      const dynamicRadius =
-        baseRadius + (average / 255) * 40 * currentSensitivity;
-
-      // Draw bars - Sample across the spectrum for more variety
-      const numBars = 64;
-      const angleStep = (Math.PI * 2) / numBars;
-      const step = Math.floor(data.length / numBars); // Spread bars across the actual data length
-
-      ctx.lineWidth = 3;
-      ctx.lineCap = "round";
-
-      for (let i = 0; i < numBars; i++) {
-        // Sample from different parts of the spectrum (Bass -> Mids -> Treble)
-        const val = data[i * step] || 0;
-        // Match SpotifyRippleVisualizer amplitude scaling (150)
-        const amplitude = (val / 255) * 150 * currentSensitivity;
-
-        const angle = i * angleStep;
-
-        const x1 = centerX + Math.cos(angle) * dynamicRadius;
-        const y1 = centerY + Math.sin(angle) * dynamicRadius;
-        const x2 = centerX + Math.cos(angle) * (dynamicRadius + amplitude);
-        const y2 = centerY + Math.sin(angle) * (dynamicRadius + amplitude);
-
-        const hue = (i / numBars) * 360;
-        ctx.strokeStyle = `hsla(${hue}, 70%, 60%, 0.8)`;
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.stroke();
-      }
-
-      // Draw center gradients
-      const hex = themeColorRef.current || "#ff0080";
-      const r = parseInt(hex.slice(1, 3), 16) || 255;
-      const g = parseInt(hex.slice(3, 5), 16) || 20;
-      const b = parseInt(hex.slice(5, 7), 16) || 147;
-
-      const grad = ctx.createRadialGradient(
-        centerX,
-        centerY,
-        0,
-        centerX,
-        centerY,
-        dynamicRadius,
-      );
-      grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.9)`);
-      grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.3)`);
-
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, dynamicRadius - 5, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
-      ctx.fill();
-
-      // Add a subtle border to the center circle to ensure visibility even with no data
-      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.5)`;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Ripples detection - Ported directly from SpotifyRippleVisualizer.tsx
-      const bassThreshold = 50 * (2 / currentSensitivity);
-      if (
-        bass > bassThreshold &&
-        ripplesRef.current.length < currentMaxRipples
-      ) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = dynamicRadius + 20 + Math.random() * 50;
-        ripplesRef.current.push({
-          x: centerX + Math.cos(angle) * dist,
-          y: centerY + Math.sin(angle) * dist,
-          radius: 0,
-          maxRadius: 100 + (bass / 255) * 150,
-          alpha: 1.0,
-          color: `${r}, ${g}, ${b}`,
-          speed: 2 + (bass / 255) * 3,
-        });
-      }
-      lastBassRef.current = bass;
-
-      ripplesRef.current = ripplesRef.current.filter((ripple) => {
-        ripple.radius += ripple.speed;
-        ripple.alpha = 1 - ripple.radius / ripple.maxRadius;
-
-        if (ripple.alpha > 0) {
-          ctx.beginPath();
-          ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(${ripple.color}, ${ripple.alpha})`;
-          // Match the line thickness behavior of the reference visualizer
-          ctx.lineWidth = 2 + (1 - ripple.alpha) * 3;
-          ctx.stroke();
-          return true;
-        }
-        return false;
-      });
-
-      // Treble particles
-      if (treble > 180 && Math.random() > 0.6) {
-        ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
-        ctx.beginPath();
-        ctx.arc(
-          centerX + (Math.random() - 0.5) * canvas.width * 0.7,
-          centerY + (Math.random() - 0.5) * canvas.height * 0.7,
-          2,
-          0,
-          Math.PI * 2,
-        );
-        ctx.fill();
-      }
-
-      animationRef.current = requestAnimationFrame(animate);
-    };
-
-    animationRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-        animationRef.current = null;
-      }
-    };
-  }, [isOpen, isPlaying, viewMode, useSpotifyAudio, captureMode, reduceMotion]);
-
   // Clean up audio capture only when the component unmounts or closes
   useEffect(() => {
     if (!isOpen) {
@@ -785,11 +510,9 @@ export const FullScreenPlayer = ({
               )}
               {viewMode === "visualizer" && (
                 <div className={styles.visualizer}>
-                  <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden="true" />
-                  <div className="absolute inset-x-4 bottom-5 text-center text-sm text-zinc-300">
-                    {reduceMotion ? "Visualization paused for reduced motion" : !isPlaying ? "Play music to start the visualizer" : activeDevice && activeDevice.id !== deviceId && useSpotifyAudio
-                      ? `Playing on ${activeDevice.name}. Choose an audio source below to visualize it.` : visualLabel}
-                  </div>
+                  <AudioVisualizer analyser={globalAnalyser} captureAnalyser={localAnalyserRef}
+                    captured={captureMode !== "none"} playing={isPlaying} reducedMotion={reduceMotion}
+                    color={currentTheme.color} sensitivity={sensitivity} detail={maxRipples} />
                 </div>
               )}
             </div>
@@ -805,7 +528,7 @@ export const FullScreenPlayer = ({
                   </div>
                   <div className="mt-4 grid grid-cols-2 gap-5">
                     <div><label className="text-xs text-zinc-400">Sensitivity</label><Slider aria-label="Visualizer sensitivity" value={[sensitivity]} min={0.5} max={3} step={0.1} onValueChange={(v) => setSensitivity(v[0])} className="mt-2 h-6" /></div>
-                    <div><label className="text-xs text-zinc-400">Ripple count</label><Slider aria-label="Ripple count" value={[maxRipples]} min={3} max={15} step={1} onValueChange={(v) => setMaxRipples(v[0])} className="mt-2 h-6" /></div>
+                    <div><label className="text-xs text-zinc-400">Detail</label><Slider aria-label="Detail" value={[maxRipples]} min={3} max={15} step={1} onValueChange={(v) => setMaxRipples(v[0])} className="mt-2 h-6" /></div>
                   </div>
                 </details>
               )}
