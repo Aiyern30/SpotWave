@@ -46,11 +46,10 @@ import type { Artist } from "@/lib/types";
 import parse from "html-react-parser";
 import DOMPurify from "dompurify";
 
-import { PiTable } from "react-icons/pi";
-import { LuLayoutGrid } from "react-icons/lu";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { fetchUserProfile } from "@/utils/fetchProfile";
 import { fetchArtistTopTracks } from "@/utils/Tracks/fetchArtistTopTracks";
+import ViewSelector, { type CollectionView } from "@/components/ViewSelector";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -142,8 +141,10 @@ const ArtistProfilePage = () => {
   const [albums, setAlbums] = useState<Albums[]>([]);
   const [artistDetails, setArtistDetails] = useState<AboutProps | null>(null);
   const [followedArtists, setFollowedArtists] = useState<Artist[]>([]);
-  const [tracksDisplayUI, setTracksDisplayUI] = useState<string>("Grid");
-  const [albumsDisplayUI, setAlbumsDisplayUI] = useState<string>("Grid");
+  const [tracksDisplayUI, setTracksDisplayUI] =
+    useState<CollectionView>("Grid");
+  const [albumsDisplayUI, setAlbumsDisplayUI] =
+    useState<CollectionView>("Grid");
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -708,34 +709,12 @@ const ArtistProfilePage = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-3xl font-bold text-white">Top Tracks</h2>
-              <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setTracksDisplayUI("Table")}
-                  className={`h-9 px-3 transition-all ${
-                    tracksDisplayUI === "Table"
-                      ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
-                      : "text-zinc-400 hover:text-white hover:bg-zinc-800"
-                  }`}
-                >
-                  <PiTable className="h-5 w-5 sm:mr-2" />
-                  <span className="hidden sm:inline">Table</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setTracksDisplayUI("Grid")}
-                  className={`h-9 px-3 transition-all ${
-                    tracksDisplayUI === "Grid"
-                      ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
-                      : "text-zinc-400 hover:text-white hover:bg-zinc-800"
-                  }`}
-                >
-                  <LuLayoutGrid className="h-5 w-5 sm:mr-2" />
-                  <span className="hidden sm:inline">Grid</span>
-                </Button>
-              </div>
+              <ViewSelector
+                value={tracksDisplayUI}
+                onChange={setTracksDisplayUI}
+                options={["Table", "Grid"]}
+                label="Top tracks view"
+              />
             </div>
 
             {tracksDisplayUI === "Table" ? (
@@ -1047,34 +1026,12 @@ const ArtistProfilePage = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-3xl font-bold text-white">Albums</h2>
-              <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setAlbumsDisplayUI("Table")}
-                  className={`h-9 px-3 transition-all ${
-                    albumsDisplayUI === "Table"
-                      ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
-                      : "text-zinc-400 hover:text-white hover:bg-zinc-800"
-                  }`}
-                >
-                  <PiTable className="h-5 w-5 sm:mr-2" />
-                  <span className="hidden sm:inline">Table</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setAlbumsDisplayUI("Grid")}
-                  className={`h-9 px-3 transition-all ${
-                    albumsDisplayUI === "Grid"
-                      ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
-                      : "text-zinc-400 hover:text-white hover:bg-zinc-800"
-                  }`}
-                >
-                  <LuLayoutGrid className="h-5 w-5 sm:mr-2" />
-                  <span className="hidden sm:inline">Grid</span>
-                </Button>
-              </div>
+              <ViewSelector
+                value={albumsDisplayUI}
+                onChange={setAlbumsDisplayUI}
+                options={["Table", "Grid"]}
+                label="Albums view"
+              />
             </div>
 
             {albumsDisplayUI === "Table" ? (

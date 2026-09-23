@@ -32,9 +32,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/";
 import { useRouter } from "next/navigation";
-import { PiTable } from "react-icons/pi";
-import { LuLayoutGrid } from "react-icons/lu";
 import { Play, MoreHorizontal, Pause, ExternalLink, User } from "lucide-react";
+import ViewSelector, { type CollectionView } from "@/components/ViewSelector";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,7 +43,6 @@ import {
 } from "@/components/ui";
 import type {
   ArtistsResponseLASTFM,
-  DisplayUIProps,
   GlobalArtistPropsLASTFM,
 } from "@/lib/types";
 import { NumberTicker } from "@/components/magicui/NumberTicker";
@@ -55,7 +53,7 @@ const Page = () => {
   const [artists, setArtists] = useState<GlobalArtistPropsLASTFM[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [numArtists, setNumArtists] = useState<number>(10);
-  const [displayUI, setDisplayUI] = useState<DisplayUIProps | string>("Table");
+  const [displayUI, setDisplayUI] = useState<CollectionView>("Table");
   const router = useRouter();
   const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } =
     usePlayer();
@@ -336,35 +334,12 @@ const Page = () => {
             </h1>
           </div>
 
-          {/* Enhanced View Selector */}
-          <div className="flex items-center gap-2 bg-zinc-900/50 rounded-lg p-1 border border-zinc-800/50">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setDisplayUI("Table")}
-              className={`h-9 px-3 transition-all ${
-                displayUI === "Table"
-                  ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
-              }`}
-            >
-              <PiTable className="h-5 w-5 sm:mr-2" />
-              <span className="hidden sm:inline">Table</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setDisplayUI("Grid")}
-              className={`h-9 px-3 transition-all ${
-                displayUI === "Grid"
-                  ? "bg-brand/10 text-brand hover:bg-brand/20 hover:text-brand"
-                  : "text-zinc-400 hover:text-white hover:bg-zinc-800"
-              }`}
-            >
-              <LuLayoutGrid className="h-5 w-5 sm:mr-2" />
-              <span className="hidden sm:inline">Grid</span>
-            </Button>
-          </div>
+          <ViewSelector
+            value={displayUI}
+            onChange={setDisplayUI}
+            options={["Table", "Grid"]}
+            label="Artists view"
+          />
         </div>
 
         {/* Loading State */}
