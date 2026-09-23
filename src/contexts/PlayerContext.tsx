@@ -11,7 +11,10 @@ import {
 } from "react";
 import type { Track } from "@/lib/types";
 
+import { transferToSpotifyDevice, type SpotifyDevice } from "@/lib/spotify-devices";
+
 interface PlayerContextType {
+  selectDevice: (device: SpotifyDevice) => Promise<void>;
   // Current track state
   currentTrack: Track | null;
   isPlaying: boolean;
@@ -191,6 +194,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Player state changed
       inst.addListener("player_state_changed", (state: any) => {
+        if (activeDeviceRef.current && activeDeviceRef.current.id !== deviceIdRef.current) return;
         if (!state) {
           setCurrentTrack(null);
           setIsPlaying(false);
@@ -634,8 +638,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       // Wait for device to be ready
-      const deviceReady = await waitForDevice();
-      if (!deviceReady || !deviceIdRef.current) {
+      const deviceReady = !!activeDeviceRef.current?.id || await waitForDevice();
+      if (!deviceReady || !(activeDeviceRef.current?.id || deviceIdRef.current)) {
         console.error(
           "Spotify device not ready. Please wait for the player to connect.",
         );
@@ -646,7 +650,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       // Only delay if we just became ready? Hard to track. A small delay always is safer for mobile.
       await new Promise((r) => setTimeout(r, 500));
 
-      const activeDeviceId = deviceIdRef.current;
+      const activeDeviceId = activeDeviceRef.current?.id || deviceIdRef.current;
 
       try {
         console.log("Playing track on device:", activeDeviceId);
@@ -669,7 +673,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           console.error("Failed to play track:", response.status, errorText);
 
           // If device is not found, try to transfer playback
-          if (response.status === 404) {
+          if (response.status === 404 && activeDeviceId === deviceIdRef.current) {
             console.log("Device not found, attempting to transfer playback...");
             await transferPlayback();
             // Retry playing the track
@@ -707,8 +711,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       // Wait for device to be ready
-      const deviceReady = await waitForDevice();
-      if (!deviceReady || !deviceIdRef.current) {
+      const deviceReady = !!activeDeviceRef.current?.id || await waitForDevice();
+      if (!deviceReady || !(activeDeviceRef.current?.id || deviceIdRef.current)) {
         console.error(
           "Spotify device not ready. Please wait for the player to connect.",
         );
@@ -718,7 +722,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       // 1s delay as suggested for robustness
       await new Promise((r) => setTimeout(r, 500));
 
-      const activeDeviceId = deviceIdRef.current;
+      const activeDeviceId = activeDeviceRef.current?.id || deviceIdRef.current;
 
       try {
         console.log("Playing playlist on device:", activeDeviceId);
@@ -732,7 +736,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         const response = await fetch(
-          `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
+          `https://api.spotify.com/v1/me/player/play?device_id=${activeDeviceId}`,
           {
             method: "PUT",
             body: JSON.stringify(body),
@@ -748,7 +752,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           console.error("Failed to play playlist:", response.status, errorText);
 
           // If device is not found, try to transfer playback
-          if (response.status === 404) {
+          if (response.status === 404 && activeDeviceId === deviceIdRef.current) {
             console.log("Device not found, attempting to transfer playback...");
             await transferPlayback();
             // Retry playing the playlist
@@ -1107,11 +1111,12 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   // Set repeat mode on Spotify player
   const setSpotifyRepeatMode = useCallback(
     async (mode: "off" | "context" | "track") => {
-      if (!deviceId || !token) return;
+      const targetDeviceId = activeDeviceRef.current?.id || deviceIdRef.current;
+      if (!targetDeviceId || !token) return;
 
       try {
         const response = await fetch(
-          `https://api.spotify.com/v1/me/player/repeat?state=${mode}&device_id=${deviceId}`,
+          `https://api.spotify.com/v1/me/player/repeat?state=${mode}&device_id=${targetDeviceId}`,
           {
             method: "PUT",
             headers: {
@@ -1250,7 +1255,18 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setToken(t);
   }, []);
 
+  const selectDevice = async (device: SpotifyDevice) => {
+    // Activate the browser audio element within the user's selection gesture.
+    if (device.id === deviceIdRef.current) await player?.activateElement?.();
+    await transferToSpotifyDevice(device, isPlaying);
+    const selected = { id: device.id!, name: device.name, type: device.type };
+    activeDeviceRef.current = selected;
+    setActiveDevice(selected);
+    lastPlayerStateFetch = null;
+  };
+
   const value: PlayerContextType = {
+    selectDevice,
     currentTrack,
     isPlaying,
     isPaused,

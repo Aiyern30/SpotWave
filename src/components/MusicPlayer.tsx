@@ -1,5 +1,6 @@
 "use client";
 
+import DevicePicker from "@/components/DevicePicker";
 import LyricsPanel from "@/components/LyricsPanel";
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -406,7 +407,7 @@ export const MusicPlayer = ({
               size="icon"
               onClick={previousTrack}
               className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-8 w-8 transition-all"
-              disabled={!isReady}
+              disabled={!isReady && !activeDevice}
             >
               <SkipBack className="h-4 w-4 fill-current" />
             </Button>
@@ -415,7 +416,7 @@ export const MusicPlayer = ({
               onClick={handlePlayPause}
               size="icon"
               className="bg-white hover:bg-brand hover:scale-105 text-black h-8 w-8 rounded-full transition-all"
-              disabled={!isReady}
+              disabled={!isReady && !activeDevice}
             >
               {isPlaying ? (
                 <Pause className="h-4 w-4 fill-current" />
@@ -429,7 +430,7 @@ export const MusicPlayer = ({
               size="icon"
               onClick={nextTrack}
               className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-8 w-8 transition-all"
-              disabled={!isReady}
+              disabled={!isReady && !activeDevice}
             >
               <SkipForward className="h-4 w-4 fill-current" />
             </Button>
@@ -470,7 +471,7 @@ export const MusicPlayer = ({
               step={1000}
               onValueChange={handleSeek}
               className="flex-1 cursor-pointer"
-              disabled={!isReady || duration === 0}
+              disabled={(!isReady && !activeDevice) || duration === 0}
             />
             <span className="text-[11px] text-zinc-400 w-10 tabular-nums">
               {formatTime(duration)}
@@ -480,6 +481,7 @@ export const MusicPlayer = ({
 
         {/* Right Section - Additional Controls & Mobile Minimal Controls */}
         <div className="flex items-center justify-end gap-1 md:gap-2 md:min-w-[240px] md:w-[30%] flex-shrink-0">
+          <DevicePicker />
           {/* Mobile Only Minimal Controls */}
           <div className="flex md:hidden items-center gap-0.5">
             <Button
@@ -490,7 +492,7 @@ export const MusicPlayer = ({
               size="icon"
               variant="ghost"
               className="text-white hover:text-brand h-9 w-9"
-              disabled={!isReady}
+              disabled={!isReady && !activeDevice}
             >
               {isPlaying ? (
                 <Pause className="h-5 w-5 fill-current" />
@@ -506,7 +508,7 @@ export const MusicPlayer = ({
                 nextTrack();
               }}
               className="text-zinc-400 hover:text-white h-9 w-9"
-              disabled={!isReady}
+              disabled={!isReady && !activeDevice}
             >
               <SkipForward className="h-4.5 w-4.5 fill-current" />
             </Button>
@@ -568,7 +570,7 @@ export const MusicPlayer = ({
               handleMute();
             }}
             className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-8 w-8 transition-all hidden md:flex"
-            disabled={!isReady}
+            disabled={!isReady && !activeDevice}
           >
             {isMuted || localVolume === 0 ? (
               <VolumeX className="h-4 w-4" />
@@ -583,7 +585,7 @@ export const MusicPlayer = ({
             step={0.01}
             onValueChange={handleVolumeChange}
             className="w-24 cursor-pointer hidden md:flex"
-            disabled={!isReady}
+            disabled={!isReady && !activeDevice}
           />
         </div>
       </div>
@@ -603,16 +605,16 @@ export const MusicPlayer = ({
       )}
 
       {/* Status Overlays - Only show on initial connection */}
-      {isConnecting && !hasConnected && (
-        <div className="absolute inset-0 bg-black/90 flex items-center justify-center">
+      {isConnecting && !hasConnected && !activeDevice && (
+        <div className="pointer-events-none absolute inset-0 bg-black/90 flex items-center justify-center">
           <div className="flex items-center space-x-3 text-zinc-300">
             <div className="animate-spin rounded-full h-5 w-5 border-2 border-brand border-t-transparent" />
             <span className="text-sm">Connecting to Spotify Player...</span>
           </div>
         </div>
       )}
-      {!isReady && !isConnecting && hasConnected && (
-        <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
+      {!isReady && !isConnecting && hasConnected && !activeDevice && (
+        <div className="pointer-events-none absolute inset-0 bg-black/80 flex items-center justify-center">
           <div className="text-zinc-400 text-sm">
             Player not ready. Please refresh the page.
           </div>
