@@ -34,6 +34,7 @@ import { formatSongDuration } from "@/utils/function";
 import { Search, Music, User, Play, Clock, Disc } from "lucide-react";
 import Image from "next/image";
 import ThemeSwitcher from "./ThemeSwitcher";
+import styles from "./Header.module.css";
 
 interface Artist {
   id: string;
@@ -338,18 +339,19 @@ export const SearchSection = () => {
   };
 
   return (
-    <form onSubmit={handleSearch} className="relative w-full max-w-2xl">
+    <form onSubmit={handleSearch} className={`${styles.searchForm} relative w-full max-w-2xl`}>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-brand" />
         <Input
           type="text"
           placeholder="What do you want to play?"
+          aria-label="Search songs and artists"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           ref={inputRef}
           onBlur={handleInputBlur}
           onFocus={() => searchTerm.trim() && setDropdownVisible(true)}
-          className="pl-10 bg-zinc-800/50 border-zinc-700 text-white placeholder:text-zinc-400 focus:border-brand focus:ring-brand/20 h-12"
+          className={`${styles.searchInput} h-12 rounded-xl pl-10 pr-10 text-base sm:text-sm text-white placeholder:text-zinc-400`}
         />
         {isSearching && (
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -361,7 +363,7 @@ export const SearchSection = () => {
       {dropdownVisible && searchResults.length > 0 && (
         <div
           ref={dropdownRef}
-          className="search-results-scrollbar absolute mt-2 w-full bg-zinc-900 border border-zinc-800 rounded-lg shadow-2xl max-h-[500px] overflow-auto z-50"
+          className={`${styles.searchDropdown} search-results-scrollbar absolute mt-2 w-full rounded-xl border overflow-auto overscroll-contain z-50`}
         >
           <div className="p-2 space-y-1">
             {searchResults.map((result, idx) => {
@@ -369,7 +371,7 @@ export const SearchSection = () => {
                 return (
                   <div key={result.artist.id} className="space-y-1">
                     <Card
-                      className="bg-zinc-800/50 hover:bg-brand/20 hover:border-brand/40 border-zinc-700/50 cursor-pointer transition-all duration-200 group"
+                      className={`${styles.result} ${styles.artistResult} cursor-pointer group`}
                       onMouseDown={(e) => {
                         e.stopPropagation();
                         handleResultClick(
@@ -408,7 +410,7 @@ export const SearchSection = () => {
                     {result.topTracks.map((track) => (
                       <Card
                         key={track.id}
-                        className="bg-zinc-800/30 hover:bg-brand/20 hover:border-brand/40 border-zinc-700/30 cursor-pointer transition-all duration-200 group"
+                        className={`${styles.result} cursor-pointer group`}
                         onMouseDown={(e) => {
                           e.stopPropagation();
                           handleResultClick(track.id, "song", track.name);
@@ -447,7 +449,7 @@ export const SearchSection = () => {
                 return result.items.map((track) => (
                   <Card
                     key={track.id}
-                    className="bg-zinc-800/30 hover:bg-brand/20 hover:border-brand/40 border-zinc-700/30 cursor-pointer transition-all duration-200 group"
+                    className={`${styles.result} cursor-pointer group`}
                     onMouseDown={(e) => {
                       e.stopPropagation();
                       handleResultClick(track.id, "song", track.name);

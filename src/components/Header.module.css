@@ -1,0 +1,74 @@
+/* ThemeContext restores app-theme from localStorage onto --brand-primary. */
+.searchForm {
+  --search-tint: hsl(var(--brand-primary) / 0.06);
+}
+
+.searchForm .searchInput {
+  background: linear-gradient(var(--search-tint), var(--search-tint)), #18181b;
+  border-color: hsl(var(--brand-primary) / 0.3);
+  box-shadow: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.searchForm .searchInput:focus-visible {
+  border-color: hsl(var(--brand-primary) / 0.85);
+  box-shadow: 0 0 0 3px hsl(var(--brand-primary) / 0.12);
+  outline: none;
+}
+
+.searchForm .searchDropdown {
+  background: linear-gradient(var(--search-tint), var(--search-tint)), #121214;
+  border-color: hsl(var(--brand-primary) / 0.3);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.35);
+  max-height: min(500px, 60vh);
+  max-height: min(500px, 60dvh);
+  scrollbar-gutter: stable;
+  scrollbar-color: hsl(var(--brand-primary) / 0.45) transparent;
+}
+
+.searchDropdown::-webkit-scrollbar-thumb {
+  background: hsl(var(--brand-primary) / 0.45);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.searchDropdown::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--brand-primary) / 0.7);
+}
+
+.searchForm .result {
+  border-color: transparent;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.searchForm .artistResult {
+  background: hsl(var(--brand-primary) / 0.08);
+  border-color: hsl(var(--brand-primary) / 0.18);
+}
+
+@media (hover: hover) {
+  .searchForm .searchInput:hover {
+    border-color: hsl(var(--brand-primary) / 0.6);
+  }
+
+  .searchForm .result:hover {
+    background: hsl(var(--brand-primary) / 0.12);
+    border-color: hsl(var(--brand-primary) / 0.3);
+  }
+}
+
+.searchForm .result:active,
+.searchForm .result:focus-within {
+  background: hsl(var(--brand-primary) / 0.16);
+  border-color: hsl(var(--brand-primary) / 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .searchForm .searchInput,
+  .searchForm .result {
+    transition: none;
+  }
+}
