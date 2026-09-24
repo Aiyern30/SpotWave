@@ -531,8 +531,8 @@ export const MusicPlayer = ({
                     <Mic2 className="h-4 w-4" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent aria-describedby={undefined} overlayClassName="z-[70] motion-reduce:animate-none" className="z-[70] motion-reduce:animate-none flex h-[100dvh] w-full flex-col gap-0 overflow-hidden border-zinc-800 bg-zinc-950 p-0 pb-[env(safe-area-inset-bottom)] sm:max-w-[480px] [&>button]:h-11 [&>button]:w-11 [&>button]:flex [&>button]:items-center [&>button]:justify-center">
-                  <SheetHeader className="shrink-0 border-b border-white/5 px-5 py-6 pr-16 text-left">
+                <SheetContent aria-describedby={undefined} overlayClassName="z-[70] motion-reduce:animate-none" className="z-[70] motion-reduce:animate-none flex h-[100dvh] w-full flex-col gap-0 overflow-hidden border-brand/20 bg-zinc-950 p-0 pb-[env(safe-area-inset-bottom)] text-zinc-100 sm:max-w-[480px] [&>button]:h-11 [&>button]:w-11 [&>button]:flex [&>button]:items-center [&>button]:justify-center">
+                  <SheetHeader className="shrink-0 border-b border-brand/20 px-5 py-6 pr-16 text-left">
                     <p className="text-xs font-medium text-zinc-400">Lyrics</p>
                     <SheetTitle className="truncate text-lg font-semibold text-zinc-100">{currentTrack?.name}</SheetTitle>
                     <p className="truncate text-sm text-zinc-400">{currentTrack?.artists.map(artist => artist.name).join(", ")}</p>

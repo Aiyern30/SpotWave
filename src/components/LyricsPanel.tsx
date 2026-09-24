@@ -5,7 +5,7 @@ import { usePlayer } from "@/contexts/PlayerContext";
 import { estimateLyricPosition, lyricIndexAt } from "@/lib/lyrics";
 
 import { useTrackLyrics } from "@/hooks/useTrackLyrics";
-const control = "min-h-11 rounded-lg border border-white/10 px-3 text-xs font-medium text-zinc-200 hover:bg-white/5 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand";
+const control = "min-h-11 rounded-lg border border-brand/20 px-3 text-xs font-medium text-zinc-200 hover:bg-white/5 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand";
 
 export default function LyricsPanel({ active = true }: { active?: boolean }) {
   const { currentTrack, position, positionUpdatedAt, duration, isPlaying, isPaused, seekTo } = usePlayer();
@@ -71,7 +71,7 @@ export default function LyricsPanel({ active = true }: { active?: boolean }) {
   };
 
   return <section className="flex h-full min-h-0 flex-col" aria-label="Lyrics">
-    <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/5 px-5 py-3">
+    <div className="flex shrink-0 items-center justify-between gap-2 border-b border-brand/20 px-5 py-3">
       <span className="text-xs text-zinc-400">{data?.lines.length ? "Synced lyrics" : "Lyrics"}</span>
       {data?.lines.length ? <button className={control} aria-pressed={following} onClick={() => setFollowing(!following)}>{following ? "Following" : "Follow lyrics"}</button> : null}
     </div>
@@ -84,7 +84,7 @@ export default function LyricsPanel({ active = true }: { active?: boolean }) {
           onClick={() => { seekTo(Math.max(0, Math.min(trackDuration, line.time + offset))); setFollowing(true); }}>{line.text || <span className="text-base font-normal">Instrumental</span>}</button>)}
       </div> : <p className="whitespace-pre-wrap break-words text-lg leading-loose text-zinc-300">{data.plain || "No lyrics found for this recording."}</p>}
     </div>
-    <footer className="shrink-0 border-t border-white/5 px-5 py-3">
+    <footer className="shrink-0 border-t border-brand/20 px-5 py-3">
       {data?.lines.length ? <><div className="flex flex-wrap items-center justify-between gap-2"><span className="text-xs tabular-nums text-zinc-300">Timing {offset > 0 ? "+" : ""}{(offset / 1000).toFixed(1)}s</span><div className="flex gap-1"><button className={control} disabled={offset <= -10000} onClick={() => adjust(offset - 100)}>Earlier</button><button className={control} disabled={offset >= 10000} onClick={() => adjust(offset + 100)}>Later</button><button className={control} disabled={offset === 0} onClick={() => adjust(0)}>Reset</button></div></div><p className="mt-2 text-xs text-zinc-400">Tap a line to seek. Timing is saved for this song.</p></> : null}
       <a href="https://lrclib.net" target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs text-zinc-400 underline underline-offset-4 hover:text-zinc-200">Lyrics from LRCLIB</a>
     </footer>
