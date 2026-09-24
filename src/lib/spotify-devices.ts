@@ -35,3 +35,33 @@ export async function transferToSpotifyDevice(device: SpotifyDevice, playing: bo
   if (!device.id || device.is_restricted) throw new Error("Spotify does not allow playback control on this device.");
   await deviceRequest("", { method: "PUT", body: JSON.stringify({ device_ids: [device.id], play: playing }) });
 }
+
+/** Transfer the existing session, never start the track again with /play. */
+export async function transferSpotifySession(device: SpotifyDevice) {
+  if (!device.id || device.is_restricted) throw new Error("Spotify does not allow playback control on this device.");
+  const readState = async () => {
+    const response = await deviceRequest("");
+    return response.status === 204 ? null : response.json();
+  };
+  const before = await readState();
+  if (before?.device?.id === device.id) return;
+  const started = Date.now();
+  // Continue the existing session on the destination without sending a new track URI.
+  await transferToSpotifyDevice(device, true);
+  for (let attempt = 0; attempt < 6; attempt++) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const after = await readState();
+    if (after?.device?.id !== device.id) continue;
+    if (before?.item?.uri && after.item?.uri === before.item.uri &&
+        typeof before.progress_ms === "number" && typeof after.progress_ms === "number" &&
+        after.progress_ms + 3000 < before.progress_ms) {
+      const elapsed = before.is_playing ? Date.now() - started : 0;
+      const position = Math.max(0, Math.min(before.item.duration_ms - 1, before.progress_ms + elapsed));
+      if (Number.isFinite(position)) {
+        await deviceRequest(`/seek?position_ms=${Math.round(position)}&device_id=${encodeURIComponent(device.id)}`, { method: "PUT" });
+      }
+    }
+    return;
+  }
+  throw new Error("Spotify has not confirmed the switch yet. Refresh the device list to check before trying again.");
+}

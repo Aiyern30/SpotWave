@@ -11,7 +11,7 @@ import {
 } from "react";
 import type { Track } from "@/lib/types";
 
-import { transferToSpotifyDevice, type SpotifyDevice } from "@/lib/spotify-devices";
+import { transferSpotifySession, type SpotifyDevice } from "@/lib/spotify-devices";
 
 interface PlayerContextType {
   selectDevice: (device: SpotifyDevice) => Promise<void>;
@@ -120,6 +120,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const silentAudioRef = useRef<HTMLAudioElement | null>(null);
   const isReadyRef = useRef<boolean>(false);
+  const deviceTransferRef = useRef(false);
   const deviceIdRef = useRef<string | null>(null);
   const activeDeviceRef = useRef<{
     id: string;
@@ -194,7 +195,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Player state changed
       inst.addListener("player_state_changed", (state: any) => {
-        if (activeDeviceRef.current && activeDeviceRef.current.id !== deviceIdRef.current) return;
+        if (deviceTransferRef.current) return;
+        if (deviceTransferRef.current || (activeDeviceRef.current && activeDeviceRef.current.id !== deviceIdRef.current)) return;
         if (!state) {
           setCurrentTrack(null);
           setIsPlaying(false);
@@ -252,9 +254,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           }, 1000);
         }
 
-        if (!isCurrentlyPaused && !analyserRef.current) {
-          setTimeout(setupAudioAnalyser, 3000);
-        }
+
       });
 
       // Errors
@@ -352,51 +352,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [token]);
 
-  const setupAudioAnalyser = useCallback(async () => {
-    if (analyserRef.current || typeof window === "undefined") return;
-
-    try {
-      const audioElement = document.querySelector("audio");
-      if (!audioElement) return;
-
-      // Crucial for CORS issues with visualizers
-      audioElement.crossOrigin = "anonymous";
-
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (
-          window.AudioContext || (window as any).webkitAudioContext
-        )();
-      }
-
-      const audioContext = audioContextRef.current;
-      if (audioContext.state === "suspended") {
-        await audioContext.resume();
-      }
-
-      const analyserNode = audioContext.createAnalyser();
-      analyserNode.fftSize = 256;
-      analyserNode.smoothingTimeConstant = 0.8;
-      analyserRef.current = analyserNode;
-
-      // Only create source if not already created for THIS element
-      if (!sourceRef.current) {
-        const source = audioContext.createMediaElementSource(audioElement);
-        sourceRef.current = source;
-        source.connect(analyserNode);
-        analyserNode.connect(audioContext.destination);
-      }
-
-      const bufferLength = analyserNode.frequencyBinCount;
-      const dataArr = new Uint8Array(bufferLength);
-
-      setAnalyser(analyserNode);
-      setDataArray(dataArr);
-      console.log("Global Spotify Analyser setup complete");
-    } catch (error) {
-      console.error("Error setting up global audio analyser:", error);
-    }
-  }, []);
-
   // Synthetic Analyser Loop - Bridging the gap when hardware analyser is silent
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -481,12 +436,12 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!isPlaying || isPaused) return;
 
     const interval = setInterval(() => {
-      if (activeDeviceRef.current && activeDeviceRef.current.id !== deviceIdRef.current) return;
+      if (deviceTransferRef.current || (activeDeviceRef.current && activeDeviceRef.current.id !== deviceIdRef.current)) return;
       if (player && typeof player.getCurrentState === "function") {
         player
           .getCurrentState()
           .then((state: any) => {
-            if (state) {
+            if (state && !deviceTransferRef.current && (!activeDeviceRef.current || activeDeviceRef.current.id === deviceIdRef.current)) {
               setPosition(state.position);
             }
           })
@@ -915,7 +870,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   async function syncPlaybackState(force = false) {
-      if (!token) return;
+      if (!token || deviceTransferRef.current) return;
 
       const sdkDeviceId = deviceIdRef.current;
       const activeId = activeDeviceRef.current?.id;
@@ -1003,6 +958,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (response.status === 200) {
           const data = await response.json();
+          if (deviceTransferRef.current) return;
           lastPlayerStateFetch = { data, timestamp: Date.now() };
 
           if (data && data.device) {
@@ -1256,13 +1212,19 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const selectDevice = async (device: SpotifyDevice) => {
-    // Activate the browser audio element within the user's selection gesture.
-    if (device.id === deviceIdRef.current) await player?.activateElement?.();
-    await transferToSpotifyDevice(device, isPlaying);
-    const selected = { id: device.id!, name: device.name, type: device.type };
-    activeDeviceRef.current = selected;
-    setActiveDevice(selected);
-    lastPlayerStateFetch = null;
+    if (deviceTransferRef.current) return;
+    deviceTransferRef.current = true;
+    try {
+      if (device.id === deviceIdRef.current) await player?.activateElement?.();
+      await transferSpotifySession(device);
+      const selected = { id: device.id!, name: device.name, type: device.type };
+      activeDeviceRef.current = selected;
+      setActiveDevice(selected);
+    } finally {
+      lastPlayerStateFetch = null;
+      deviceTransferRef.current = false;
+      void syncPlaybackState(true);
+    }
   };
 
   const value: PlayerContextType = {
