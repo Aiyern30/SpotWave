@@ -521,7 +521,9 @@ export const FullScreenPlayer = ({
               {viewMode === "visualizer" && (
                 <details className={styles.settings}>
                   <summary className="cursor-pointer text-sm font-medium text-zinc-300">Visualizer settings</summary>
+                  <p className="mt-3 text-sm text-zinc-400">Automatic animation starts with playback. For sound-reactive visuals, optionally share audio or use your microphone.</p>
                   <div className="mt-4 flex flex-wrap gap-2">
+                    <Button variant="ghost" aria-pressed={captureMode === "none"} className="border border-brand/25 text-zinc-100 hover:bg-brand/15 hover:text-zinc-100" onClick={stopListening}>Automatic</Button>
                     <Button variant="ghost" className="border border-brand/25 text-zinc-100 hover:bg-brand/15 hover:text-zinc-100" onClick={() => captureMode === "speaker" ? stopListening() : startListening("speaker")}>Share audio</Button>
                     <Button variant="ghost" className="border border-brand/25 text-zinc-100 hover:bg-brand/15 hover:text-zinc-100" onClick={() => captureMode === "mic" ? stopListening() : startListening("mic")}>Use microphone</Button>
                     {captureMode !== "none" && <Button variant="ghost" className="text-red-300 hover:bg-red-500/10 hover:text-red-300" onClick={stopListening}>Stop capture</Button>}

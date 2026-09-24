@@ -42,35 +42,39 @@ export default function AudioVisualizer(props: Props) {
       const dt = Math.min((stamp - (last || stamp)) / 1000, .05);
       last = stamp;
       if (moving) time += dt;
-      const analyser = p.captured ? p.captureAnalyser.current : p.analyser;
+      // Automatic mode never depends on access to Spotify's protected audio.
+      const analyser = p.captured ? p.captureAnalyser.current : null;
       if (analyser !== previousSource) { bands.fill(0); silentFor = 0; previousSource = analyser; }
       if (analyser) {
         if (samples.length !== analyser.frequencyBinCount) samples = new Uint8Array(analyser.frequencyBinCount);
-        analyser.getByteFrequencyData(samples);
+        try { analyser.getByteFrequencyData(samples); }
+        catch { samples.fill(0); }
       } else samples.fill(0);
       let sum = 0;
       for (const value of samples) sum += value;
       const live = sum > 0;
       silentFor = live ? 0 : silentFor + dt;
-      const ambient = !p.captured && !live;
+      const ambient = !p.captured;
       const label = p.reducedMotion ? "Reduced motion" : !moving ? "Paused" : p.captured
-        ? (silentFor > 1 ? "Listening for audio" : "Live audio") : live ? "Live audio" : "Ambient animation";
+        ? (silentFor > 1 ? "Listening for audio" : "Live audio") : live ? "Live audio" : "Automatic animation";
       if (status.current && status.current.textContent !== label) status.current.textContent = label;
       const smoothing = moving ? 1 - Math.exp(-dt * 12) : 1;
       let bass = 0;
       for (let i = 0; i < bands.length; i++) {
         // Logarithmic spacing gives bass and midrange room instead of over-weighting treble.
         const index = Math.min(samples.length - 1, Math.floor(Math.pow(samples.length, i / bands.length) - 1));
-        const simulated = .17 + .12 * Math.sin(time * 1.3 + i * .16) + .08 * Math.sin(time * .6 - i * .29);
+        // Deliberately generated movement, not a claim of beat detection.
+        const swell = .5 + .5 * Math.sin(time * 1.8);
+        const simulated = .24 + .22 * swell + .16 * Math.sin(time * 2.2 + i * .16) + .1 * Math.sin(time * .9 - i * .29);
         const target = !moving ? .08 : ambient ? simulated : samples[index] / 255;
         bands[i] += (Math.min(1, target * p.sensitivity * .7) - bands[i]) * smoothing;
         if (i < 18) bass += bands[i] / 18;
       }
       cooldown -= dt;
-      if (moving && live && bass > bassAverage + .09 && cooldown <= 0) {
+      if (moving && ((live && bass > bassAverage + .09) || (ambient && Math.sin(time * 1.8) > .98)) && cooldown <= 0) {
         pulses.push({ age: 0, strength: bass });
         if (pulses.length > p.detail) pulses.shift();
-        cooldown = .3;
+        cooldown = ambient ? 1.5 : .3;
       }
       bassAverage += (bass - bassAverage) * (1 - Math.exp(-dt * 2));
       const rgb = /^#[0-9a-f]{6}$/i.test(p.color) ? [1, 3, 5].map(i => parseInt(p.color.slice(i, i + 2), 16)).join(",") : "34,197,94";
