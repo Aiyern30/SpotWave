@@ -86,7 +86,7 @@ const PlaylistPage = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying } =
+  const { playPlaylist, pauseTrack, resumeTrack, currentTrack, isPlaying } =
     usePlayer();
 
   const segments = pathname.split("/");
@@ -168,16 +168,14 @@ const PlaylistPage = () => {
 
   const handlePlayPause = useCallback(
     (track: PlaylistTrack["track"]) => {
-      // Check if this track is currently playing
       if (currentTrack?.id === track.id && isPlaying) {
-        // If it's playing, pause it
         pauseTrack();
       } else if (currentTrack?.id === track.id && !isPlaying) {
-        // If it's the same track but paused, resume it (don't restart)
         resumeTrack();
       } else {
-        // Different track, play it from the beginning
-        playTrack({
+        // Play entire playlist starting from this track so auto-advance works
+        const playlistUri = `spotify:playlist:${playlistId}`;
+        playPlaylist(playlistUri, track.uri, {
           id: track.id,
           name: track.name,
           artists: track.artists,
@@ -202,7 +200,7 @@ const PlaylistPage = () => {
         });
       }
     },
-    [playTrack, pauseTrack, resumeTrack, currentTrack, isPlaying],
+    [playPlaylist, pauseTrack, resumeTrack, currentTrack, isPlaying, playlistId],
   );
 
   const handleArtistClick = (artistId: string, artistName: string) => {
