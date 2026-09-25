@@ -48,3 +48,22 @@ test('logout during refresh cannot restore credentials', async () => {
   resolve(Response.json({ access_token:'new', expires_in:3600 }));
   await assert.rejects(pending); assert.equal(h.data.size,0);
 });
+test('a second API 401 expires authorization without an endless retry loop', async () => {
+  let calls = 0;
+  const h = setup(async input => {
+    if (typeof input === 'string') return Response.json({ access_token:'new', expires_in:3600 });
+    calls++; return new Response(null, {status:401});
+  }, {...initial, TokenExpiresAt:String(Date.now()+3600000)});
+  h.api.installSpotifyFetchGuard();
+  await assert.rejects(h.window.fetch('https://api.spotify.com/v1/me'));
+  assert.equal(calls,2); assert.equal(h.data.size,0);
+});
+test('unrelated requests and Spotify rate limits never clear authorization', async () => {
+  const inputs = [];
+  const h = setup(async input => { inputs.push(input); return new Response(null,{status:429}); }, {...initial, TokenExpiresAt:String(Date.now()+3600000)});
+  h.api.installSpotifyFetchGuard();
+  await h.window.fetch('/api/ai-recommendations');
+  assert.equal(inputs[0],'/api/ai-recommendations');
+  assert.equal((await h.window.fetch('https://api.spotify.com/v1/me')).status,429);
+  assert.equal(h.data.get('RefreshToken'),'refresh');
+});

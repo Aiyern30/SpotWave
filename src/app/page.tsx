@@ -7,7 +7,7 @@ import { Play, Headphones, Volume2 } from "lucide-react";
 import Image from "next/image";
 import { usePlayer } from "@/contexts/PlayerContext";
 
-import { saveSpotifySession } from "@/lib/spotify-session";
+import { saveSpotifySession, clearSpotifySession } from "@/lib/spotify-session";
 
 // PKCE Helper Functions
 function generateRandomString(length: number): string {
@@ -65,7 +65,7 @@ export default function Home() {
       return response.status !== 401;
     } catch (error) {
       console.error("Error validating token:", error);
-      return true; // Offline is not a revoked session.
+      return Boolean(window.localStorage.getItem("Token")); // Keep offline sessions, but never restore a cleared login.
     }
   }, []);
 
@@ -158,12 +158,11 @@ export default function Home() {
       setLoading(true);
       validateToken(storedToken).then((isValid) => {
         if (isValid) {
-          setToken(storedToken);
+          setToken(window.localStorage.getItem("Token") || storedToken);
           setContextToken(window.localStorage.getItem("Token") || storedToken);
           router.push("/Home");
         } else {
-          window.localStorage.removeItem("Token");
-          window.localStorage.removeItem("RefreshToken");
+          clearSpotifySession();
           setToken("");
           setLoading(false);
         }

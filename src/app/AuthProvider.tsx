@@ -21,14 +21,14 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     const redirect = () => { if (!publicPage()) router.replace("/401"); };
     const sync = () => setToken(localStorage.getItem("Token"));
     const restoreFetch = installSpotifyFetchGuard();
-    const check = async () => {
+    const check = async (validate = true) => {
       if (checking) return;
       checking = true;
       try {
         if (!localStorage.getItem("Token") && !localStorage.getItem("RefreshToken")) { redirect(); return; }
         await getSpotifyToken();
         // Also validates legacy sessions and revoked authorization, while idle.
-        await fetch("https://api.spotify.com/v1/me");
+        if (validate) await fetch("https://api.spotify.com/v1/me", { signal: AbortSignal.timeout(15_000) });
       } catch {
         // Network errors and rate limits are not evidence of a revoked login.
       } finally {
@@ -45,7 +45,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     window.addEventListener("storage", storage);
     window.addEventListener("focus", resume);
     document.addEventListener("visibilitychange", resume);
-    const timer = window.setInterval(resume, 30_000);
+    const timer = window.setInterval(() => { if (!document.hidden) void check(false); }, 30_000);
     void check();
     return () => {
       disposed = true;
