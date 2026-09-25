@@ -383,6 +383,7 @@ const ArtistProfilePage = () => {
     } else {
       // Different track - play it
       try {
+        const contextUris = topTracks.map((t) => `spotify:track:${t.id}`);
         playTrack({
           id: track.id,
           name: track.name,
@@ -405,7 +406,7 @@ const ArtistProfilePage = () => {
           track_number: 0,
           disc_number: 1,
           uri: `spotify:track:${track.id}`,
-        });
+        }, contextUris);
         setCurrentTrackId(track.id);
       } catch (error) {
         console.error("Error playing track:", error);

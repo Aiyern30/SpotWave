@@ -26,7 +26,7 @@ interface PlayerContextType {
   volume: number;
 
   // Player controls
-  playTrack: (track: Track) => void;
+  playTrack: (track: Track, contextUris?: string[]) => void;
   playPlaylist: (playlistUri: string, trackUri?: string) => void;
   pauseTrack: () => void;
   resumeTrack: () => void;
@@ -577,7 +577,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [deviceId, token]);
 
   const playTrack = useCallback(
-    async (track: Track) => {
+    async (track: Track, contextUris?: string[]) => {
       console.log("Attempting to play track:", track.name);
 
       // Play silent audio immediately to grab Media Session focus (iOS restriction)
@@ -615,7 +615,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           {
             method: "PUT",
             body: JSON.stringify({
-              uris: [track.uri],
+              uris: contextUris && contextUris.length > 0 ? contextUris : [track.uri],
+              ...(contextUris && contextUris.length > 0 ? { offset: { uri: track.uri } } : {})
             }),
             headers: {
               "Content-Type": "application/json",
