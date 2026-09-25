@@ -7,7 +7,7 @@ import BackgroundVisualizer from "@/components/BackgroundVisualizer";
 import Sidebar from "@/components/Sidebar";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useFullScreenPlayer } from "@/contexts/FullScreenPlayerContext";
-import { Breadcrumbs, SearchSection } from "@/components/Header";
+import { SearchSection } from "@/components/Header";
 
 export default function MainLayout({
   children,
@@ -57,7 +57,7 @@ export default function MainLayout({
       >
         <div className="px-3 sm:px-6 lg:px-8 pt-20 md:pt-6 space-y-6 flex flex-col">
           {!isFullScreenOpen && <BackgroundVisualizer />}
-          <div className="relative z-[1]"><Breadcrumbs /></div>
+
           {!isGamePage && (
             <div className="relative z-[1] animate-in fade-in slide-in-from-top-4 duration-700">
               <SearchSection />

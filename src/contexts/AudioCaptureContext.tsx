@@ -52,14 +52,22 @@ export function AudioCaptureProvider({ children }: { children: ReactNode }) {
       if (!media || (mode === "speaker" && !media.getDisplayMedia)) {
         throw new Error("Audio sharing is unavailable in this browser. Try a desktop browser with tab audio sharing.");
       }
+      // Browser hints favor tab audio and hide entire monitors where supported.
+      const displayOptions = {
+        video: { displaySurface: "browser" }, audio: true,
+        preferCurrentTab: true, monitorTypeSurfaces: "exclude",
+      };
       const captured = mode === "speaker"
-        ? await media.getDisplayMedia({ video: true, audio: true })
+        ? await media.getDisplayMedia(displayOptions)
         : await media.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
       if (request !== generation.current) {
         captured.getTracks().forEach(track => track.stop());
         return;
       }
       stream.current = captured;
+      if (mode === "speaker" && captured.getVideoTracks().some(track => track.getSettings().displaySurface === "monitor")) {
+        throw new Error("Entire-screen sharing is disabled. Choose a browser tab with audio instead.");
+      }
       if (!captured.getAudioTracks().some(track => track.readyState === "live")) {
         throw new Error("No audio was shared. Choose the playing tab and enable Share tab audio.");
       }

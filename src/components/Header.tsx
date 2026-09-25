@@ -58,7 +58,7 @@ type SearchResult =
   | { type: "song"; items: Track[] }
   | { type: "artistWithTopTracks"; artist: Artist; topTracks: Track[] };
 
-export const Breadcrumbs = () => {
+export const Breadcrumbs = ({ actions }: { actions?: React.ReactNode }) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -93,8 +93,8 @@ export const Breadcrumbs = () => {
   return (
     <div className="lg:relative fixed top-0 left-0 right-0 z-40 lg:z-auto bg-black/60 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none px-4 lg:px-0 py-4 lg:py-0 border-b border-white/5 lg:border-0 transition-all duration-300 pl-20 lg:pl-0">
       <div className="flex items-center justify-between w-full pr-4 lg:pr-0">
-        <Breadcrumb>
-          <BreadcrumbList>
+        <Breadcrumb className="min-w-0 flex-1 overflow-hidden">
+          <BreadcrumbList className="flex-nowrap overflow-x-auto whitespace-nowrap">
             <BreadcrumbItem>
               <BreadcrumbLink
                 asChild
@@ -141,7 +141,7 @@ export const Breadcrumbs = () => {
             })}
           </BreadcrumbList>
         </Breadcrumb>
-        <ThemeSwitcher />
+        <div className="ml-3 flex shrink-0 items-center gap-2">{actions}<ThemeSwitcher /></div>
       </div>
 
       <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>

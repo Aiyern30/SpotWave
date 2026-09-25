@@ -33,10 +33,10 @@ function harness(getDisplayMedia) {
 }
 function stream(audio = true) {
   const tracks = [track(), ...(audio ? [track()] : [])];
-  return { tracks, getTracks: () => tracks, getAudioTracks: () => audio ? [tracks[1]] : [] };
+  return { tracks, getTracks: () => tracks, getVideoTracks: () => [tracks[0]], getAudioTracks: () => audio ? [tracks[1]] : [] };
 }
 function track() {
-  return { readyState: 'live', stopped: false, stop() { this.stopped = true; }, addEventListener(_, fn) { this.ended = fn; } };
+  return { getSettings: () => ({ displaySurface: 'browser' }), readyState: 'live', stopped: false, stop() { this.stopped = true; }, addEventListener(_, fn) { this.ended = fn; } };
 }
 test('sharing keeps all tracks alive until explicit stop, then closes audio context', async () => {
   const media = stream(); const h = harness(async () => media);
@@ -67,4 +67,16 @@ test('no audio and late permission responses do not leak tracks', async () => {
   pending.dispose(); resolve(late); await request;
   assert.ok(late.tracks.every(t => t.stopped));
   assert.equal(pending.contexts.length, 0);
+});
+
+test('entire-screen capture is rejected and released', async () => {
+  const media = stream();
+  media.tracks[0].getSettings = () => ({ displaySurface: 'monitor' });
+  const h = harness(async options => {
+    assert.equal(options.monitorTypeSurfaces, 'exclude');
+    return media;
+  });
+  await h.capture.startListening('speaker');
+  assert.ok(media.tracks.every(t => t.stopped));
+  assert.equal(h.capture.analyser.current, null);
 });
