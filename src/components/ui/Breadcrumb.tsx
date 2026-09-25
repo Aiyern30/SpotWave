@@ -9,7 +9,7 @@ const Breadcrumb = React.forwardRef<
   React.ComponentPropsWithoutRef<"nav"> & {
     separator?: React.ReactNode;
   }
->(({ ...props }, ref) => <nav ref={ref} aria-label="breadcrumb" {...props} />);
+>(({ className, ...props }, ref) => <nav ref={ref} aria-label="breadcrumb" className={cn("min-w-0", className)} {...props} />);
 Breadcrumb.displayName = "Breadcrumb";
 
 const BreadcrumbList = React.forwardRef<
@@ -19,7 +19,7 @@ const BreadcrumbList = React.forwardRef<
   <ol
     ref={ref}
     className={cn(
-      "flex flex-wrap items-center gap-1.5 break-words text-sm text-brand/80 sm:gap-2.5",
+      "flex min-w-0 flex-nowrap items-center gap-1.5 text-sm text-brand/80 sm:gap-2.5",
       className,
     )}
     {...props}
@@ -33,7 +33,7 @@ const BreadcrumbItem = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <li
     ref={ref}
-    className={cn("inline-flex items-center gap-1.5", className)}
+    className={cn("inline-flex min-w-0 items-center gap-1.5", className)}
     {...props}
   />
 ));
@@ -51,7 +51,7 @@ const BreadcrumbLink = React.forwardRef<
     <Comp
       ref={ref}
       className={cn(
-        "text-brand/80 transition-colors hover:text-brand",
+        "block truncate text-zinc-400 transition-colors hover:text-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand",
         className,
       )}
       {...props}
@@ -69,7 +69,7 @@ const BreadcrumbPage = React.forwardRef<
     role="link"
     aria-disabled="true"
     aria-current="page"
-    className={cn("font-medium text-brand", className)}
+    className={cn("block truncate font-medium text-brand", className)}
     {...props}
   />
 ));
@@ -83,7 +83,7 @@ const BreadcrumbSeparator = ({
   <li
     role="presentation"
     aria-hidden="true"
-    className={cn("[&>svg]:size-3.5", className)}
+    className={cn("shrink-0 [&>svg]:size-3.5", className)}
     {...props}
   >
     {children ?? <ChevronRightIcon />}

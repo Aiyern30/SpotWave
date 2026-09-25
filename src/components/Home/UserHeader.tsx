@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import styles from "./UserHeader.module.css";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -62,64 +63,24 @@ interface UserHeaderProps {
 }
 
 export function UserHeaderSkeleton() {
-  return (
-    <div className="relative overflow-hidden rounded-xl border border-brand/20 bg-gradient-to-br from-brand/30 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--brand-primary)/0.15),transparent_70%)]" />
-
-      <div className="relative flex flex-col items-center space-y-6 p-4 sm:p-8 lg:flex-row lg:items-start lg:space-y-0 lg:space-x-8">
-        <Skeleton className="aspect-square h-auto w-full max-w-[320px] shrink-0 rounded-xl" />
-
-        <div className="min-w-0 w-full flex-1 space-y-6 text-center lg:text-left">
-          <div className="space-y-3">
-            <Skeleton className="mx-auto h-7 w-28 rounded-full lg:mx-0" />
-            <div className="space-y-2">
-              <Skeleton className="mx-auto h-14 w-full max-w-2xl lg:mx-0" />
-              <Skeleton className="mx-auto h-14 w-3/4 max-w-xl lg:mx-0" />
-            </div>
-            <Skeleton className="mx-auto h-6 w-full max-w-2xl lg:mx-0" />
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-6 lg:justify-start">
-            <div className="flex items-center gap-3">
-              <Skeleton className="h-8 w-8 rounded-full" />
-              <Skeleton className="h-5 w-24" />
-            </div>
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-5 w-5 rounded" />
-              <Skeleton className="h-5 w-20" />
-            </div>
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-5 w-5 rounded" />
-              <Skeleton className="h-5 w-24" />
-            </div>
-          </div>
+  return <div className={styles.root} role="status" aria-label="Loading playlist" aria-busy="true">
+    <div aria-hidden="true" className={styles.surface}>
+      <div className={styles.layout}>
+        <Skeleton className={`${styles.cover} aspect-square rounded-xl motion-reduce:animate-none`} />
+        <div className={styles.info}>
+          <Skeleton className="h-6 w-24 motion-reduce:animate-none" />
+          <Skeleton className="h-10 w-full motion-reduce:animate-none" />
+          <div className="space-y-2"><Skeleton className="h-4 w-full motion-reduce:animate-none" /><Skeleton className="h-4 w-2/3 motion-reduce:animate-none" /></div>
+          <div className="flex flex-wrap gap-3"><Skeleton className="h-8 w-28 motion-reduce:animate-none" /><Skeleton className="h-8 w-20 motion-reduce:animate-none" /></div>
         </div>
-
-        <div className="flex shrink-0 flex-row items-center justify-center gap-3 lg:flex-col">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={index} className="h-12 w-12 rounded-full" />
-          ))}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 p-4 pt-0 sm:grid-cols-2 sm:p-8 sm:pt-0">
-        {Array.from({ length: 2 }).map((_, index) => (
-          <div
-            key={index}
-            className="rounded-xl border border-brand/20 bg-gradient-to-br from-brand/30 to-zinc-800/50 p-4 backdrop-blur-sm sm:p-6"
-          >
-            <div className="flex items-center gap-4">
-              <Skeleton className="h-14 w-14 shrink-0 rounded-xl" />
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-7 w-28" />
-              </div>
-            </div>
-          </div>
-        ))}
+        <div className={styles.actions}>{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-12 w-12 rounded-full motion-reduce:animate-none" />)}</div>
       </div>
     </div>
-  );
+    <div aria-hidden="true" className={styles.stats}>{[0, 1].map(index => <div key={index} className={styles.stat}>
+      <Skeleton className="h-12 w-12 shrink-0 rounded-xl motion-reduce:animate-none" />
+      <div className="min-w-0 flex-1 space-y-2"><Skeleton className="h-4 w-20 motion-reduce:animate-none" /><Skeleton className="h-7 w-3/4 motion-reduce:animate-none" /></div>
+    </div>)}</div>
+  </div>;
 }
 
 export default function UserHeader({
@@ -147,7 +108,6 @@ export default function UserHeader({
   const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
   const [aiSummary, setAiSummary] = useState<any>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
-  const [inputWidth, setInputWidth] = useState<number>(0);
   const [generatingAI, setGeneratingAI] = useState(false);
   const [ownerProfile, setOwnerProfile] = useState<UserProfile | null>(null);
 
@@ -166,7 +126,6 @@ export default function UserHeader({
   const nameInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const hiddenSpanRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -242,14 +201,6 @@ export default function UserHeader({
         .finally(() => setSummaryLoading(false));
     }
   }, [summaryDialogOpen, aiSummary, playlist.tracks.items, token]);
-
-  // Calculate input width based on text content
-  useEffect(() => {
-    if (hiddenSpanRef.current) {
-      const width = hiddenSpanRef.current.offsetWidth;
-      setInputWidth(Math.max(width + 40, 200)); // Add padding and set minimum width
-    }
-  }, [inputValue, nameEditing]);
 
   const updatePlaylistDetails = async () => {
     if (!id || !playlist.id || !token) return;
@@ -595,24 +546,15 @@ export default function UserHeader({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Hidden span for measuring text width */}
-      <span
-        ref={hiddenSpanRef}
-        className="absolute opacity-0 pointer-events-none text-4xl lg:text-6xl font-bold whitespace-nowrap"
-        aria-hidden="true"
-      >
-        {inputValue}
-      </span>
-
+    <div className={styles.root}>
       {/* Enhanced Playlist Header */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand/30 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm border border-brand/20">
+      <div className={styles.surface}>
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--brand-primary)/0.15),transparent_70%)]" />
 
-        <div className="relative flex min-w-0 flex-col items-center space-y-6 p-4 sm:p-8 lg:flex-row lg:items-start lg:space-y-0 lg:space-x-8">
+        <div className={styles.layout}>
           {/* Enhanced Playlist Cover Image */}
-          <div className="relative w-full max-w-[320px] shrink-0 group">
+          <div className={`${styles.cover} group`}>
             <div
               className="relative w-full"
               onMouseEnter={() => setIsHovered(true)}
@@ -642,7 +584,7 @@ export default function UserHeader({
                 {isOwner && (
                   <div
                     className={`absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center transition-all duration-300 ${
-                      isHovered ? "opacity-100" : "opacity-0"
+                      isHovered ? "opacity-100" : "opacity-0 focus-within:opacity-100 [@media(hover:none)]:opacity-100"
                     }`}
                   >
                     <Dialog
@@ -656,7 +598,7 @@ export default function UserHeader({
                           className="bg-brand/10 hover:bg-brand/20 text-white border-brand/30 backdrop-blur-sm"
                         >
                           <Camera className="h-5 w-5 mr-2" />
-                          Change Photo
+                          Edit cover
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="bg-zinc-900 border-brand/20 max-w-md">
@@ -737,7 +679,7 @@ export default function UserHeader({
           </div>
 
           {/* Enhanced Playlist Info */}
-          <div className="min-w-0 w-full flex-1 space-y-6 text-center lg:text-left">
+          <div className={styles.info}>
             <div className="space-y-3">
               <Badge
                 variant="secondary"
@@ -750,8 +692,8 @@ export default function UserHeader({
               {/* Enhanced Editable Title */}
               <div className="relative">
                 {nameEditing ? (
-                  <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 w-full max-w-4xl">
-                    <div className="relative flex-1 w-full">
+                  <div className="flex min-w-0 flex-col items-start gap-3 w-full">
+                    <div className="relative min-w-0 w-full">
                       <Input
                         ref={nameInputRef}
                         type="text"
@@ -760,7 +702,7 @@ export default function UserHeader({
                         onKeyDown={(e: React.KeyboardEvent<Element>) =>
                           handleKeyPress(e, "name")
                         }
-                        className="text-3xl lg:text-5xl font-bold bg-zinc-900/50 border-2 border-brand/30 focus:border-brand text-white px-4 py-2 h-auto leading-tight rounded-xl transition-all shadow-2xl backdrop-blur-md w-full"
+                        className="text-xl sm:text-2xl font-bold bg-zinc-900/50 border-2 border-brand/30 focus:border-brand text-white px-4 py-2 h-auto leading-tight rounded-xl transition-all shadow-2xl backdrop-blur-md w-full"
                         disabled={updating}
                       />
                       {updating && (
@@ -769,7 +711,7 @@ export default function UserHeader({
                         </div>
                       )}
                     </div>
-                    <div className="flex space-x-2 flex-shrink-0">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         size="lg"
                         onClick={() => {
@@ -797,8 +739,8 @@ export default function UserHeader({
                     </div>
                   </div>
                 ) : (
-                  <div className="group flex min-w-0 flex-wrap items-center justify-center gap-3 lg:justify-start">
-                    <h1 className="min-w-0 break-words text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
+                  <div className="group flex min-w-0 flex-wrap items-center justify-start gap-3">
+                    <h1 className={styles.title}>
                       {inputValue}
                     </h1>
                     {isOwner && (
@@ -809,8 +751,9 @@ export default function UserHeader({
                               <Button
                                 variant="ghost"
                                 size="sm"
+                                aria-label="Edit playlist name"
                                 onClick={() => setNameEditing(true)}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-white hover:bg-zinc-800/50 flex-shrink-0"
+                                className="opacity-100 transition-colors text-zinc-400 hover:text-white hover:bg-zinc-800/50 flex-shrink-0"
                               >
                                 <Edit3 className="h-4 w-4" />
                               </Button>
@@ -1063,7 +1006,7 @@ export default function UserHeader({
                       className="text-lg bg-zinc-900/50 border-2 border-brand/20 focus:border-brand text-zinc-300 resize-none rounded-xl p-4 min-h-[120px] transition-all focus:ring-4 focus:ring-brand/10"
                       disabled={updating}
                     />
-                    <div className="flex space-x-3">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         size="default"
                         onClick={() => {
@@ -1096,7 +1039,7 @@ export default function UserHeader({
                   </div>
                 ) : (
                   <div className="group flex items-start space-x-2">
-                    <p className="max-w-2xl break-words text-lg leading-relaxed text-zinc-300">
+                    <p className="min-w-0 max-w-2xl [overflow-wrap:anywhere] text-sm leading-relaxed text-zinc-300 sm:text-base">
                       {descriptionValue ||
                         (isOwner ? "Add a description..." : "No description")}
                     </p>
@@ -1107,8 +1050,9 @@ export default function UserHeader({
                             <Button
                               variant="ghost"
                               size="sm"
+                              aria-label="Edit description"
                               onClick={() => setDescriptionEditing(true)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-400 hover:text-white hover:bg-zinc-800/50 flex-shrink-0"
+                              className="opacity-100 transition-colors text-zinc-400 hover:text-white hover:bg-zinc-800/50 flex-shrink-0"
                             >
                               <Edit3 className="h-4 w-4" />
                             </Button>
@@ -1125,8 +1069,8 @@ export default function UserHeader({
             </div>
 
             {/* Enhanced Playlist Metadata */}
-            <div className="flex flex-wrap justify-center gap-4 text-zinc-300 sm:gap-6 lg:justify-start">
-              <div className="flex items-center space-x-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-3 text-sm text-zinc-300">
+              <div className="flex min-w-0 max-w-full items-center gap-2">
                 <Avatar className="w-8 h-8 ring-2 ring-white/20">
                   <AvatarImage
                     src={ownerProfile?.images?.[0]?.url || "/placeholder.svg"}
@@ -1137,7 +1081,7 @@ export default function UserHeader({
                   </AvatarFallback>
                 </Avatar>
                 <button
-                  className="hover:text-white transition-colors font-medium hover:underline"
+                  className="min-w-0 truncate text-left hover:text-white transition-colors font-medium hover:underline"
                   onClick={() =>
                     router.push(
                       `/Profile/${playlist.owner.id}?name=${encodeURIComponent(
@@ -1158,7 +1102,7 @@ export default function UserHeader({
               </div>
 
               <div className="flex items-center space-x-2">
-                <Clock className="h-4 w-4 text-blue-500" />
+                <Clock className="h-4 w-4 text-brand" />
                 <span className="font-medium">
                   {formatDuration(totalDuration)}
                 </span>
@@ -1167,7 +1111,7 @@ export default function UserHeader({
           </div>
 
           {/* Enhanced Action Buttons */}
-          <div className="flex w-full flex-row flex-wrap items-center justify-center gap-3 lg:mt-6 lg:w-auto lg:flex-col lg:items-end lg:justify-end lg:gap-3">
+          <div className={styles.actions}>
             {isOwner && (
               <>
                 <Settings playlistID={playlist.id} />
@@ -1345,14 +1289,14 @@ export default function UserHeader({
       </div>
 
       {/* Enhanced Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="bg-gradient-to-br from-brand/30 to-zinc-800/50 border-brand/20 backdrop-blur-sm hover:bg-zinc-800/30 transition-all duration-300">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-brand/20 rounded-xl ring-1 ring-brand/30">
+      <div className={styles.stats}>
+        <Card className="min-w-0 bg-zinc-900/90 border-brand/15 rounded-xl">
+          <CardContent className="p-4">
+            <div className="flex min-w-0 items-center gap-4">
+              <div className="shrink-0 p-3 bg-brand/20 rounded-xl ring-1 ring-brand/30">
                 <Music className="h-6 w-6 text-brand" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm text-zinc-400 font-medium">
                   Total Tracks
                 </p>
@@ -1364,13 +1308,13 @@ export default function UserHeader({
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-brand/30 to-zinc-800/50 border-brand/20 backdrop-blur-sm hover:bg-zinc-800/30 transition-all duration-300">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-brand/20 rounded-xl ring-1 ring-brand/30">
+        <Card className="min-w-0 bg-zinc-900/90 border-brand/15 rounded-xl">
+          <CardContent className="p-4">
+            <div className="flex min-w-0 items-center gap-4">
+              <div className="shrink-0 p-3 bg-brand/20 rounded-xl ring-1 ring-brand/30">
                 <Users className="h-6 w-6 text-brand" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm text-zinc-400 font-medium">Created by</p>
                 <p className="text-2xl font-bold text-white truncate">
                   {playlist.owner.display_name}
