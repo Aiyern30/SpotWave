@@ -56,6 +56,8 @@ import {
   UserPlus,
   Disc,
   User,
+  Search,
+  X,
 } from "lucide-react";
 import { formatSongDuration } from "@/utils/function";
 import { fetchUserProfile } from "@/utils/fetchProfile";
@@ -71,6 +73,7 @@ const PlaylistPage = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [displayUI, setDisplayUI] = useState<CollectionView>("Table");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const [token, setToken] = useState<string>("");
   const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
@@ -349,6 +352,20 @@ const PlaylistPage = () => {
     [playlist?.tracks?.items],
   );
 
+  const filteredTracks = useMemo(() => {
+    if (!searchQuery.trim()) return memoizedTracks;
+    const q = searchQuery.toLowerCase();
+    return memoizedTracks.filter((item) => {
+      const track = item.track;
+      const nameMatch = track.name.toLowerCase().includes(q);
+      const artistMatch = track.artists.some((a: { name: string }) =>
+        a.name.toLowerCase().includes(q),
+      );
+      const albumMatch = track.album?.name?.toLowerCase().includes(q);
+      return nameMatch || artistMatch || albumMatch;
+    });
+  }, [memoizedTracks, searchQuery]);
+
   const isCurrentTrackPlaying = (trackId: string) => {
     return currentTrack?.id === trackId && isPlaying;
   };
@@ -415,16 +432,54 @@ const PlaylistPage = () => {
         refetch={fetchPlaylistDetails}
       />
 
-      {/* Display Toggle */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-          Songs
-        </h2>
-        <ViewSelector
-          value={displayUI}
-          onChange={setDisplayUI}
-          options={["Table", "Grid"]}
-        />
+      {/* Display Toggle + Search */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            Songs
+            {searchQuery.trim() && (
+              <span className="ml-3 text-base font-normal text-zinc-400">
+                {filteredTracks.length} result{filteredTracks.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </h2>
+          <ViewSelector
+            value={displayUI}
+            onChange={setDisplayUI}
+            options={["Table", "Grid"]}
+          />
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search in playlist…"
+            className="w-full bg-zinc-800/60 border border-zinc-700/50 rounded-lg pl-9 pr-9 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:border-transparent transition-all"
+            style={{
+              // @ts-ignore
+              "--tw-ring-color": "hsl(var(--brand-primary) / 0.5)",
+            } as React.CSSProperties}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "hsl(var(--brand-primary) / 0.6)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "";
+            }}
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Songs Display */}
@@ -452,7 +507,14 @@ const PlaylistPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {memoizedTracks.map((playlistTrack, index) => {
+              {filteredTracks.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12 text-zinc-500">
+                    No songs match &ldquo;{searchQuery}&rdquo;
+                  </TableCell>
+                </TableRow>
+              ) : null}
+              {filteredTracks.map((playlistTrack, index) => {
                 const { track } = playlistTrack;
                 const isCurrentlyPlaying = isCurrentTrackPlaying(track.id);
 
@@ -650,7 +712,12 @@ const PlaylistPage = () => {
         </div>
       ) : (
         <div className="media-grid">
-          {memoizedTracks.map((playlistTrack, index) => {
+          {filteredTracks.length === 0 && searchQuery.trim() ? (
+            <div className="col-span-full text-center py-12 text-zinc-500">
+              No songs match &ldquo;{searchQuery}&rdquo;
+            </div>
+          ) : null}
+          {filteredTracks.map((playlistTrack, index) => {
             const { track } = playlistTrack;
             return (
               <PlaylistCard
