@@ -286,7 +286,7 @@ const PlaylistPage = () => {
       if (response.ok) {
         const { toast } = await import("react-toastify");
         toast.success(`Removed "${trackName}" from playlist`);
-        fetchPlaylistDetails();
+        fetchPlaylistDetails(true);
       } else {
         throw new Error("Failed to remove");
       }
