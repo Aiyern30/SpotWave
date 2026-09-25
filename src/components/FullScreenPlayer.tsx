@@ -3,6 +3,7 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import styles from "./FullScreenPlayer.module.css";
 import { useTrackLyrics } from "@/hooks/useTrackLyrics";
+import { useAudioCapture } from "@/contexts/AudioCaptureContext";
 import AudioVisualizer from "@/components/AudioVisualizer";
 import LyricsPanel from "@/components/LyricsPanel";
 
@@ -143,16 +144,7 @@ export const FullScreenPlayer = ({
   const [currentPlayingTrackId, setCurrentPlayingTrackId] = useState<
     string | null
   >(null);
-  // Audio capture refs (for Share Audio/Mic)
-  const localAudioContextRef = useRef<AudioContext | null>(null);
-  const localAnalyserRef = useRef<AnalyserNode | null>(null);
-  const localStreamRef = useRef<MediaStream | null>(null);
-  const localSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-
-  const [captureMode, setCaptureMode] = useState<"none" | "mic" | "speaker">(
-    "none",
-  );
-  const captureRequest = useRef(0);
+  const { analyser: localAnalyserRef, captureMode, startListening, stopListening, pending: capturePending, error: captureError } = useAudioCapture();
 
   const [sensitivity, setSensitivity] = useState(1.5);
   const [maxRipples, setMaxRipples] = useState(8);
@@ -177,88 +169,6 @@ export const FullScreenPlayer = ({
 
     return () => clearInterval(interval);
   }, [isOpen, isPlaying, duration]);
-
-  const startListening = async (mode: "mic" | "speaker") => {
-    stopListening();
-    const request = ++captureRequest.current;
-    try {
-      let stream: MediaStream;
-      if (mode === "speaker") {
-        stream = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
-          audio: true,
-        });
-        const videoTracks = stream.getVideoTracks();
-        videoTracks.forEach((track) => track.stop());
-        if (stream.getAudioTracks().length === 0) {
-          throw new Error("No audio found in system stream.");
-        }
-      } else {
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false,
-          },
-        });
-      }
-
-      if (request !== captureRequest.current) {
-        stream.getTracks().forEach(track => track.stop());
-        return;
-      }
-      localStreamRef.current = stream;
-      stream.getAudioTracks().forEach(track => track.addEventListener("ended", () => {
-        if (localStreamRef.current === stream) stopListening();
-      }, { once: true }));
-      const audioContext = new (
-        window.AudioContext || (window as any).webkitAudioContext
-      )();
-      localAudioContextRef.current = audioContext;
-      if (audioContext.state === "suspended") await audioContext.resume();
-      if (request !== captureRequest.current) return;
-
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.8;
-      localAnalyserRef.current = analyser;
-
-      const source = audioContext.createMediaStreamSource(stream);
-      localSourceRef.current = source;
-      source.connect(analyser);
-
-      setCaptureMode(mode);
-
-    } catch (err) {
-      if (request !== captureRequest.current) return;
-      stopListening();
-      console.error("Error setting up audio:", err);
-      alert(
-        err instanceof Error
-          ? `Could not access ${mode === "mic" ? "microphone" : "audio"}: ${err.message}`
-          : "Could not access audio source. Please ensure you have granted the necessary permissions.",
-      );
-    }
-  };
-
-  const stopListening = () => {
-    captureRequest.current += 1;
-    if (localSourceRef.current) {
-      localSourceRef.current.disconnect();
-      localSourceRef.current = null;
-    }
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => track.stop());
-      localStreamRef.current = null;
-    }
-    if (localAudioContextRef.current) {
-      localAudioContextRef.current.close();
-      localAudioContextRef.current = null;
-    }
-    localAnalyserRef.current = null;
-    setCaptureMode("none");
-
-  };
 
   useEffect(() => {
     setLocalVolume(volume);
@@ -457,16 +367,6 @@ export const FullScreenPlayer = ({
 
   const trackImage = currentTrack?.album.images[0]?.url || "/default-artist.png";
   const trackTitle = currentTrack?.name || "Now Playing";
-  // Clean up audio capture only when the component unmounts or closes
-  useEffect(() => {
-    if (!isOpen) {
-      stopListening();
-    }
-    return () => {
-      stopListening();
-    };
-  }, [isOpen]);
-
   if (!isOpen || !currentTrack) return null;
 
   return (
@@ -523,9 +423,10 @@ export const FullScreenPlayer = ({
                   <summary className="cursor-pointer text-sm font-medium text-zinc-300">Visualizer settings</summary>
                   <p className="mt-3 text-sm text-zinc-400">Automatic animation starts with playback. For sound-reactive visuals, optionally share audio or use your microphone.</p>
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <Button variant="ghost" aria-pressed={captureMode === "none"} className="border border-brand/25 text-zinc-100 hover:bg-brand/15 hover:text-zinc-100" onClick={stopListening}>Automatic</Button>
-                    <Button variant="ghost" className="border border-brand/25 text-zinc-100 hover:bg-brand/15 hover:text-zinc-100" onClick={() => captureMode === "speaker" ? stopListening() : startListening("speaker")}>Share audio</Button>
-                    <Button variant="ghost" className="border border-brand/25 text-zinc-100 hover:bg-brand/15 hover:text-zinc-100" onClick={() => captureMode === "mic" ? stopListening() : startListening("mic")}>Use microphone</Button>
+                    {captureError && <p role="alert" className="basis-full text-sm text-red-300">{captureError}</p>}
+                    <Button variant="ghost" aria-pressed={captureMode === "none"} className="border border-brand/25 text-zinc-100 hover:bg-brand/15 hover:text-zinc-100" onClick={stopListening}>Automatic / stop sharing</Button>
+                    <Button variant="ghost" className="border border-brand/25 text-zinc-100 hover:bg-brand/15 hover:text-zinc-100" disabled={capturePending} onClick={() => captureMode === "speaker" ? stopListening() : startListening("speaker")}>Share audio</Button>
+                    <Button variant="ghost" className="border border-brand/25 text-zinc-100 hover:bg-brand/15 hover:text-zinc-100" disabled={capturePending} onClick={() => captureMode === "mic" ? stopListening() : startListening("mic")}>Use microphone</Button>
                     {captureMode !== "none" && <Button variant="ghost" className="text-red-300 hover:bg-red-500/10 hover:text-red-300" onClick={stopListening}>Stop capture</Button>}
                   </div>
                   <div className="mt-4 grid grid-cols-2 gap-5">

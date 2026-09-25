@@ -11,6 +11,7 @@ type Props = {
   color: string;
   sensitivity: number;
   detail: number;
+  background?: boolean;
 };
 type Mode = "Orbit" | "Ribbons" | "Spectrum";
 
@@ -19,7 +20,7 @@ export default function AudioVisualizer(props: Props) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const status = useRef<HTMLSpanElement>(null);
   const latest = useRef(props);
-  const [mode, setMode] = useState<Mode>("Orbit");
+  const [mode, setMode] = useState<Mode>(props.background ? "Ribbons" : "Orbit");
   useEffect(() => { latest.current = props; });
 
   useEffect(() => {
@@ -58,7 +59,7 @@ export default function AudioVisualizer(props: Props) {
       const label = p.reducedMotion ? "Reduced motion" : !moving ? "Paused" : p.captured
         ? (silentFor > 1 ? "Listening for audio" : "Live audio") : live ? "Live audio" : "Automatic animation";
       if (status.current && status.current.textContent !== label) status.current.textContent = label;
-      const smoothing = moving ? 1 - Math.exp(-dt * 12) : 1;
+      const smoothing = moving ? 1 - Math.exp(-dt * (p.background ? 22 : 12)) : 1;
       let bass = 0;
       for (let i = 0; i < bands.length; i++) {
         // Logarithmic spacing gives bass and midrange room instead of over-weighting treble.
@@ -67,7 +68,7 @@ export default function AudioVisualizer(props: Props) {
         const swell = .5 + .5 * Math.sin(time * 1.8);
         const simulated = .24 + .22 * swell + .16 * Math.sin(time * 2.2 + i * .16) + .1 * Math.sin(time * .9 - i * .29);
         const target = !moving ? .08 : ambient ? simulated : samples[index] / 255;
-        bands[i] += (Math.min(1, target * p.sensitivity * .7) - bands[i]) * smoothing;
+        bands[i] += ((p.background ? 1 - Math.exp(-Math.max(0, target) * p.sensitivity) : Math.min(1, target * p.sensitivity * .7)) - bands[i]) * smoothing;
         if (i < 18) bass += bands[i] / 18;
       }
       cooldown -= dt;
@@ -80,10 +81,10 @@ export default function AudioVisualizer(props: Props) {
       const rgb = /^#[0-9a-f]{6}$/i.test(p.color) ? [1, 3, 5].map(i => parseInt(p.color.slice(i, i + 2), 16)).join(",") : "34,197,94";
       const tint = (alpha: number) => `rgba(${rgb},${alpha})`;
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-      ctx.fillStyle = "#09090b";
-      ctx.fillRect(0, 0, width, height);
+      ctx.clearRect(0, 0, width, height);
+      if (!p.background) { ctx.fillStyle = "#09090b"; ctx.fillRect(0, 0, width, height); }
       const cx = width / 2, cy = height / 2;
-      const size = Math.min(width, height) * .34;
+      const size = Math.min(width, height) * (p.background ? .65 : .34);
       const atmosphere = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(width, height) * .55);
       atmosphere.addColorStop(0, tint(.09 + bass * .07));
       atmosphere.addColorStop(1, tint(0));
@@ -130,7 +131,7 @@ export default function AudioVisualizer(props: Props) {
             if (!i) ctx.moveTo(width * .04, y); else ctx.lineTo(width * (.04 + u * .92), y);
           }
           ctx.strokeStyle = layer === 6 ? "rgba(244,244,245,.8)" : tint(.12 + (1 - Math.abs(layer - 5.5) / 6) * .6);
-          ctx.lineWidth = layer === 6 ? 2 : 1;
+          ctx.lineWidth = p.background ? (layer === 6 ? 3 : 1.5) : layer === 6 ? 2 : 1;
           ctx.stroke();
         }
       } else {
@@ -178,14 +179,14 @@ export default function AudioVisualizer(props: Props) {
     document.addEventListener("visibilitychange", restart);
     restart();
     return () => { cancelAnimationFrame(frame); resize.disconnect(); intersection.disconnect(); document.removeEventListener("visibilitychange", restart); };
-  }, [mode, props.playing, props.captured, props.reducedMotion, props.color]);
+  }, [mode, props.playing, props.captured, props.reducedMotion, props.color, props.background]);
 
   return <div className="relative h-full w-full overflow-hidden rounded-2xl">
     <canvas ref={canvas} className="absolute inset-0 h-full w-full" aria-label={`${mode} music visualization`} role="img" />
-    <div className="absolute inset-x-3 top-3 flex justify-center gap-1" role="group" aria-label="Visualization style">
+    {!props.background && <><div className="absolute inset-x-3 top-3 flex justify-center gap-1" role="group" aria-label="Visualization style">
       {(["Orbit", "Ribbons", "Spectrum"] as const).map(value => <button key={value} onClick={() => setMode(value)} aria-pressed={mode === value}
         className={`min-h-10 rounded-full border px-4 text-xs font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand ${mode === value ? "border-brand/40 bg-zinc-900 text-zinc-100" : "border-white/10 bg-zinc-950/90 text-zinc-400 hover:text-zinc-100"}`}>{value}</button>)}
     </div>
-    <span ref={status} className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-zinc-950/90 px-3 py-1.5 text-xs text-zinc-400">Ambient animation</span>
+    <span ref={status} className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-zinc-950/90 px-3 py-1.5 text-xs text-zinc-400">Ambient animation</span></>}
   </div>;
 }

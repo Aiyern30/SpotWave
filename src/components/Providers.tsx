@@ -1,5 +1,6 @@
 "use client";
 
+import { AudioCaptureProvider } from "@/contexts/AudioCaptureContext";
 import { useState } from "react";
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -18,6 +19,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <AuthProvider>
       <ThemeProvider>
         <PlayerProvider>
+          <AudioCaptureProvider>
           <FullScreenPlayerProvider
             value={{ isFullScreenOpen, setIsFullScreenOpen }}
           >
@@ -36,6 +38,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <Toaster position="top-right" richColors />
             {children}
           </FullScreenPlayerProvider>
+          </AudioCaptureProvider>
         </PlayerProvider>
       </ThemeProvider>
     </AuthProvider>

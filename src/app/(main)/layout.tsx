@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import InQueueWindow from "@/components/InQueueWindow";
+import BackgroundVisualizer from "@/components/BackgroundVisualizer";
 import Sidebar from "@/components/Sidebar";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useFullScreenPlayer } from "@/contexts/FullScreenPlayerContext";
@@ -35,7 +36,7 @@ export default function MainLayout({
   const isGamePage = pathname.startsWith("/Games/") && pathname !== "/Games";
 
   return (
-    <div className="flex min-h-[100dvh] bg-black">
+    <div className="relative isolate flex min-h-[100dvh] bg-black">
       {!isFullScreenOpen && (
         <Sidebar
           isOpen={sidebarOpen}
@@ -55,13 +56,14 @@ export default function MainLayout({
         } ${isPlayerVisible && !isFullScreenOpen ? "pb-[90px]" : ""}`}
       >
         <div className="px-3 sm:px-6 lg:px-8 pt-20 md:pt-6 space-y-6 flex flex-col">
-          <Breadcrumbs />
+          {!isFullScreenOpen && <BackgroundVisualizer />}
+          <div className="relative z-[1]"><Breadcrumbs /></div>
           {!isGamePage && (
-            <div className="animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="relative z-[1] animate-in fade-in slide-in-from-top-4 duration-700">
               <SearchSection />
             </div>
           )}
-          <main className="min-w-0 flex-1 pb-8">{children}</main>
+          <main className="relative z-[1] min-w-0 flex-1 pb-8">{children}</main>
         </div>
 
         {pathname !== "/Events" && !isFullScreenOpen && (
