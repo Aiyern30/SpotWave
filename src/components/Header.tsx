@@ -182,8 +182,93 @@ export const SearchSection = () => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const [canGoForward, setCanGoForward] = useState(false);
+  const [canGoBack, setCanGoBack] = useState(false);
+  const traversalRef = useRef(false);
+  const isInitialMount = useRef(true);
+
+  // Listen to popstate (back/forward history traversals)
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      traversalRef.current = true;
+      const stateIdx = e.state?.__sw_idx;
+      const maxIdx = parseInt(sessionStorage.getItem("sw_hist_max") || "0", 10) || 0;
+
+      if (typeof stateIdx === "number") {
+        sessionStorage.setItem("sw_hist_idx", String(stateIdx));
+        setCanGoForward(stateIdx < maxIdx);
+        setCanGoBack(stateIdx > 0 || window.history.length > 1);
+      } else {
+        const prevIdx = parseInt(sessionStorage.getItem("sw_hist_idx") || "0", 10) || 0;
+        setCanGoForward(prevIdx < maxIdx);
+        setCanGoBack(prevIdx > 0 || window.history.length > 1);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  // Track route changes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let maxIdx = parseInt(sessionStorage.getItem("sw_hist_max") || "0", 10) || 0;
+    let currentIdx: number;
+
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      const stateIdx = window.history.state?.__sw_idx;
+      if (typeof stateIdx === "number") {
+        currentIdx = stateIdx;
+      } else {
+        const savedIdx = parseInt(sessionStorage.getItem("sw_hist_idx") || "0", 10) || 0;
+        currentIdx = savedIdx;
+        try {
+          window.history.replaceState({ ...window.history.state, __sw_idx: currentIdx }, "");
+        } catch {}
+      }
+      setCanGoForward(currentIdx < maxIdx);
+      setCanGoBack(currentIdx > 0 || window.history.length > 1);
+      return;
+    }
+
+    if (traversalRef.current) {
+      traversalRef.current = false;
+      const stateIdx = window.history.state?.__sw_idx;
+      currentIdx = typeof stateIdx === "number"
+        ? stateIdx
+        : (parseInt(sessionStorage.getItem("sw_hist_idx") || "0", 10) || 0);
+    } else {
+      const prevIdx = parseInt(sessionStorage.getItem("sw_hist_idx") || "0", 10) || 0;
+      currentIdx = prevIdx + 1;
+      maxIdx = currentIdx;
+      sessionStorage.setItem("sw_hist_max", String(maxIdx));
+      try {
+        window.history.replaceState({ ...window.history.state, __sw_idx: currentIdx }, "");
+      } catch {}
+    }
+
+    sessionStorage.setItem("sw_hist_idx", String(currentIdx));
+    setCanGoForward(currentIdx < maxIdx);
+    setCanGoBack(currentIdx > 0 || window.history.length > 1);
+  }, [pathname]);
+
+  const handleBack = () => {
+    traversalRef.current = true;
+    router.back();
+    setCanGoForward(true);
+  };
+
+  const handleForward = () => {
+    if (!canGoForward) return;
+    traversalRef.current = true;
+    router.forward();
+  };
 
   const searchArtist = async (term: string): Promise<Artist[]> => {
     const token = localStorage.getItem("Token");
@@ -351,8 +436,9 @@ export const SearchSection = () => {
           type="button"
           variant="ghost"
           size="icon"
-          onClick={() => router.back()}
-          className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-zinc-900/80 hover:bg-zinc-800 text-white border border-white/10 hover:border-brand/40 transition-all shadow-sm active:scale-95 flex items-center justify-center cursor-pointer"
+          onClick={handleBack}
+          disabled={!canGoBack}
+          className={`h-10 w-10 sm:h-12 sm:w-12 rounded-full ${styles.navButton} active:scale-95 flex items-center justify-center cursor-pointer`}
           title="Go back"
           aria-label="Go back"
         >
@@ -362,9 +448,10 @@ export const SearchSection = () => {
           type="button"
           variant="ghost"
           size="icon"
-          onClick={() => router.forward()}
-          className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-zinc-900/80 hover:bg-zinc-800 text-white border border-white/10 hover:border-brand/40 transition-all shadow-sm active:scale-95 flex items-center justify-center cursor-pointer"
-          title="Go forward"
+          onClick={handleForward}
+          disabled={!canGoForward}
+          className={`h-10 w-10 sm:h-12 sm:w-12 rounded-full ${styles.navButton} active:scale-95 flex items-center justify-center cursor-pointer`}
+          title={canGoForward ? "Go forward" : undefined}
           aria-label="Go forward"
         >
           <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
