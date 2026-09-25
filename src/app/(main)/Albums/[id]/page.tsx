@@ -657,7 +657,7 @@ const AlbumsIDPage = () => {
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-9 w-9 bg-black/60 text-white hover:bg-black/80 backdrop-blur-sm rounded-full"
+                            className="h-9 w-9 bg-brand/10 hover:bg-brand hover:text-black text-zinc-200 backdrop-blur-sm rounded-full transition-all shadow-sm"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MoreHorizontal className="w-4 h-4" />
