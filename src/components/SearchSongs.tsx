@@ -685,7 +685,7 @@ export default function SearchSongs({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-12 w-12 rounded-full bg-brand text-black hover:bg-brand/80 hover:scale-105 transition-all duration-300 shadow-lg shadow-brand/20 border-none"
+                className="h-12 w-12 cursor-pointer rounded-full bg-brand text-black hover:bg-brand/80 hover:scale-105 transition-all duration-300 shadow-lg shadow-brand/20 border-none"
               >
                 <Plus className="h-5 w-5" />
               </Button>

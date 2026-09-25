@@ -31,7 +31,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/";
 import {
-  Camera,
   Edit3,
   Music,
   Clock,
@@ -551,7 +550,7 @@ export default function UserHeader({
       {/* Enhanced Playlist Header */}
       <div className={styles.surface}>
         {/* Background Pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--brand-primary)/0.15),transparent_70%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--brand-primary)/0.15),transparent_70%)]" />
 
         <div className={styles.layout}>
           {/* Enhanced Playlist Cover Image */}
@@ -595,11 +594,12 @@ export default function UserHeader({
                       <DialogTrigger asChild>
                         <Button
                           variant="secondary"
-                          size="lg"
-                          className="bg-brand/10 hover:bg-brand/20 text-white border-brand/30 backdrop-blur-sm"
+                          size="icon"
+                          aria-label="Edit playlist cover"
+                          title="Edit playlist cover"
+                          className="h-12 w-12 cursor-pointer rounded-full border-brand/30 bg-brand/10 text-white backdrop-blur-sm hover:bg-brand/20"
                         >
-                          <Camera className="h-5 w-5 mr-2" />
-                          Edit cover
+                          <Edit3 className="h-5 w-5" />
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="bg-zinc-900 border-brand/20 max-w-md">
@@ -1075,7 +1075,7 @@ export default function UserHeader({
             {/* Enhanced Playlist Metadata */}
             <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-3 text-sm text-zinc-300">
               <div className="flex min-w-0 max-w-full items-center gap-2">
-                <Avatar className="w-8 h-8 ring-2 ring-white/20">
+                <Avatar className="h-8 w-8 rounded-full">
                   <AvatarImage
                     src={ownerProfile?.images?.[0]?.url || "/placeholder.svg"}
                     className="rounded-full"
@@ -1134,7 +1134,7 @@ export default function UserHeader({
                     variant="ghost"
                     size="icon"
                     onClick={handleExportPlaylist}
-                    className="h-12 w-12 rounded-full bg-brand text-black hover:bg-brand/80 hover:scale-105 transition-all duration-300 shadow-lg shadow-brand/20 border-none"
+                    className="h-12 w-12 cursor-pointer rounded-full bg-brand text-black hover:bg-brand/80 hover:scale-105 transition-all duration-300 shadow-lg shadow-brand/20 border-none"
                   >
                     <Download className="h-5 w-5" />
                   </Button>
@@ -1154,7 +1154,7 @@ export default function UserHeader({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-12 w-12 rounded-full bg-brand text-black hover:bg-brand/80 hover:scale-105 transition-all duration-300 shadow-lg shadow-brand/20 border-none"
+                    className="h-12 w-12 cursor-pointer rounded-full bg-brand text-black hover:bg-brand/80 hover:scale-105 transition-all duration-300 shadow-lg shadow-brand/20 border-none"
                   >
                     <Sparkles className="h-4 w-4" />
                   </Button>

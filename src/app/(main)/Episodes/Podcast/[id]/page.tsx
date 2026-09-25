@@ -283,7 +283,7 @@ const PodcastDetailPage = () => {
       {/* Header Section */}
       <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand/30 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm border border-zinc-800/50 mb-10">
         {/* Background Pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--brand-primary)/0.15),transparent_70%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--brand-primary)/0.15),transparent_70%)]" />
 
         <div className="relative p-6 md:p-10 flex flex-col md:flex-row gap-8 items-center md:items-end">
           <div className="relative w-64 h-64 flex-shrink-0 shadow-[0_20px_50px_rgba(0,0,0,0.5)] group transition-transform duration-500 hover:scale-[1.02]">

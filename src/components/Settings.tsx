@@ -67,7 +67,7 @@ export default function Settings({ playlistID }: SettingsProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [currentPlaylist, setCurrentPlaylist] = useState<PlaylistProps | null>(
-    null
+    null,
   );
   const [isEmbedDialogOpen, setIsEmbedDialogOpen] = useState(false);
   const [iframeWidth, setIframeWidth] = useState<"352" | "252" | "152">("352");
@@ -79,7 +79,7 @@ export default function Settings({ playlistID }: SettingsProps) {
   const [userID, setUserID] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>(
-    {}
+    {},
   );
 
   useEffect(() => {
@@ -98,7 +98,7 @@ export default function Settings({ playlistID }: SettingsProps) {
         const playlistName = playlistResponse.name;
         toast.success("Playlist created successfully!");
         router.push(
-          `/Playlists/${playlistID}?name=${encodeURIComponent(playlistName)}`
+          `/Playlists/${playlistID}?name=${encodeURIComponent(playlistName)}`,
         );
       } else {
         toast.error("Failed to create playlist");
@@ -152,12 +152,12 @@ export default function Settings({ playlistID }: SettingsProps) {
           body: JSON.stringify({
             public: !currentPlaylist.public,
           }),
-        }
+        },
       );
 
       if (response.ok) {
         toast.success(
-          `Playlist set to ${!currentPlaylist.public ? "Public" : "Private"}`
+          `Playlist set to ${!currentPlaylist.public ? "Public" : "Private"}`,
         );
         // Refresh playlist details to get updated state
         await handleFetchPlaylistDetails();
@@ -239,7 +239,7 @@ export default function Settings({ playlistID }: SettingsProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-12 w-12 rounded-full bg-brand text-black hover:bg-brand/80 hover:scale-105 transition-all duration-300 shadow-lg shadow-brand/20 border-none"
+                  className="h-12 w-12 cursor-pointer rounded-full bg-brand text-black hover:bg-brand/80 hover:scale-105 transition-all duration-300 shadow-lg shadow-brand/20 border-none"
                 >
                   <SettingsIcon className="h-5 w-5" />
                 </Button>
