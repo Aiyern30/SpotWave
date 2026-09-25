@@ -45,7 +45,7 @@ export default function DevicePicker() {
         <MonitorSmartphone className="h-5 w-5" />
       </Button>
     </SheetTrigger>
-    <SheetContent aria-describedby="device-help" overlayClassName="z-[70]" className="z-[70] flex w-full flex-col border-zinc-800 bg-zinc-950 text-zinc-100 sm:max-w-sm" onClick={event => event.stopPropagation()}>
+    <SheetContent aria-describedby="device-help" overlayClassName="z-[70]" className="z-[70] flex w-full flex-col sm:max-w-sm" onClick={event => event.stopPropagation()}>
       <SheetHeader><SheetTitle className="text-zinc-100">Connect to a device</SheetTitle></SheetHeader>
       <p id="device-help" className="text-sm leading-relaxed text-zinc-400">Open Spotify on another phone, computer, or speaker using the same account, then refresh.</p>
       <div className="flex items-center justify-between gap-3">

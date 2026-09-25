@@ -21,7 +21,7 @@ const SheetOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SheetPrimitive.Overlay
     className={cn(
-      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50 bg-black/70 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
     {...props}
@@ -31,7 +31,15 @@ const SheetOverlay = React.forwardRef<
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
 
 const sheetVariants = cva(
-  "fixed z-50 gap-4 border-brand/20 bg-background p-6 text-foreground shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
+  [
+    "fixed z-50 gap-4 p-6 shadow-2xl",
+    "transition ease-in-out",
+    "data-[state=closed]:duration-300 data-[state=open]:duration-500",
+    "data-[state=open]:animate-in data-[state=closed]:animate-out",
+    // Dark glassmorphism defaults — uses brand CSS var for border accent
+    "bg-zinc-950/95 backdrop-blur-xl",
+    "border-brand/20 text-zinc-100",
+  ].join(" "),
   {
     variants: {
       side: {
@@ -58,15 +66,21 @@ interface SheetContentProps
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, overlayClassName, children, ...props }, ref) => (
+>(({ side = "right", className, overlayClassName, children, style, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay className={overlayClassName} />
     <SheetPrimitive.Content
       ref={ref}
       className={cn(sheetVariants({ side }), className)}
+      style={{
+        background: "linear-gradient(135deg, rgba(15,15,20,0.97) 0%, hsl(var(--brand-primary) / 0.12) 100%)",
+        borderColor: "hsl(var(--brand-primary) / 0.3)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.7), 0 0 0 1px hsl(var(--brand-primary) / 0.15)",
+        ...style,
+      }}
       {...props}
     >
-      <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+      <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-zinc-800 text-zinc-400 hover:text-zinc-100">
         <Cross2Icon className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </SheetPrimitive.Close>
@@ -110,7 +124,7 @@ const SheetTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SheetPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-semibold text-foreground", className)}
+    className={cn("text-lg font-semibold text-zinc-100", className)}
     {...props}
   />
 ))
@@ -122,7 +136,7 @@ const SheetDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SheetPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    className={cn("text-sm text-zinc-400", className)}
     {...props}
   />
 ))
