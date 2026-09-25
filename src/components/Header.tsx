@@ -31,7 +31,7 @@ import {
   AlertDialogTitle,
 } from "./ui";
 import { formatSongDuration } from "@/utils/function";
-import { Search, Music, User, Play, Clock, Disc } from "lucide-react";
+import { Search, Music, User, Play, Clock, Disc, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import ThemeSwitcher from "./ThemeSwitcher";
 import styles from "./Header.module.css";
@@ -345,10 +345,36 @@ export const SearchSection = () => {
   };
 
   return (
-    <form
-      onSubmit={handleSearch}
-      className={`${styles.searchForm} relative w-full max-w-2xl`}
-    >
+    <div className="flex items-center gap-2 sm:gap-3 w-full max-w-3xl">
+      <div className="flex items-center gap-1.5 shrink-0">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => router.back()}
+          className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-zinc-900/80 hover:bg-zinc-800 text-white border border-white/10 hover:border-brand/40 transition-all shadow-sm active:scale-95 flex items-center justify-center cursor-pointer"
+          title="Go back"
+          aria-label="Go back"
+        >
+          <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => router.forward()}
+          className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-zinc-900/80 hover:bg-zinc-800 text-white border border-white/10 hover:border-brand/40 transition-all shadow-sm active:scale-95 flex items-center justify-center cursor-pointer"
+          title="Go forward"
+          aria-label="Go forward"
+        >
+          <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
+        </Button>
+      </div>
+
+      <form
+        onSubmit={handleSearch}
+        className={`${styles.searchForm} relative flex-1 min-w-0`}
+      >
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-brand" />
         <Input
@@ -497,18 +523,21 @@ export const SearchSection = () => {
         </div>
       )}
     </form>
-  );
-};
-
-const Header = () => (
-  <div className="flex flex-col space-y-6 relative z-50">
-    <Suspense
-      fallback={<div className="h-6 w-32 bg-zinc-800 animate-pulse rounded" />}
-    >
-      <Breadcrumbs />
-    </Suspense>
-    <SearchSection />
   </div>
 );
+};
+
+const Header = () => {
+  return (
+    <div className="flex flex-col space-y-6 relative z-50">
+      <Suspense
+        fallback={<div className="h-6 w-32 bg-zinc-800 animate-pulse rounded" />}
+      >
+        <Breadcrumbs />
+      </Suspense>
+      <SearchSection />
+    </div>
+  );
+};
 
 export default Header;
