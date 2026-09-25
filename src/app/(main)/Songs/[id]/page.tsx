@@ -752,7 +752,7 @@ const SongPage = () => {
                 Album Information
               </h3>
               <div
-                className="flex items-center space-x-4 p-4 rounded-lg bg-zinc-800/30 hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                className="group flex items-center space-x-4 p-4 rounded-lg bg-zinc-800/30 hover:bg-zinc-800/50 transition-colors cursor-pointer"
                 onClick={() =>
                   router.push(
                     `/Albums/${track.album.id}?name=${track.album.name}`
@@ -767,7 +767,7 @@ const SongPage = () => {
                   alt={track.album.name}
                 />
                 <div className="flex-1">
-                  <h4 className="text-lg font-semibold text-white hover:bg-brand transition-colors">
+                  <h4 className="text-lg font-semibold text-white group-hover:text-brand transition-colors">
                     {track.album.name}
                   </h4>
                   <p className="text-zinc-400">
