@@ -61,7 +61,9 @@ import { formatSongDuration } from "@/utils/function";
 import { fetchUserProfile } from "@/utils/fetchProfile";
 import { usePlayer } from "@/contexts/PlayerContext";
 import type { PlaylistProps, PlaylistTrack, UserProfile } from "@/lib/types";
-import UserHeader from "@/components/Home/UserHeader";
+import UserHeader, {
+  UserHeaderSkeleton,
+} from "@/components/Home/UserHeader";
 import ViewSelector, { type CollectionView } from "@/components/ViewSelector";
 
 const PlaylistPage = () => {
@@ -369,14 +371,7 @@ const PlaylistPage = () => {
     return (
       <div className="space-y-6">
         <div className="space-y-4">
-          <div className="flex items-center space-x-4">
-            <Skeleton className="w-48 h-48 rounded-lg" />
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-64" />
-              <Skeleton className="h-4 w-48" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-          </div>
+          <UserHeaderSkeleton />
           <div className="space-y-2">
             {Array(10)
               .fill(0)

@@ -61,6 +61,50 @@ interface UserHeaderProps {
   refetch: (silent?: boolean) => void;
 }
 
+export function UserHeaderSkeleton() {
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-brand/20 bg-gradient-to-br from-brand/30 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--brand-primary)/0.15),transparent_70%)]" />
+
+      <div className="relative flex flex-col items-center space-y-6 p-8 lg:flex-row lg:items-start lg:space-y-0 lg:space-x-8">
+        <Skeleton className="h-80 w-80 max-w-full shrink-0 rounded-xl" />
+
+        <div className="flex-1 space-y-6 text-center lg:text-left">
+          <div className="space-y-3">
+            <Skeleton className="mx-auto h-7 w-28 rounded-full lg:mx-0" />
+            <div className="space-y-2">
+              <Skeleton className="mx-auto h-14 w-full max-w-2xl lg:mx-0" />
+              <Skeleton className="mx-auto h-14 w-3/4 max-w-xl lg:mx-0" />
+            </div>
+            <Skeleton className="mx-auto h-6 w-full max-w-2xl lg:mx-0" />
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-6 lg:justify-start">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-5 w-24" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-5 rounded" />
+              <Skeleton className="h-5 w-20" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-5 rounded" />
+              <Skeleton className="h-5 w-24" />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex shrink-0 flex-row items-center justify-center gap-3 lg:flex-col">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-12 w-12 rounded-full" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function UserHeader({
   playlist,
   user,
@@ -75,7 +119,7 @@ export default function UserHeader({
   const [descriptionEditing, setDescriptionEditing] = useState(false);
   const [inputValue, setInputValue] = useState(playlist.name);
   const [descriptionValue, setDescriptionValue] = useState(
-    playlist.description || ""
+    playlist.description || "",
   );
   const [token, setToken] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -94,7 +138,7 @@ export default function UserHeader({
   const [aiGenIsOpen, setAiGenIsOpen] = useState(false);
   const [userAiPrompt, setUserAiPrompt] = useState("");
   const [descriptionLength, setDescriptionLength] = useState<"short" | "long">(
-    "short"
+    "short",
   );
   const [generatedContent, setGeneratedContent] = useState<{
     name: string;
@@ -326,14 +370,14 @@ export default function UserHeader({
   };
 
   const handleDescriptionChange = (
-    e: React.ChangeEvent<HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLTextAreaElement>,
   ) => {
     setDescriptionValue(e.target.value);
   };
 
   const handleKeyPress = (
     e: React.KeyboardEvent,
-    type: "name" | "description"
+    type: "name" | "description",
   ) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -513,7 +557,7 @@ export default function UserHeader({
       toast.success("✅ Playlist exported as playlist.json!");
       toast.info(
         "💡 For best accuracy, use: .\\downloader-spotdl.ps1 (see DOWNLOAD_GUIDE.md)",
-        { duration: 10000 }
+        { duration: 10000 },
       );
     } catch (error: any) {
       console.error("Export failed:", error);
@@ -528,18 +572,7 @@ export default function UserHeader({
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-6 lg:space-y-0 lg:space-x-8 bg-gradient-to-b from-brand/30 to-transparent rounded-xl p-8">
-          <Skeleton className="w-80 h-80 rounded-xl" />
-          <div className="flex-1 space-y-4 text-center lg:text-left">
-            <Skeleton className="h-12 w-96 mx-auto lg:mx-0" />
-            <Skeleton className="h-6 w-64 mx-auto lg:mx-0" />
-            <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-              <Skeleton className="h-6 w-32" />
-              <Skeleton className="h-6 w-24" />
-              <Skeleton className="h-6 w-28" />
-            </div>
-          </div>
-        </div>
+        <UserHeaderSkeleton />
       </div>
     );
   }
@@ -575,8 +608,8 @@ export default function UserHeader({
                     (playlistImages.length > 0
                       ? playlistImages[0].url
                       : playlist?.images?.length
-                      ? playlist.images[0].url
-                      : "/default-artist.png")
+                        ? playlist.images[0].url
+                        : "/default-artist.png")
                   }
                   width={320}
                   height={320}
@@ -813,7 +846,10 @@ export default function UserHeader({
 
                             <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-5 [scrollbar-gutter:stable] sm:px-6">
                               <div className="space-y-3">
-                                <label htmlFor="ai-renamer-prompt" className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
+                                <label
+                                  htmlFor="ai-renamer-prompt"
+                                  className="text-sm font-semibold text-zinc-300 flex items-center gap-2"
+                                >
                                   <Edit3 className="h-4 w-4 text-brand/70" />
                                   Custom Vibe (Optional)
                                 </label>
@@ -903,7 +939,10 @@ export default function UserHeader({
                               {generatedContent && (
                                 <div className="space-y-5 pt-6 border-t border-brand/20 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                   <div className="space-y-2">
-                                    <label htmlFor="ai-renamer-name" className="text-sm font-semibold text-brand">
+                                    <label
+                                      htmlFor="ai-renamer-name"
+                                      className="text-sm font-semibold text-brand"
+                                    >
                                       Proposed Name
                                     </label>
                                     <Input
@@ -913,14 +952,17 @@ export default function UserHeader({
                                         setGeneratedContent((prev) =>
                                           prev
                                             ? { ...prev, name: e.target.value }
-                                            : null
+                                            : null,
                                         )
                                       }
                                       className="bg-zinc-900/50 border-brand/30 text-white font-bold text-lg rounded-xl focus:border-brand"
                                     />
                                   </div>
                                   <div className="space-y-2">
-                                    <label htmlFor="ai-renamer-description" className="text-sm font-semibold text-brand">
+                                    <label
+                                      htmlFor="ai-renamer-description"
+                                      className="text-sm font-semibold text-brand"
+                                    >
                                       Proposed Vibe Description
                                     </label>
                                     <Textarea
@@ -933,7 +975,7 @@ export default function UserHeader({
                                                 ...prev,
                                                 description: e.target.value,
                                               }
-                                            : null
+                                            : null,
                                         )
                                       }
                                       className="bg-zinc-900/50 border-brand/30 text-white h-28 resize-none rounded-xl focus:border-brand leading-relaxed"
@@ -1082,8 +1124,8 @@ export default function UserHeader({
                   onClick={() =>
                     router.push(
                       `/Profile/${playlist.owner.id}?name=${encodeURIComponent(
-                        playlist.owner.display_name
-                      )}`
+                        playlist.owner.display_name,
+                      )}`,
                     )
                   }
                 >
