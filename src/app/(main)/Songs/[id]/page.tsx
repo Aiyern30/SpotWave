@@ -668,31 +668,31 @@ const SongPage = () => {
                   Track Information
                 </h3>
                 <div className="space-y-1">
-                  <div className="flex justify-between items-center py-2.5 border-b border-brand/10 hover:bg-brand/5 px-2 rounded transition-colors">
-                    <span className="text-zinc-400">Duration</span>
-                    <span className="text-white font-medium">
+                  <div className="group flex justify-between items-center py-2.5 border-b border-brand/10 hover:bg-brand/10 px-2 rounded transition-colors">
+                    <span className="text-zinc-400 group-hover:text-brand transition-colors">Duration</span>
+                    <span className="text-white font-medium group-hover:text-brand transition-colors">
                       {Math.floor(track.duration_ms / 60000)}:
                       {Math.floor((track.duration_ms % 60000) / 1000)
                         .toString()
                         .padStart(2, "0")}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center py-2.5 border-b border-brand/10 hover:bg-brand/5 px-2 rounded transition-colors">
-                    <span className="text-zinc-400">Explicit</span>
-                    <span className="text-white font-medium">
+                  <div className="group flex justify-between items-center py-2.5 border-b border-brand/10 hover:bg-brand/10 px-2 rounded transition-colors">
+                    <span className="text-zinc-400 group-hover:text-brand transition-colors">Explicit</span>
+                    <span className="text-white font-medium group-hover:text-brand transition-colors">
                       {track.explicit ? "Yes" : "No"}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center py-2.5 border-b border-brand/10 hover:bg-brand/5 px-2 rounded transition-colors">
-                    <span className="text-zinc-400">Track Number</span>
-                    <span className="text-white font-medium">{track.track_number}</span>
+                  <div className="group flex justify-between items-center py-2.5 border-b border-brand/10 hover:bg-brand/10 px-2 rounded transition-colors">
+                    <span className="text-zinc-400 group-hover:text-brand transition-colors">Track Number</span>
+                    <span className="text-white font-medium group-hover:text-brand transition-colors">{track.track_number}</span>
                   </div>
-                  <div className="flex justify-between items-center py-2.5 border-b border-brand/10 hover:bg-brand/5 px-2 rounded transition-colors">
-                    <span className="text-zinc-400">Disc Number</span>
-                    <span className="text-white font-medium">{track.disc_number}</span>
+                  <div className="group flex justify-between items-center py-2.5 border-b border-brand/10 hover:bg-brand/10 px-2 rounded transition-colors">
+                    <span className="text-zinc-400 group-hover:text-brand transition-colors">Disc Number</span>
+                    <span className="text-white font-medium group-hover:text-brand transition-colors">{track.disc_number}</span>
                   </div>
-                  <div className="flex justify-between items-center py-2.5 hover:bg-brand/5 px-2 rounded transition-colors">
-                    <span className="text-zinc-400">Popularity</span>
+                  <div className="group flex justify-between items-center py-2.5 hover:bg-brand/10 px-2 rounded transition-colors">
+                    <span className="text-zinc-400 group-hover:text-brand transition-colors">Popularity</span>
                     <div className="flex items-center space-x-3">
                       <div className="w-28 h-2 bg-zinc-700 rounded-full overflow-hidden">
                         <div
@@ -700,7 +700,7 @@ const SongPage = () => {
                           style={{ width: `${track.popularity}%` }}
                         />
                       </div>
-                      <span className="text-white text-sm font-medium">
+                      <span className="text-white text-sm font-medium group-hover:text-brand transition-colors">
                         {track.popularity}/100
                       </span>
                     </div>
