@@ -27,7 +27,7 @@ interface PlayerContextType {
 
   // Player controls
   playTrack: (track: Track, contextUris?: string[]) => void;
-  playPlaylist: (playlistUri: string, trackUri?: string) => void;
+  playPlaylist: (playlistUri: string, trackUri?: string, initialTrack?: Track) => void;
   pauseTrack: () => void;
   resumeTrack: () => void;
   nextTrack: () => void;
@@ -130,7 +130,13 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   } | null>(null);
   const lastOwnDeviceSyncRef = useRef(0);
 
+  const currentTrackRef = useRef<Track | null>(null);
+
   // Sync refs with state
+  useEffect(() => {
+    currentTrackRef.current = currentTrack;
+  }, [currentTrack]);
+
   useEffect(() => {
     activeDeviceRef.current = activeDevice;
   }, [activeDevice]);
@@ -580,6 +586,13 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     async (track: Track, contextUris?: string[]) => {
       console.log("Attempting to play track:", track.name);
 
+      // Optimistic update: render track details immediately in MusicPlayer
+      setCurrentTrack(track);
+      setIsPlaying(true);
+      setIsPaused(false);
+      setPosition(0);
+      setDuration(track.duration_ms || 0);
+
       // Play silent audio immediately to grab Media Session focus (iOS restriction)
       silentAudioRef.current
         ?.play()
@@ -593,8 +606,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
 
-      // Wait for device to be ready
-      const deviceReady = !!activeDeviceRef.current?.id || await waitForDevice();
+      // Check if device is already active / connected
+      const isAlreadyReady = !!activeDeviceRef.current?.id || !!deviceIdRef.current;
+      const deviceReady = isAlreadyReady || (await waitForDevice());
       if (!deviceReady || !(activeDeviceRef.current?.id || deviceIdRef.current)) {
         console.error(
           "Spotify device not ready. Please wait for the player to connect.",
@@ -602,9 +616,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
 
-      // 1s delay as suggested for robustness ("Initialization Delay")
-      // Only delay if we just became ready? Hard to track. A small delay always is safer for mobile.
-      await new Promise((r) => setTimeout(r, 500));
+      // Only add a small stabilization delay if the device was NOT already connected
+      if (!isAlreadyReady) {
+        await new Promise((r) => setTimeout(r, 350));
+      }
 
       const activeDeviceId = activeDeviceRef.current?.id || deviceIdRef.current;
 
@@ -633,12 +648,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           if (response.status === 404 && activeDeviceId === deviceIdRef.current) {
             console.log("Device not found, attempting to transfer playback...");
             await transferPlayback();
-            // Retry playing the track
-            setTimeout(() => playTrack(track), 1000);
+            setTimeout(() => playTrack(track, contextUris), 1000);
           }
         } else {
           console.log("Track started successfully");
-          // Try to play silent audio to grab media session focus
+          lastPlayerStateFetch = null;
           silentAudioRef.current
             ?.play()
             .catch((e) => console.error("Silent audio play failed:", e));
@@ -651,8 +665,17 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const playPlaylist = useCallback(
-    async (playlistUri: string, trackUri?: string) => {
+    async (playlistUri: string, trackUri?: string, initialTrack?: Track) => {
       console.log("Attempting to play playlist:", playlistUri);
+
+      // Optimistically update if initial track is provided
+      if (initialTrack) {
+        setCurrentTrack(initialTrack);
+        setIsPlaying(true);
+        setIsPaused(false);
+        setPosition(0);
+        setDuration(initialTrack.duration_ms || 0);
+      }
 
       // Play silent audio immediately to grab Media Session focus (iOS restriction)
       silentAudioRef.current
@@ -667,8 +690,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
 
-      // Wait for device to be ready
-      const deviceReady = !!activeDeviceRef.current?.id || await waitForDevice();
+      const isAlreadyReady = !!activeDeviceRef.current?.id || !!deviceIdRef.current;
+      const deviceReady = isAlreadyReady || (await waitForDevice());
       if (!deviceReady || !(activeDeviceRef.current?.id || deviceIdRef.current)) {
         console.error(
           "Spotify device not ready. Please wait for the player to connect.",
@@ -676,8 +699,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
 
-      // 1s delay as suggested for robustness
-      await new Promise((r) => setTimeout(r, 500));
+      if (!isAlreadyReady) {
+        await new Promise((r) => setTimeout(r, 350));
+      }
 
       const activeDeviceId = activeDeviceRef.current?.id || deviceIdRef.current;
 
@@ -687,7 +711,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           context_uri: playlistUri,
         };
 
-        // If a specific track is provided, start from that track
         if (trackUri) {
           body.offset = { uri: trackUri };
         }
@@ -708,15 +731,15 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           const errorText = await response.text();
           console.error("Failed to play playlist:", response.status, errorText);
 
-          // If device is not found, try to transfer playback
           if (response.status === 404 && activeDeviceId === deviceIdRef.current) {
             console.log("Device not found, attempting to transfer playback...");
             await transferPlayback();
-            // Retry playing the playlist
-            setTimeout(() => playPlaylist(playlistUri, trackUri), 1000);
+            setTimeout(() => playPlaylist(playlistUri, trackUri, initialTrack), 1000);
           }
         } else {
           console.log("Playlist started successfully");
+          lastPlayerStateFetch = null;
+          setTimeout(() => syncPlaybackState(true), 150);
         }
       } catch (error) {
         console.error("Error playing playlist:", error);
@@ -800,6 +823,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             headers: { Authorization: `Bearer ${token}` },
           },
         );
+        lastPlayerStateFetch = null;
+        setTimeout(() => syncPlaybackState(true), 150);
       } catch (error) {
         console.error("Error skipping to next track via API:", error);
       }
@@ -810,6 +835,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       player.nextTrack().catch((error: any) => {
         console.error("Error skipping to next track:", error);
       });
+      lastPlayerStateFetch = null;
+      setTimeout(() => syncPlaybackState(true), 150);
     }
   }, [player, token]);
 
@@ -826,6 +853,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             headers: { Authorization: `Bearer ${token}` },
           },
         );
+        lastPlayerStateFetch = null;
+        setTimeout(() => syncPlaybackState(true), 150);
       } catch (error) {
         console.error("Error skipping to previous track via API:", error);
       }
@@ -836,6 +865,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       player.previousTrack().catch((error: any) => {
         console.error("Error skipping to previous track:", error);
       });
+      lastPlayerStateFetch = null;
+      setTimeout(() => syncPlaybackState(true), 150);
     }
   }, [player, token]);
 
@@ -908,10 +939,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
               type: data.device.type,
             });
 
-            if (data.device.id !== deviceIdRef.current && data.item) {
-              setCurrentTrack({
-                id: data.item.id || "",
-                name: data.item.name,
+            if (data.item) {
+              if (!currentTrackRef.current || currentTrackRef.current.id !== data.item.id) {
+                setCurrentTrack({
+                  id: data.item.id || "",
+                  name: data.item.name,
                 artists: data.item.artists.map((artist: any) => ({
                   name: artist.name,
                   id: artist.uri?.split(":")[2] || "",
@@ -938,7 +970,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
                 disc_number: 0,
                 uri: data.item.uri,
               });
-              setIsPlaying(data.is_playing);
+            }
+            setIsPlaying(data.is_playing);
               setIsPaused(!data.is_playing);
               setPosition(Math.min(data.item.duration_ms, data.progress_ms + (data.is_playing ? now - lastPlayerStateFetch.timestamp : 0)));
               setDuration(data.item.duration_ms);
@@ -970,8 +1003,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
               type: data.device.type,
             });
 
-            if (data.device.id !== deviceIdRef.current) {
-              if (data.item) {
+            if (data.item) {
+              if (!currentTrackRef.current || currentTrackRef.current.id !== data.item.id) {
                 setCurrentTrack({
                   id: data.item.id || "",
                   name: data.item.name,
@@ -1001,13 +1034,13 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
                   disc_number: 0,
                   uri: data.item.uri,
                 });
-                setIsPlaying(data.is_playing);
-                setIsPaused(!data.is_playing);
-                setPosition(data.progress_ms);
-                setDuration(data.item.duration_ms);
-                if (data.device.volume_percent !== null) {
-                  setVolumeState(data.device.volume_percent / 100);
-                }
+              }
+              setIsPlaying(data.is_playing);
+              setIsPaused(!data.is_playing);
+              setPosition(data.progress_ms);
+              setDuration(data.item.duration_ms);
+              if (data.device.volume_percent !== null) {
+                setVolumeState(data.device.volume_percent / 100);
               }
             }
           } else {

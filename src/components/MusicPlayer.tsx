@@ -313,6 +313,8 @@ export const MusicPlayer = ({
                   height={56}
                   alt={currentTrack.name}
                   className="object-cover w-full h-full"
+                  priority
+                  sizes="56px"
                 />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <ChevronUp className="h-5 w-5 text-white" />
