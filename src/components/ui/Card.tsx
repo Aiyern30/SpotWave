@@ -8,15 +8,24 @@ import { cn } from "@/lib/utils";
 type MotionDivProps = MotionProps & React.HTMLAttributes<HTMLDivElement>;
 
 const Card = React.forwardRef<HTMLDivElement, MotionDivProps>(
-  ({ className, ...props }, ref) => (
+  ({ className, style, ...props }, ref) => (
     <motion.div
       ref={ref}
       className={cn(
-        "rounded-xl bg-zinc-900/50 hover:bg-zinc-800/70",
+        "rounded-xl bg-zinc-900/50 border transition-[border-color,box-shadow] duration-200",
+        "hover:bg-zinc-800/70",
         className
       )}
+      style={{
+        borderColor: "hsl(var(--brand-primary) / 0.35)",
+        ...style,
+      }}
+      whileHover={{
+        borderColor: "hsl(var(--brand-primary) / 0.6)" as any,
+        boxShadow: "0 0 0 1px hsl(var(--brand-primary) / 0.15), 0 4px 16px hsl(var(--brand-primary) / 0.1)",
+      }}
       {...props}
-      transition={{ ease: "easeInOut", duration: 0.3 }}
+      transition={{ ease: "easeInOut", duration: 0.2 }}
     />
   )
 );

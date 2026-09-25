@@ -468,16 +468,17 @@ const PlaylistPage = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search in playlist…"
-            className="w-full bg-zinc-800/60 border border-zinc-700/50 rounded-lg pl-9 pr-9 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:border-transparent transition-all"
+            className="w-full bg-zinc-800/60 border rounded-lg pl-9 pr-9 py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none transition-all duration-200"
             style={{
-              // @ts-ignore
-              "--tw-ring-color": "hsl(var(--brand-primary) / 0.5)",
-            } as React.CSSProperties}
+              borderColor: "hsl(var(--brand-primary) / 0.35)",
+            }}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = "hsl(var(--brand-primary) / 0.6)";
+              e.currentTarget.style.borderColor = "hsl(var(--brand-primary) / 0.8)";
+              e.currentTarget.style.boxShadow = "0 0 0 2px hsl(var(--brand-primary) / 0.2)";
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = "";
+              e.currentTarget.style.borderColor = "hsl(var(--brand-primary) / 0.35)";
+              e.currentTarget.style.boxShadow = "";
             }}
           />
           {searchQuery && (

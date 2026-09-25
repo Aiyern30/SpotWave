@@ -1294,16 +1294,14 @@ export default function UserHeader({
 
       {/* Enhanced Stats Cards */}
       <div className={styles.stats}>
-        <Card className="min-w-0 bg-zinc-900/90 border-brand/15 rounded-xl">
+        <Card className="min-w-0 bg-zinc-900/90 rounded-xl">
           <CardContent className="p-4">
             <div className="flex min-w-0 items-center gap-4">
               <div className="shrink-0 p-3 bg-brand/20 rounded-xl ring-1 ring-brand/30">
                 <Music className="h-6 w-6 text-brand" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm text-zinc-400 font-medium">
-                  Total Tracks
-                </p>
+                <p className="text-sm text-zinc-400 font-medium">Total Tracks</p>
                 <p className="text-2xl font-bold text-white">
                   {playlist.tracks.total}
                 </p>
@@ -1312,7 +1310,7 @@ export default function UserHeader({
           </CardContent>
         </Card>
 
-        <Card className="min-w-0 bg-zinc-900/90 border-brand/15 rounded-xl">
+        <Card className="min-w-0 bg-zinc-900/90 rounded-xl">
           <CardContent className="p-4">
             <div className="flex min-w-0 items-center gap-4">
               <div className="shrink-0 p-3 bg-brand/20 rounded-xl ring-1 ring-brand/30">
