@@ -1,6 +1,6 @@
 "use client";
 
-import ReactPlayer from "react-player";
+
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, useRef } from "react";
 import Image from "next/image";
@@ -19,7 +19,6 @@ import type { Track } from "@/lib/types";
 import { formatLyrics } from "@/utils/function";
 import { usePlayer } from "@/contexts/PlayerContext";
 import {
-  Play,
   ExternalLink,
   FileText,
   Music,
@@ -659,82 +658,49 @@ const SongPage = () => {
             </div>
           </div>
 
-          {/* Track Details Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Audio Preview */}
-            <Card className="bg-zinc-900/30 border-zinc-800/50">
-              <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-4 flex items-center text-white">
-                  <Play className="h-5 w-5 mr-2" />
-                  Audio Preview
-                </h3>
-                {track.preview_url ? (
-                  <div className="w-full rounded-lg overflow-hidden bg-zinc-800/50 p-4">
-                    <ReactPlayer
-                      url={track.preview_url}
-                      controls
-                      playing={false}
-                      width="100%"
-                      height="60px"
-                      config={{
-                        file: {
-                          attributes: {
-                            style: { backgroundColor: "transparent" },
-                          },
-                        },
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-8 text-zinc-400">
-                    <Music className="h-12 w-12 mb-2 opacity-50" />
-                    <p>No preview available for this track</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
+          {/* Track Details Grid - full width, no preview */}
+          <div className="grid grid-cols-1 gap-6">
             {/* Track Information */}
-            <Card className="bg-zinc-900/30 border-zinc-800/50">
+            <Card className="bg-zinc-900/30 border-brand/20 hover:border-brand/40 transition-colors">
               <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-4 flex items-center text-white">
+                <h3 className="text-xl font-semibold mb-4 flex items-center text-brand">
                   <Music className="h-5 w-5 mr-2" />
                   Track Information
                 </h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center py-2 border-b border-zinc-800">
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center py-2.5 border-b border-brand/10 hover:bg-brand/5 px-2 rounded transition-colors">
                     <span className="text-zinc-400">Duration</span>
-                    <span className="text-white">
+                    <span className="text-white font-medium">
                       {Math.floor(track.duration_ms / 60000)}:
                       {Math.floor((track.duration_ms % 60000) / 1000)
                         .toString()
                         .padStart(2, "0")}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-zinc-800">
+                  <div className="flex justify-between items-center py-2.5 border-b border-brand/10 hover:bg-brand/5 px-2 rounded transition-colors">
                     <span className="text-zinc-400">Explicit</span>
-                    <span className="text-white">
+                    <span className="text-white font-medium">
                       {track.explicit ? "Yes" : "No"}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-zinc-800">
+                  <div className="flex justify-between items-center py-2.5 border-b border-brand/10 hover:bg-brand/5 px-2 rounded transition-colors">
                     <span className="text-zinc-400">Track Number</span>
-                    <span className="text-white">{track.track_number}</span>
+                    <span className="text-white font-medium">{track.track_number}</span>
                   </div>
-                  <div className="flex justify-between items-center py-2 border-b border-zinc-800">
+                  <div className="flex justify-between items-center py-2.5 border-b border-brand/10 hover:bg-brand/5 px-2 rounded transition-colors">
                     <span className="text-zinc-400">Disc Number</span>
-                    <span className="text-white">{track.disc_number}</span>
+                    <span className="text-white font-medium">{track.disc_number}</span>
                   </div>
-                  <div className="flex justify-between items-center py-2">
+                  <div className="flex justify-between items-center py-2.5 hover:bg-brand/5 px-2 rounded transition-colors">
                     <span className="text-zinc-400">Popularity</span>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-20 h-2 bg-zinc-700 rounded-full overflow-hidden">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-28 h-2 bg-zinc-700 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-brand rounded-full"
+                          className="h-full bg-brand rounded-full transition-all"
                           style={{ width: `${track.popularity}%` }}
                         />
                       </div>
-                      <span className="text-white text-sm">
+                      <span className="text-white text-sm font-medium">
                         {track.popularity}/100
                       </span>
                     </div>
@@ -745,14 +711,14 @@ const SongPage = () => {
           </div>
 
           {/* Album Information */}
-          <Card className="bg-zinc-900/30 border-zinc-800/50">
+          <Card className="bg-zinc-900/30 border-brand/20 hover:border-brand/40 transition-colors">
             <CardContent className="p-6">
-              <h3 className="text-xl font-semibold mb-4 flex items-center text-white">
+              <h3 className="text-xl font-semibold mb-4 flex items-center text-brand">
                 <Music className="h-5 w-5 mr-2" />
                 Album Information
               </h3>
               <div
-                className="group flex items-center space-x-4 p-4 rounded-lg bg-zinc-800/30 hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                className="group flex items-center space-x-4 p-4 rounded-lg bg-zinc-800/30 hover:bg-brand/10 border border-transparent hover:border-brand/30 transition-all cursor-pointer"
                 onClick={() =>
                   router.push(
                     `/Albums/${track.album.id}?name=${track.album.name}`
