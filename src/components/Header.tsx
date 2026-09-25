@@ -186,26 +186,52 @@ export const SearchSection = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const [canGoForward, setCanGoForward] = useState(false);
-  const [canGoBack, setCanGoBack] = useState(false);
+  // Safari Left/Next History Logic
+  interface SafariHistoryItem {
+    path: string;
+    title: string;
+  }
+
+  const [historyStack, setHistoryStack] = useState<SafariHistoryItem[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const traversalRef = useRef(false);
   const isInitialMount = useRef(true);
 
-  // Listen to popstate (back/forward history traversals)
+  // History menu states (long-press or right-click like Safari)
+  const [showBackMenu, setShowBackMenu] = useState(false);
+  const [showForwardMenu, setShowForwardMenu] = useState(false);
+  const backBtnRef = useRef<HTMLButtonElement>(null);
+  const forwardBtnRef = useRef<HTMLButtonElement>(null);
+  const backMenuRef = useRef<HTMLDivElement>(null);
+  const forwardMenuRef = useRef<HTMLDivElement>(null);
+
+  const backPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const backIsLongPress = useRef(false);
+  const forwardPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const forwardIsLongPress = useRef(false);
+
+  const resolveTitle = (path: string): string => {
+    try {
+      const url = new URL(path, "http://localhost");
+      const nameParam = url.searchParams.get("name");
+      if (nameParam) return decodeURIComponent(nameParam);
+      const segments = url.pathname.split("/").filter(Boolean);
+      if (segments.length === 0 || url.pathname === "/Home") return "Home";
+      const last = segments[segments.length - 1];
+      return decodeURIComponent(last).charAt(0).toUpperCase() + decodeURIComponent(last).slice(1);
+    } catch {
+      return "Page";
+    }
+  };
+
+  // Listen to popstate (back/forward history traversals in browser or buttons)
   useEffect(() => {
     const handlePopState = (e: PopStateEvent) => {
       traversalRef.current = true;
       const stateIdx = e.state?.__sw_idx;
-      const maxIdx = parseInt(sessionStorage.getItem("sw_hist_max") || "0", 10) || 0;
-
       if (typeof stateIdx === "number") {
-        sessionStorage.setItem("sw_hist_idx", String(stateIdx));
-        setCanGoForward(stateIdx < maxIdx);
-        setCanGoBack(stateIdx > 0 || window.history.length > 1);
-      } else {
-        const prevIdx = parseInt(sessionStorage.getItem("sw_hist_idx") || "0", 10) || 0;
-        setCanGoForward(prevIdx < maxIdx);
-        setCanGoBack(prevIdx > 0 || window.history.length > 1);
+        setCurrentIndex(stateIdx);
+        sessionStorage.setItem("sw_safari_idx", String(stateIdx));
       }
     };
 
@@ -217,57 +243,208 @@ export const SearchSection = () => {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    let maxIdx = parseInt(sessionStorage.getItem("sw_hist_max") || "0", 10) || 0;
-    let currentIdx: number;
+    const currentUrl = window.location.pathname + window.location.search;
+    const currentTitle = resolveTitle(currentUrl);
 
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      const stateIdx = window.history.state?.__sw_idx;
-      if (typeof stateIdx === "number") {
-        currentIdx = stateIdx;
-      } else {
-        const savedIdx = parseInt(sessionStorage.getItem("sw_hist_idx") || "0", 10) || 0;
-        currentIdx = savedIdx;
+      const rawStack = sessionStorage.getItem("sw_safari_stack");
+      const rawIdx = sessionStorage.getItem("sw_safari_idx");
+      let stack: SafariHistoryItem[] = [];
+      let idx = 0;
+
+      if (rawStack) {
         try {
-          window.history.replaceState({ ...window.history.state, __sw_idx: currentIdx }, "");
+          const parsed = JSON.parse(rawStack);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            stack = parsed;
+            const parsedIdx = parseInt(rawIdx || "0", 10);
+            idx = Math.max(0, Math.min(parsedIdx, parsed.length - 1));
+          }
         } catch {}
       }
-      setCanGoForward(currentIdx < maxIdx);
-      setCanGoBack(currentIdx > 0 || window.history.length > 1);
+
+      if (stack.length === 0) {
+        stack = [{ path: currentUrl, title: currentTitle }];
+        idx = 0;
+      } else if (stack[idx]?.path !== currentUrl) {
+        stack[idx] = { path: currentUrl, title: currentTitle };
+      }
+
+      setHistoryStack(stack);
+      setCurrentIndex(idx);
+      sessionStorage.setItem("sw_safari_stack", JSON.stringify(stack));
+      sessionStorage.setItem("sw_safari_idx", String(idx));
+      try {
+        window.history.replaceState({ ...window.history.state, __sw_idx: idx }, "");
+      } catch {}
       return;
     }
 
     if (traversalRef.current) {
       traversalRef.current = false;
       const stateIdx = window.history.state?.__sw_idx;
-      currentIdx = typeof stateIdx === "number"
-        ? stateIdx
-        : (parseInt(sessionStorage.getItem("sw_hist_idx") || "0", 10) || 0);
-    } else {
-      const prevIdx = parseInt(sessionStorage.getItem("sw_hist_idx") || "0", 10) || 0;
-      currentIdx = prevIdx + 1;
-      maxIdx = currentIdx;
-      sessionStorage.setItem("sw_hist_max", String(maxIdx));
-      try {
-        window.history.replaceState({ ...window.history.state, __sw_idx: currentIdx }, "");
-      } catch {}
+      if (typeof stateIdx === "number") {
+        setCurrentIndex(stateIdx);
+        sessionStorage.setItem("sw_safari_idx", String(stateIdx));
+      }
+      return;
     }
 
-    sessionStorage.setItem("sw_hist_idx", String(currentIdx));
-    setCanGoForward(currentIdx < maxIdx);
-    setCanGoBack(currentIdx > 0 || window.history.length > 1);
+    // Normal forward push navigation - clears any forward branch (Safari behavior)
+    setHistoryStack((prevStack) => {
+      const prevIdx = parseInt(sessionStorage.getItem("sw_safari_idx") || "0", 10) || 0;
+      if (prevStack[prevIdx]?.path === currentUrl) {
+        return prevStack;
+      }
+
+      const nextStack = prevStack.slice(0, prevIdx + 1);
+      nextStack.push({ path: currentUrl, title: currentTitle });
+      const nextIdx = nextStack.length - 1;
+
+      setCurrentIndex(nextIdx);
+      sessionStorage.setItem("sw_safari_stack", JSON.stringify(nextStack));
+      sessionStorage.setItem("sw_safari_idx", String(nextIdx));
+      try {
+        window.history.replaceState({ ...window.history.state, __sw_idx: nextIdx }, "");
+      } catch {}
+
+      return nextStack;
+    });
   }, [pathname]);
 
+  // Click outside to close history popup
+  useEffect(() => {
+    if (!showBackMenu && !showForwardMenu) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        backMenuRef.current &&
+        !backMenuRef.current.contains(e.target as Node) &&
+        !backBtnRef.current?.contains(e.target as Node)
+      ) {
+        setShowBackMenu(false);
+      }
+      if (
+        forwardMenuRef.current &&
+        !forwardMenuRef.current.contains(e.target as Node) &&
+        !forwardBtnRef.current?.contains(e.target as Node)
+      ) {
+        setShowForwardMenu(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowBackMenu(false);
+        setShowForwardMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showBackMenu, showForwardMenu]);
+
+  const canGoBack = currentIndex > 0;
+  const canGoForward = currentIndex < historyStack.length - 1;
+
+  const backHistory = historyStack
+    .slice(0, currentIndex)
+    .map((item, idx) => ({ ...item, delta: idx - currentIndex }))
+    .reverse();
+
+  const forwardHistory = historyStack
+    .slice(currentIndex + 1)
+    .map((item, idx) => ({ ...item, delta: idx + 1 }));
+
   const handleBack = () => {
+    if (!canGoBack) return;
     traversalRef.current = true;
     router.back();
-    setCanGoForward(true);
   };
 
   const handleForward = () => {
     if (!canGoForward) return;
     traversalRef.current = true;
     router.forward();
+  };
+
+  const handleJump = (delta: number) => {
+    setShowBackMenu(false);
+    setShowForwardMenu(false);
+    traversalRef.current = true;
+    window.history.go(delta);
+  };
+
+  // Long press & context menu handlers
+  const startBackPress = () => {
+    if (!canGoBack || backHistory.length === 0) return;
+    backIsLongPress.current = false;
+    backPressTimer.current = setTimeout(() => {
+      backIsLongPress.current = true;
+      setShowBackMenu(true);
+      setShowForwardMenu(false);
+    }, 380);
+  };
+
+  const endBackPress = () => {
+    if (backPressTimer.current) {
+      clearTimeout(backPressTimer.current);
+      backPressTimer.current = null;
+    }
+  };
+
+  const onBackClick = () => {
+    if (backIsLongPress.current) {
+      backIsLongPress.current = false;
+      return;
+    }
+    handleBack();
+  };
+
+  const onBackContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (canGoBack && backHistory.length > 0) {
+      setShowBackMenu((prev) => !prev);
+      setShowForwardMenu(false);
+    }
+  };
+
+  const startForwardPress = () => {
+    if (!canGoForward || forwardHistory.length === 0) return;
+    forwardIsLongPress.current = false;
+    forwardPressTimer.current = setTimeout(() => {
+      forwardIsLongPress.current = true;
+      setShowForwardMenu(true);
+      setShowBackMenu(false);
+    }, 380);
+  };
+
+  const endForwardPress = () => {
+    if (forwardPressTimer.current) {
+      clearTimeout(forwardPressTimer.current);
+      forwardPressTimer.current = null;
+    }
+  };
+
+  const onForwardClick = () => {
+    if (forwardIsLongPress.current) {
+      forwardIsLongPress.current = false;
+      return;
+    }
+    handleForward();
+  };
+
+  const onForwardContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (canGoForward && forwardHistory.length > 0) {
+      setShowForwardMenu((prev) => !prev);
+      setShowBackMenu(false);
+    }
   };
 
   const searchArtist = async (term: string): Promise<Artist[]> => {
@@ -432,30 +609,89 @@ export const SearchSection = () => {
   return (
     <div className="flex items-center gap-2 sm:gap-3 w-full max-w-3xl">
       <div className="flex items-center gap-1.5 shrink-0">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={handleBack}
-          disabled={!canGoBack}
-          className={`h-10 w-10 sm:h-12 sm:w-12 rounded-full ${styles.navButton} active:scale-95 flex items-center justify-center cursor-pointer`}
-          title="Go back"
-          aria-label="Go back"
-        >
-          <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={handleForward}
-          disabled={!canGoForward}
-          className={`h-10 w-10 sm:h-12 sm:w-12 rounded-full ${styles.navButton} active:scale-95 flex items-center justify-center cursor-pointer`}
-          title={canGoForward ? "Go forward" : undefined}
-          aria-label="Go forward"
-        >
-          <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
-        </Button>
+        <div className="relative">
+          <Button
+            ref={backBtnRef}
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onBackClick}
+            onPointerDown={startBackPress}
+            onPointerUp={endBackPress}
+            onPointerLeave={endBackPress}
+            onContextMenu={onBackContextMenu}
+            disabled={!canGoBack}
+            className={`h-10 w-10 sm:h-12 sm:w-12 rounded-full ${styles.navButton} active:scale-95 flex items-center justify-center cursor-pointer`}
+            title={canGoBack ? "Click to go back, hold or right-click for history" : "Go back"}
+            aria-label="Go back"
+          >
+            <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
+          </Button>
+          {showBackMenu && backHistory.length > 0 && (
+            <div
+              ref={backMenuRef}
+              className="absolute left-0 top-full mt-2 z-50 min-w-[210px] max-w-[280px] rounded-xl border border-brand/30 bg-zinc-950/95 backdrop-blur-xl p-1.5 shadow-2xl shadow-black/80 animate-in fade-in-0 zoom-in-95 duration-150"
+            >
+              <div className="px-2.5 py-1 text-[11px] font-bold tracking-wider text-zinc-500 uppercase">
+                History
+              </div>
+              <div className="space-y-0.5 max-h-60 overflow-y-auto search-results-scrollbar">
+                {backHistory.map((item, i) => (
+                  <button
+                    key={`${item.path}-${i}`}
+                    type="button"
+                    onClick={() => handleJump(item.delta)}
+                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left text-sm text-zinc-200 hover:text-brand hover:bg-brand/15 transition-colors cursor-pointer group"
+                  >
+                    <span className="truncate flex-1 font-medium">{item.title}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="relative">
+          <Button
+            ref={forwardBtnRef}
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onForwardClick}
+            onPointerDown={startForwardPress}
+            onPointerUp={endForwardPress}
+            onPointerLeave={endForwardPress}
+            onContextMenu={onForwardContextMenu}
+            disabled={!canGoForward}
+            className={`h-10 w-10 sm:h-12 sm:w-12 rounded-full ${styles.navButton} active:scale-95 flex items-center justify-center cursor-pointer`}
+            title={canGoForward ? "Click to go forward, hold or right-click for history" : undefined}
+            aria-label="Go forward"
+          >
+            <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
+          </Button>
+          {showForwardMenu && forwardHistory.length > 0 && (
+            <div
+              ref={forwardMenuRef}
+              className="absolute left-0 top-full mt-2 z-50 min-w-[210px] max-w-[280px] rounded-xl border border-brand/30 bg-zinc-950/95 backdrop-blur-xl p-1.5 shadow-2xl shadow-black/80 animate-in fade-in-0 zoom-in-95 duration-150"
+            >
+              <div className="px-2.5 py-1 text-[11px] font-bold tracking-wider text-zinc-500 uppercase">
+                History
+              </div>
+              <div className="space-y-0.5 max-h-60 overflow-y-auto search-results-scrollbar">
+                {forwardHistory.map((item, i) => (
+                  <button
+                    key={`${item.path}-${i}`}
+                    type="button"
+                    onClick={() => handleJump(item.delta)}
+                    className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left text-sm text-zinc-200 hover:text-brand hover:bg-brand/15 transition-colors cursor-pointer group"
+                  >
+                    <span className="truncate flex-1 font-medium">{item.title}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <form
