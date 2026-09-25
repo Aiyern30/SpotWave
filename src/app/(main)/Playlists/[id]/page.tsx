@@ -918,23 +918,78 @@ const PlaylistPage = () => {
         open={!!trackToRemove}
         onOpenChange={() => setTrackToRemove(null)}
       >
-        <AlertDialogContent className="bg-zinc-900 border-zinc-800">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-white">
+        <AlertDialogContent
+          className="bg-zinc-900 border border-zinc-800 overflow-hidden"
+          style={{
+            boxShadow: "0 0 0 1px hsl(var(--brand-primary) / 0.2), 0 20px 60px -10px hsl(var(--brand-primary) / 0.15)",
+          }}
+        >
+          {/* Brand-tinted top accent line */}
+          <div
+            className="absolute top-0 left-0 right-0 h-0.5"
+            style={{ background: "hsl(var(--brand-primary))" }}
+          />
+
+          <AlertDialogHeader className="pt-2">
+            <AlertDialogTitle className="text-white flex items-center gap-2">
+              <span
+                className="inline-flex items-center justify-center w-7 h-7 rounded-full"
+                style={{ background: "hsl(var(--brand-primary) / 0.15)" }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-4 h-4"
+                  style={{ color: "hsl(var(--brand-primary))" }}
+                >
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                  <path d="M10 11v6M14 11v6" />
+                  <path d="M9 6V4h6v2" />
+                </svg>
+              </span>
               Remove from playlist?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-zinc-400">
-              Are you sure you want to remove "{trackToRemove?.name}" from this
-              playlist?
+            <AlertDialogDescription className="text-zinc-400 pl-9">
+              Remove{" "}
+              <span className="text-white font-medium">
+                &ldquo;{trackToRemove?.name}&rdquo;
+              </span>{" "}
+              from this playlist? This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-zinc-800 text-white hover:bg-zinc-700 border-zinc-700">
+
+          <AlertDialogFooter className="mt-2">
+            <AlertDialogCancel
+              className="bg-zinc-800 text-zinc-300 border-zinc-700 transition-colors"
+              style={
+                {
+                  "--hover-bg": "hsl(var(--brand-primary) / 0.1)",
+                  "--hover-border": "hsl(var(--brand-primary) / 0.4)",
+                  "--hover-text": "hsl(var(--brand-primary))",
+                } as React.CSSProperties
+              }
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "hsl(var(--brand-primary) / 0.1)";
+                e.currentTarget.style.borderColor = "hsl(var(--brand-primary) / 0.4)";
+                e.currentTarget.style.color = "hsl(var(--brand-primary))";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "";
+                e.currentTarget.style.borderColor = "";
+                e.currentTarget.style.color = "";
+              }}
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmRemoveTrack}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 hover:bg-red-500 text-white border-transparent transition-colors"
             >
               Remove
             </AlertDialogAction>
