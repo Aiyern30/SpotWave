@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { FiChevronUp, FiChevronDown } from "react-icons/fi";
 import { useRouter } from "next/navigation";
-import { Play } from "lucide-react";
 import {
   Avatar,
   AvatarFallback,
@@ -13,9 +12,18 @@ import {
   TabsList,
   TabsTrigger,
   Button,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "./ui";
+import { Play, MoreHorizontal, ListPlus } from "lucide-react";
 import { Artist, RecentTracksProps, Track } from "@/lib/types";
 import { usePlayer } from "@/contexts/PlayerContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { fetchRecentlyPlayed } from "@/utils/Artist/fetchRecentlyPlayed";
 
 interface InQueueWindowProps {
@@ -28,7 +36,10 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
   const [currentTrack, setCurrentTrack] = useState<any>(null);
   const [recentTracks, setRecentTracks] = useState<RecentTracksProps[]>([]);
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<string>("Queue");
+  const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
   const { playTrack } = usePlayer();
+  const { currentTheme } = useTheme();
 
   const getToken = () => {
     return localStorage.getItem("Token");
@@ -132,13 +143,75 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
     };
   };
 
+  const handleFetchUserPlaylists = useCallback(async () => {
+    const accessToken = getToken();
+    if (!accessToken) return;
+    try {
+      const profileRes = await fetch("https://api.spotify.com/v1/me", {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (!profileRes.ok) return;
+      const profile = await profileRes.json();
+
+      const response = await fetch("https://api.spotify.com/v1/me/playlists?limit=50", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const editablePlaylists = data.items.filter(
+          (pl: any) => pl.owner.id === profile.id || pl.collaborative
+        );
+        setUserPlaylists(editablePlaylists);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
+
+  const handleAddToPlaylist = async (trackUri: string, playlistId: string, playlistName: string) => {
+    const token = getToken();
+    if (!token) return;
+    try {
+      const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ uris: [trackUri] }),
+      });
+      if (response.ok) {
+        const { toast } = await import("react-toastify");
+        toast.success(`Added to ${playlistName}!`);
+      } else {
+        const { toast } = await import("react-toastify");
+        toast.error("Failed to add to playlist");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    const savedTab = localStorage.getItem("in-queue-window-tab");
+    if (savedTab === "Queue" || savedTab === "Recently played") {
+      setActiveTab(savedTab);
+    }
+  }, []);
+
+  const handleTabChange = (val: string) => {
+    setActiveTab(val);
+    localStorage.setItem("in-queue-window-tab", val);
+  };
+
   useEffect(() => {
     if (isOpen) {
       fetchCurrentTrack();
       fetchQueue();
-      handleFetchRecentlyPlayed(); // Fetch recently played when the window is opened
+      handleFetchRecentlyPlayed();
+      handleFetchUserPlaylists();
     }
-  }, [isOpen, fetchCurrentTrack, fetchQueue, handleFetchRecentlyPlayed]);
+  }, [isOpen, fetchCurrentTrack, fetchQueue, handleFetchRecentlyPlayed, handleFetchUserPlaylists]);
 
   return (
     <div
@@ -146,9 +219,12 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
         isOpen
           ? "w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] md:w-[500px] md:h-[500px]"
           : "w-0 h-0 opacity-0 pointer-events-none"
-      } bg-white shadow-lg rounded-md flex items-center justify-center z-50`}
+      } text-white shadow-2xl rounded-xl flex items-center justify-center z-50 backdrop-blur-xl overflow-hidden`}
       style={{
         transition: "width 0.3s ease, height 0.3s ease, opacity 0.3s ease",
+        background: `linear-gradient(135deg, rgba(15,15,20,0.92) 0%, color-mix(in srgb, ${currentTheme.color} 15%, rgba(10,10,15,0.95)) 100%)`,
+        border: `1px solid color-mix(in srgb, ${currentTheme.color} 40%, transparent)`,
+        boxShadow: `0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px color-mix(in srgb, ${currentTheme.color} 20%, transparent)`,
       }}
     >
       {isOpen && (
@@ -156,13 +232,13 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
           <div className="flex justify-end">
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-brand transition-colors"
+              className="text-white/70 hover:text-white transition-colors"
             >
               <FiChevronDown size={24} />
             </button>
           </div>
           <div className="flex-1 overflow-hidden">
-            <Tabs defaultValue="Queue" className="w-full h-full">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full h-full">
               <TabsList>
                 <TabsTrigger value="Queue">Queue</TabsTrigger>
                 <TabsTrigger value="Recently played">
@@ -183,7 +259,7 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
                           <AvatarImage
                             src={currentTrack?.album.images[2]?.url || ""}
                           />
-                          <AvatarFallback className="text-black">
+                          <AvatarFallback className="text-zinc-900">
                             Album
                           </AvatarFallback>
                         </Avatar>
@@ -224,7 +300,7 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
                             (artist: Artist, idx: number) => (
                               <React.Fragment key={artist.id}>
                                 <span
-                                  className="cursor-pointer hover:underline text-gray-700"
+                                  className="cursor-pointer hover:underline text-white/90"
                                   onClick={() =>
                                     router.push(
                                       `/Artists/${
@@ -241,7 +317,7 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
                           )}
                         </div>
                         <div
-                          className="text-gray-500 text-sm cursor-pointer hover:underline"
+                          className="text-white/60 text-sm cursor-pointer hover:underline"
                           onClick={() =>
                             router.push(
                               `/Albums/${
@@ -254,6 +330,36 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
                         >
                           {currentTrack.album.name}
                         </div>
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:text-white/80 hover:bg-white/20">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>
+                                <ListPlus className="mr-2 h-4 w-4" />
+                                Add to playlist
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent className="w-56 max-h-[50vh] overflow-y-auto">
+                                {userPlaylists.map((pl) => (
+                                  <DropdownMenuItem
+                                    key={pl.id}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAddToPlaylist(currentTrack.uri, pl.id, pl.name);
+                                    }}
+                                  >
+                                    {pl.name}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   </>
@@ -268,7 +374,7 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
                       <div className="relative mr-4">
                         <Avatar>
                           <AvatarImage src={track.album.images[2]?.url || ""} />
-                          <AvatarFallback className="text-black">
+                          <AvatarFallback className="text-zinc-900">
                             Album
                           </AvatarFallback>
                         </Avatar>
@@ -305,7 +411,7 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
                           {track.artists.map((artist: Artist, idx: number) => (
                             <React.Fragment key={artist.id}>
                               <span
-                                className="cursor-pointer hover:underline text-gray-700"
+                                className="cursor-pointer hover:underline text-white/90"
                                 onClick={() =>
                                   router.push(
                                     `/Artists/${
@@ -320,6 +426,36 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
                             </React.Fragment>
                           ))}
                         </div>
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:text-white/80 hover:bg-white/20">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>
+                                <ListPlus className="mr-2 h-4 w-4" />
+                                Add to playlist
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent className="w-56 max-h-[50vh] overflow-y-auto">
+                                {userPlaylists.map((pl) => (
+                                  <DropdownMenuItem
+                                    key={pl.id}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAddToPlaylist(track.uri, pl.id, pl.name);
+                                    }}
+                                  >
+                                    {pl.name}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   ))}
@@ -338,7 +474,7 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
                           <AvatarImage
                             src={track.track.album.images[2]?.url || ""}
                           />
-                          <AvatarFallback className="text-black">
+                          <AvatarFallback className="text-zinc-900">
                             Album
                           </AvatarFallback>
                         </Avatar>
@@ -375,7 +511,7 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
                           {track.track.album.artists.map((artist, idx) => (
                             <React.Fragment key={artist.id || idx}>
                               <span
-                                className="cursor-pointer hover:underline text-gray-700"
+                                className="cursor-pointer hover:underline text-white/80"
                                 onClick={() =>
                                   router.push(
                                     `/Artists/${
@@ -391,6 +527,36 @@ const InQueueWindow = ({ isOpen, onClose }: InQueueWindowProps) => {
                             </React.Fragment>
                           ))}
                         </div>
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/20">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>
+                                <ListPlus className="mr-2 h-4 w-4" />
+                                Add to playlist
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent className="w-56 max-h-[50vh] overflow-y-auto">
+                                {userPlaylists.map((pl) => (
+                                  <DropdownMenuItem
+                                    key={pl.id}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAddToPlaylist(track.track.uri, pl.id, pl.name);
+                                    }}
+                                  >
+                                    {pl.name}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   ))
