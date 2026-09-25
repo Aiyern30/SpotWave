@@ -66,10 +66,10 @@ export function UserHeaderSkeleton() {
     <div className="relative overflow-hidden rounded-xl border border-brand/20 bg-gradient-to-br from-brand/30 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--brand-primary)/0.15),transparent_70%)]" />
 
-      <div className="relative flex flex-col items-center space-y-6 p-8 lg:flex-row lg:items-start lg:space-y-0 lg:space-x-8">
-        <Skeleton className="h-80 w-80 max-w-full shrink-0 rounded-xl" />
+      <div className="relative flex flex-col items-center space-y-6 p-4 sm:p-8 lg:flex-row lg:items-start lg:space-y-0 lg:space-x-8">
+        <Skeleton className="aspect-square h-auto w-full max-w-[320px] shrink-0 rounded-xl" />
 
-        <div className="flex-1 space-y-6 text-center lg:text-left">
+        <div className="min-w-0 w-full flex-1 space-y-6 text-center lg:text-left">
           <div className="space-y-3">
             <Skeleton className="mx-auto h-7 w-28 rounded-full lg:mx-0" />
             <div className="space-y-2">
@@ -100,6 +100,23 @@ export function UserHeaderSkeleton() {
             <Skeleton key={index} className="h-12 w-12 rounded-full" />
           ))}
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 p-4 pt-0 sm:grid-cols-2 sm:p-8 sm:pt-0">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <div
+            key={index}
+            className="rounded-xl border border-brand/20 bg-gradient-to-br from-brand/30 to-zinc-800/50 p-4 backdrop-blur-sm sm:p-6"
+          >
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-14 w-14 shrink-0 rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-7 w-28" />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -593,11 +610,11 @@ export default function UserHeader({
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--brand-primary)/0.15),transparent_70%)]" />
 
-        <div className="relative flex flex-col lg:flex-row items-center lg:items-start space-y-6 lg:space-y-0 lg:space-x-8 p-8">
+        <div className="relative flex min-w-0 flex-col items-center space-y-6 p-4 sm:p-8 lg:flex-row lg:items-start lg:space-y-0 lg:space-x-8">
           {/* Enhanced Playlist Cover Image */}
-          <div className="relative group flex-shrink-0">
+          <div className="relative w-full max-w-[320px] shrink-0 group">
             <div
-              className="relative"
+              className="relative w-full"
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
             >
@@ -615,7 +632,7 @@ export default function UserHeader({
                   height={320}
                   alt={playlist?.name || "Playlist cover image"}
                   priority
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="aspect-square h-auto w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
 
                 {/* Gradient Overlay */}
@@ -720,7 +737,7 @@ export default function UserHeader({
           </div>
 
           {/* Enhanced Playlist Info */}
-          <div className="flex-1 text-center lg:text-left space-y-6">
+          <div className="min-w-0 w-full flex-1 space-y-6 text-center lg:text-left">
             <div className="space-y-3">
               <Badge
                 variant="secondary"
@@ -780,8 +797,8 @@ export default function UserHeader({
                     </div>
                   </div>
                 ) : (
-                  <div className="group flex items-center justify-center lg:justify-start space-x-3">
-                    <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight">
+                  <div className="group flex min-w-0 flex-wrap items-center justify-center gap-3 lg:justify-start">
+                    <h1 className="min-w-0 break-words text-4xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
                       {inputValue}
                     </h1>
                     {isOwner && (
@@ -1079,7 +1096,7 @@ export default function UserHeader({
                   </div>
                 ) : (
                   <div className="group flex items-start space-x-2">
-                    <p className="text-zinc-300 text-lg max-w-2xl leading-relaxed">
+                    <p className="max-w-2xl break-words text-lg leading-relaxed text-zinc-300">
                       {descriptionValue ||
                         (isOwner ? "Add a description..." : "No description")}
                     </p>
@@ -1108,7 +1125,7 @@ export default function UserHeader({
             </div>
 
             {/* Enhanced Playlist Metadata */}
-            <div className="flex flex-wrap justify-center lg:justify-start gap-6 text-zinc-300">
+            <div className="flex flex-wrap justify-center gap-4 text-zinc-300 sm:gap-6 lg:justify-start">
               <div className="flex items-center space-x-3">
                 <Avatar className="w-8 h-8 ring-2 ring-white/20">
                   <AvatarImage
@@ -1150,7 +1167,7 @@ export default function UserHeader({
           </div>
 
           {/* Enhanced Action Buttons */}
-          <div className="flex flex-row lg:flex-col space-x-3 lg:space-x-0 lg:space-y-3 items-center lg:items-end justify-center lg:justify-end mt-6 lg:mt-0">
+          <div className="flex w-full flex-row flex-wrap items-center justify-center gap-3 lg:mt-6 lg:w-auto lg:flex-col lg:items-end lg:justify-end lg:gap-3">
             {isOwner && (
               <>
                 <Settings playlistID={playlist.id} />
@@ -1328,9 +1345,9 @@ export default function UserHeader({
       </div>
 
       {/* Enhanced Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card className="bg-gradient-to-br from-brand/30 to-zinc-800/50 border-brand/20 backdrop-blur-sm hover:bg-zinc-800/30 transition-all duration-300">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-brand/20 rounded-xl ring-1 ring-brand/30">
                 <Music className="h-6 w-6 text-brand" />
@@ -1348,7 +1365,7 @@ export default function UserHeader({
         </Card>
 
         <Card className="bg-gradient-to-br from-brand/30 to-zinc-800/50 border-brand/20 backdrop-blur-sm hover:bg-zinc-800/30 transition-all duration-300">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center space-x-4">
               <div className="p-3 bg-brand/20 rounded-xl ring-1 ring-brand/30">
                 <Users className="h-6 w-6 text-brand" />
