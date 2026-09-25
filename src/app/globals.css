@@ -101,6 +101,10 @@
 }
 
 @layer utilities {
+  .skeleton-loading {
+    background-color: hsl(var(--brand-primary) / 0.18) !important;
+  }
+
   .animate-float {
     animation: float 15s ease-in-out infinite;
   }

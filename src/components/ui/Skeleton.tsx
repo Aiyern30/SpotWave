@@ -6,7 +6,7 @@ function Skeleton({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-primary/70", className)}
+      className={cn("skeleton-loading animate-pulse rounded-md", className)}
       {...props}
     />
   );
