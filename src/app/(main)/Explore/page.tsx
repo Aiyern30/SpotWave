@@ -13,7 +13,7 @@ import {
   Button,
 } from "@/components/ui";
 import { useRouter } from "next/navigation";
-import { Music, Users, Clock } from "lucide-react";
+import { ChevronsDownUp, ChevronsUpDown, Music, Users, Clock } from "lucide-react";
 import type { Artist, RecentTracksProps } from "@/lib/types";
 import { fetchFollowedArtists } from "@/utils/Artist/fetchFollowedArtists";
 import { fetchFavoriteArtists } from "@/utils/Artist/fetchFavoriteArtists";
@@ -222,19 +222,26 @@ const Page = () => {
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-8 pb-10">
       <div className="space-y-3 sm:space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 px-1 sm:px-2">
-          <h1 className="text-xl sm:text-3xl font-bold text-white tracking-tight">
+        <div className="flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between sm:px-2">
+          <h1 className="min-w-0 text-xl font-bold tracking-tight text-white sm:text-3xl">
             Explore Your Music
           </h1>
-          <div className="flex flex-wrap items-center gap-3">
-          <ViewSelector value={view} onChange={setView} options={["Grid", "List"]} label="Explore collection view" />
-          <Button
-            onClick={handleToggleAll}
-            variant="outline"
-            className="bg-zinc-800/50 border-zinc-700 text-zinc-300 hover:bg-brand hover:text-brand-foreground hover:border-brand w-fit transition-all"
-          >
-            {allOpen ? "Collapse All" : "Expand All"}
-          </Button>
+          <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
+            <ViewSelector value={view} onChange={setView} options={["Grid", "List"]} label="Explore collection view" />
+            <Button
+              onClick={handleToggleAll}
+              variant="outline"
+              size="icon"
+              aria-label={allOpen ? "Collapse all sections" : "Expand all sections"}
+              title={allOpen ? "Collapse all sections" : "Expand all sections"}
+              className="h-11 w-11 shrink-0 cursor-pointer border-zinc-700 bg-zinc-800/50 text-zinc-300 transition-all hover:border-brand hover:bg-brand hover:text-brand-foreground"
+            >
+              {allOpen ? (
+                <ChevronsDownUp className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <ChevronsUpDown className="h-4 w-4" aria-hidden="true" />
+              )}
+            </Button>
           </div>
         </div>
 
@@ -249,7 +256,7 @@ const Page = () => {
             value="item-1"
             className="bg-zinc-900/30"
           >
-            <AccordionTrigger className="rounded-lg px-4 text-zinc-100 hover:bg-brand/10 hover:text-brand transition-colors">
+            <AccordionTrigger className="min-w-0 rounded-lg px-3 text-zinc-100 transition-colors hover:bg-brand/10 hover:text-brand sm:px-4">
               <div className="flex items-center space-x-2">
                 <Users className="h-5 w-5" />
                 <span>Your Followed Artists</span>
@@ -301,7 +308,7 @@ const Page = () => {
             value="item-2"
             className="bg-zinc-900/30"
           >
-            <AccordionTrigger className="rounded-lg px-4 text-zinc-100 hover:bg-brand/10 hover:text-brand transition-colors">
+            <AccordionTrigger className="min-w-0 rounded-lg px-3 text-zinc-100 transition-colors hover:bg-brand/10 hover:text-brand sm:px-4">
               <div className="flex items-center space-x-2">
                 <Music className="h-5 w-5" />
                 <span>Your Favorite Artists</span>
@@ -353,7 +360,7 @@ const Page = () => {
             value="item-3"
             className="bg-zinc-900/30"
           >
-            <AccordionTrigger className="rounded-lg px-4 text-zinc-100 hover:bg-brand/10 hover:text-brand transition-colors">
+            <AccordionTrigger className="min-w-0 rounded-lg px-3 text-zinc-100 transition-colors hover:bg-brand/10 hover:text-brand sm:px-4">
               <div className="flex items-center space-x-2">
                 <Clock className="h-5 w-5" />
                 <span>Recently Played</span>
