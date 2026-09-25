@@ -80,3 +80,19 @@ test('entire-screen capture is rejected and released', async () => {
   assert.ok(media.tracks.every(t => t.stopped));
   assert.equal(h.capture.analyser.current, null);
 });
+
+test('a denied permission request can be retried successfully', async () => {
+  const media = stream();
+  let attempts = 0;
+  const h = harness(async () => {
+    if (++attempts === 1) throw Object.assign(new Error('Permission denied'), { name: 'NotAllowedError' });
+    return media;
+  });
+  await h.capture.startListening('speaker');
+  assert.equal(h.capture.analyser.current, null);
+  await h.capture.startListening('speaker');
+  assert.equal(attempts, 2);
+  assert.ok(h.capture.analyser.current);
+  assert.ok(media.tracks.every(t => !t.stopped));
+  h.dispose();
+});

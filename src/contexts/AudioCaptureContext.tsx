@@ -90,7 +90,12 @@ export function AudioCaptureProvider({ children }: { children: ReactNode }) {
     } catch (cause) {
       if (request !== generation.current) return;
       stopListening();
-      setError(cause instanceof Error ? cause.message : "Could not share audio. Please try again.");
+      const name = cause && typeof cause === "object" && "name" in cause ? cause.name : "";
+      setError(name === "NotAllowedError"
+        ? "Sharing was cancelled or blocked. Try sharing again. If the picker does not appear, check your browser or system screen-recording permission."
+        : name === "InvalidStateError"
+          ? "Click Share audio again while this tab is active."
+          : cause instanceof Error ? cause.message : "Could not share audio. Please try again.");
     }
   }, [stopListening]);
 

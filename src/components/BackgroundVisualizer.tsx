@@ -31,15 +31,24 @@ export default function BackgroundVisualizer() {
   }, []);
   const connected = captureMode !== "none";
   useEffect(() => { if (error) setOpen(true); }, [error]);
-  const controls = <DropdownMenu open={open} onOpenChange={next => {
-    if (next && !connected && !pending && !error) {
-      void startListening("speaker");
-      return;
-    }
-    setOpen(next);
-  }}>
+  const requestAudio = () => {
+    // Invoke capture directly from a click, never from menu state or an effect.
+    void startListening("speaker");
+    setOpen(true);
+  };
+  const controls = <DropdownMenu open={open} onOpenChange={setOpen}>
     <DropdownMenuTrigger asChild>
-      <button type="button" aria-label={pending ? "Audio sharing pending" : connected ? "Audio visualizer settings" : "Share audio for visualizer"}
+      <button type="button"
+        onPointerDown={event => { if (!connected && !pending) event.preventDefault(); }}
+        onKeyDown={event => {
+          if (!connected && !pending && ["Enter", " ", "ArrowDown"].includes(event.key)) {
+            event.preventDefault();
+            if (event.key === "ArrowDown") setOpen(true);
+            else requestAudio();
+          }
+        }}
+        onClick={() => { if (!connected && !pending) requestAudio(); }}
+        aria-label={pending ? "Audio sharing pending" : connected ? "Audio visualizer settings" : "Share audio for visualizer"}
         title={connected ? "Audio visualizer settings" : "Share audio"}
         className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-colors active:scale-[.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand ${connected ? "border-brand/40 bg-brand/15 text-brand" : "border-white/10 bg-zinc-950/80 text-zinc-400 hover:border-brand/40 hover:text-zinc-100"}`}>
         <AudioLines size={19} aria-hidden="true" className={pending ? "motion-safe:animate-pulse" : ""} />
@@ -68,7 +77,7 @@ export default function BackgroundVisualizer() {
       {reducedMotion && <p className="px-2.5 py-2 text-xs text-zinc-400">Reduced motion is enabled on your device.</p>}
       <DropdownMenuSeparator />
       {connected || pending ? <DropdownMenuItem onSelect={stopListening}><Square size={14} />{pending ? "Cancel sharing" : "Stop sharing"}</DropdownMenuItem>
-        : <DropdownMenuItem onSelect={() => void startListening("speaker")}>Share audio</DropdownMenuItem>}
+        : <DropdownMenuItem onSelect={event => { event.preventDefault(); requestAudio(); }}>{error ? "Try sharing again" : "Share audio"}</DropdownMenuItem>}
     </DropdownMenuContent>
   </DropdownMenu>;
   return <>
