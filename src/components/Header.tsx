@@ -91,8 +91,8 @@ export const Breadcrumbs = ({ actions, leading }: { actions?: React.ReactNode; l
   };
 
   return (
-    <div className="fixed inset-x-0 top-0 z-40 min-h-14 border-b border-white/10 bg-zinc-950/95 px-3 md:relative md:inset-auto md:min-h-0 md:border-0 md:bg-transparent md:p-0">
-      <div className="flex min-h-14 min-w-0 items-center gap-2 md:min-h-0">
+    <div className="fixed inset-x-0 top-0 z-40 min-h-14 border-b border-white/10 bg-zinc-950/95 px-3 md:relative md:inset-auto md:min-h-[76px] md:border-0 md:bg-transparent md:p-0">
+      <div className="flex min-h-14 min-w-0 items-center gap-2 md:min-h-[76px]">
         {leading}
         <Breadcrumb className="flex-1">
           <BreadcrumbList>

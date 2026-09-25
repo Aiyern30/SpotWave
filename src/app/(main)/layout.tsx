@@ -57,7 +57,7 @@ export default function MainLayout({
               : "md:ml-[72px] ml-0"
         } ${isPlayerVisible && !isFullScreenOpen ? "pb-[90px]" : ""}`}
       >
-        <div className="px-3 sm:px-6 lg:px-8 pt-20 md:pt-6 space-y-6 flex flex-col">
+        <div className="flex flex-col gap-6 px-3 pt-20 sm:px-6 md:pt-0 lg:px-8">
           {!isFullScreenOpen && <BackgroundVisualizer renderControls={controls => (
             <Breadcrumbs
               leading={<div ref={setMobileTriggerContainer} className="h-11 w-11 shrink-0 md:hidden" />}
