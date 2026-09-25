@@ -1287,7 +1287,7 @@ const ArtistProfilePage = () => {
                       </Avatar>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className="text-center text-sm font-medium text-white group-hover:bg-brand transition-colors line-clamp-2">
+                          <div className="text-center text-sm font-medium text-white group-hover:text-brand transition-colors line-clamp-2">
                             {similarArtist.name}
                           </div>
                         </TooltipTrigger>
