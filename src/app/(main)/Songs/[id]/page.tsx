@@ -14,6 +14,7 @@ import {
   SheetTrigger,
   Card,
   CardContent,
+  Badge,
 } from "@/components/ui";
 import type { Track } from "@/lib/types";
 import { formatLyrics } from "@/utils/function";
@@ -385,275 +386,175 @@ const SongPage = () => {
       {track && (
         <div className="space-y-8">
           {/* Track Header */}
-          <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 bg-gradient-to-b from-brand/30 to-transparent rounded-lg p-8">
-            <div className="flex-shrink-0">
-              <Image
-                src={track.album?.images[0]?.url || "/default-artist.png"}
-                width={300}
-                height={300}
-                className="rounded-lg object-cover shadow-2xl"
-                alt={track.name}
-              />
-            </div>
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand/30 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm border border-zinc-800/50 w-full mb-8">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--brand-primary)/0.15),transparent_70%)]" />
 
-            <div className="flex-1 text-center md:text-left space-y-6">
-              <div className="space-y-2">
-                <div className="text-sm text-zinc-400 uppercase tracking-wide">
-                  Song
+            <div className="relative flex flex-col md:flex-row items-center md:items-start p-6 md:p-8 gap-6 md:gap-8">
+              <div className="relative group flex-shrink-0 w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64">
+                <div className="relative w-full h-full overflow-hidden rounded-xl shadow-2xl ring-1 ring-white/10">
+                  <Image
+                    src={track.album?.images[0]?.url || "/default-artist.png"}
+                    fill
+                    alt={track.name}
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    priority
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
                 </div>
-                <h1 className="text-4xl md:text-6xl font-bold text-white">
-                  {track.name}
-                </h1>
               </div>
 
-              <div className="flex flex-wrap justify-center md:justify-start gap-4 text-zinc-300">
-                <div className="flex items-center space-x-2">
-                  <Users className="h-4 w-4" />
-                  <span>
-                    {track.artists.map((artist, idx) => (
-                      <span
-                        key={artist.id}
-                        onClick={() =>
-                          router.push(
-                            `/Artists/${artist.id}?name=${artist.name}`
-                          )
-                        }
-                        className="hover:underline cursor-pointer hover:text-white"
+              <div className="flex-1 flex flex-col justify-center text-center md:text-left space-y-4 md:space-y-6 w-full">
+                <div className="space-y-3">
+                  <Badge
+                    variant="secondary"
+                    className="bg-brand/20 text-brand border-brand/30 uppercase tracking-wide inline-flex items-center"
+                  >
+                    <Music className="w-3 h-3 mr-1" />
+                    Song
+                  </Badge>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight break-words max-w-full">
+                      {track.name}
+                    </h1>
+
+                    {/* Dropdown Menu for More Options */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 rounded-full backdrop-blur-sm border transition-all duration-200 hover:scale-110 text-white bg-black/20 border-white/10 hover:bg-brand/20 hover:text-brand hover:border-brand/40"
+                        >
+                          <MoreHorizontal className="h-5 w-5 sm:h-6 sm:w-6" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="start"
+                        className="w-56 bg-zinc-900 border-zinc-800"
                       >
-                        {artist.name}
-                        {idx < track.artists.length - 1 && ", "}
-                      </span>
-                    ))}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Music className="h-4 w-4" />
-                  <span
-                    onClick={() =>
-                      router.push(
-                        `/Albums/${track.album.id}?name=${track.album.name}`
-                      )
-                    }
-                    className="hover:underline cursor-pointer hover:text-white"
-                  >
-                    {track.album?.name}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <TrendingUp className="h-4 w-4" />
-                  <span>Popularity: {track.popularity}/100</span>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap justify-center md:justify-start gap-4">
-                <Button
-                  onClick={() =>
-                    window.open(track.external_urls?.spotify, "_blank")
-                  }
-                  className="bg-brand hover:bg-brand text-black font-semibold hover:scale-105 transition-all"
-                >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Open in Spotify
-                </Button>
-
-                <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                  <SheetTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="bg-transparent border-white text-white hover:bg-brand hover:text-black hover:border-brand transition-all"
-                      onClick={() => {
-                        if (!lyrics && !loadingLyrics) {
-                          fetchLyrics(
-                            track.artists[0].name,
-                            track.name,
-                            track.album.name,
-                            track.duration_ms
-                          );
-                        }
-                      }}
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      View Lyrics
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent className="w-[400px] sm:w-[540px] bg-zinc-900 border-zinc-800 flex flex-col overflow-hidden">
-                    <SheetHeader className="space-y-4 flex-shrink-0">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden">
-                          <Image
-                            src={
-                              track.album?.images[0]?.url ||
-                              "/default-artist.png"
-                            }
-                            width={64}
-                            height={64}
-                            className="object-cover"
-                            alt={track.name}
-                          />
-                        </div>
-                        <div>
-                          <SheetTitle className="text-white text-lg font-semibold">
-                            {track.name}
-                          </SheetTitle>
-                          <p className="text-zinc-400 text-sm">
-                            by{" "}
-                            {track.artists
-                              .map((artist) => artist.name)
-                              .join(", ")}
-                          </p>
-                        </div>
-                      </div>
-                    </SheetHeader>
-                    <div className="flex-1 overflow-hidden mt-6">
-                      {loadingLyrics ? (
-                        <div className="flex items-center justify-center h-full">
-                          <div className="animate-spin rounded-full h-8 w-8 border-2 border-green-500 border-t-transparent"></div>
-                          <span className="ml-3 text-zinc-400">
-                            Loading lyrics...
-                          </span>
-                        </div>
-                      ) : syncedLyrics && syncedLyrics.length > 0 ? (
-                        <div
-                          ref={lyricsContainerRef}
-                          className="bg-zinc-800/30 rounded-lg p-4 h-full overflow-y-auto scroll-smooth"
-                          style={{ maxHeight: "calc(100vh - 200px)" }}
-                        >
-                          <div className="space-y-3 pb-32">
-                            {syncedLyrics.map((line, index) => (
-                              <div
-                                key={index}
-                                data-index={index}
-                                className={`text-sm leading-relaxed transition-all duration-300 py-1 ${
-                                  index === currentLyricIndex
-                                    ? "bg-brand font-semibold text-lg scale-105"
-                                    : index < currentLyricIndex
-                                    ? "text-zinc-500"
-                                    : "text-zinc-300"
-                                }`}
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger>
+                            <ListPlus className="mr-2 h-4 w-4" />
+                            Add to playlist
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuSubContent className="bg-zinc-900 border-zinc-800 max-h-[300px] overflow-y-auto">
+                            {userPlaylists.map((pl) => (
+                              <DropdownMenuItem
+                                key={pl.id}
+                                onClick={() =>
+                                  handleAddToPlaylist(
+                                    track.uri || `spotify:track:${track.id}`,
+                                    pl.id,
+                                    pl.name
+                                  )
+                                }
+                                className="text-white hover:bg-brand/20"
                               >
-                                {line.text}
-                              </div>
+                                {pl.name}
+                              </DropdownMenuItem>
                             ))}
-                          </div>
-                        </div>
-                      ) : (
-                        <div
-                          className="bg-zinc-800/30 rounded-lg p-4 h-full overflow-y-auto"
-                          style={{ maxHeight: "calc(100vh - 200px)" }}
+                          </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+
+                        <DropdownMenuItem
+                          onClick={() => handleSaveToLiked(track.id, track.name)}
+                          className="text-white hover:bg-brand/20"
                         >
-                          <pre className="text-zinc-300 text-sm leading-relaxed whitespace-pre-wrap font-sans">
-                            {formatLyrics(lyrics)}
-                          </pre>
-                        </div>
-                      )}
-                    </div>
-                  </SheetContent>
-                </Sheet>
+                          <Heart
+                            className={`mr-2 h-4 w-4 ${likedTracks.has(track.id)
+                                ? "fill-brand text-brand"
+                                : ""
+                              }`}
+                          />
+                          {likedTracks.has(track.id)
+                            ? "Remove from Liked Songs"
+                            : "Save to Liked Songs"}
+                        </DropdownMenuItem>
 
-                {/* Dropdown Menu for More Options */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="bg-brand/10 text-white border-brand/20 hover:border-brand hover:bg-brand hover:text-black transition-all w-10 px-0 rounded-full"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="start"
-                    className="w-56 bg-zinc-900 border-zinc-800"
-                  >
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <ListPlus className="mr-2 h-4 w-4" />
-                        Add to playlist
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent className="bg-zinc-900 border-zinc-800 max-h-[300px] overflow-y-auto">
-                        {userPlaylists.map((pl) => (
-                          <DropdownMenuItem
-                            key={pl.id}
-                            onClick={() =>
-                              handleAddToPlaylist(
-                                track.uri || `spotify:track:${track.id}`,
-                                pl.id,
-                                pl.name
-                              )
+                        <DropdownMenuSeparator className="bg-zinc-800" />
+
+                        <DropdownMenuItem
+                          onClick={() => {
+                            if (track.album && track.album.id) {
+                              router.push(
+                                `/Albums/${track.album.id
+                                }?name=${encodeURIComponent(track.album.name)}`
+                              );
                             }
-                            className="text-white hover:bg-brand/20"
-                          >
-                            {pl.name}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
+                          }}
+                          className="text-white hover:bg-brand/20"
+                        >
+                          <Disc className="mr-2 h-4 w-4" />
+                          Go to album
+                        </DropdownMenuItem>
 
-                    <DropdownMenuItem
-                      onClick={() => handleSaveToLiked(track.id, track.name)}
-                      className="text-white hover:bg-brand/20"
-                    >
-                      <Heart
-                        className={`mr-2 h-4 w-4 ${
-                          likedTracks.has(track.id)
-                            ? "fill-green-500 bg-brand"
-                            : ""
-                        }`}
-                      />
-                      {likedTracks.has(track.id)
-                        ? "Remove from Liked Songs"
-                        : "Save to Liked Songs"}
-                    </DropdownMenuItem>
-
-                    <DropdownMenuSeparator className="bg-zinc-800" />
-
-                    <DropdownMenuItem
-                      onClick={() => {
-                        if (track.album && track.album.id) {
-                          router.push(
-                            `/Albums/${
-                              track.album.id
-                            }?name=${encodeURIComponent(track.album.name)}`
-                          );
-                        }
-                      }}
-                      className="text-white hover:bg-brand/20"
-                    >
-                      <Disc className="mr-2 h-4 w-4" />
-                      Go to album
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem
-                      onClick={() => {
-                        if (
-                          track.artists &&
-                          track.artists[0] &&
-                          track.artists[0].id
-                        ) {
-                          router.push(
-                            `/Artists/${
+                        <DropdownMenuItem
+                          onClick={() => {
+                            if (
+                              track.artists &&
+                              track.artists[0] &&
                               track.artists[0].id
-                            }?name=${encodeURIComponent(track.artists[0].name)}`
-                          );
-                        }
-                      }}
-                      className="text-white hover:bg-brand/20"
-                    >
-                      <User className="mr-2 h-4 w-4" />
-                      Go to artist
-                    </DropdownMenuItem>
+                            ) {
+                              router.push(
+                                `/Artists/${track.artists[0].id
+                                }?name=${encodeURIComponent(track.artists[0].name)}`
+                              );
+                            }
+                          }}
+                          className="text-white hover:bg-brand/20"
+                        >
+                          <User className="mr-2 h-4 w-4" />
+                          Go to artist
+                        </DropdownMenuItem>
 
-                    <DropdownMenuItem
-                      onClick={() =>
-                        window.open(track.external_urls?.spotify, "_blank")
-                      }
-                      className="text-white hover:bg-brand/20"
-                    >
-                      <ExternalLink className="mr-2 h-4 w-4" />
-                      Open in Spotify
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            window.open(track.external_urls?.spotify, "_blank")
+                          }
+                          className="text-white hover:bg-brand/20"
+                        >
+                          <ExternalLink className="mr-2 h-4 w-4" />
+                          Open in Spotify
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap justify-center md:justify-start gap-4 sm:gap-6 text-zinc-300 text-sm sm:text-base">
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="h-4 w-4 text-brand" />
+                    <span className="font-medium">
+                      {new Date(track.album.release_date).getFullYear()}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <TrendingUp className="h-4 w-4 text-blue-500" />
+                    <span className="font-medium">
+                      Popularity: {track.popularity}/100
+                    </span>
+                  </div>
+                </div>
+
+                {track.artists && (
+                  <div className="flex flex-wrap gap-2 sm:gap-4 items-center justify-center md:justify-start pt-2">
+                    {track.artists.map((artist, index) => (
+                      <div key={artist.id} className="flex items-center gap-2 sm:gap-3">
+                        <Button
+                          variant="link"
+                          className="text-white hover:text-brand p-0 h-auto font-semibold text-base sm:text-lg hover:underline transition-colors break-words max-w-[150px] sm:max-w-xs"
+                          onClick={() => router.push(`/Artists/${artist.id}?name=${artist.name}`)}
+                        >
+                          <span className="truncate">{artist.name}</span>
+                        </Button>
+                        {index < track.artists.length - 1 && (
+                          <span className="text-zinc-600 text-lg sm:text-xl">•</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
