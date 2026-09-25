@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Music, Pause, Play } from "lucide-react";
 import { decodeHtmlEntities } from "@/utils/decodeHtmlEntities";
+import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/Card";
 
 type HomeMediaCardProps = {
   view?: "Grid" | "List";
@@ -20,7 +21,7 @@ export default function HomeMediaCard({ title, subtitle, image, href, isPlaying,
   const [failedImage, setFailedImage] = useState<string | null>(null);
 
   return (
-    <article className={`group relative min-w-0 ${view === "List" ? "flex items-center gap-3" : ""} rounded-xl border border-zinc-800/70 bg-zinc-900/50 p-3 transition-colors hover:border-brand/50 hover:bg-brand/5 focus-within:border-brand/50`}>
+    <Card className={`group relative min-w-0 ${view === "List" ? "flex items-center gap-3" : ""} p-3`}>
       <Link href={href} className={`${view === "List" ? "flex min-w-0 flex-1 items-center gap-4" : "block"} rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-4 focus-visible:ring-offset-zinc-900`}>
         <div className={`relative overflow-hidden rounded-lg bg-zinc-800 ${view === "List" ? "h-14 w-14 shrink-0" : "aspect-square"}`}>
           {image && failedImage !== image ? (
@@ -29,10 +30,14 @@ export default function HomeMediaCard({ title, subtitle, image, href, isPlaying,
             <div className="flex h-full items-center justify-center"><Music className="h-10 w-10 text-zinc-500" aria-hidden="true" /></div>
           )}
         </div>
-        <div className={`min-w-0 ${view === "List" ? "flex-1" : "h-[72px] pt-3"}`}>
-          <h3 className="truncate text-sm font-semibold leading-5 text-zinc-100 group-hover:text-brand group-focus-within:text-brand sm:text-base" title={title}>{title}</h3>
-          <p className="mt-1 truncate text-xs leading-5 text-zinc-400 sm:text-sm" title={decodeHtmlEntities(subtitle)}>{decodeHtmlEntities(subtitle)}</p>
-        </div>
+        <CardContent className={`min-w-0 p-0 ${view === "List" ? "flex-1" : "h-[72px] pt-3"}`}>
+          <CardTitle className="leading-5 group-hover:text-brand group-focus-within:text-brand sm:text-base" title={title}>
+            {title}
+          </CardTitle>
+          <CardDescription className="mt-1 truncate leading-5 sm:text-sm" title={decodeHtmlEntities(subtitle)}>
+            {decodeHtmlEntities(subtitle)}
+          </CardDescription>
+        </CardContent>
       </Link>
       {onPlay && (
         <button type="button" onClick={onPlay} aria-label={`${isPlaying ? "Pause" : "Play"} ${title}`} aria-pressed={!!isPlaying}
@@ -40,6 +45,6 @@ export default function HomeMediaCard({ title, subtitle, image, href, isPlaying,
           {isPlaying ? <Pause className="h-5 w-5" fill="currentColor" /> : <Play className="ml-0.5 h-5 w-5" fill="currentColor" />}
         </button>
       )}
-    </article>
+    </Card>
   );
 }
