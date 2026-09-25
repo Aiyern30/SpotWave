@@ -66,7 +66,7 @@ export default function MainLayout({
           )} />}
 
           {!isGamePage && (
-            <div className="relative z-[1] animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="relative z-50 animate-in fade-in slide-in-from-top-4 duration-700">
               <SearchSection />
             </div>
           )}

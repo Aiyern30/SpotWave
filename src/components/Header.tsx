@@ -501,7 +501,7 @@ export const SearchSection = () => {
 };
 
 const Header = () => (
-  <div className="flex flex-col space-y-6">
+  <div className="flex flex-col space-y-6 relative z-50">
     <Suspense
       fallback={<div className="h-6 w-32 bg-zinc-800 animate-pulse rounded" />}
     >
