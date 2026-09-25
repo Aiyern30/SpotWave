@@ -226,7 +226,7 @@ export default function UserHeader({
 
       if (response.ok) {
         console.log("Playlist updated successfully");
-        refetch();
+        refetch(true);
       } else {
         console.error("Failed to update playlist details");
       }
@@ -253,7 +253,7 @@ export default function UserHeader({
 
       if (response.ok) {
         console.log("Playlist cover image updated successfully");
-        refetch();
+        refetch(true);
         setImageDialogOpen(false);
       } else if (response.status === 401) {
         console.error("Unauthorized. Check token.");
