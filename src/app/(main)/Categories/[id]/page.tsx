@@ -48,7 +48,6 @@ export default function CategoryDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-
   const {
     playTrack,
     pauseTrack,
@@ -240,18 +239,23 @@ export default function CategoryDetailPage() {
                 {tracks.slice(0, 10).map((track, index) => {
                   const isPlayingThis = isTrackPlaying(track.id);
 
-
                   return (
                     <SongTableRow
                       key={track.id}
                       className="border-zinc-800/30 hover:bg-zinc-800/30 transition-all cursor-pointer group"
                       onActivate={() => handlePlayPauseTrack(track)}
-                        aria-label={`${isPlayingThis ? "Pause" : "Play"} ${track.name}`}
-
-
+                      aria-label={`${isPlayingThis ? "Pause" : "Play"} ${track.name}`}
                     >
                       <TableCell className="text-center py-4">
-                        <span className={isPlayingThis ? "text-brand tabular-nums text-xs" : "text-zinc-500 tabular-nums text-xs"}>{index + 1}</span>
+                        <span
+                          className={
+                            isPlayingThis
+                              ? "text-brand tabular-nums text-xs"
+                              : "text-zinc-500 tabular-nums text-xs"
+                          }
+                        >
+                          {index + 1}
+                        </span>
                       </TableCell>
                       <TableCell className="py-4 max-w-0">
                         <div className="flex items-center gap-3">
@@ -317,7 +321,7 @@ export default function CategoryDetailPage() {
                 badge={`${playlist.tracks?.total || 0} tracks`}
                 onClick={(id) =>
                   router.push(
-                    `/Playlists/${id}?name=${encodeURIComponent(playlist.name)}`
+                    `/Playlists/${id}?name=${encodeURIComponent(playlist.name)}`,
                   )
                 }
               />
@@ -344,7 +348,7 @@ export default function CategoryDetailPage() {
                 badge={album.album_type}
                 onClick={(id) =>
                   router.push(
-                    `/Albums/${id}?name=${encodeURIComponent(album.name)}`
+                    `/Albums/${id}?name=${encodeURIComponent(album.name)}`,
                   )
                 }
               />

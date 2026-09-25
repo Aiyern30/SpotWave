@@ -14,6 +14,7 @@ import {
   fetchShowEpisodes,
 } from "@/utils/fetchEpisodes";
 import { useRouter } from "next/navigation";
+import { decodeHtmlEntities } from "@/utils/decodeHtmlEntities";
 
 type EpisodeProps = {
   id: string;
@@ -189,7 +190,7 @@ const EpisodesPage = () => {
             </div>
 
             <p className="text-zinc-500 text-sm line-clamp-2 mb-3">
-              {episode.description}
+              {decodeHtmlEntities(episode.description)}
             </p>
 
             <div className="flex items-center gap-4 text-xs text-zinc-400">

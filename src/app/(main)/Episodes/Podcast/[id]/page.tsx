@@ -92,7 +92,7 @@ const PodcastDetailPage = () => {
         "https://api.spotify.com/v1/me/playlists?limit=50",
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       if (response.ok) {
         const data = await response.json();
@@ -170,7 +170,7 @@ const PodcastDetailPage = () => {
   const handleAddEpisodeToPlaylist = async (
     episodeId: string,
     playlistId: string,
-    playlistName: string
+    playlistName: string,
   ) => {
     const token = localStorage.getItem("Token");
     if (!token) return;
@@ -185,7 +185,7 @@ const PodcastDetailPage = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ uris: [`spotify:episode:${episodeId}`] }),
-        }
+        },
       );
 
       if (response.ok) {
@@ -494,7 +494,7 @@ const PodcastDetailPage = () => {
                                         handleAddEpisodeToPlaylist(
                                           episode.id,
                                           pl.id,
-                                          pl.name
+                                          pl.name,
                                         );
                                       }}
                                       className="text-white hover:bg-brand/10 cursor-pointer"

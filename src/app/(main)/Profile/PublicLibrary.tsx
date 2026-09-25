@@ -1,6 +1,7 @@
 "use client";
 import ViewSelector from "@/components/ViewSelector";
 import { useCollectionView } from "@/hooks/useCollectionView";
+import { decodeHtmlEntities } from "@/utils/decodeHtmlEntities";
 
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -253,7 +254,9 @@ const PublicLibrary = ({ userId }: { userId?: string }) => {
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
                           <div className="text-zinc-400 truncate max-w-xs text-sm">
-                            {playlist.description || "No description"}
+                            {playlist.description
+                              ? decodeHtmlEntities(playlist.description)
+                              : "No description"}
                           </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-right">

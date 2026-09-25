@@ -18,6 +18,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/";
 import { Play, Pause, Music, Clock, ExternalLink } from "lucide-react";
+import { decodeHtmlEntities } from "@/utils/decodeHtmlEntities";
 
 interface PlaylistCardProps {
   id: string;
@@ -99,7 +100,7 @@ export default function PlaylistCard({
           {image && !imageError ? <Image src={image} alt="" width={56} height={56} className="h-14 w-14 shrink-0 rounded-lg object-cover" onError={() => setImageError(true)} /> : <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-zinc-800"><Music className="h-6 w-6 text-zinc-400" /></span>}
           <span className="min-w-0 flex-1">
             <span className={`block truncate text-sm font-semibold ${isCurrentTrack ? "text-brand" : "text-zinc-100"}`}>{title}</span>
-            <span className="mt-1 block truncate text-sm text-zinc-400">{description || badge || ""}</span>
+            <span className="mt-1 block truncate text-sm text-zinc-400">{description ? decodeHtmlEntities(description) : badge || ""}</span>
           </span>
         </button>
         {duration && <span className="hidden text-xs text-zinc-400 sm:block">{duration}</span>}
@@ -202,7 +203,7 @@ export default function PlaylistCard({
 
           {(description || fluid) && (
             <div className="text-xs sm:text-sm text-zinc-400 truncate leading-5">
-              {description || "\u00a0"}
+              {description ? decodeHtmlEntities(description) : "\u00a0"}
             </div>
           )}
 

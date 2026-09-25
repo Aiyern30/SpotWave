@@ -53,6 +53,7 @@ import type { PlaylistProps, UserProfile } from "@/lib/types";
 import Settings from "../Settings";
 import SearchSongs from "../SearchSongs";
 import { analyzePlaylistGenres } from "@/utils/analyzePlaylistGenres";
+import { decodeHtmlEntities } from "@/utils/decodeHtmlEntities";
 import { toast } from "sonner";
 
 interface UserHeaderProps {
@@ -1040,8 +1041,11 @@ export default function UserHeader({
                 ) : (
                   <div className="group flex items-start space-x-2">
                     <p className="min-w-0 max-w-2xl [overflow-wrap:anywhere] text-sm leading-relaxed text-zinc-300 sm:text-base">
-                      {descriptionValue ||
-                        (isOwner ? "Add a description..." : "No description")}
+                      {descriptionValue
+                        ? decodeHtmlEntities(descriptionValue)
+                        : isOwner
+                          ? "Add a description..."
+                          : "No description"}
                     </p>
                     {isOwner && (
                       <TooltipProvider>

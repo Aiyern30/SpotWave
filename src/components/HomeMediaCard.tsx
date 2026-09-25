@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Music, Pause, Play } from "lucide-react";
+import { decodeHtmlEntities } from "@/utils/decodeHtmlEntities";
 
 type HomeMediaCardProps = {
   view?: "Grid" | "List";
@@ -30,7 +31,7 @@ export default function HomeMediaCard({ title, subtitle, image, href, isPlaying,
         </div>
         <div className={`min-w-0 ${view === "List" ? "flex-1" : "h-[72px] pt-3"}`}>
           <h3 className="truncate text-sm font-semibold leading-5 text-zinc-100 group-hover:text-brand group-focus-within:text-brand sm:text-base" title={title}>{title}</h3>
-          <p className="mt-1 truncate text-xs leading-5 text-zinc-400 sm:text-sm" title={subtitle}>{subtitle}</p>
+          <p className="mt-1 truncate text-xs leading-5 text-zinc-400 sm:text-sm" title={decodeHtmlEntities(subtitle)}>{decodeHtmlEntities(subtitle)}</p>
         </div>
       </Link>
       {onPlay && (
