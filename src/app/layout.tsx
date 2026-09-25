@@ -58,7 +58,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.className} bg-primary-background`}>
+      <body className={`${inter.className} bg-black`}>
         <Providers>{children}</Providers>
       </body>
     </html>
