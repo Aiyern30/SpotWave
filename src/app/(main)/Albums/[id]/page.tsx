@@ -18,7 +18,18 @@ import {
   Disc3,
   Pause,
   Heart,
+  MoreHorizontal,
+  ListPlus,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui";
 import {
   Card,
   CardHeader,
@@ -74,6 +85,9 @@ const AlbumsIDPage = () => {
   const [isSaved, setIsSaved] = useState<boolean>(false);
   const [artistImage, setArtistImage] = useState<string | null>(null);
   const [isCheckingSaved, setIsCheckingSaved] = useState<boolean>(true);
+  const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
+  const [playlistTracks, setPlaylistTracks] = useState<Record<string, Set<string>>>({});
+  const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
 
   const handleArtistClick = (artistId: string, name: string) => {
     router.push(`/Artists/${artistId}?name=${encodeURIComponent(name)}`);
@@ -251,6 +265,34 @@ const AlbumsIDPage = () => {
     }
   };
 
+  const isTrackSaved = (trackId: string) =>
+    likedTracks.has(trackId) ||
+    Object.values(playlistTracks).some((s) => s.has(trackId));
+
+  const handleAddToPlaylist = async (trackUri: string, playlistId: string, playlistName: string) => {
+    try {
+      const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ uris: [trackUri] }),
+      });
+      if (response.ok) {
+        const { toast } = await import("react-toastify");
+        toast.success(`Added to ${playlistName}!`);
+        const trackId = trackUri.split(":").pop() || "";
+        setPlaylistTracks((prev) => ({
+          ...prev,
+          [playlistId]: new Set([...(prev[playlistId] || []), trackId]),
+        }));
+      } else {
+        throw new Error("Failed to add");
+      }
+    } catch {
+      const { toast } = await import("react-toastify");
+      toast.error("Failed to add to playlist");
+    }
+  };
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedToken = localStorage.getItem("Token");
@@ -259,6 +301,54 @@ const AlbumsIDPage = () => {
       }
     }
   }, []);
+
+  // Fetch liked tracks for all album tracks
+  useEffect(() => {
+    if (!token || !album?.tracks?.items?.length) return;
+    const ids = album.tracks.items.map((t: any) => t.id).join(",");
+    fetch(`https://api.spotify.com/v1/me/tracks/contains?ids=${ids}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data: boolean[]) => {
+        const liked = new Set<string>();
+        data.forEach((isLiked, i) => {
+          if (isLiked) liked.add(album.tracks.items[i].id);
+        });
+        setLikedTracks(liked);
+      })
+      .catch(console.error);
+  }, [token, album]);
+
+  // Fetch user playlists + their track IDs
+  useEffect(() => {
+    if (!token) return;
+    fetch("https://api.spotify.com/v1/me/playlists?limit=50", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then(async (data) => {
+        const playlists = data.items || [];
+        setUserPlaylists(playlists);
+        const trackMap: Record<string, Set<string>> = {};
+        await Promise.all(
+          playlists.map(async (pl: any) => {
+            const r = await fetch(
+              `https://api.spotify.com/v1/playlists/${pl.id}/tracks?fields=items(track(id))&limit=100`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (r.ok) {
+              const d = await r.json();
+              trackMap[pl.id] = new Set(
+                (d.items || []).map((it: any) => it.track?.id).filter(Boolean)
+              );
+            }
+          })
+        );
+        setPlaylistTracks(trackMap);
+      })
+      .catch(console.error);
+  }, [token]);
 
   if (!album) {
     return (
@@ -347,7 +437,7 @@ const AlbumsIDPage = () => {
                       #
                     </TableHead>
                     <TableHead className="text-zinc-400">Title</TableHead>
-                    <TableHead className="hidden lg:table-cell text-center text-zinc-400">
+                    <TableHead className="text-center text-zinc-400">
                       Action
                     </TableHead>
                     <TableHead className="hidden md:table-cell text-right text-zinc-400">
@@ -383,14 +473,19 @@ const AlbumsIDPage = () => {
                             </div>
                           )}
                           <div className="min-w-0 flex-1">
-                            <div
-                              className={`font-medium truncate transition-colors ${
-                                isTrackPlaying(item.id)
-                                  ? "text-brand"
-                                  : "text-white group-hover:text-brand"
-                              }`}
-                            >
-                              {item.name}
+                            <div className="flex items-center gap-2">
+                              <div
+                                className={`font-medium truncate transition-colors ${
+                                  isTrackPlaying(item.id)
+                                    ? "text-brand"
+                                    : "text-white group-hover:text-brand"
+                                }`}
+                              >
+                                {item.name}
+                              </div>
+                              {isTrackSaved(item.id) && (
+                                <Heart className="w-3.5 h-3.5 fill-brand text-brand flex-shrink-0" />
+                              )}
                             </div>
                             <div className="text-zinc-400 text-sm truncate">
                               {item.artists.map(
@@ -418,24 +513,58 @@ const AlbumsIDPage = () => {
                         </div>
                       </TableCell>
 
-                      <TableCell className="hidden lg:table-cell text-center">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-zinc-700 text-brand hover:bg-brand/10 hover:border-brand hover:text-brand transition-all"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open(
-                              `https://open.spotify.com/track/${item.uri
-                                .split(":")
-                                .pop()}`,
-                              "_blank"
-                            );
-                          }}
-                        >
-                          <ExternalLink className="w-3 h-3 mr-1" />
-                          Spotify
-                        </Button>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="hidden sm:flex border-zinc-700 text-brand hover:bg-brand/10 hover:border-brand hover:text-brand transition-all"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(
+                                `https://open.spotify.com/track/${item.uri.split(":").pop()}`,
+                                "_blank"
+                              );
+                            }}
+                          >
+                            <ExternalLink className="w-3 h-3 mr-1" />
+                            Spotify
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-700"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56 bg-zinc-900 border-zinc-800">
+                              <DropdownMenuSub>
+                                <DropdownMenuSubTrigger className="text-white hover:bg-brand/20">
+                                  <ListPlus className="mr-2 h-4 w-4" />
+                                  Add to playlist
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuSubContent className="bg-zinc-900 border-zinc-800 max-h-[300px] overflow-y-auto">
+                                  {userPlaylists.map((pl) => (
+                                    <DropdownMenuItem
+                                      key={pl.id}
+                                      onClick={() => handleAddToPlaylist(item.uri, pl.id, pl.name)}
+                                      className="text-white hover:bg-brand/20 flex items-center justify-between"
+                                    >
+                                      <span className="truncate">{pl.name}</span>
+                                      {playlistTracks[pl.id]?.has(item.id) && (
+                                        <Heart className="w-3 h-3 fill-brand text-brand flex-shrink-0 ml-2" />
+                                      )}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuSubContent>
+                              </DropdownMenuSub>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </TableCell>
 
                       <TableCell className="hidden md:table-cell text-right text-zinc-400 text-sm">
@@ -470,6 +599,7 @@ const AlbumsIDPage = () => {
                       .pop()}`}
                     isPlaying={isThisTrack && isPlaying}
                     isPaused={isThisTrack && !isPlaying}
+                    isLiked={isTrackSaved(item.id)}
                     onPlay={handlePlayTrackWrapper}
                     onPause={pauseTrack}
                     onResume={resumeTrack}
@@ -477,6 +607,42 @@ const AlbumsIDPage = () => {
                       router.push(
                         `/Songs/${id}?name=${encodeURIComponent(name)}`
                       )
+                    }
+                    menu={
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-9 w-9 bg-black/60 text-white hover:bg-black/80 backdrop-blur-sm rounded-full"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-56 bg-zinc-900 border-zinc-800">
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger className="text-white hover:bg-brand/20">
+                              <ListPlus className="mr-2 h-4 w-4" />
+                              Add to playlist
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent className="bg-zinc-900 border-zinc-800 max-h-[300px] overflow-y-auto">
+                              {userPlaylists.map((pl) => (
+                                <DropdownMenuItem
+                                  key={pl.id}
+                                  onClick={() => handleAddToPlaylist(item.uri, pl.id, pl.name)}
+                                  className="text-white hover:bg-brand/20 flex items-center justify-between"
+                                >
+                                  <span className="truncate">{pl.name}</span>
+                                  {playlistTracks[pl.id]?.has(item.id) && (
+                                    <Heart className="w-3 h-3 fill-brand text-brand flex-shrink-0 ml-2" />
+                                  )}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     }
                   />
                 );
