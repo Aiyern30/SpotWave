@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useAudioCapture } from "@/contexts/AudioCaptureContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { AudioLines, Square } from "lucide-react";
+import { AudioLines, Square, MonitorUp, Mic, Aperture, Waves, Activity, Scale, Gauge, Zap } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -65,31 +65,12 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          onPointerDown={(event) => {
-            if (!connected && !pending) event.preventDefault();
-          }}
-          onKeyDown={(event) => {
-            if (
-              !connected &&
-              !pending &&
-              ["Enter", " ", "ArrowDown"].includes(event.key)
-            ) {
-              event.preventDefault();
-              if (event.key === "ArrowDown") setOpen(true);
-              else requestAudio();
-            }
-          }}
-          onClick={() => {
-            if (!connected && !pending) requestAudio();
-          }}
           aria-label={
             pending
               ? "Audio sharing pending"
-              : connected
-                ? "Audio visualizer settings"
-                : "Share audio for visualizer"
+              : "Audio visualizer settings"
           }
-          title={connected ? "Audio visualizer settings" : "Share audio"}
+          title="Audio visualizer settings"
           className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-colors active:scale-[.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand ${connected ? "border-brand/40 bg-brand/15 text-brand" : "border-white/10 bg-zinc-950/80 text-zinc-400 hover:border-brand/40 hover:text-zinc-100"}`}
         >
           <AudioLines
@@ -140,9 +121,11 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
         </DropdownMenuCheckboxItem>
         <DropdownMenuLabel>Audio source</DropdownMenuLabel>
         <DropdownMenuItem disabled={pending} onSelect={event => event.preventDefault()} onClick={() => requestAudio("speaker")}>
+          <MonitorUp size={14} className="mr-2" />
           {captureMode === "speaker" ? "Change shared audio" : "Share tab / screen audio"}
         </DropdownMenuItem>
         <DropdownMenuItem disabled={pending || captureMode === "mic"} onSelect={event => event.preventDefault()} onClick={() => requestAudio("mic")}>
+          <Mic size={14} className="mr-2" />
           {captureMode === "mic" ? "Microphone active" : "Use microphone"}
         </DropdownMenuItem>
         <p className="px-2.5 py-2 text-xs leading-relaxed text-zinc-400">Shared audio is clearest. Microphone mode needs audible speakers and also picks up room noise.</p>
@@ -153,9 +136,15 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
           setVisualMode(value);
           try { localStorage.setItem("background-visualizer-mode", value); } catch {}
         }}>
-          {(["Orbit", "Ribbons", "Spectrum"] as const).map(value => (
-            <DropdownMenuRadioItem key={value} value={value} onSelect={event => event.preventDefault()}>{value}</DropdownMenuRadioItem>
-          ))}
+          {(["Orbit", "Ribbons", "Spectrum"] as const).map(value => {
+            const Icon = value === "Orbit" ? Aperture : value === "Ribbons" ? Waves : Activity;
+            return (
+              <DropdownMenuRadioItem key={value} value={value} onSelect={event => event.preventDefault()}>
+                <Icon size={14} className="mr-2" />
+                {value}
+              </DropdownMenuRadioItem>
+            );
+          })}
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
         <DropdownMenuLabel>Sensitivity</DropdownMenuLabel>
@@ -169,16 +158,18 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
           }}
         >
           {[
-            [2, "Balanced"],
-            [4, "Sensitive"],
-            [6, "Very sensitive"],
-          ].map(([value, label]) => (
+            [2, "Balanced", Scale],
+            [4, "Sensitive", Gauge],
+            [6, "Very sensitive", Zap],
+          ].map(([value, label, Icon]) => (
             <DropdownMenuRadioItem
-              key={value}
+              key={value as number}
               value={String(value)}
               onSelect={(event) => event.preventDefault()}
             >
-              {label}
+              {/* @ts-ignore Icon will be a Lucide component */}
+              <Icon size={14} className="mr-2" />
+              {label as string}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
@@ -190,16 +181,15 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
         <DropdownMenuSeparator />
         {connected || pending ? (
           <DropdownMenuItem onSelect={stopListening}>
-            <Square size={14} />
+            <Square size={14} className="mr-2" />
             {pending ? "Cancel sharing" : "Stop sharing"}
           </DropdownMenuItem>
         ) : (
           <DropdownMenuItem
-            onSelect={(event) => {
-              event.preventDefault();
-              requestAudio();
-            }}
+            onSelect={(event) => event.preventDefault()}
+            onClick={() => requestAudio()}
           >
+            <MonitorUp size={14} className="mr-2" />
             {error ? "Try sharing again" : "Share audio"}
           </DropdownMenuItem>
         )}
