@@ -271,7 +271,7 @@ export const MusicPlayer = ({
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-zinc-800 z-[60] transition-all duration-300 cursor-pointer md:cursor-default"
+      className="fixed bottom-0 left-0 right-0 z-[60] border-[1.5px] border-brand/25 bg-black/95 shadow-[0_-8px_24px_rgba(0,0,0,0.35)] backdrop-blur-xl transition-all duration-300 cursor-pointer md:cursor-default"
       onClick={(event) => {
         if (event.currentTarget.contains(event.target as Node) && window.innerWidth < 768) handleFullScreenClick();
       }}

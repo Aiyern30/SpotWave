@@ -86,14 +86,14 @@ export default function Sidebar({ isOpen, onClose, onOpen, compact, onToggleComp
   );
 
   return <TooltipProvider delayDuration={150}>
-    <aside aria-label="Sidebar" className={`fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-brand/20 bg-zinc-950 md:flex ${compact ? "w-[72px]" : "w-64"} ${currentTrack || isConnecting ? "pb-[90px]" : ""}`}>
+    <aside aria-label="Sidebar" className={`fixed inset-y-0 left-0 z-40 hidden flex-col border-[1.5px] border-brand/25 bg-zinc-950 shadow-[2px_0_18px_rgba(0,0,0,0.28)] md:flex ${compact ? "w-[72px]" : "w-64"} ${currentTrack || isConnecting ? "pb-[90px]" : ""}`}>
       {navigation(compact)}
     </aside>
     <Dialog.Root open={isOpen} onOpenChange={(open) => open ? onOpen() : onClose()}>
       <Dialog.Trigger asChild><button aria-label="Open navigation" className={`${iconButton} fixed left-3 top-3 z-40 border border-brand/30 bg-zinc-950 md:hidden`}><Menu size={21} /></button></Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/65" />
-        <Dialog.Content aria-describedby={undefined} className="fixed inset-y-0 left-0 z-50 flex h-[100dvh] w-[min(320px,calc(100vw-32px))] flex-col border-r border-brand/20 bg-zinc-950 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] shadow-xl focus:outline-none">
+        <Dialog.Content aria-describedby={undefined} className="fixed inset-y-0 left-0 z-50 flex h-[100dvh] w-[min(320px,calc(100vw-32px))] flex-col border-[1.5px] border-brand/25 bg-zinc-950 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] shadow-xl focus:outline-none">
           <Dialog.Title className="sr-only">SpotWave navigation</Dialog.Title>
           {navigation(false, true)}
         </Dialog.Content>

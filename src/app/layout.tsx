@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
@@ -10,12 +10,6 @@ export const metadata: Metadata = {
   title: "SpotWave",
   description: "Created by Ian Gan",
   manifest: "/manifest.json",
-  themeColor: "#22c55e",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -25,6 +19,13 @@ export const metadata: Metadata = {
     icon: "/Logo.png",
     apple: "/Logo.png",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#22c55e",
 };
 
 export default function RootLayout({
