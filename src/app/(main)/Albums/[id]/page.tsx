@@ -16,15 +16,18 @@ import {
   Music,
   Calendar,
   Disc3,
+  Disc,
   Pause,
   Heart,
   MoreHorizontal,
   ListPlus,
+  User,
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
@@ -293,6 +296,36 @@ const AlbumsIDPage = () => {
     }
   };
 
+  const handleSaveToLiked = async (trackId: string, trackName: string) => {
+    const isLiked = likedTracks.has(trackId);
+    try {
+      const response = await fetch(
+        `https://api.spotify.com/v1/me/tracks?ids=${trackId}`,
+        {
+          method: isLiked ? "DELETE" : "PUT",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (response.ok) {
+        const { toast } = await import("react-toastify");
+        if (isLiked) {
+          toast.success(`"${trackName}" removed from Liked Songs`);
+          setLikedTracks((prev) => {
+            const next = new Set(prev);
+            next.delete(trackId);
+            return next;
+          });
+        } else {
+          toast.success(`"${trackName}" saved to Liked Songs!`);
+          setLikedTracks((prev) => new Set(prev).add(trackId));
+        }
+      }
+    } catch {
+      const { toast } = await import("react-toastify");
+      toast.error("Failed to update Liked Songs");
+    }
+  };
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedToken = localStorage.getItem("Token");
@@ -429,20 +462,16 @@ const AlbumsIDPage = () => {
           </div>
 
           {displayUI === "Table" ? (
-            <div>
-              <Table className="table-fixed">
+            <div className="bg-zinc-900/50">
+              <Table className="w-full">
                 <TableHeader>
                   <TableRow className="border-zinc-800 hover:bg-transparent">
-                    <TableHead className="w-12 text-center text-zinc-400">
-                      #
-                    </TableHead>
-                    <TableHead className="text-zinc-400">Title</TableHead>
-                    <TableHead className="text-center text-zinc-400">
-                      Action
-                    </TableHead>
-                    <TableHead className="hidden md:table-cell text-right text-zinc-400">
+                    <TableHead className="w-12 text-center text-zinc-400">#</TableHead>
+                    <TableHead className="text-zinc-400 w-full sm:w-[50%]">Title</TableHead>
+                    <TableHead className="hidden md:table-cell w-20 text-right text-zinc-400">
                       <Clock className="w-4 h-4 ml-auto" />
                     </TableHead>
+                    <TableHead className="w-12 text-right text-zinc-400" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -457,118 +486,132 @@ const AlbumsIDPage = () => {
                         <span className={isTrackPlaying(item.id) ? "text-brand tabular-nums text-xs" : "text-zinc-500 tabular-nums text-xs"}>{startIndex + index + 1}</span>
                       </TableCell>
 
-                      <TableCell className="max-w-0">
+                      <TableCell className="max-w-0 py-4">
                         <div className="flex items-center space-x-3 min-w-0">
-                          {item.album?.images?.[0]?.url && (
-                            <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
-                              <Image
-                                src={
-                                  item.album.images[0].url || "/placeholder.svg"
-                                }
-                                width={48}
-                                height={48}
-                                alt={item.name}
-                                className="object-cover"
-                              />
-                            </div>
-                          )}
+                          <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0">
+                            <Image
+                              src={item.album?.images?.[0]?.url || album?.images?.[0]?.url || "/placeholder.svg"}
+                              width={48}
+                              height={48}
+                              alt={item.name}
+                              className="object-cover"
+                            />
+                          </div>
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className={`font-medium truncate transition-colors ${
-                                  isTrackPlaying(item.id)
-                                    ? "text-brand"
-                                    : "text-white group-hover:text-brand"
-                                }`}
-                              >
-                                {item.name}
-                              </div>
+                            <div
+                              className={`font-medium truncate transition-colors flex items-center gap-2 ${
+                                isTrackPlaying(item.id)
+                                  ? "text-brand"
+                                  : "text-white group-hover:text-brand"
+                              }`}
+                            >
+                              <span className="truncate">{item.name}</span>
                               {isTrackSaved(item.id) && (
-                                <Heart className="w-3.5 h-3.5 fill-brand text-brand flex-shrink-0" />
+                                <Heart className="w-4 h-4 fill-brand text-brand flex-shrink-0" />
                               )}
                             </div>
                             <div className="text-zinc-400 text-sm truncate">
-                              {item.artists.map(
-                                (artist: any, artistIndex: number) => (
-                                  <span key={artist.id}>
-                                    <span
-                                      className="hover:underline hover:text-white transition-colors cursor-pointer"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleArtistClick(
-                                          artist.id,
-                                          artist.name
-                                        );
-                                      }}
-                                    >
-                                      {artist.name}
-                                    </span>
-                                    {artistIndex < item.artists.length - 1 &&
-                                      ", "}
+                              {item.artists.map((artist: any, artistIndex: number) => (
+                                <span key={artist.id}>
+                                  <span
+                                    className="hover:underline hover:text-brand transition-colors cursor-pointer"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleArtistClick(artist.id, artist.name);
+                                    }}
+                                  >
+                                    {artist.name}
                                   </span>
-                                )
-                              )}
+                                  {artistIndex < item.artists.length - 1 && ", "}
+                                </span>
+                              ))}
                             </div>
                           </div>
                         </div>
                       </TableCell>
 
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="hidden sm:flex border-zinc-700 text-brand hover:bg-brand/10 hover:border-brand hover:text-brand transition-all"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              window.open(
-                                `https://open.spotify.com/track/${item.uri.split(":").pop()}`,
-                                "_blank"
-                              );
-                            }}
-                          >
-                            <ExternalLink className="w-3 h-3 mr-1" />
-                            Spotify
-                          </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-700"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <MoreHorizontal className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56 bg-zinc-900 border-zinc-800">
-                              <DropdownMenuSub>
-                                <DropdownMenuSubTrigger className="text-white hover:bg-brand/20">
-                                  <ListPlus className="mr-2 h-4 w-4" />
-                                  Add to playlist
-                                </DropdownMenuSubTrigger>
-                                <DropdownMenuSubContent className="bg-zinc-900 border-zinc-800 max-h-[300px] overflow-y-auto">
-                                  {userPlaylists.map((pl) => (
-                                    <DropdownMenuItem
-                                      key={pl.id}
-                                      onClick={() => handleAddToPlaylist(item.uri, pl.id, pl.name)}
-                                      className="text-white hover:bg-brand/20 flex items-center justify-between"
-                                    >
-                                      <span className="truncate">{pl.name}</span>
-                                      {playlistTracks[pl.id]?.has(item.id) && (
-                                        <Heart className="w-3 h-3 fill-brand text-brand flex-shrink-0 ml-2" />
-                                      )}
-                                    </DropdownMenuItem>
-                                  ))}
-                                </DropdownMenuSubContent>
-                              </DropdownMenuSub>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </TableCell>
-
                       <TableCell className="hidden md:table-cell text-right text-zinc-400 text-sm">
                         {formatSongDuration(item.duration_ms)}
+                      </TableCell>
+
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`More options for ${item.name}`}
+                              className="touch-action-reveal h-10 w-10 sm:h-8 sm:w-8 rounded-lg border border-transparent text-zinc-400 hover:border-brand/30 hover:bg-brand/15 hover:text-zinc-100 focus-visible:ring-brand data-[state=open]:opacity-100 data-[state=open]:border-brand/30 data-[state=open]:bg-brand/15 data-[state=open]:text-zinc-100"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56 bg-zinc-900 border-zinc-800">
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger className="text-white hover:bg-brand/20">
+                                <ListPlus className="mr-2 h-4 w-4" />
+                                Add to playlist
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent className="bg-zinc-900 border-zinc-800 max-h-[300px] overflow-y-auto">
+                                {userPlaylists.map((pl) => (
+                                  <DropdownMenuItem
+                                    key={pl.id}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAddToPlaylist(item.uri, pl.id, pl.name);
+                                    }}
+                                    className="text-white hover:bg-brand/20 flex items-center justify-between"
+                                  >
+                                    <span className="truncate">{pl.name}</span>
+                                    {playlistTracks[pl.id]?.has(item.id) && (
+                                      <Heart className="w-3 h-3 fill-brand text-brand flex-shrink-0 ml-2" />
+                                    )}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSaveToLiked(item.id, item.name);
+                              }}
+                              className="text-white hover:bg-brand/20"
+                            >
+                              <Heart
+                                className={`mr-2 h-4 w-4 ${likedTracks.has(item.id) ? "fill-brand text-brand" : ""}`}
+                              />
+                              {likedTracks.has(item.id) ? "Remove from Liked Songs" : "Save to Liked Songs"}
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator className="bg-zinc-800" />
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (item.artists?.[0]) {
+                                  handleArtistClick(item.artists[0].id, item.artists[0].name);
+                                }
+                              }}
+                              className="text-white hover:bg-brand/20"
+                            >
+                              <User className="mr-2 h-4 w-4" />
+                              Go to artist
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(`https://open.spotify.com/track/${item.uri.split(":").pop()}`, "_blank");
+                              }}
+                              className="text-white hover:bg-brand/20"
+                            >
+                              <ExternalLink className="mr-2 h-4 w-4" />
+                              Open in Spotify
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </SongTableRow>
                   ))}
