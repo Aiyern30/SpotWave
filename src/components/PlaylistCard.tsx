@@ -17,7 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/";
-import { Play, Pause, Music, Clock, ExternalLink } from "lucide-react";
+import { Play, Pause, Music, Clock, ExternalLink, Heart } from "lucide-react";
 import { decodeHtmlEntities } from "@/utils/decodeHtmlEntities";
 
 interface PlaylistCardProps {
@@ -37,6 +37,7 @@ interface PlaylistCardProps {
   menu?: React.ReactNode;
   fluid?: boolean;
   view?: "Grid" | "List";
+  isLiked?: boolean;
 }
 
 export default function PlaylistCard({
@@ -56,6 +57,7 @@ export default function PlaylistCard({
   menu,
   fluid = true,
   view = "Grid",
+  isLiked = false,
 }: PlaylistCardProps) {
   const [imageError, setImageError] = useState(false);
   const router = useRouter();
@@ -99,7 +101,10 @@ export default function PlaylistCard({
         <button type="button" onClick={handleCardClick} className="flex min-w-0 flex-1 items-center gap-4 rounded-lg text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand">
           {image && !imageError ? <Image src={image} alt="" width={56} height={56} className="h-14 w-14 shrink-0 rounded-lg object-cover" onError={() => setImageError(true)} /> : <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-zinc-800"><Music className="h-6 w-6 text-zinc-400" /></span>}
           <span className="min-w-0 flex-1">
-            <span className={`block truncate text-sm font-semibold ${isCurrentTrack ? "text-brand" : "text-zinc-100"}`}>{title}</span>
+            <span className={`flex items-center gap-2 truncate text-sm font-semibold ${isCurrentTrack ? "text-brand" : "text-zinc-100"}`}>
+              <span className="truncate">{title}</span>
+              {isLiked && <Heart className="h-4 w-4 fill-brand text-brand flex-shrink-0" />}
+            </span>
             <span className="mt-1 block truncate text-sm text-zinc-400">{description ? decodeHtmlEntities(description) : badge || ""}</span>
           </span>
         </button>
@@ -187,13 +192,14 @@ export default function PlaylistCard({
           <Tooltip>
             <TooltipTrigger asChild>
               <CardTitle
-                className={`text-sm sm:text-base leading-5 font-semibold truncate transition-colors ${
+                className={`flex items-center gap-2 text-sm sm:text-base leading-5 font-semibold transition-colors ${
                   isCurrentTrack
                     ? "text-brand"
                     : "text-white group-hover:text-brand"
                 }`}
               >
-                <button type="button" className="block w-full truncate text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" onClick={(event) => { event.stopPropagation(); handleCardClick(); }}>{title}</button>
+                <button type="button" className="block truncate text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand flex-1" onClick={(event) => { event.stopPropagation(); handleCardClick(); }}>{title}</button>
+                {isLiked && <Heart className="w-4 h-4 fill-brand text-brand flex-shrink-0" />}
               </CardTitle>
             </TooltipTrigger>
             <TooltipContent>

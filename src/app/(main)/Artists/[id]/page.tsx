@@ -772,13 +772,14 @@ const ArtistProfilePage = () => {
                             </div>
                             <div className="min-w-0 flex-1">
                               <div
-                                className={`font-medium truncate transition-colors ${
+                                className={`font-medium truncate transition-colors flex items-center gap-2 ${
                                   isTrackPlaying(track.id)
                                     ? "text-brand"
                                     : "text-white group-hover:text-brand"
                                 }`}
                               >
-                                {track.name}
+                                <span className="truncate">{track.name}</span>
+                                {likedTracks.has(track.id) && <Heart className="w-4 h-4 fill-brand text-brand flex-shrink-0" />}
                               </div>
                               <div className="text-zinc-400 text-sm truncate">
                                 <span
@@ -927,6 +928,7 @@ const ArtistProfilePage = () => {
                       badge={`#${index + 1}`}
                       duration={formatSongDuration(track.duration_ms)}
                       isPlaying={currentTrackId === track.id && isPlaying}
+                      isLiked={likedTracks.has(track.id)}
                       onPlay={() => handlePlayPauseTrack(track)}
                       onPause={pauseTrack}
                       onClick={(id) => handleSongClick(id, track.name)}
