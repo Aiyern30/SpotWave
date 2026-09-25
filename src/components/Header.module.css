@@ -17,9 +17,11 @@
 }
 
 .searchForm .searchDropdown {
-  background: linear-gradient(var(--search-tint), var(--search-tint)), #121214;
-  border-color: hsl(var(--brand-primary) / 0.3);
-  box-shadow: 0 16px 40px rgb(0 0 0 / 0.35);
+  background: linear-gradient(135deg, rgba(12, 12, 18, 0.97) 0%, hsl(var(--brand-primary) / 0.10) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-color: hsl(var(--brand-primary) / 0.30);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65), 0 0 0 1px hsl(var(--brand-primary) / 0.12);
   max-height: min(500px, 60vh);
   max-height: min(500px, 60dvh);
   scrollbar-gutter: stable;

@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 // The root theme restores the user's saved accent, including inside Radix portals.
 const menuSurface =
-  "z-50 min-w-[12rem] max-w-[calc(100vw-1rem)] max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain rounded-xl border border-brand/25 bg-zinc-900 p-1.5 text-zinc-100 shadow-xl shadow-black/30 [scrollbar-width:thin] [scrollbar-color:hsl(var(--brand-primary)/0.4)_transparent]";
+  "z-50 min-w-[12rem] max-w-[calc(100vw-1rem)] max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain rounded-xl border p-1.5 text-zinc-100 backdrop-blur-xl [scrollbar-width:thin] [scrollbar-color:hsl(var(--brand-primary)/0.4)_transparent] [background:linear-gradient(135deg,rgba(12,12,18,0.97)_0%,hsl(var(--brand-primary)/0.10)_100%)] [border-color:hsl(var(--brand-primary)/0.30)] [box-shadow:0_8px_32px_rgba(0,0,0,0.65),0_0_0_1px_hsl(var(--brand-primary)/0.12)]";
 const menuMotion =
   "origin-[var(--radix-dropdown-menu-content-transform-origin)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-150 motion-reduce:animate-none";
 const menuItem =

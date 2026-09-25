@@ -86,7 +86,7 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
       <DropdownMenuContent
         align="end"
         sideOffset={8}
-        className="w-80 max-w-[calc(100vw-24px)] max-h-[min(80dvh,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto"
+        className="w-[420px] max-w-[calc(100vw-24px)] max-h-[min(80dvh,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto"
       >
         <DropdownMenuLabel className="text-zinc-100">
           Audio visualizer
@@ -136,15 +136,27 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
           setVisualMode(value);
           try { localStorage.setItem("background-visualizer-mode", value); } catch {}
         }}>
+          <div className="grid grid-cols-3 gap-1.5 px-1 pb-1">
           {(["Orbit", "Ribbons", "Spectrum"] as const).map(value => {
             const Icon = value === "Orbit" ? Aperture : value === "Ribbons" ? Waves : Activity;
+            const checked = visualMode === value;
             return (
-              <DropdownMenuRadioItem key={value} value={value} onSelect={event => event.preventDefault()}>
-                <Icon size={14} className="mr-2" />
-                {value}
+              <DropdownMenuRadioItem
+                key={value}
+                value={value}
+                onSelect={event => event.preventDefault()}
+                className={`flex-col gap-1.5 justify-center items-center py-3 pl-0 rounded-lg border transition-colors ${
+                  checked
+                    ? "bg-brand/20 border-brand/50 text-brand"
+                    : "border-white/10 hover:border-brand/30 hover:bg-brand/10"
+                } [&>span:first-child]:hidden`}
+              >
+                <Icon size={16} />
+                <span className="text-xs font-medium">{value}</span>
               </DropdownMenuRadioItem>
             );
           })}
+          </div>
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
         <DropdownMenuLabel>Sensitivity</DropdownMenuLabel>
@@ -157,21 +169,31 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
             } catch {}
           }}
         >
+          <div className="grid grid-cols-3 gap-1.5 px-1 pb-1">
           {[
             [2, "Balanced", Scale],
             [4, "Sensitive", Gauge],
             [6, "Very sensitive", Zap],
-          ].map(([value, label, Icon]) => (
-            <DropdownMenuRadioItem
-              key={value as number}
-              value={String(value)}
-              onSelect={(event) => event.preventDefault()}
-            >
-              {/* @ts-ignore Icon will be a Lucide component */}
-              <Icon size={14} className="mr-2" />
-              {label as string}
-            </DropdownMenuRadioItem>
-          ))}
+          ].map(([value, label, Icon]) => {
+            const checked = sensitivity === (value as number);
+            return (
+              <DropdownMenuRadioItem
+                key={value as number}
+                value={String(value)}
+                onSelect={(event) => event.preventDefault()}
+                className={`flex-col gap-1.5 justify-center items-center py-3 pl-0 rounded-lg border transition-colors ${
+                  checked
+                    ? "bg-brand/20 border-brand/50 text-brand"
+                    : "border-white/10 hover:border-brand/30 hover:bg-brand/10"
+                } [&>span:first-child]:hidden`}
+              >
+                {/* @ts-ignore Icon will be a Lucide component */}
+                <Icon size={16} />
+                <span className="text-xs font-medium text-center leading-tight">{label as string}</span>
+              </DropdownMenuRadioItem>
+            );
+          })}
+          </div>
         </DropdownMenuRadioGroup>
         {reducedMotion && (
           <p className="px-2.5 py-2 text-xs text-zinc-400">
