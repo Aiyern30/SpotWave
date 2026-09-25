@@ -1,6 +1,7 @@
 "use client";
 
 import { SongTableRow } from "@/components/SongTableRow";
+import AlbumHeader from "@/components/AlbumHeader";
 
 import type React from "react";
 
@@ -293,106 +294,13 @@ const AlbumsIDPage = () => {
     <TooltipProvider>
       <div className="space-y-4 sm:space-y-8">
         {/* Enhanced Album Header */}
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-brand/30 via-zinc-800/50 to-zinc-900/90 backdrop-blur-sm border border-zinc-800/50">
-          {/* Background Pattern */}
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--brand-primary)/0.15),transparent_70%)]" />
-
-          <div className="relative flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 p-8">
-            <div className="relative group flex-shrink-0">
-              <div className="relative overflow-hidden rounded-xl shadow-2xl ring-1 ring-white/10">
-                <Image
-                  src={album.images[0]?.url || "/default-artist.png"}
-                  width={256}
-                  height={256}
-                  alt={album.name}
-                  className="w-48 h-48 md:w-64 md:h-64 rounded-xl object-cover transition-transform duration-500 group-hover:scale-105"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-              </div>
-            </div>
-
-            <div className="flex-1 text-center md:text-left space-y-6">
-              <div className="space-y-3">
-                <Badge
-                  variant="secondary"
-                  className="bg-brand/20 text-brand border-brand/30 capitalize"
-                >
-                  <Disc3 className="w-3 h-3 mr-1" />
-                  {album.album_type}
-                </Badge>
-                <div className="flex items-center justify-center md:justify-start gap-4">
-                  <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tight">
-                    {album.name}
-                  </h1>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleSaveAlbum}
-                    className={`h-12 w-12 rounded-full backdrop-blur-sm border border-white/10 transition-all duration-200 hover:scale-110 ${
-                      isSaved
-                        ? "text-brand bg-brand/10 border-brand/20"
-                        : "text-white bg-black/20 hover:bg-black/40"
-                    }`}
-                  >
-                    <Heart
-                      className={`h-6 w-6 ${
-                        isSaved ? "fill-current" : "text-white"
-                      }`}
-                    />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap justify-center md:justify-start gap-6 text-zinc-300">
-                <div className="flex items-center space-x-2">
-                  <Calendar className="h-4 w-4 text-brand" />
-                  <span className="font-medium">
-                    {new Date(album.release_date).getFullYear()}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Music className="h-4 w-4 text-blue-500" />
-                  <span className="font-medium">
-                    {album.total_tracks} tracks
-                  </span>
-                </div>
-              </div>
-
-              {album.artists && (
-                <div className="flex flex-wrap gap-4 items-center justify-center md:justify-start">
-                  {album.artists.map((artist: any, index: number) => (
-                    <div key={artist.id} className="flex items-center gap-3">
-                      {index === 0 && artistImage && (
-                        <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-white/10 flex-shrink-0">
-                          <Image
-                            src={artistImage}
-                            width={40}
-                            height={40}
-                            alt={artist.name}
-                            className="object-cover"
-                          />
-                        </div>
-                      )}
-                      <Button
-                        variant="link"
-                        className="text-white hover:text-brand p-0 h-auto font-semibold text-lg hover:underline transition-colors"
-                        onClick={() =>
-                          handleArtistClick(artist.id, artist.name)
-                        }
-                      >
-                        {artist.name}
-                      </Button>
-                      {index < album.artists.length - 1 && (
-                        <span className="text-zinc-600 text-xl">•</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <AlbumHeader
+          album={album}
+          isSaved={isSaved}
+          toggleSaveAlbum={toggleSaveAlbum}
+          artistImage={artistImage}
+          handleArtistClick={handleArtistClick}
+        />
 
         {/* Enhanced Controls */}
         <div className="space-y-4 sm:space-y-6">
