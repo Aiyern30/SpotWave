@@ -109,7 +109,7 @@ const PlaylistPage = () => {
       if (!silent) setLoading(true);
       try {
         const [playlistResponse, userResponse] = await Promise.all([
-          fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
+          fetch(`https://api.spotify.com/v1/playlists/${playlistId}?market=from_token`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
           fetchUserProfile(token),
@@ -347,8 +347,20 @@ const PlaylistPage = () => {
     }
   };
 
+  // Helper: is a playlist track unavailable/delisted?
+  const isUnavailable = (playlistTrack: PlaylistTrack): boolean => {
+    if (!playlistTrack?.track) return true;
+    const t = playlistTrack.track as PlaylistTrack["track"] & {
+      is_playable?: boolean;
+      restrictions?: { reason: string };
+    };
+    if (t.is_playable === false) return true;
+    if (t.restrictions && Object.keys(t.restrictions).length > 0) return true;
+    return false;
+  };
+
   const memoizedTracks = useMemo(
-    () => playlist?.tracks?.items || [],
+    () => (playlist?.tracks?.items || []).filter((item) => item?.track != null),
     [playlist?.tracks?.items],
   );
 
@@ -516,14 +528,19 @@ const PlaylistPage = () => {
               ) : null}
               {filteredTracks.map((playlistTrack, index) => {
                 const { track } = playlistTrack;
-                const isCurrentlyPlaying = isCurrentTrackPlaying(track.id);
+                const unavailable = isUnavailable(playlistTrack);
+                const isCurrentlyPlaying = !unavailable && isCurrentTrackPlaying(track.id);
 
                 return (
                   <SongTableRow
                     key={track.id}
-                    className="border-zinc-800/30 hover:bg-zinc-800/20 transition-colors cursor-pointer group"
-                    onActivate={() => handlePlayPause(track)}
-                    aria-label={`${isCurrentlyPlaying ? "Pause" : "Play"} ${track.name}`}
+                    className={`border-zinc-800/30 transition-colors group ${
+                      unavailable
+                        ? "opacity-40 cursor-default"
+                        : "hover:bg-zinc-800/20 cursor-pointer"
+                    }`}
+                    onActivate={unavailable ? undefined : () => handlePlayPause(track)}
+                    aria-label={unavailable ? `${track.name} (unavailable)` : `${isCurrentlyPlaying ? "Pause" : "Play"} ${track.name}`}
                   >
                     <TableCell className="text-center py-3 sm:py-4">
                       <span
@@ -552,28 +569,36 @@ const PlaylistPage = () => {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div
-                            className={`font-medium truncate hover:text-brand transition-colors text-sm sm:text-base ${
-                              isCurrentlyPlaying ? "text-brand" : "text-white"
+                            className={`font-medium truncate text-sm sm:text-base ${
+                              unavailable
+                                ? "text-zinc-500 line-through"
+                                : isCurrentlyPlaying
+                                  ? "text-brand hover:text-brand"
+                                  : "text-white hover:text-brand transition-colors"
                             }`}
                           >
                             {track.name}
                           </div>
-                          <div className="text-zinc-400 text-xs sm:text-sm truncate">
-                            {track.artists.map((artist, artistIndex) => (
-                              <span key={artist.id}>
-                                <button
-                                  className="hover:underline hover:text-white transition-colors"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleArtistClick(artist.id, artist.name);
-                                  }}
-                                >
-                                  {artist.name}
-                                </button>
-                                {artistIndex < track.artists.length - 1 && ", "}
-                              </span>
-                            ))}
-                          </div>
+                          {unavailable ? (
+                            <div className="text-zinc-600 text-xs mt-0.5 italic">Not available in your region</div>
+                          ) : (
+                            <div className="text-zinc-400 text-xs sm:text-sm truncate">
+                              {track.artists.map((artist, artistIndex) => (
+                                <span key={artist.id}>
+                                  <button
+                                    className="hover:underline hover:text-white transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleArtistClick(artist.id, artist.name);
+                                    }}
+                                  >
+                                    {artist.name}
+                                  </button>
+                                  {artistIndex < track.artists.length - 1 && ", "}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </TableCell>
@@ -615,93 +640,120 @@ const PlaylistPage = () => {
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-64">
-                          <DropdownMenuSub>
-                            <DropdownMenuSubTrigger>
-                              <ListPlus className="mr-2 h-4 w-4" />
-                              Add to playlist
-                            </DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent className="w-64 max-h-[40vh] mr-4 overflow-y-auto">
-                              {userPlaylists.map((pl) => (
-                                <DropdownMenuItem
-                                  key={pl.id}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleAddToPlaylist(
-                                      track.uri,
-                                      pl.id,
-                                      pl.name,
-                                    );
-                                  }}
-                                >
-                                  {pl.name}
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuSubContent>
-                          </DropdownMenuSub>
+                        {unavailable ? (
+                          // Unavailable track: only show Remove if owner
+                          <DropdownMenuContent align="end" className="w-64">
+                            {isOwner ? (
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setTrackToRemove({
+                                    uri: track.uri,
+                                    name: track.name,
+                                  });
+                                }}
+                                className="text-red-400 focus:bg-red-500/15 focus:text-red-300 data-[highlighted]:bg-red-500/15 data-[highlighted]:text-red-300"
+                              >
+                                <Ban className="mr-2 h-4 w-4" />
+                                Remove from this playlist
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem disabled>
+                                <Music className="mr-2 h-4 w-4" />
+                                Song unavailable
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        ) : (
+                          // Normal track: full menu
+                          <DropdownMenuContent align="end" className="w-64">
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>
+                                <ListPlus className="mr-2 h-4 w-4" />
+                                Add to playlist
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent className="w-64 max-h-[40vh] mr-4 overflow-y-auto">
+                                {userPlaylists.map((pl) => (
+                                  <DropdownMenuItem
+                                    key={pl.id}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAddToPlaylist(
+                                        track.uri,
+                                        pl.id,
+                                        pl.name,
+                                      );
+                                    }}
+                                  >
+                                    {pl.name}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
 
-                          {isOwner && (
+                            {isOwner && (
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setTrackToRemove({
+                                    uri: track.uri,
+                                    name: track.name,
+                                  });
+                                }}
+                                className="text-red-400 focus:bg-red-500/15 focus:text-red-300 data-[highlighted]:bg-red-500/15 data-[highlighted]:text-red-300"
+                              >
+                                <Ban className="mr-2 h-4 w-4" />
+                                Remove from this playlist
+                              </DropdownMenuItem>
+                            )}
+
                             <DropdownMenuItem
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setTrackToRemove({
-                                  uri: track.uri,
-                                  name: track.name,
-                                });
+                                handleSaveToLiked(track.id, track.name);
                               }}
-                              className="text-red-400 focus:bg-red-500/15 focus:text-red-300 data-[highlighted]:bg-red-500/15 data-[highlighted]:text-red-300"
                             >
-                              <Ban className="mr-2 h-4 w-4" />
-                              Remove from this playlist
+                              <Heart
+                                className={`mr-2 h-4 w-4 ${
+                                  likedTracks.has(track.id)
+                                    ? "fill-brand text-brand"
+                                    : ""
+                                }`}
+                              />
+                              {likedTracks.has(track.id)
+                                ? "Remove from Liked Songs"
+                                : "Save to Liked Songs"}
                             </DropdownMenuItem>
-                          )}
 
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSaveToLiked(track.id, track.name);
-                            }}
-                          >
-                            <Heart
-                              className={`mr-2 h-4 w-4 ${
-                                likedTracks.has(track.id)
-                                  ? "fill-brand text-brand"
-                                  : ""
-                              }`}
-                            />
-                            {likedTracks.has(track.id)
-                              ? "Remove from Liked Songs"
-                              : "Save to Liked Songs"}
-                          </DropdownMenuItem>
+                            <DropdownMenuSeparator />
 
-                          <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleArtistClick(
+                                  track.artists[0].id,
+                                  track.artists[0].name,
+                                );
+                              }}
+                            >
+                              <User className="mr-2 h-4 w-4" />
+                              Go to artist
+                            </DropdownMenuItem>
 
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleArtistClick(
-                                track.artists[0].id,
-                                track.artists[0].name,
-                              );
-                            }}
-                          >
-                            <User className="mr-2 h-4 w-4" />
-                            Go to artist
-                          </DropdownMenuItem>
-
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAlbumClick(
-                                track.album.id,
-                                track.album.name,
-                              );
-                            }}
-                          >
-                            <Disc className="mr-2 h-4 w-4" />
-                            Go to album
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAlbumClick(
+                                  track.album.id,
+                                  track.album.name,
+                                );
+                              }}
+                            >
+                              <Disc className="mr-2 h-4 w-4" />
+                              Go to album
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        )}
                       </DropdownMenu>
                     </TableCell>
                   </SongTableRow>
@@ -719,19 +771,27 @@ const PlaylistPage = () => {
           ) : null}
           {filteredTracks.map((playlistTrack, index) => {
             const { track } = playlistTrack;
+            const unavailable = isUnavailable(playlistTrack);
             return (
-              <PlaylistCard
+              <div
                 key={track.id}
+                className={unavailable ? "opacity-40 grayscale pointer-events-none" : ""}
+              >
+              <PlaylistCard
                 id={track.id}
                 image={track.album.images[0]?.url || "/placeholder.svg"}
                 title={track.name}
-                description={track.artists.map((a) => a.name).join(", ")}
+                description={
+                  unavailable
+                    ? "Not available in your region"
+                    : track.artists.map((a) => a.name).join(", ")
+                }
                 badge={`#${index + 1}`}
                 duration={formatSongDuration(track.duration_ms)}
-                isPlaying={currentTrack?.id === track.id && isPlaying}
-                onPlay={() => handlePlayPause(track)}
+                isPlaying={!unavailable && currentTrack?.id === track.id && isPlaying}
+                onPlay={unavailable ? () => {} : () => handlePlayPause(track)}
                 onPause={pauseTrack}
-                onClick={(id) => {
+                onClick={unavailable ? () => {} : (id) => {
                   // Navigate to song details
                   router.push(
                     `/Songs/${id}?name=${encodeURIComponent(track.name)}`,
@@ -833,6 +893,7 @@ const PlaylistPage = () => {
                   </DropdownMenu>
                 }
               />
+              </div>
             );
           })}
         </div>
