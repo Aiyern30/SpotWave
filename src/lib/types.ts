@@ -179,6 +179,9 @@ export interface Album {
   release_date: string;
   total_tracks: number;
   album_type: string;
+  external_urls?: {
+    spotify: string;
+  };
   tracks: {
     items: {
       id: string;

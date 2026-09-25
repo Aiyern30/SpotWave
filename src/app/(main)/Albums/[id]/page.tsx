@@ -296,6 +296,32 @@ const AlbumsIDPage = () => {
     }
   };
 
+  const handleAddAlbumToPlaylist = async (playlistId: string, playlistName: string) => {
+    if (!album || !album.tracks || !album.tracks.items) return;
+    try {
+      const uris = album.tracks.items.map((t: any) => t.uri);
+      const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ uris }),
+      });
+      if (response.ok) {
+        const { toast } = await import("react-toastify");
+        toast.success(`Album added to ${playlistName}!`);
+        const trackIds = uris.map((uri: string) => uri.split(":").pop() || "");
+        setPlaylistTracks((prev) => ({
+          ...prev,
+          [playlistId]: new Set([...(prev[playlistId] || []), ...trackIds]),
+        }));
+      } else {
+        throw new Error("Failed to add album");
+      }
+    } catch {
+      const { toast } = await import("react-toastify");
+      toast.error("Failed to add album to playlist");
+    }
+  };
+
   const handleSaveToLiked = async (trackId: string, trackName: string) => {
     const isLiked = likedTracks.has(trackId);
     try {
@@ -423,6 +449,77 @@ const AlbumsIDPage = () => {
           toggleSaveAlbum={toggleSaveAlbum}
           artistImage={artistImage}
           handleArtistClick={handleArtistClick}
+          menu={
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 rounded-full backdrop-blur-sm border transition-all duration-200 hover:scale-110 text-white bg-black/20 border-white/10 hover:bg-brand/20 hover:text-brand hover:border-brand/40"
+                >
+                  <MoreHorizontal className="h-5 w-5 sm:h-6 sm:w-6" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                className="w-56 bg-zinc-900 border-zinc-800"
+              >
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="text-white hover:bg-brand/20">
+                    <ListPlus className="mr-2 h-4 w-4" />
+                    Add album to playlist
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent className="bg-zinc-900 border-zinc-800 max-h-[300px] overflow-y-auto">
+                    {userPlaylists.map((pl) => (
+                      <DropdownMenuItem
+                        key={pl.id}
+                        onClick={() => handleAddAlbumToPlaylist(pl.id, pl.name)}
+                        className="text-white hover:bg-brand/20"
+                      >
+                        {pl.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+
+                <DropdownMenuItem
+                  onClick={toggleSaveAlbum}
+                  className="text-white hover:bg-brand/20"
+                >
+                  <Heart
+                    className={`mr-2 h-4 w-4 ${
+                      isSaved ? "fill-brand text-brand" : ""
+                    }`}
+                  />
+                  {isSaved ? "Remove from Library" : "Save to Library"}
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator className="bg-zinc-800" />
+
+                {album.artists?.[0] && (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      handleArtistClick(album.artists[0].id, album.artists[0].name)
+                    }
+                    className="text-white hover:bg-brand/20"
+                  >
+                    <User className="mr-2 h-4 w-4" />
+                    Go to artist
+                  </DropdownMenuItem>
+                )}
+
+                <DropdownMenuItem
+                  onClick={() =>
+                    window.open(album.external_urls?.spotify, "_blank")
+                  }
+                  className="text-white hover:bg-brand/20"
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Open in Spotify
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          }
         />
 
         {/* Enhanced Controls */}

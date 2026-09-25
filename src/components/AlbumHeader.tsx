@@ -10,6 +10,7 @@ interface AlbumHeaderProps {
   toggleSaveAlbum: () => void;
   artistImage: string | null;
   handleArtistClick: (artistId: string, artistName: string) => void;
+  menu?: React.ReactNode;
 }
 
 export default function AlbumHeader({
@@ -18,6 +19,7 @@ export default function AlbumHeader({
   toggleSaveAlbum,
   artistImage,
   handleArtistClick,
+  menu,
 }: AlbumHeaderProps) {
   if (!album) return null;
 
@@ -54,22 +56,26 @@ export default function AlbumHeader({
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight break-words max-w-full">
                 {album.name}
               </h1>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleSaveAlbum}
-                className={`flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 rounded-full backdrop-blur-sm border transition-all duration-200 hover:scale-110 ${
-                  isSaved
-                    ? "text-brand bg-brand/10 border-brand/20"
-                    : "text-white bg-black/20 border-white/10 hover:bg-black/40"
-                }`}
-              >
-                <Heart
-                  className={`h-5 w-5 sm:h-6 sm:w-6 ${
-                    isSaved ? "fill-current" : "text-white"
+              {menu ? (
+                menu
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleSaveAlbum}
+                  className={`flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 rounded-full backdrop-blur-sm border transition-all duration-200 hover:scale-110 ${
+                    isSaved
+                      ? "text-brand bg-brand/10 border-brand/20"
+                      : "text-white bg-black/20 border-white/10 hover:bg-black/40"
                   }`}
-                />
-              </Button>
+                >
+                  <Heart
+                    className={`h-5 w-5 sm:h-6 sm:w-6 ${
+                      isSaved ? "fill-current" : "text-white"
+                    }`}
+                  />
+                </Button>
+              )}
             </div>
           </div>
 
