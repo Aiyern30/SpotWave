@@ -1,5 +1,6 @@
 "use client";
 
+import { getSpotifyToken } from "@/lib/spotify-session";
 import type React from "react";
 import {
   createContext,
@@ -317,7 +318,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         const spotifyPlayer = new window.Spotify.Player({
           name: "SpotWave Player",
           getOAuthToken: (cb: (t: string) => void) => {
-            cb(token);
+            void getSpotifyToken().then(cb).catch(() => { /* AuthProvider handles expired authorization. */ });
           },
           volume: 0.5,
         });

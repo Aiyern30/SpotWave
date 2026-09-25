@@ -7,6 +7,8 @@ import { Play, Headphones, Volume2 } from "lucide-react";
 import Image from "next/image";
 import { usePlayer } from "@/contexts/PlayerContext";
 
+import { saveSpotifySession } from "@/lib/spotify-session";
+
 // PKCE Helper Functions
 function generateRandomString(length: number): string {
   const possible =
@@ -63,7 +65,7 @@ export default function Home() {
       return response.status !== 401;
     } catch (error) {
       console.error("Error validating token:", error);
-      return false;
+      return true; // Offline is not a revoked session.
     }
   }, []);
 
@@ -89,10 +91,7 @@ export default function Home() {
       const data = await response.json();
 
       if (data.access_token) {
-        window.localStorage.setItem("Token", data.access_token);
-        if (data.refresh_token) {
-          window.localStorage.setItem("RefreshToken", data.refresh_token);
-        }
+        saveSpotifySession(data);
         setToken(data.access_token);
         setContextToken(data.access_token);
         setLoading(false);
@@ -160,7 +159,7 @@ export default function Home() {
       validateToken(storedToken).then((isValid) => {
         if (isValid) {
           setToken(storedToken);
-          setContextToken(storedToken);
+          setContextToken(window.localStorage.getItem("Token") || storedToken);
           router.push("/Home");
         } else {
           window.localStorage.removeItem("Token");

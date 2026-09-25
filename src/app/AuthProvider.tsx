@@ -1,77 +1,66 @@
 "use client";
 
-import {
-  useState,
-  useEffect,
-  createContext,
-  useContext,
-  ReactNode,
-  useCallback,
-} from "react";
-import { useRouter } from "next/navigation";
-import { usePathname } from "next/navigation";
+import { useState, useEffect, createContext, useContext, ReactNode, useRef } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { getSpotifyToken, installSpotifyFetchGuard, SESSION_CHANGED, SESSION_EXPIRED } from "@/lib/spotify-session";
 
-export const AuthContext = createContext<{ token: string | null }>({
-  token: null,
-});
-
-export function useAuth() {
-  return useContext(AuthContext);
-}
+export const AuthContext = createContext<{ token: string | null }>({ token: null });
+export function useAuth() { return useContext(AuthContext); }
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true); // Add loading state
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-
-  const validateToken = useCallback(async (token: string) => {
-    try {
-      const response = await fetch("https://api.spotify.com/v1/me", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return response.status !== 401;
-    } catch (error) {
-      console.error("Error validating token:", error);
-      return false;
-    }
-  }, []);
-
-  const handleTokenInvalid = useCallback(() => {
-    window.localStorage.removeItem("Token");
-    setToken(null);
-    if (pathname !== "/401" && pathname !== "/") {
-      router.push("/");
-    }
-  }, [pathname, router]);
-
-  const checkToken = useCallback(async () => {
-    const storedToken = window.localStorage.getItem("Token");
-    if (storedToken) {
-      const isValid = await validateToken(storedToken);
-      if (isValid) {
-        setToken(storedToken);
-      } else {
-        handleTokenInvalid();
-      }
-    } else {
-      handleTokenInvalid();
-    }
-    setLoading(false); // Set loading to false after checking
-  }, [validateToken, handleTokenInvalid]);
-
+  const path = useRef(pathname);
+  path.current = pathname;
   useEffect(() => {
-    checkToken();
-  }, [checkToken]);
-
-  // Prevent rendering children until loading is complete
-  if (loading) {
-    return null; // Optionally, return a loading spinner or some placeholder UI
-  }
-
-  return (
-    <AuthContext.Provider value={{ token }}>{children}</AuthContext.Provider>
-  );
+    let disposed = false;
+    let checking = false;
+    const publicPage = () => ["/", "/callback", "/401"].includes(path.current);
+    const redirect = () => { if (!publicPage()) router.replace("/401"); };
+    const sync = () => setToken(localStorage.getItem("Token"));
+    const restoreFetch = installSpotifyFetchGuard();
+    const check = async () => {
+      if (checking) return;
+      checking = true;
+      try {
+        if (!localStorage.getItem("Token") && !localStorage.getItem("RefreshToken")) { redirect(); return; }
+        await getSpotifyToken();
+        // Also validates legacy sessions and revoked authorization, while idle.
+        await fetch("https://api.spotify.com/v1/me");
+      } catch {
+        // Network errors and rate limits are not evidence of a revoked login.
+      } finally {
+        checking = false;
+        if (!disposed) { sync(); setLoading(false); }
+      }
+    };
+    const resume = () => { if (!document.hidden) void check(); };
+    const storage = (event: StorageEvent) => {
+      if (event.key === null || ["Token", "RefreshToken", "TokenExpiresAt"].includes(event.key)) { sync(); void check(); }
+    };
+    window.addEventListener(SESSION_EXPIRED, redirect);
+    window.addEventListener(SESSION_CHANGED, sync);
+    window.addEventListener("storage", storage);
+    window.addEventListener("focus", resume);
+    document.addEventListener("visibilitychange", resume);
+    const timer = window.setInterval(resume, 30_000);
+    void check();
+    return () => {
+      disposed = true;
+      restoreFetch();
+      window.clearInterval(timer);
+      window.removeEventListener(SESSION_EXPIRED, redirect);
+      window.removeEventListener(SESSION_CHANGED, sync);
+      window.removeEventListener("storage", storage);
+      window.removeEventListener("focus", resume);
+      document.removeEventListener("visibilitychange", resume);
+    };
+  }, [router]);
+  useEffect(() => {
+    if (!loading && !["/", "/callback", "/401"].includes(pathname) && !localStorage.getItem("Token") && !localStorage.getItem("RefreshToken")) router.replace("/401");
+  }, [pathname, loading, router]);
+  if (loading) return null;
+  return <AuthContext.Provider value={{ token }}>{children}</AuthContext.Provider>;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { clearSpotifySession } from "@/lib/spotify-session";
 import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -108,7 +109,7 @@ export default function Sidebar({ isOpen, onClose, onOpen, compact, onToggleComp
     <AlertDialog open={logoutOpen} onOpenChange={setLogoutOpen}>
       <AlertDialogContent className="border-brand/20 bg-zinc-950 text-zinc-100">
         <AlertDialogHeader><AlertDialogTitle>Sign Out</AlertDialogTitle><AlertDialogDescription className="text-zinc-400">Sign out of SpotWave? You can sign back in to access your library.</AlertDialogDescription></AlertDialogHeader>
-        <AlertDialogFooter><AlertDialogCancel className="border-brand/30 bg-zinc-900 text-zinc-100">Cancel</AlertDialogCancel><AlertDialogAction className="bg-brand text-brand-foreground hover:bg-brand/90" onClick={() => { localStorage.removeItem("Token"); router.push("/"); }}>Sign Out</AlertDialogAction></AlertDialogFooter>
+        <AlertDialogFooter><AlertDialogCancel className="border-brand/30 bg-zinc-900 text-zinc-100">Cancel</AlertDialogCancel><AlertDialogAction className="bg-brand text-brand-foreground hover:bg-brand/90" onClick={() => { clearSpotifySession(); router.push("/"); }}>Sign Out</AlertDialogAction></AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   </TooltipProvider>;

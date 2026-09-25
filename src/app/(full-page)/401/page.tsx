@@ -61,7 +61,7 @@ const UnauthorizedPage = () => {
             href="/"
             className="bg-white text-gray-900 px-6 py-3 rounded-full font-semibold hover:bg-gray-200 transition-colors duration-300"
           >
-            Go Back Home
+            Connect Spotify
           </Link>
         </motion.div>
       </motion.div>
