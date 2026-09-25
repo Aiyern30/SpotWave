@@ -7,7 +7,7 @@ import BackgroundVisualizer from "@/components/BackgroundVisualizer";
 import Sidebar from "@/components/Sidebar";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useFullScreenPlayer } from "@/contexts/FullScreenPlayerContext";
-import { SearchSection } from "@/components/Header";
+import { Breadcrumbs, SearchSection } from "@/components/Header";
 
 export default function MainLayout({
   children,
@@ -15,6 +15,7 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [mobileTriggerContainer, setMobileTriggerContainer] = useState<HTMLDivElement | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCompact, setSidebarCompact] = useState(true);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
@@ -39,6 +40,7 @@ export default function MainLayout({
     <div className="relative isolate flex min-h-[100dvh] bg-black">
       {!isFullScreenOpen && (
         <Sidebar
+          mobileTriggerContainer={mobileTriggerContainer}
           isOpen={sidebarOpen}
           onClose={closeSidebar}
           onOpen={() => setSidebarOpen(true)}
@@ -56,7 +58,12 @@ export default function MainLayout({
         } ${isPlayerVisible && !isFullScreenOpen ? "pb-[90px]" : ""}`}
       >
         <div className="px-3 sm:px-6 lg:px-8 pt-20 md:pt-6 space-y-6 flex flex-col">
-          {!isFullScreenOpen && <BackgroundVisualizer />}
+          {!isFullScreenOpen && <BackgroundVisualizer renderControls={controls => (
+            <Breadcrumbs
+              leading={<div ref={setMobileTriggerContainer} className="h-11 w-11 shrink-0 md:hidden" />}
+              actions={controls}
+            />
+          )} />}
 
           {!isGamePage && (
             <div className="relative z-[1] animate-in fade-in slide-in-from-top-4 duration-700">

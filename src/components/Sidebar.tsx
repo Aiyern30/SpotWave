@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -28,7 +29,8 @@ const groups = [
 ];
 const iconButton = "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-zinc-400 hover:bg-brand/10 hover:text-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand";
 
-export default function Sidebar({ isOpen, onClose, onOpen, compact, onToggleCompact }: {
+export default function Sidebar({ isOpen, onClose, onOpen, compact, onToggleCompact, mobileTriggerContainer }: {
+  mobileTriggerContainer: HTMLElement | null;
   isOpen: boolean;
   onClose: () => void;
   onOpen: () => void;
@@ -90,7 +92,11 @@ export default function Sidebar({ isOpen, onClose, onOpen, compact, onToggleComp
       {navigation(compact)}
     </aside>
     <Dialog.Root open={isOpen} onOpenChange={(open) => open ? onOpen() : onClose()}>
-      <Dialog.Trigger asChild><button aria-label="Open navigation" className={`${iconButton} fixed left-3 top-3 z-40 border border-brand/30 bg-zinc-950 md:hidden`}><Menu size={21} /></button></Dialog.Trigger>
+      {/* Keep the Radix trigger inside its dialog context, but place it in the shared header row. */}
+      {mobileTriggerContainer && createPortal(
+        <Dialog.Trigger asChild><button type="button" aria-label="Open navigation" className={`${iconButton} border border-brand/30 bg-zinc-950`}><Menu size={21} /></button></Dialog.Trigger>,
+        mobileTriggerContainer,
+      )}
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/65" />
         <Dialog.Content aria-describedby={undefined} className="fixed inset-y-0 left-0 z-50 flex h-[100dvh] w-[min(320px,calc(100vw-32px))] flex-col border-[1.5px] border-brand/25 bg-zinc-950 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] shadow-xl focus:outline-none">

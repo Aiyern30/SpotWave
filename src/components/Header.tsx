@@ -58,7 +58,7 @@ type SearchResult =
   | { type: "song"; items: Track[] }
   | { type: "artistWithTopTracks"; artist: Artist; topTracks: Track[] };
 
-export const Breadcrumbs = ({ actions }: { actions?: React.ReactNode }) => {
+export const Breadcrumbs = ({ actions, leading }: { actions?: React.ReactNode; leading?: React.ReactNode }) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -91,27 +91,63 @@ export const Breadcrumbs = ({ actions }: { actions?: React.ReactNode }) => {
   };
 
   return (
-    <div className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-zinc-950/95 py-3 pl-16 pr-3 md:relative md:inset-auto md:border-0 md:bg-transparent md:p-0">
-      <div className="flex min-w-0 items-center gap-2">
+    <div className="fixed inset-x-0 top-0 z-40 min-h-14 border-b border-white/10 bg-zinc-950/95 px-3 md:relative md:inset-auto md:min-h-0 md:border-0 md:bg-transparent md:p-0">
+      <div className="flex min-h-14 min-w-0 items-center gap-2 md:min-h-0">
+        {leading}
         <Breadcrumb className="flex-1">
           <BreadcrumbList>
-            {breadcrumbSegments.length === 0 || pathname === "/Home" ? <BreadcrumbItem><BreadcrumbPage>Home</BreadcrumbPage></BreadcrumbItem> : breadcrumbSegments.map((segment, index) => {
-              const isLast = index === breadcrumbSegments.length - 1;
-              const href = `/${breadcrumbSegments.slice(0, index + 1).join("/")}`;
-              let label = segment;
-              try { label = decodeURIComponent(segment); } catch {}
-              label = isLast && name ? name : label.charAt(0).toUpperCase() + label.slice(1);
-              return <React.Fragment key={href}>
-                {index > 0 && <BreadcrumbSeparator className="hidden text-zinc-600 md:block" />}
-                <BreadcrumbItem className={isLast ? "min-w-0 flex-1" : "hidden min-w-0 max-w-32 md:inline-flex"}>
-                  {isLast ? <BreadcrumbPage title={label}>{label}</BreadcrumbPage> :
-                    <BreadcrumbLink asChild><Link href={href} title={label} onClick={event => handleNavigation(event, href)}>{label}</Link></BreadcrumbLink>}
-                </BreadcrumbItem>
-              </React.Fragment>;
-            })}
+            {breadcrumbSegments.length === 0 || pathname === "/Home" ? (
+              <BreadcrumbItem>
+                <BreadcrumbPage>Home</BreadcrumbPage>
+              </BreadcrumbItem>
+            ) : (
+              breadcrumbSegments.map((segment, index) => {
+                const isLast = index === breadcrumbSegments.length - 1;
+                const href = `/${breadcrumbSegments.slice(0, index + 1).join("/")}`;
+                let label = segment;
+                try {
+                  label = decodeURIComponent(segment);
+                } catch {}
+                label =
+                  isLast && name
+                    ? name
+                    : label.charAt(0).toUpperCase() + label.slice(1);
+                return (
+                  <React.Fragment key={href}>
+                    {index > 0 && (
+                      <BreadcrumbSeparator className="hidden text-zinc-600 md:block" />
+                    )}
+                    <BreadcrumbItem
+                      className={
+                        isLast
+                          ? "min-w-0 flex-1"
+                          : "hidden min-w-0 max-w-32 md:inline-flex"
+                      }
+                    >
+                      {isLast ? (
+                        <BreadcrumbPage title={label}>{label}</BreadcrumbPage>
+                      ) : (
+                        <BreadcrumbLink asChild>
+                          <Link
+                            href={href}
+                            title={label}
+                            onClick={(event) => handleNavigation(event, href)}
+                          >
+                            {label}
+                          </Link>
+                        </BreadcrumbLink>
+                      )}
+                    </BreadcrumbItem>
+                  </React.Fragment>
+                );
+              })
+            )}
           </BreadcrumbList>
         </Breadcrumb>
-        <div className="flex shrink-0 items-center gap-1 sm:gap-2">{actions}<ThemeSwitcher /></div>
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          {actions}
+          <ThemeSwitcher />
+        </div>
       </div>
 
       <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
@@ -309,7 +345,10 @@ export const SearchSection = () => {
   };
 
   return (
-    <form onSubmit={handleSearch} className={`${styles.searchForm} relative w-full max-w-2xl`}>
+    <form
+      onSubmit={handleSearch}
+      className={`${styles.searchForm} relative w-full max-w-2xl`}
+    >
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-brand" />
         <Input
