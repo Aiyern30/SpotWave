@@ -8,6 +8,7 @@ import Image from "next/image";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useFullScreenPlayer } from "@/contexts/FullScreenPlayerContext";
+import { useTrackLyrics } from "@/hooks/useTrackLyrics";
 import {
   Button,
   Slider,
@@ -90,6 +91,11 @@ export const MusicPlayer = ({
     deviceId,
   } = usePlayer();
   const { isFullScreenOpen } = useFullScreenPlayer();
+  const {
+    data: lyricsData,
+    error: lyricsError,
+    hasLyrics,
+  } = useTrackLyrics(currentTrack, !!currentTrack);
 
   const [isMuted, setIsMuted] = useState(false);
   const [previousVolume, setPreviousVolume] = useState(volume);
@@ -513,7 +519,7 @@ export const MusicPlayer = ({
               <SkipForward className="h-4.5 w-4.5 fill-current" />
             </Button>
           </div>
-          {!isQuizPage && (
+          {!isQuizPage && ((!lyricsData && !lyricsError) || hasLyrics) && (
             <>
               <Sheet
                 open={isLyricsSheetOpen}
@@ -523,10 +529,10 @@ export const MusicPlayer = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-11 w-11 flex transition-colors"
+                    className="text-zinc-400 hover:text-brand hover:bg-zinc-800 h-11 w-11 flex cursor-pointer transition-colors"
                     aria-label="Open lyrics"
                     onClick={(event) => event.stopPropagation()}
-                    disabled={!currentTrack}
+                    disabled={!currentTrack || !lyricsData || !hasLyrics}
                   >
                     <Mic2 className="h-4 w-4" />
                   </Button>

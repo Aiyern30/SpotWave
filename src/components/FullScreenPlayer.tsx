@@ -595,11 +595,11 @@ export const FullScreenPlayer = ({
           <h2 className="text-xl sm:text-2xl font-semibold text-white mb-4 sm:mb-6">
             Track Information
           </h2>
-          <Card className="bg-zinc-800/30 border-zinc-700">
+          <Card className="border-brand/20 bg-brand/5">
             <CardContent className="p-4 sm:p-6 space-y-3 sm:space-y-4 overflow-x-hidden">
               <div className="space-y-2 sm:space-y-3">
                 <div className="flex justify-between py-2 sm:py-3 border-b border-zinc-700">
-                  <span className="text-zinc-400 text-sm sm:text-base">
+                  <span className="text-brand/80 text-sm font-medium sm:text-base">
                     Duration
                   </span>
                   <span className="text-white text-sm sm:text-base">
@@ -607,7 +607,7 @@ export const FullScreenPlayer = ({
                   </span>
                 </div>
                 <div className="flex justify-between py-2 sm:py-3 border-b border-zinc-700">
-                  <span className="text-zinc-400 text-sm sm:text-base">
+                  <span className="text-brand/80 text-sm font-medium sm:text-base">
                     Explicit
                   </span>
                   <span className="text-white text-sm sm:text-base">
@@ -615,7 +615,7 @@ export const FullScreenPlayer = ({
                   </span>
                 </div>
                 <div className="flex justify-between py-2 sm:py-3 border-b border-zinc-700">
-                  <span className="text-zinc-400 text-sm sm:text-base">
+                  <span className="text-brand/80 text-sm font-medium sm:text-base">
                     Popularity
                   </span>
                   <div className="flex items-center space-x-2 sm:space-x-3">
@@ -631,7 +631,7 @@ export const FullScreenPlayer = ({
                   </div>
                 </div>
                 <div className="flex justify-between py-2 sm:py-3">
-                  <span className="text-zinc-400 text-sm sm:text-base">
+                  <span className="text-brand/80 text-sm font-medium sm:text-base">
                     Album
                   </span>
                   <span
