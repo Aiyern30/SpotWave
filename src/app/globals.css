@@ -94,9 +94,14 @@
   }
   html {
     background-color: #000;
+    overscroll-behavior-y: none;
+    overscroll-behavior-x: none;
   }
   body {
     @apply bg-black text-foreground;
+    overscroll-behavior-y: none;
+    overscroll-behavior-x: none;
+
   }
 }
 
