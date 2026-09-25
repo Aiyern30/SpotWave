@@ -277,7 +277,8 @@ export const MusicPlayer = ({
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-[60] border-[1.5px] border-brand/25 bg-black/95 shadow-[0_-8px_24px_rgba(0,0,0,0.35)] backdrop-blur-xl transition-all duration-300 cursor-pointer md:cursor-default"
+      className="fixed bottom-0 left-0 right-0 z-[60] backdrop-blur-xl transition-all duration-300 cursor-pointer md:cursor-default"
+     style={{ background: "linear-gradient(180deg, rgba(10,10,14,0.97) 0%, hsl(var(--brand-primary) / 0.10) 100%)", borderTop: "1.5px solid hsl(var(--brand-primary) / 0.30)", boxShadow: "0 -8px 32px rgba(0,0,0,0.5), 0 0 0 1px hsl(var(--brand-primary) / 0.10)" }}
       onClick={(event) => {
         if (event.currentTarget.contains(event.target as Node) && window.innerWidth < 768) handleFullScreenClick();
       }}
@@ -631,7 +632,7 @@ export const MusicPlayer = ({
         </div>
       )}
       <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
-        <AlertDialogContent className="bg-zinc-950 border-zinc-800 text-white">
+        <AlertDialogContent className="text-zinc-100" style={{ background: "linear-gradient(135deg, rgba(15,15,20,0.97) 0%, hsl(var(--brand-primary) / 0.12) 100%)", borderColor: "hsl(var(--brand-primary) / 0.3)", boxShadow: "0 8px 32px rgba(0,0,0,0.7)" }}>
           <AlertDialogHeader>
             <AlertDialogTitle>Quit Quiz?</AlertDialogTitle>
             <AlertDialogDescription className="text-zinc-400">

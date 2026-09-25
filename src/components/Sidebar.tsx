@@ -89,7 +89,8 @@ export default function Sidebar({ isOpen, onClose, onOpen, compact, onToggleComp
   );
 
   return <TooltipProvider delayDuration={150}>
-    <aside aria-label="Sidebar" className={`fixed left-0 top-0 bottom-1 z-40 hidden flex-col overflow-hidden rounded-b-2xl border-[1.5px] border-brand/40 bg-zinc-950 shadow-[2px_0_18px_rgba(0,0,0,0.28)] md:flex ${compact ? "w-[72px]" : "w-64"} ${currentTrack || isConnecting ? "pb-[90px]" : ""}`}>
+    <aside aria-label="Sidebar" className={`fixed left-0 top-0 bottom-1 z-40 hidden flex-col overflow-hidden rounded-b-2xl backdrop-blur-xl shadow-[2px_0_18px_rgba(0,0,0,0.40)] md:flex ${compact ? "w-[72px]" : "w-64"} ${currentTrack || isConnecting ? "pb-[90px]" : ""}`}
+      style={{ background: "linear-gradient(160deg, rgba(12,12,18,0.97) 0%, hsl(var(--brand-primary) / 0.12) 100%)", border: "1.5px solid hsl(var(--brand-primary) / 0.35)", boxShadow: "2px 0 24px rgba(0,0,0,0.45), 0 0 0 1px hsl(var(--brand-primary) / 0.10)" }}>
       {navigation(compact)}
     </aside>
     <Dialog.Root open={isOpen} onOpenChange={(open) => open ? onOpen() : onClose()}>
@@ -100,14 +101,15 @@ export default function Sidebar({ isOpen, onClose, onOpen, compact, onToggleComp
       )}
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/65" />
-        <Dialog.Content aria-describedby={undefined} className="fixed left-0 top-0 bottom-1 z-50 flex w-[min(320px,calc(100vw-32px))] flex-col overflow-hidden rounded-b-2xl border-[1.5px] border-brand/40 bg-zinc-950 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] shadow-xl focus:outline-none">
+        <Dialog.Content aria-describedby={undefined} className={`fixed left-0 top-0 bottom-1 z-50 flex w-[min(320px,calc(100vw-32px))] flex-col overflow-hidden rounded-b-2xl pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] focus:outline-none backdrop-blur-xl`}
+          style={{ background: "linear-gradient(160deg, rgba(12,12,18,0.97) 0%, hsl(var(--brand-primary) / 0.12) 100%)", border: "1.5px solid hsl(var(--brand-primary) / 0.35)", boxShadow: "4px 0 32px rgba(0,0,0,0.55)" }}>
           <Dialog.Title className="sr-only">SpotWave navigation</Dialog.Title>
           {navigation(false, true)}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
     <AlertDialog open={logoutOpen} onOpenChange={setLogoutOpen}>
-      <AlertDialogContent className="border-brand/20 bg-zinc-950 text-zinc-100">
+      <AlertDialogContent className="text-zinc-100" style={{ background: "linear-gradient(135deg, rgba(15,15,20,0.97) 0%, hsl(var(--brand-primary) / 0.12) 100%)", borderColor: "hsl(var(--brand-primary) / 0.3)", boxShadow: "0 8px 32px rgba(0,0,0,0.7)" }}>
         <AlertDialogHeader><AlertDialogTitle>Sign Out</AlertDialogTitle><AlertDialogDescription className="text-zinc-400">Sign out of SpotWave? You can sign back in to access your library.</AlertDialogDescription></AlertDialogHeader>
         <AlertDialogFooter><AlertDialogCancel className="border-brand/30 bg-zinc-900 text-zinc-100">Cancel</AlertDialogCancel><AlertDialogAction className="bg-brand text-brand-foreground hover:bg-brand/90" onClick={() => { clearSpotifySession(); router.push("/"); }}>Sign Out</AlertDialogAction></AlertDialogFooter>
       </AlertDialogContent>
