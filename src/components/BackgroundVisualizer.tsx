@@ -16,7 +16,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from "./ui/Dropdown-menu";
-import AudioVisualizer from "./AudioVisualizer";
+import AudioVisualizer, { type Mode } from "./AudioVisualizer";
 
 export default function BackgroundVisualizer({ renderControls }: { renderControls: (controls: ReactNode) => ReactNode }) {
   const {
@@ -31,11 +31,14 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
   const { currentTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const [enabled, setEnabled] = useState(true);
+  const [visualMode, setVisualMode] = useState<Mode>("Ribbons");
   const [sensitivity, setSensitivity] = useState(4);
   const [reducedMotion, setReducedMotion] = useState(true);
   useEffect(() => {
     try {
       setEnabled(localStorage.getItem("background-visualizer") !== "false");
+      const savedMode = localStorage.getItem("background-visualizer-mode");
+      if (savedMode === "Orbit" || savedMode === "Ribbons" || savedMode === "Spectrum") setVisualMode(savedMode);
       const saved = Number(
         localStorage.getItem("background-visualizer-sensitivity"),
       );
@@ -102,7 +105,7 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
       <DropdownMenuContent
         align="end"
         sideOffset={8}
-        className="w-64 max-w-[calc(100vw-24px)]"
+        className="w-64 max-w-[calc(100vw-24px)] max-h-[min(80dvh,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto"
       >
         <DropdownMenuLabel className="text-zinc-100">
           Audio visualizer
@@ -112,10 +115,10 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
           role="status"
         >
           {pending
-            ? "Choose audio in the browser picker."
+            ? "Select the playing tab and enable Share tab audio."
             : connected
-              ? "Audio connected across your pages."
-              : "Automatic animation"}
+              ? "Reacting to shared audio across your pages."
+              : "Waiting for shared audio. No simulated movement."}
         </p>
         {error && (
           <p role="alert" className="px-2.5 pb-2 text-xs text-red-300">
@@ -135,6 +138,17 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
         >
           Background animation
         </DropdownMenuCheckboxItem>
+        <DropdownMenuLabel>Visualization</DropdownMenuLabel>
+        <DropdownMenuRadioGroup value={visualMode} onValueChange={value => {
+          if (value !== "Orbit" && value !== "Ribbons" && value !== "Spectrum") return;
+          setVisualMode(value);
+          try { localStorage.setItem("background-visualizer-mode", value); } catch {}
+        }}>
+          {(["Orbit", "Ribbons", "Spectrum"] as const).map(value => (
+            <DropdownMenuRadioItem key={value} value={value} onSelect={event => event.preventDefault()}>{value}</DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
         <DropdownMenuLabel>Sensitivity</DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={String(sensitivity)}
@@ -185,7 +199,7 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
   );
   return (
     <>
-      {enabled && (
+      {enabled && connected && (
         <div
           aria-hidden="true"
           className="pointer-events-none fixed inset-0 z-0 opacity-60"
@@ -200,6 +214,8 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
             sensitivity={sensitivity}
             detail={8}
             background
+            mode={visualMode}
+            audioOnly
           />
         </div>
       )}

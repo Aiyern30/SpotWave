@@ -12,15 +12,18 @@ type Props = {
   sensitivity: number;
   detail: number;
   background?: boolean;
+  mode?: Mode;
+  audioOnly?: boolean;
 };
-type Mode = "Orbit" | "Ribbons" | "Spectrum";
+export type Mode = "Orbit" | "Ribbons" | "Spectrum";
 
 /** Canvas owns animation state so audio frames never rerender the player. */
 export default function AudioVisualizer(props: Props) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const status = useRef<HTMLSpanElement>(null);
   const latest = useRef(props);
-  const [mode, setMode] = useState<Mode>(props.background ? "Ribbons" : "Orbit");
+  const [selectedMode, setMode] = useState<Mode>(props.background ? "Ribbons" : "Orbit");
+  const mode = props.mode ?? selectedMode;
   useEffect(() => { latest.current = props; });
 
   useEffect(() => {
@@ -39,10 +42,10 @@ export default function AudioVisualizer(props: Props) {
     const draw = (stamp: number) => {
       frame = 0;
       const p = latest.current;
-      const moving = !p.reducedMotion && (p.playing || p.captured);
+      const moving = !p.reducedMotion && (p.captured || (!p.audioOnly && p.playing));
       const dt = Math.min((stamp - (last || stamp)) / 1000, .05);
       last = stamp;
-      if (moving) time += dt;
+
       // Automatic mode never depends on access to Spotify's protected audio.
       const analyser = p.captured ? p.captureAnalyser.current : null;
       if (analyser !== previousSource) { bands.fill(0); silentFor = 0; previousSource = analyser; }
@@ -55,7 +58,9 @@ export default function AudioVisualizer(props: Props) {
       for (const value of samples) sum += value;
       const live = sum > 0;
       silentFor = live ? 0 : silentFor + dt;
-      const ambient = !p.captured;
+      const ambient = !p.captured && !p.audioOnly;
+      // Captured silence does not drive decorative motion. Keep sampling for audio to resume.
+      if (moving && (live || ambient)) time += dt;
       const label = p.reducedMotion ? "Reduced motion" : !moving ? "Paused" : p.captured
         ? (silentFor > 1 ? "Listening for audio" : "Live audio") : live ? "Live audio" : "Automatic animation";
       if (status.current && status.current.textContent !== label) status.current.textContent = label;
@@ -67,7 +72,7 @@ export default function AudioVisualizer(props: Props) {
         // Deliberately generated movement, not a claim of beat detection.
         const swell = .5 + .5 * Math.sin(time * 1.8);
         const simulated = .24 + .22 * swell + .16 * Math.sin(time * 2.2 + i * .16) + .1 * Math.sin(time * .9 - i * .29);
-        const target = !moving ? .08 : ambient ? simulated : samples[index] / 255;
+        const target = !moving ? (p.audioOnly ? 0 : .08) : ambient ? simulated : samples[index] / 255;
         bands[i] += ((p.background ? 1 - Math.exp(-Math.max(0, target) * p.sensitivity) : Math.min(1, target * p.sensitivity * .7)) - bands[i]) * smoothing;
         if (i < 18) bass += bands[i] / 18;
       }
@@ -179,7 +184,7 @@ export default function AudioVisualizer(props: Props) {
     document.addEventListener("visibilitychange", restart);
     restart();
     return () => { cancelAnimationFrame(frame); resize.disconnect(); intersection.disconnect(); document.removeEventListener("visibilitychange", restart); };
-  }, [mode, props.playing, props.captured, props.reducedMotion, props.color, props.background]);
+  }, [mode, props.playing, props.captured, props.reducedMotion, props.color, props.background, props.audioOnly]);
 
   return <div className="relative h-full w-full overflow-hidden rounded-2xl">
     <canvas ref={canvas} className="absolute inset-0 h-full w-full" aria-label={`${mode} music visualization`} role="img" />
