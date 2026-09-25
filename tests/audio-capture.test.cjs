@@ -27,7 +27,7 @@ function harness(getDisplayMedia) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
   }).outputText;
   vm.runInNewContext(code, { exports, require: name => name === 'react' ? react : { jsx: (_, props) => { value = props.value; } },
-    navigator: { mediaDevices: { getDisplayMedia } }, AudioContext });
+    navigator: { mediaDevices: { getDisplayMedia, getUserMedia: getDisplayMedia } }, AudioContext });
   exports.AudioCaptureProvider({ children: null });
   return { capture: value, dispose: () => cleanup(), contexts };
 }
@@ -69,16 +69,21 @@ test('no audio and late permission responses do not leak tracks', async () => {
   assert.equal(pending.contexts.length, 0);
 });
 
-test('entire-screen capture is rejected and released', async () => {
+test('screen sources with audio are accepted', async () => {
   const media = stream();
   media.tracks[0].getSettings = () => ({ displaySurface: 'monitor' });
-  const h = harness(async options => {
-    assert.equal(options.monitorTypeSurfaces, 'exclude');
-    return media;
-  });
+  const h = harness(async () => media);
   await h.capture.startListening('speaker');
-  assert.ok(media.tracks.every(t => t.stopped));
-  assert.equal(h.capture.analyser.current, null);
+  assert.ok(h.capture.analyser.current);
+  assert.ok(media.tracks.every(t => !t.stopped));
+  h.dispose();
+});
+test('microphone connects without requesting video', async () => {
+  const media = stream();
+  const h = harness(async options => { assert.equal(options.video, undefined); return media; });
+  await h.capture.startListening('mic');
+  assert.ok(h.capture.analyser.current);
+  h.dispose();
 });
 
 test('a denied permission request can be retried successfully', async () => {

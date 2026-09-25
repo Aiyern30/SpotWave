@@ -52,10 +52,10 @@ export function AudioCaptureProvider({ children }: { children: ReactNode }) {
       if (!media || (mode === "speaker" && !media.getDisplayMedia)) {
         throw new Error("Audio sharing is unavailable in this browser. Try a desktop browser with tab audio sharing.");
       }
-      // Browser hints favor tab audio and hide entire monitors where supported.
+      // Prefer tab audio, but accept any surface that actually supplies audio.
       const displayOptions = {
         video: { displaySurface: "browser" }, audio: true,
-        preferCurrentTab: true, monitorTypeSurfaces: "exclude",
+        preferCurrentTab: true, systemAudio: "include",
       };
       const captured = mode === "speaker"
         ? await media.getDisplayMedia(displayOptions)
@@ -65,11 +65,8 @@ export function AudioCaptureProvider({ children }: { children: ReactNode }) {
         return;
       }
       stream.current = captured;
-      if (mode === "speaker" && captured.getVideoTracks().some(track => track.getSettings().displaySurface === "monitor")) {
-        throw new Error("Entire-screen sharing is disabled. Choose a browser tab with audio instead.");
-      }
       if (!captured.getAudioTracks().some(track => track.readyState === "live")) {
-        throw new Error("No audio was shared. Choose the playing tab and enable Share tab audio.");
+        throw new Error("The browser returned no audio. Try sharing the playing tab with Share tab audio enabled in a supported browser, or choose Use microphone.");
       }
       // Keep the display track alive for the browser's sharing session; never render or record it.
       captured.getTracks().forEach(track => track.addEventListener("ended", () => {
@@ -84,7 +81,12 @@ export function AudioCaptureProvider({ children }: { children: ReactNode }) {
       node.smoothingTimeConstant = .35;
       analyser.current = node;
       source.current = audio.createMediaStreamSource(captured);
-      source.current.connect(node); // No destination connection: avoids duplicated audio/echo.
+      source.current.connect(node);
+      // Force the audio graph to pull data by connecting to a muted destination.
+      const gain = audio.createGain();
+      gain.gain.value = 0;
+      node.connect(gain);
+      gain.connect(audio.destination);
       setMode(mode);
       setPending(false);
     } catch (cause) {
@@ -92,7 +94,9 @@ export function AudioCaptureProvider({ children }: { children: ReactNode }) {
       stopListening();
       const name = cause && typeof cause === "object" && "name" in cause ? cause.name : "";
       setError(name === "NotAllowedError"
-        ? "Sharing was cancelled or blocked. Try sharing again. If the picker does not appear, check your browser or system screen-recording permission."
+        ? mode === "speaker"
+          ? "Sharing was cancelled or blocked. Try sharing again. If the picker does not appear, check your browser or system screen-recording permission."
+          : "Microphone access was denied. Please allow microphone access in your browser or ensure you are clicking directly."
         : name === "InvalidStateError"
           ? "Click Share audio again while this tab is active."
           : cause instanceof Error ? cause.message : "Could not share audio. Please try again.");

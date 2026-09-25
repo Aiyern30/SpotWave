@@ -55,9 +55,9 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
   useEffect(() => {
     if (error) setOpen(true);
   }, [error]);
-  const requestAudio = () => {
+  const requestAudio = (mode: "speaker" | "mic" = "speaker") => {
     // Invoke capture directly from a click, never from menu state or an effect.
-    void startListening("speaker");
+    void startListening(mode);
     setOpen(true);
   };
   const controls = (
@@ -105,7 +105,7 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
       <DropdownMenuContent
         align="end"
         sideOffset={8}
-        className="w-64 max-w-[calc(100vw-24px)] max-h-[min(80dvh,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto"
+        className="w-80 max-w-[calc(100vw-24px)] max-h-[min(80dvh,var(--radix-dropdown-menu-content-available-height))] overflow-y-auto"
       >
         <DropdownMenuLabel className="text-zinc-100">
           Audio visualizer
@@ -117,7 +117,7 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
           {pending
             ? "Select the playing tab and enable Share tab audio."
             : connected
-              ? "Reacting to shared audio across your pages."
+              ? (captureMode === "mic" ? "Microphone connected. Reacts to sound around you." : "Shared audio connected across your pages.")
               : "Waiting for shared audio. No simulated movement."}
         </p>
         {error && (
@@ -138,6 +138,15 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
         >
           Background animation
         </DropdownMenuCheckboxItem>
+        <DropdownMenuLabel>Audio source</DropdownMenuLabel>
+        <DropdownMenuItem disabled={pending} onSelect={event => event.preventDefault()} onClick={() => requestAudio("speaker")}>
+          {captureMode === "speaker" ? "Change shared audio" : "Share tab / screen audio"}
+        </DropdownMenuItem>
+        <DropdownMenuItem disabled={pending || captureMode === "mic"} onSelect={event => event.preventDefault()} onClick={() => requestAudio("mic")}>
+          {captureMode === "mic" ? "Microphone active" : "Use microphone"}
+        </DropdownMenuItem>
+        <p className="px-2.5 py-2 text-xs leading-relaxed text-zinc-400">Shared audio is clearest. Microphone mode needs audible speakers and also picks up room noise.</p>
+        <DropdownMenuSeparator />
         <DropdownMenuLabel>Visualization</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={visualMode} onValueChange={value => {
           if (value !== "Orbit" && value !== "Ribbons" && value !== "Spectrum") return;
