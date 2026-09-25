@@ -164,7 +164,13 @@ const ArtistProfilePage = () => {
   const [isBioExpanded, setIsBioExpanded] = useState(false);
   const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
   const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
+  const [playlistTracks, setPlaylistTracks] = useState<Record<string, Set<string>>>({});
   const [userProfile, setUserProfile] = useState<any>(null);
+
+  const isTrackSaved = (trackId: string) => {
+    if (likedTracks.has(trackId)) return true;
+    return Object.values(playlistTracks).some((set) => set.has(trackId));
+  };
 
   useEffect(() => {
     if (artistProfile?.id && followedArtists.length > 0) {
@@ -500,6 +506,32 @@ const ArtistProfilePage = () => {
           if (response.ok) {
             const data = await response.json();
             setUserPlaylists(data.items);
+            
+            // Fetch tracks for all these playlists
+            const tracksMapping: Record<string, Set<string>> = {};
+            await Promise.all(
+              data.items.map(async (playlist: any) => {
+                try {
+                  const tracksRes = await fetch(
+                    `https://api.spotify.com/v1/playlists/${playlist.id}/tracks?limit=100&fields=items(track(id))`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                  );
+                  if (tracksRes.ok) {
+                    const tracksData = await tracksRes.json();
+                    const trackIds = new Set<string>();
+                    tracksData.items.forEach((item: any) => {
+                      if (item.track?.id) {
+                        trackIds.add(item.track.id);
+                      }
+                    });
+                    tracksMapping[playlist.id] = trackIds;
+                  }
+                } catch (e) {
+                  console.error("Error fetching tracks for playlist", playlist.id, e);
+                }
+              })
+            );
+            setPlaylistTracks(tracksMapping);
           }
         } catch (error) {
           console.error("Error fetching user playlists:", error);
@@ -555,6 +587,16 @@ const ArtistProfilePage = () => {
       if (response.ok) {
         const { toast } = await import("react-toastify");
         toast.success(`Added to ${playlistName}!`);
+        
+        // Update local state to immediately show the heart icon
+        const trackId = trackUri.split(":")[2];
+        setPlaylistTracks((prev) => {
+          const newMapping = { ...prev };
+          const set = new Set(newMapping[playlistId] || []);
+          set.add(trackId);
+          newMapping[playlistId] = set;
+          return newMapping;
+        });
       } else {
         throw new Error("Failed to add");
       }
@@ -779,7 +821,7 @@ const ArtistProfilePage = () => {
                                 }`}
                               >
                                 <span className="truncate">{track.name}</span>
-                                {likedTracks.has(track.id) && <Heart className="w-4 h-4 fill-brand text-brand flex-shrink-0" />}
+                                {isTrackSaved(track.id) && <Heart className="w-4 h-4 fill-brand text-brand flex-shrink-0" />}
                               </div>
                               <div className="text-zinc-400 text-sm truncate">
                                 <span
@@ -849,9 +891,10 @@ const ArtistProfilePage = () => {
                                           pl.name,
                                         );
                                       }}
-                                      className="text-white hover:bg-brand/20 "
+                                      className="text-white hover:bg-brand/20 flex items-center justify-between"
                                     >
-                                      {pl.name}
+                                      <span className="truncate">{pl.name}</span>
+                                      {playlistTracks[pl.id]?.has(track.id) && <Heart className="w-3 h-3 fill-brand text-brand flex-shrink-0 ml-2" />}
                                     </DropdownMenuItem>
                                   ))}
                                 </DropdownMenuSubContent>
@@ -928,7 +971,7 @@ const ArtistProfilePage = () => {
                       badge={`#${index + 1}`}
                       duration={formatSongDuration(track.duration_ms)}
                       isPlaying={currentTrackId === track.id && isPlaying}
-                      isLiked={likedTracks.has(track.id)}
+                      isLiked={isTrackSaved(track.id)}
                       onPlay={() => handlePlayPauseTrack(track)}
                       onPause={pauseTrack}
                       onClick={(id) => handleSongClick(id, track.name)}
@@ -965,9 +1008,10 @@ const ArtistProfilePage = () => {
                                         pl.name,
                                       );
                                     }}
-                                    className="text-white hover:bg-brand/20"
+                                    className="text-white hover:bg-brand/20 flex items-center justify-between"
                                   >
-                                    {pl.name}
+                                    <span className="truncate">{pl.name}</span>
+                                    {playlistTracks[pl.id]?.has(track.id) && <Heart className="w-3 h-3 fill-brand text-brand flex-shrink-0 ml-2" />}
                                   </DropdownMenuItem>
                                 ))}
                               </DropdownMenuSubContent>
