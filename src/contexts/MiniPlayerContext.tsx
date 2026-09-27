@@ -3,7 +3,11 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 
 export type MiniPlayerDesign = "deck" | "card" | "pill";
-
+export const PIP_DIMENSIONS: Record<MiniPlayerDesign, { width: number; height: number }> = {
+  deck: { width: 460, height: 130 },
+  card: { width: 372, height: 480 },
+  pill: { width: 340, height: 210 },
+};
 export type MiniPlayerContextValue = {
   isMiniPlayerOpen: boolean;
   isPipActive: boolean;
@@ -60,6 +64,13 @@ export function MiniPlayerProvider({ children }: { children: ReactNode }) {
       }
     } catch { }
   }, []);
+  useEffect(() => {
+    if (!pipWindow) return;
+    const dims = PIP_DIMENSIONS[design];
+    try {
+      pipWindow.resizeTo(dims.width, dims.height);
+    } catch { }
+  }, [design, pipWindow]);
 
   const setDesign = useCallback((next: MiniPlayerDesign) => {
     setDesignState(next);
@@ -84,9 +95,10 @@ export function MiniPlayerProvider({ children }: { children: ReactNode }) {
   const openMiniPlayer = useCallback(async () => {
     if (typeof window !== "undefined" && "documentPictureInPicture" in window) {
       try {
+        const dims = PIP_DIMENSIONS[design];
         const pip = await (window as any).documentPictureInPicture.requestWindow({
-          width: 440,
-          height: 150,
+          width: dims.width,
+          height: dims.height,
         });
 
         copyStylesToPip(pip);

@@ -421,15 +421,15 @@ function DeckDesign({ core, onClose }: { core: CoreState; onClose: () => void })
       ref={core.containerRef}
       style={
         core.isPip
-          ? { width: "100%", height: "100%", padding: "10px", boxSizing: "border-box" }
+          ? { position: "fixed", inset: 0, padding: "10px", boxSizing: "border-box" }
           : {
             transform: core.coords ? `translate3d(${core.coords.x}px, ${core.coords.y}px, 0)` : "none",
             visibility: core.coords ? "visible" : "hidden",
           }
       }
-      className={`relative select-none bg-[#1B1A17] text-[#F2EAD7] flex flex-col ${core.isPip
-          ? "w-full h-full min-h-screen"
-          : "fixed top-0 left-0 z-[90] w-[440px] rounded-2xl border border-[#3a362c] p-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.7)] touch-none animate-in fade-in slide-in-from-bottom-4 duration-200"
+      className={`relative select-none bg-[#1B1A17] text-[#F2EAD7] flex flex-col justify-center ${core.isPip
+        ? ""
+        : "fixed top-0 left-0 z-[90] w-[440px] rounded-2xl border border-[#3a362c] p-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.7)] touch-none animate-in fade-in slide-in-from-bottom-4 duration-200"
         }`}
     >
       <style>{`@keyframes spw-vinyl-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
@@ -569,15 +569,15 @@ function CardDesign({ core, onClose }: { core: CoreState; onClose: () => void })
       ref={core.containerRef}
       style={
         core.isPip
-          ? { width: "100%", height: "100%", padding: "12px", boxSizing: "border-box" }
+          ? { position: "fixed", inset: 0, padding: "12px", boxSizing: "border-box" }
           : {
             transform: core.coords ? `translate3d(${core.coords.x}px, ${core.coords.y}px, 0)` : "none",
             visibility: core.coords ? "visible" : "hidden",
           }
       }
       className={`relative select-none bg-[#121214] text-white flex flex-col justify-between ${core.isPip
-          ? "w-full h-full min-h-screen"
-          : "fixed top-0 left-0 z-[90] w-[340px] rounded-[28px] border border-white/10 p-4 shadow-[0_25px_60px_rgba(0,0,0,0.85)] backdrop-blur-2xl touch-none animate-in fade-in zoom-in-95 duration-200"
+        ? ""
+        : "fixed top-0 left-0 z-[90] w-[340px] rounded-[28px] border border-white/10 p-4 shadow-[0_25px_60px_rgba(0,0,0,0.85)] backdrop-blur-2xl touch-none animate-in fade-in zoom-in-95 duration-200"
         }`}
     >
       <div
@@ -693,14 +693,14 @@ function PillDesign({ core, onClose }: { core: CoreState; onClose: () => void })
       ref={core.containerRef}
       style={
         core.isPip
-          ? { width: "100%", height: "100%", padding: "10px", boxSizing: "border-box" }
+          ? { position: "fixed", inset: 0, padding: "10px", boxSizing: "border-box" }
           : {
             transform: core.coords ? `translate3d(${core.coords.x}px, ${core.coords.y}px, 0)` : "none",
             visibility: core.coords ? "visible" : "hidden",
           }
       }
       className={`relative select-none bg-[#181818] text-white transition-all duration-200 ${core.isPip
-          ? "w-full h-full min-h-screen flex flex-col justify-center"
+          ? "flex flex-col justify-center"
           : `fixed top-0 left-0 z-[90] rounded-full border border-white/10 shadow-[0_15px_40px_rgba(0,0,0,0.6)] touch-none animate-in fade-in zoom-in-95 duration-200 ${expanded ? "w-[300px] rounded-3xl" : "w-16"
           }`
         }`}
