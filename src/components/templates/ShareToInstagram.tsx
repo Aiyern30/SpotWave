@@ -27,16 +27,30 @@ const proxyImage = (url: string) =>
         ? url
         : `/api/image-proxy?url=${encodeURIComponent(url)}`;
 
+const withTimeout = <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> =>
+    Promise.race([
+        promise,
+        new Promise<T>((_, reject) =>
+            setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms),
+        ),
+    ]);
+
 const waitForImages = async (container: HTMLElement) => {
     const imgs = Array.from(container.querySelectorAll("img"));
     await Promise.all(
         imgs.map((img) =>
-            img.complete
-                ? Promise.resolve()
-                : new Promise<void>((resolve) => {
-                    img.onload = () => resolve();
-                    img.onerror = () => resolve();
-                }),
+            withTimeout(
+                img.complete && img.naturalWidth > 0
+                    ? Promise.resolve()
+                    : new Promise<void>((resolve) => {
+                        img.onload = () => resolve();
+                        img.onerror = () => resolve(); // don't hang on a broken image
+                    }),
+                6000,
+                `image load (${img.src.slice(0, 60)})`,
+            ).catch((err) => {
+                console.warn(err.message);
+            }),
         ),
     );
 };
@@ -70,12 +84,13 @@ export default function ShareToInstagram({ data }: ShareToInstagramProps) {
         if (!cardRef.current) return null;
         await waitForImages(cardRef.current);
         try {
-            return await toBlob(cardRef.current, {
-                pixelRatio: 1,
-                cacheBust: true,
-            });
+            return await withTimeout(
+                toBlob(cardRef.current, { pixelRatio: 1, cacheBust: true }),
+                10000,
+                "toBlob render",
+            );
         } catch (err) {
-            console.error("toBlob failed:", err);
+            console.error("toBlob failed or timed out:", err);
             return null;
         }
     };
@@ -102,15 +117,15 @@ export default function ShareToInstagram({ data }: ShareToInstagramProps) {
                         setOpen(false);
                         return;
                     } catch (err: any) {
-                        if (err?.name === "AbortError") return; // user cancelled
+                        if (err?.name === "AbortError") return;
                         console.warn("File share failed, falling back to link:", err);
                     }
                 }
             } else {
+                // Now this actually fires instead of hanging silently
                 toast.error("Couldn't generate the image — sharing link instead");
             }
 
-            // Fallback: share the link only (works even in restrictive in-app browsers)
             if (navigator.share) {
                 await navigator.share({
                     title: data.name,
@@ -124,7 +139,7 @@ export default function ShareToInstagram({ data }: ShareToInstagramProps) {
         } catch (err: any) {
             if (err?.name !== "AbortError") {
                 console.error(err);
-                toast.error("Couldn't open the share sheet");
+                toast.error(err?.message || "Couldn't open the share sheet");
             }
         } finally {
             setSharing(false);
@@ -184,8 +199,8 @@ export default function ShareToInstagram({ data }: ShareToInstagramProps) {
                                         key={t.id}
                                         onClick={() => setTemplateId(t.id)}
                                         className={`flex-1 rounded-xl border-2 px-4 py-2 text-sm font-medium transition-all ${templateId === t.id
-                                                ? "border-brand bg-brand/20 text-white"
-                                                : "border-zinc-700 text-zinc-400 hover:border-brand/40"
+                                            ? "border-brand bg-brand/20 text-white"
+                                            : "border-zinc-700 text-zinc-400 hover:border-brand/40"
                                             }`}
                                     >
                                         {t.label}
@@ -308,8 +323,8 @@ export default function ShareToInstagram({ data }: ShareToInstagramProps) {
                                                     variant="ghost"
                                                     size="icon"
                                                     className={`h-8 w-8 transition-all ${copied === "link"
-                                                            ? "text-brand bg-zinc-800"
-                                                            : "text-zinc-400 hover:text-brand hover:bg-zinc-800"
+                                                        ? "text-brand bg-zinc-800"
+                                                        : "text-zinc-400 hover:text-brand hover:bg-zinc-800"
                                                         }`}
                                                     onClick={() => copyToClipboard(data.shareUrl, "link")}
                                                 >
@@ -331,8 +346,8 @@ export default function ShareToInstagram({ data }: ShareToInstagramProps) {
                                                     variant="ghost"
                                                     size="icon"
                                                     className={`h-8 w-8 transition-all ${copied === "embed"
-                                                            ? "text-brand bg-zinc-800"
-                                                            : "text-zinc-400 hover:text-brand hover:bg-zinc-800"
+                                                        ? "text-brand bg-zinc-800"
+                                                        : "text-zinc-400 hover:text-brand hover:bg-zinc-800"
                                                         }`}
                                                     onClick={() => copyToClipboard(embedCode, "embed")}
                                                 >

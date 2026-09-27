@@ -5,7 +5,9 @@ export async function GET(req: NextRequest) {
     if (!url) return new NextResponse("Missing url", { status: 400 });
 
     try {
-        const res = await fetch(url);
+        const res = await fetch(url, {
+            signal: AbortSignal.timeout(8000), // fail fast instead of hanging
+        });
         if (!res.ok) return new NextResponse("Fetch failed", { status: 502 });
 
         const buffer = await res.arrayBuffer();
