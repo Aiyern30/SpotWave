@@ -10,6 +10,8 @@ import { Toaster } from "@/components/ui/sonner";
 import AuthProvider from "@/app/AuthProvider";
 import InQueueWindow from "@/components/InQueueWindow";
 import { FullScreenPlayerProvider } from "@/contexts/FullScreenPlayerContext";
+import { MiniPlayerProvider } from "@/contexts/MiniPlayerContext";
+import MiniPlayer from "@/components/MiniPlayer";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [isQueueOpen, setIsQueueOpen] = useState(false);
@@ -20,24 +22,27 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <ThemeProvider>
         <PlayerProvider>
           <AudioCaptureProvider>
-          <FullScreenPlayerProvider
-            value={{ isFullScreenOpen, setIsFullScreenOpen }}
-          >
-            <MusicPlayer
-              onToggleQueue={() => setIsQueueOpen((prev) => !prev)}
-              onToggleFullScreen={() => setIsFullScreenOpen((prev) => !prev)}
-            />
-            <FullScreenPlayer
-              isOpen={isFullScreenOpen}
-              onClose={() => setIsFullScreenOpen(false)}
-            />
-            <InQueueWindow
-              isOpen={isQueueOpen}
-              onClose={() => setIsQueueOpen(false)}
-            />
-            <Toaster position="top-right" richColors />
-            {children}
-          </FullScreenPlayerProvider>
+            <FullScreenPlayerProvider
+              value={{ isFullScreenOpen, setIsFullScreenOpen }}
+            >
+              <MiniPlayerProvider>
+                <MusicPlayer
+                  onToggleQueue={() => setIsQueueOpen((prev) => !prev)}
+                  onToggleFullScreen={() => setIsFullScreenOpen((prev) => !prev)}
+                />
+                <FullScreenPlayer
+                  isOpen={isFullScreenOpen}
+                  onClose={() => setIsFullScreenOpen(false)}
+                />
+                <MiniPlayer />
+                <InQueueWindow
+                  isOpen={isQueueOpen}
+                  onClose={() => setIsQueueOpen(false)}
+                />
+                <Toaster position="top-right" richColors />
+                {children}
+              </MiniPlayerProvider>
+            </FullScreenPlayerProvider>
           </AudioCaptureProvider>
         </PlayerProvider>
       </ThemeProvider>

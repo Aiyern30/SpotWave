@@ -41,10 +41,12 @@ import {
   Mic2,
   List,
   Maximize2,
+  PictureInPicture2,
   ChevronUp,
   Loader2,
   MonitorSmartphone,
 } from "lucide-react";
+import { useMiniPlayer } from "@/contexts/MiniPlayerContext";
 import {
   checkUserSavedTracks,
   saveTracksForUser,
@@ -91,6 +93,7 @@ export const MusicPlayer = ({
     deviceId,
   } = usePlayer();
   const { isFullScreenOpen } = useFullScreenPlayer();
+  const { isMiniPlayerOpen, toggleMiniPlayer } = useMiniPlayer();
   const {
     data: lyricsData,
     error: lyricsError,
@@ -559,6 +562,20 @@ export const MusicPlayer = ({
                 onClick={handleQueueClick}
               >
                 <List className="h-4 w-4" />
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-8 w-8 hidden md:flex transition-all ${
+                  isMiniPlayerOpen
+                    ? "text-brand bg-zinc-800"
+                    : "text-zinc-400 hover:text-brand hover:bg-zinc-800"
+                }`}
+                onClick={toggleMiniPlayer}
+                title={isMiniPlayerOpen ? "Close Mini Player" : "Open Mini Player"}
+              >
+                <PictureInPicture2 className="h-4 w-4" />
               </Button>
 
               <Button

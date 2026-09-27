@@ -4,7 +4,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useAudioCapture } from "@/contexts/AudioCaptureContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { AudioLines, Square, MonitorUp, Mic, Aperture, Waves, Activity, Scale, Gauge, Zap } from "lucide-react";
+import { AudioLines, Square, MonitorUp, Mic, Aperture, Waves, Activity, Scale, Gauge, Zap, PictureInPicture2 } from "lucide-react";
+import { useMiniPlayer } from "@/contexts/MiniPlayerContext";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -29,6 +30,7 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
   } = useAudioCapture();
   const { isPlaying } = usePlayer();
   const { currentTheme } = useTheme();
+  const { isMiniPlayerOpen, toggleMiniPlayer } = useMiniPlayer();
   const [open, setOpen] = useState(false);
   const [enabled, setEnabled] = useState(true);
   const [visualMode, setVisualMode] = useState<Mode>("Ribbons");
@@ -61,7 +63,8 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
     setOpen(true);
   };
   const controls = (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
+    <div className="flex items-center gap-1 sm:gap-2">
+      <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
@@ -217,6 +220,27 @@ export default function BackgroundVisualizer({ renderControls }: { renderControl
         )}
       </DropdownMenuContent>
     </DropdownMenu>
+
+      <button
+        type="button"
+        onClick={toggleMiniPlayer}
+        aria-label={isMiniPlayerOpen ? "Close Mini Player" : "Open Mini Player"}
+        title={isMiniPlayerOpen ? "Close Mini Player" : "Open Mini Player"}
+        className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-colors active:scale-[.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand ${
+          isMiniPlayerOpen
+            ? "border-brand/40 bg-brand/15 text-brand"
+            : "border-white/10 bg-zinc-950/80 text-zinc-400 hover:border-brand/40 hover:text-zinc-100"
+        }`}
+      >
+        <PictureInPicture2
+          size={19}
+          aria-hidden="true"
+        />
+        {isMiniPlayerOpen && (
+          <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-brand" />
+        )}
+      </button>
+    </div>
   );
   return (
     <>
