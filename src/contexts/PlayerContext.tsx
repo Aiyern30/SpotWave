@@ -1234,7 +1234,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     if (isPlaying && silentAudioRef.current) {
       silentAudioRef.current
         .play()
-        .catch((e) => console.error("Silent audio ensure-play failed:", e));
+        .catch((e) => {
+          if (e.name !== "NotAllowedError") {
+            console.error("Silent audio ensure-play failed:", e);
+          }
+        });
     }
   }, [isPlaying, currentTrack]);
 

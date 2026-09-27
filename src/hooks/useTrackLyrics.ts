@@ -94,6 +94,8 @@ async function fetchSearch(
   }
 }
 
+const pending = new Map<string, Promise<Lyrics>>();
+
 export function useTrackLyrics(track: Track | null | undefined, active = true) {
   const trackId = track?.id || "";
   const artist = track?.artists[0]?.name || "";
@@ -114,8 +116,9 @@ export function useTrackLyrics(track: Track | null | undefined, active = true) {
     const cached = cache.get(key);
     if (cached) { setResult({ key, data: cached }); return; }
 
-    (async () => {
-      try {
+    let req = pending.get(key);
+    if (!req) {
+      req = (async (): Promise<Lyrics> => {
         const durationSec = trackDuration / 1000;
         let isFallback = false;
         const cleanTitle = stripVersionSuffix(title) || title;
@@ -139,11 +142,7 @@ export function useTrackLyrics(track: Track | null | undefined, active = true) {
           if (body) isFallback = true; // came from fallback search
         }
 
-        if (controller.signal.aborted) return;
-
         const safeBody = body ?? { plainLyrics: "" };
-        // If this is a fallback result, skip synced lines — timestamps belong to
-        // the original recording, not this cover/remix version.
         const lines = isFallback ? [] : parseSyncedLyrics(safeBody.syncedLyrics || "");
         const value: Lyrics = {
           lines,
@@ -153,11 +152,20 @@ export function useTrackLyrics(track: Track | null | undefined, active = true) {
         };
         if (cache.size >= 50) cache.delete(cache.keys().next().value!);
         cache.set(key, value);
-        setResult({ key, data: value });
-      } catch (reason: unknown) {
+        return value;
+      })();
+
+      pending.set(key, req);
+      req.finally(() => pending.delete(key));
+    }
+
+    req
+      .then((val) => {
+        if (!controller.signal.aborted) setResult({ key, data: val });
+      })
+      .catch((reason: unknown) => {
         if (!controller.signal.aborted) setError((reason as Error).message);
-      }
-    })();
+      });
 
     return () => controller.abort();
   }, [active, key, trackId, artist, title, album, trackDuration, retry]);
