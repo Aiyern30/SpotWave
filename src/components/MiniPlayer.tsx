@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import { usePlayer } from "@/contexts/PlayerContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useFullScreenPlayer } from "@/contexts/FullScreenPlayerContext";
 import { useMiniPlayer, type MiniPlayerDesign } from "@/contexts/MiniPlayerContext";
 import {
@@ -323,6 +325,34 @@ function useMiniPlayerCore(isPip: boolean) {
   const artistName = currentTrack?.artists?.map((a) => a.name).join(", ") || "SpotWave";
   const progressPercent = duration > 0 ? Math.min(100, (estimatedPosition / duration) * 100) : 0;
 
+  const router = useRouter();
+  const { currentTheme } = useTheme();
+  const themeColor = currentTheme?.color || "#22c55e";
+
+  const handleTrackClick = useCallback(() => {
+    if (currentTrack?.album?.id) {
+      router.push(
+        `/Albums/${currentTrack.album.id}?name=${encodeURIComponent(
+          currentTrack.album.name
+        )}`
+      );
+      try {
+        window.focus();
+      } catch {}
+    }
+  }, [currentTrack?.album?.id, currentTrack?.album?.name, router]);
+
+  const handleArtistClick = useCallback((artistId: string, artistName: string) => {
+    if (artistId) {
+      router.push(
+        `/Artists/${artistId}?name=${encodeURIComponent(artistName)}`
+      );
+      try {
+        window.focus();
+      } catch {}
+    }
+  }, [router]);
+
   return {
     currentTrack,
     isPlaying,
@@ -342,6 +372,7 @@ function useMiniPlayerCore(isPip: boolean) {
     trackTitle,
     artistName,
     progressPercent,
+    themeColor,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
@@ -350,6 +381,8 @@ function useMiniPlayerCore(isPip: boolean) {
     handleToggleSave,
     seekToFraction,
     handleExpandOrPip,
+    handleTrackClick,
+    handleArtistClick,
     previousTrack,
     nextTrack,
     setVolume,
