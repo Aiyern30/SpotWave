@@ -3,9 +3,10 @@ export interface ShareCardData {
     description?: string;
     coverImage: string;
     trackCount: number;
-    duration: string; // pre-formatted, e.g. "1h 24m"
+    duration: string;
     ownerName: string;
     ownerAvatar?: string;
+    shareUrl: string;
 }
 
 export interface ShareTemplateProps {
@@ -17,3 +18,4 @@ export interface ShareTemplateDefinition {
     label: string;
     Component: React.ComponentType<ShareTemplateProps>;
 }
+

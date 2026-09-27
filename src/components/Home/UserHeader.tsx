@@ -1296,6 +1296,7 @@ export default function UserHeader({
                 duration: formatDuration(totalDuration),
                 ownerName: playlist.owner.display_name,
                 ownerAvatar: ownerProfile?.images?.[0]?.url,
+                shareUrl: `https://open.spotify.com/playlist/${playlist.id}`,
               }}
             />
           </div>
