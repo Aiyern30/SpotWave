@@ -18,4 +18,3 @@ export interface ShareTemplateDefinition {
     label: string;
     Component: React.ComponentType<ShareTemplateProps>;
 }
-

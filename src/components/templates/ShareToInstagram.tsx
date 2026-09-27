@@ -11,21 +11,8 @@ import {
     MessageCircle,
     Facebook,
 } from "lucide-react";
-import {
-    Button,
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-    Input,
-} from "@/components/ui/";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from "@/components/ui/";
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Input } from "@/components/ui/";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { ShareCardData } from "@/types/shareToInstagram";
@@ -34,6 +21,25 @@ import { shareTemplates } from ".";
 interface ShareToInstagramProps {
     data: ShareCardData;
 }
+
+const proxyImage = (url: string) =>
+    url.startsWith("data:") || url.startsWith("/")
+        ? url
+        : `/api/image-proxy?url=${encodeURIComponent(url)}`;
+
+const waitForImages = async (container: HTMLElement) => {
+    const imgs = Array.from(container.querySelectorAll("img"));
+    await Promise.all(
+        imgs.map((img) =>
+            img.complete
+                ? Promise.resolve()
+                : new Promise<void>((resolve) => {
+                    img.onload = () => resolve();
+                    img.onerror = () => resolve();
+                }),
+        ),
+    );
+};
 
 export default function ShareToInstagram({ data }: ShareToInstagramProps) {
     const isMobile = useIsMobile();
@@ -47,6 +53,14 @@ export default function ShareToInstagram({ data }: ShareToInstagramProps) {
         shareTemplates.find((t) => t.id === templateId) ?? shareTemplates[0];
     const ActiveComponent = activeTemplate.Component;
 
+    // Route remote images (Spotify CDN etc.) through our own origin so the
+    // canvas isn't "tainted" by cross-origin content when we try to export it.
+    const proxiedData: ShareCardData = {
+        ...data,
+        coverImage: proxyImage(data.coverImage),
+        ownerAvatar: data.ownerAvatar ? proxyImage(data.ownerAvatar) : undefined,
+    };
+
     const embedCode = `<iframe src="${data.shareUrl.replace(
         "open.spotify.com",
         "open.spotify.com/embed",
@@ -54,52 +68,70 @@ export default function ShareToInstagram({ data }: ShareToInstagramProps) {
 
     const generateImage = async (): Promise<Blob | null> => {
         if (!cardRef.current) return null;
-        return toBlob(cardRef.current, { pixelRatio: 1, cacheBust: true });
+        await waitForImages(cardRef.current);
+        try {
+            return await toBlob(cardRef.current, {
+                pixelRatio: 1,
+                cacheBust: true,
+            });
+        } catch (err) {
+            console.error("toBlob failed:", err);
+            return null;
+        }
     };
 
-    // ---- Mobile: native share sheet (Instagram, WhatsApp, Messages, etc.) ----
+    // ---- Mobile: native share sheet ----
     const handleNativeShare = async () => {
         setSharing(true);
         try {
             const blob = await generateImage();
-            if (!blob) throw new Error("Failed to render image");
 
-            const file = new File([blob], `${data.name}-story.png`, {
-                type: "image/png",
-            });
+            if (blob) {
+                const file = new File([blob], `${data.name}-story.png`, {
+                    type: "image/png",
+                });
 
-            if (navigator.canShare?.({ files: [file] })) {
-                try {
-                    await navigator.share({
-                        files: [file],
-                        title: data.name,
-                        text: `Check out "${data.name}" 🎵 ${data.shareUrl}`,
-                    });
-                    toast.success("Shared!");
-                    setOpen(false);
-                    return;
-                } catch (err: any) {
-                    if (err?.name === "AbortError") return; // user cancelled, do nothing
+                if (navigator.canShare?.({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            files: [file],
+                            title: data.name,
+                            text: `Check out "${data.name}" 🎵 ${data.shareUrl}`,
+                        });
+                        toast.success("Shared!");
+                        setOpen(false);
+                        return;
+                    } catch (err: any) {
+                        if (err?.name === "AbortError") return; // user cancelled
+                        console.warn("File share failed, falling back to link:", err);
+                    }
                 }
+            } else {
+                toast.error("Couldn't generate the image — sharing link instead");
             }
 
-            // image sharing unsupported on this device — share the link instead
+            // Fallback: share the link only (works even in restrictive in-app browsers)
             if (navigator.share) {
                 await navigator.share({
                     title: data.name,
                     text: `Check out "${data.name}" 🎵`,
                     url: data.shareUrl,
                 });
+            } else {
+                await navigator.clipboard.writeText(data.shareUrl);
+                toast.info("Link copied to clipboard");
             }
-        } catch (err) {
-            console.error(err);
-            toast.error("Couldn't open the share sheet");
+        } catch (err: any) {
+            if (err?.name !== "AbortError") {
+                console.error(err);
+                toast.error("Couldn't open the share sheet");
+            }
         } finally {
             setSharing(false);
         }
     };
 
-    // ---- Desktop: copy link / embed / quick web share links ----
+    // ---- Desktop: copy link / embed / web share links ----
     const copyToClipboard = async (text: string, type: "link" | "embed") => {
         await navigator.clipboard.writeText(text);
         setCopied(type);
@@ -161,13 +193,18 @@ export default function ShareToInstagram({ data }: ShareToInstagramProps) {
                                 ))}
                             </div>
 
-                            {/* Live preview */}
+                            {/* Live preview (scaled down) */}
                             <div
                                 className="mx-auto overflow-hidden rounded-xl border border-zinc-800 shadow-2xl"
                                 style={{ width: 240, height: 427 }}
                             >
-                                <div style={{ transform: "scale(0.2222)", transformOrigin: "top left" }}>
-                                    <ActiveComponent data={data} />
+                                <div
+                                    style={{
+                                        transform: "scale(0.2222)",
+                                        transformOrigin: "top left",
+                                    }}
+                                >
+                                    <ActiveComponent data={proxiedData} />
                                 </div>
                             </div>
 
@@ -189,102 +226,144 @@ export default function ShareToInstagram({ data }: ShareToInstagramProps) {
                             </DialogFooter>
                         </>
                     ) : (
-                        <>
-                            <div className="space-y-5">
-                                {/* Copy link */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-zinc-300">
-                                        Playlist link
-                                    </label>
-                                    <div className="flex gap-2">
-                                        <Input
-                                            readOnly
-                                            value={data.shareUrl}
-                                            className="bg-zinc-900/60 border-brand/20 text-zinc-300 text-sm"
-                                        />
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={() => copyToClipboard(data.shareUrl, "link")}
-                                            className="border-brand/30 shrink-0"
-                                        >
-                                            {copied === "link" ? (
-                                                <Check className="h-4 w-4 text-brand" />
-                                            ) : (
-                                                <Link2 className="h-4 w-4" />
-                                            )}
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                {/* Embed code */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-zinc-300 flex items-center gap-2">
-                                        <Code2 className="h-4 w-4" />
-                                        Embed
-                                    </label>
-                                    <div className="flex gap-2">
-                                        <Input
-                                            readOnly
-                                            value={embedCode}
-                                            className="bg-zinc-900/60 border-brand/20 text-zinc-500 text-xs font-mono"
-                                        />
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={() => copyToClipboard(embedCode, "embed")}
-                                            className="border-brand/30 shrink-0"
-                                        >
-                                            {copied === "embed" ? (
-                                                <Check className="h-4 w-4 text-brand" />
-                                            ) : (
-                                                <Code2 className="h-4 w-4" />
-                                            )}
-                                        </Button>
-                                    </div>
-                                </div>
-
-                                {/* Quick web share targets that DO have a desktop web intent */}
-                                <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-zinc-300">
-                                        Share to
-                                    </label>
-                                    <div className="flex gap-3">
-                                        <a
-                                            href={whatsappWebUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl border border-brand/20 bg-zinc-900/50 text-white hover:bg-brand/10 transition-colors"
-                                        >
-                                            <MessageCircle className="h-4 w-4" />
-                                            <span className="text-sm font-medium">WhatsApp</span>
-                                        </a>
-                                        <a
-                                            href={facebookShareUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl border border-brand/20 bg-zinc-900/50 text-white hover:bg-brand/10 transition-colors"
-                                        >
-                                            <Facebook className="h-4 w-4" />
-                                            <span className="text-sm font-medium">Facebook</span>
-                                        </a>
-                                    </div>
-                                    <p className="text-xs text-zinc-500 pt-1">
-                                        Instagram doesn't support sharing from desktop browsers — open this on
-                                        your phone to share directly to Instagram.
-                                    </p>
-                                </div>
+                        <div className="space-y-5">
+                            {/* Copy link */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-zinc-300">
+                                    Playlist link
+                                </label>
+                                <Input
+                                    readOnly
+                                    value={data.shareUrl}
+                                    className="bg-zinc-900/60 border-brand/20 text-zinc-300 text-sm"
+                                />
                             </div>
-                        </>
+
+                            {/* Embed code */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-zinc-300">
+                                    Embed
+                                </label>
+                                <Input
+                                    readOnly
+                                    value={embedCode}
+                                    className="bg-zinc-900/60 border-brand/20 text-zinc-500 text-xs font-mono"
+                                />
+                            </div>
+
+                            {/* Quick share icon row — matches PiP button style */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-zinc-300">
+                                    Share to
+                                </label>
+                                <div className="flex gap-1">
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    asChild
+                                                    className="h-8 w-8 text-zinc-400 hover:text-brand hover:bg-zinc-800 transition-all"
+                                                >
+                                                    <a
+                                                        href={whatsappWebUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        <MessageCircle className="h-4 w-4" />
+                                                    </a>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Share on WhatsApp</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    asChild
+                                                    className="h-8 w-8 text-zinc-400 hover:text-brand hover:bg-zinc-800 transition-all"
+                                                >
+                                                    <a
+                                                        href={facebookShareUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        <Facebook className="h-4 w-4" />
+                                                    </a>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Share on Facebook</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className={`h-8 w-8 transition-all ${copied === "link"
+                                                            ? "text-brand bg-zinc-800"
+                                                            : "text-zinc-400 hover:text-brand hover:bg-zinc-800"
+                                                        }`}
+                                                    onClick={() => copyToClipboard(data.shareUrl, "link")}
+                                                >
+                                                    {copied === "link" ? (
+                                                        <Check className="h-4 w-4" />
+                                                    ) : (
+                                                        <Link2 className="h-4 w-4" />
+                                                    )}
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Copy link</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className={`h-8 w-8 transition-all ${copied === "embed"
+                                                            ? "text-brand bg-zinc-800"
+                                                            : "text-zinc-400 hover:text-brand hover:bg-zinc-800"
+                                                        }`}
+                                                    onClick={() => copyToClipboard(embedCode, "embed")}
+                                                >
+                                                    {copied === "embed" ? (
+                                                        <Check className="h-4 w-4" />
+                                                    ) : (
+                                                        <Code2 className="h-4 w-4" />
+                                                    )}
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Copy embed code</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
+                                <p className="text-xs text-zinc-500 pt-1">
+                                    Instagram doesn't support sharing from desktop browsers —
+                                    open this on your phone to share directly to Instagram.
+                                </p>
+                            </div>
+                        </div>
                     )}
                 </DialogContent>
             </Dialog>
 
-            {/* Full-res off-screen card, only needed for mobile image capture */}
+            {/* Full-res off-screen card used for actual image capture (mobile only) */}
             {isMobile && (
                 <div style={{ position: "fixed", top: -99999, left: -99999 }}>
                     <div ref={cardRef}>
-                        <ActiveComponent data={data} />
+                        <ActiveComponent data={proxiedData} />
                     </div>
                 </div>
             )}
