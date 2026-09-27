@@ -5,6 +5,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 export type MiniPlayerContextValue = {
   isMiniPlayerOpen: boolean;
   isPipActive: boolean;
+  isPipSupported: boolean;
   pipWindow: Window | null;
   setIsMiniPlayerOpen: React.Dispatch<React.SetStateAction<boolean>>;
   openMiniPlayer: () => Promise<void>;
@@ -19,7 +20,7 @@ function copyStylesToPip(pipWin: Window) {
   document.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => {
     try {
       pipWin.document.head.appendChild(node.cloneNode(true));
-    } catch {}
+    } catch { }
   });
 
   // 2. Copy root className, dark mode, and CSS variables
@@ -42,18 +43,26 @@ function copyStylesToPip(pipWin: Window) {
 export function MiniPlayerProvider({ children }: { children: ReactNode }) {
   const [isMiniPlayerOpen, setIsMiniPlayerOpen] = useState(false);
   const [pipWindow, setPipWindow] = useState<Window | null>(null);
+  const [isPipSupported, setIsPipSupported] = useState(false);
+
+  // Detect PiP support once, client-side only
+  useEffect(() => {
+    setIsPipSupported(
+      typeof window !== "undefined" && "documentPictureInPicture" in window
+    );
+  }, []);
 
   const closeMiniPlayer = useCallback(() => {
     if (pipWindow) {
       try {
         pipWindow.close();
-      } catch {}
+      } catch { }
       setPipWindow(null);
     }
     setIsMiniPlayerOpen(false);
     try {
       localStorage.setItem("mini-player-open", "false");
-    } catch {}
+    } catch { }
   }, [pipWindow]);
 
   const openMiniPlayer = useCallback(async () => {
@@ -72,25 +81,26 @@ export function MiniPlayerProvider({ children }: { children: ReactNode }) {
           setIsMiniPlayerOpen(false);
           try {
             localStorage.setItem("mini-player-open", "false");
-          } catch {}
+          } catch { }
         });
 
         setPipWindow(pip);
         setIsMiniPlayerOpen(true);
         try {
           localStorage.setItem("mini-player-open", "true");
-        } catch {}
+        } catch { }
         return;
       } catch (err) {
         console.warn("Could not open Document PiP, falling back to in-page player:", err);
       }
     }
 
-    // Fallback: in-page floating player
+    // Fallback: in-page floating player (only visible on this tab —
+    // navigator.mediaSession in MiniPlayer.tsx covers the cross-tab/OS case)
     setIsMiniPlayerOpen(true);
     try {
       localStorage.setItem("mini-player-open", "true");
-    } catch {}
+    } catch { }
   }, []);
 
   const toggleMiniPlayer = useCallback(() => {
@@ -107,7 +117,7 @@ export function MiniPlayerProvider({ children }: { children: ReactNode }) {
       if (pipWindow) {
         try {
           pipWindow.close();
-        } catch {}
+        } catch { }
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -119,6 +129,7 @@ export function MiniPlayerProvider({ children }: { children: ReactNode }) {
       value={{
         isMiniPlayerOpen,
         isPipActive: !!pipWindow,
+        isPipSupported,
         pipWindow,
         setIsMiniPlayerOpen,
         openMiniPlayer,

@@ -37,6 +37,103 @@ const formatTime = (ms: number) => {
   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 };
 
+/**
+ * Publishes the current track to the OS-level Media Session:
+ * lock screen, keyboard media keys, macOS Control Center / Now Playing,
+ * Windows media overlay, Android/iOS notification controls, etc.
+ * This works in every modern browser (not just Chromium) and keeps
+ * "now playing" info + transport controls available no matter which
+ * tab or app is focused — independent of whether Document PiP is supported.
+ */
+function useMediaSession({
+  track,
+  isPlaying,
+  duration,
+  position,
+  onPlay,
+  onPause,
+  onNext,
+  onPrevious,
+  onSeek,
+}: {
+  track: {
+    name?: string;
+    artists?: { name: string }[];
+    album?: { name?: string; images?: { url: string }[] };
+  } | null | undefined;
+  isPlaying: boolean;
+  duration: number;
+  position: number;
+  onPlay: () => void;
+  onPause: () => void;
+  onNext: () => void;
+  onPrevious: () => void;
+  onSeek: (ms: number) => void;
+}) {
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+
+    if (!track) {
+      navigator.mediaSession.metadata = null;
+      navigator.mediaSession.playbackState = "none";
+      return;
+    }
+
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: track.name || "Unknown track",
+        artist: track.artists?.map((a) => a.name).join(", ") || "",
+        album: track.album?.name || "",
+        artwork: (track.album?.images || []).map((img) => ({
+          src: img.url,
+          sizes: "512x512",
+          type: "image/jpeg",
+        })),
+      });
+    } catch (e) {
+      console.warn("MediaMetadata failed:", e);
+    }
+
+    navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+
+    navigator.mediaSession.setActionHandler("play", onPlay);
+    navigator.mediaSession.setActionHandler("pause", onPause);
+    navigator.mediaSession.setActionHandler("nexttrack", onNext);
+    navigator.mediaSession.setActionHandler("previoustrack", onPrevious);
+    try {
+      navigator.mediaSession.setActionHandler("seekto", (details) => {
+        if (details.seekTime != null) onSeek(Math.floor(details.seekTime * 1000));
+      });
+    } catch {
+      // seekto not supported everywhere; safe to ignore
+    }
+
+    return () => {
+      try {
+        navigator.mediaSession.setActionHandler("play", null);
+        navigator.mediaSession.setActionHandler("pause", null);
+        navigator.mediaSession.setActionHandler("nexttrack", null);
+        navigator.mediaSession.setActionHandler("previoustrack", null);
+        navigator.mediaSession.setActionHandler("seekto", null);
+      } catch { }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [track?.name, track, isPlaying, onPlay, onPause, onNext, onPrevious, onSeek]);
+
+  // Keep the OS scrubber (macOS/Windows overlays) in sync with playback position
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+    if (!duration || !navigator.mediaSession.setPositionState) return;
+    try {
+      navigator.mediaSession.setPositionState({
+        duration: duration / 1000,
+        position: Math.min(position / 1000, duration / 1000),
+        playbackRate: isPlaying ? 1 : 0,
+      });
+    } catch { }
+  }, [position, duration, isPlaying]);
+}
+
 interface MiniPlayerCardProps {
   isPip: boolean;
   onClose: () => void;
@@ -59,7 +156,7 @@ function MiniPlayerCard({ isPip, onClose }: MiniPlayerCardProps) {
     toggleRepeat,
   } = usePlayer();
   const { setIsFullScreenOpen } = useFullScreenPlayer();
-  const { openMiniPlayer } = useMiniPlayer();
+  const { openMiniPlayer, isPipSupported } = useMiniPlayer();
 
   const [estimatedPosition, setEstimatedPosition] = useState(position);
   const [isMuted, setIsMuted] = useState(volume === 0);
@@ -75,6 +172,21 @@ function MiniPlayerCard({ isPip, onClose }: MiniPlayerCardProps) {
   const dragStartRef = useRef({ x: 0, y: 0, startX: 0, startY: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
+
+  // Publish now-playing info + controls to the OS media session.
+  // This is what actually keeps controls available when you switch tabs/apps,
+  // regardless of whether Document PiP opened successfully.
+  useMediaSession({
+    track: currentTrack,
+    isPlaying,
+    duration,
+    position: estimatedPosition,
+    onPlay: resumeTrack,
+    onPause: pauseTrack,
+    onNext: nextTrack,
+    onPrevious: previousTrack,
+    onSeek: seekTo,
+  });
 
   // Sync position
   useEffect(() => {
@@ -131,7 +243,7 @@ function MiniPlayerCard({ isPip, onClose }: MiniPlayerCardProps) {
           return;
         }
       }
-    } catch {}
+    } catch { }
 
     const defaultX = Math.max(16, window.innerWidth - 370);
     const defaultY = Math.max(80, window.innerHeight - 520);
@@ -170,7 +282,7 @@ function MiniPlayerCard({ isPip, onClose }: MiniPlayerCardProps) {
     setCoords(updated);
     try {
       localStorage.setItem("mini-player-coords", JSON.stringify(updated));
-    } catch {}
+    } catch { }
   };
 
   const handlePointerUp = () => {
@@ -229,7 +341,7 @@ function MiniPlayerCard({ isPip, onClose }: MiniPlayerCardProps) {
   };
 
   const handleExpandOrPip = () => {
-    if (!isPip && typeof window !== "undefined" && "documentPictureInPicture" in window) {
+    if (!isPip && isPipSupported) {
       void openMiniPlayer();
     } else {
       setIsFullScreenOpen(true);
@@ -252,15 +364,14 @@ function MiniPlayerCard({ isPip, onClose }: MiniPlayerCardProps) {
         isPip
           ? { width: "100%", height: "100%", padding: "12px", boxSizing: "border-box" }
           : {
-              transform: coords ? `translate3d(${coords.x}px, ${coords.y}px, 0)` : "none",
-              visibility: coords ? "visible" : "hidden",
-            }
+            transform: coords ? `translate3d(${coords.x}px, ${coords.y}px, 0)` : "none",
+            visibility: coords ? "visible" : "hidden",
+          }
       }
-      className={`select-none bg-[#121214] text-white flex flex-col justify-between ${
-        isPip
+      className={`select-none bg-[#121214] text-white flex flex-col justify-between ${isPip
           ? "w-full h-full min-h-screen"
           : "fixed top-0 left-0 z-[90] w-[340px] rounded-[28px] border border-white/10 p-4 shadow-[0_25px_60px_rgba(0,0,0,0.85),0_0_0_1px_rgba(255,255,255,0.06)] backdrop-blur-2xl touch-none animate-in fade-in zoom-in-95 duration-200"
-      }`}
+        }`}
     >
       {/* Top Header Bar */}
       <div
@@ -354,9 +465,8 @@ function MiniPlayerCard({ isPip, onClose }: MiniPlayerCardProps) {
             type="button"
             onClick={() => setIsShuffle((prev) => !prev)}
             title="Shuffle"
-            className={`transition-all hover:scale-110 active:scale-95 cursor-pointer p-1 ${
-              isShuffle ? "text-brand" : "text-white/80 hover:text-white"
-            }`}
+            className={`transition-all hover:scale-110 active:scale-95 cursor-pointer p-1 ${isShuffle ? "text-brand" : "text-white/80 hover:text-white"
+              }`}
           >
             <Shuffle className="h-4 w-4" />
           </button>
@@ -403,9 +513,8 @@ function MiniPlayerCard({ isPip, onClose }: MiniPlayerCardProps) {
             type="button"
             onClick={toggleRepeat}
             title={`Repeat: ${repeatMode}`}
-            className={`transition-all hover:scale-110 active:scale-95 cursor-pointer p-1 ${
-              repeatMode !== "off" ? "text-brand" : "text-white/80 hover:text-white"
-            }`}
+            className={`transition-all hover:scale-110 active:scale-95 cursor-pointer p-1 ${repeatMode !== "off" ? "text-brand" : "text-white/80 hover:text-white"
+              }`}
           >
             {repeatMode === "track" ? (
               <Repeat1 className="h-4 w-4" />
@@ -418,7 +527,13 @@ function MiniPlayerCard({ isPip, onClose }: MiniPlayerCardProps) {
           <button
             type="button"
             onClick={handleExpandOrPip}
-            title={isPip ? "Full Screen Player" : "Picture in Picture Window"}
+            title={
+              isPip
+                ? "Full Screen Player"
+                : isPipSupported
+                  ? "Picture in Picture Window"
+                  : "PiP not supported in this browser — opening Full Screen"
+            }
             className="text-white/80 hover:text-white hover:scale-110 active:scale-95 transition-all cursor-pointer p-1"
           >
             {isPip ? <Maximize2 className="h-4 w-4" /> : <ExternalLink className="h-4 w-4" />}
