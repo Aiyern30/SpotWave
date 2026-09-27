@@ -2,11 +2,15 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 
+export type MiniPlayerDesign = "deck" | "card" | "pill";
+
 export type MiniPlayerContextValue = {
   isMiniPlayerOpen: boolean;
   isPipActive: boolean;
   isPipSupported: boolean;
   pipWindow: Window | null;
+  design: MiniPlayerDesign;
+  setDesign: (design: MiniPlayerDesign) => void;
   setIsMiniPlayerOpen: React.Dispatch<React.SetStateAction<boolean>>;
   openMiniPlayer: () => Promise<void>;
   closeMiniPlayer: () => void;
@@ -15,20 +19,19 @@ export type MiniPlayerContextValue = {
 
 const MiniPlayerContext = createContext<MiniPlayerContextValue | null>(null);
 
+const DESIGN_STORAGE_KEY = "mini-player-design";
+
 function copyStylesToPip(pipWin: Window) {
-  // 1. Copy all <style> and <link rel="stylesheet"> tags
   document.querySelectorAll('style, link[rel="stylesheet"]').forEach((node) => {
     try {
       pipWin.document.head.appendChild(node.cloneNode(true));
     } catch { }
   });
 
-  // 2. Copy root className, dark mode, and CSS variables
   pipWin.document.documentElement.className = document.documentElement.className + " dark";
   pipWin.document.documentElement.style.cssText = document.documentElement.style.cssText;
   pipWin.document.title = "SpotWave Mini Player";
 
-  // 3. Set base styling for PiP document body
   const body = pipWin.document.body;
   body.style.backgroundColor = "#121214";
   body.style.color = "#ffffff";
@@ -44,12 +47,25 @@ export function MiniPlayerProvider({ children }: { children: ReactNode }) {
   const [isMiniPlayerOpen, setIsMiniPlayerOpen] = useState(false);
   const [pipWindow, setPipWindow] = useState<Window | null>(null);
   const [isPipSupported, setIsPipSupported] = useState(false);
+  const [design, setDesignState] = useState<MiniPlayerDesign>("deck");
 
-  // Detect PiP support once, client-side only
   useEffect(() => {
     setIsPipSupported(
       typeof window !== "undefined" && "documentPictureInPicture" in window
     );
+    try {
+      const savedDesign = localStorage.getItem(DESIGN_STORAGE_KEY) as MiniPlayerDesign | null;
+      if (savedDesign === "deck" || savedDesign === "card" || savedDesign === "pill") {
+        setDesignState(savedDesign);
+      }
+    } catch { }
+  }, []);
+
+  const setDesign = useCallback((next: MiniPlayerDesign) => {
+    setDesignState(next);
+    try {
+      localStorage.setItem(DESIGN_STORAGE_KEY, next);
+    } catch { }
   }, []);
 
   const closeMiniPlayer = useCallback(() => {
@@ -66,12 +82,11 @@ export function MiniPlayerProvider({ children }: { children: ReactNode }) {
   }, [pipWindow]);
 
   const openMiniPlayer = useCallback(async () => {
-    // Check for Document Picture-in-Picture API (Chrome/Edge 116+ on Mac/Windows)
     if (typeof window !== "undefined" && "documentPictureInPicture" in window) {
       try {
         const pip = await (window as any).documentPictureInPicture.requestWindow({
-          width: 340,
-          height: 440,
+          width: 440,
+          height: 150,
         });
 
         copyStylesToPip(pip);
@@ -95,8 +110,6 @@ export function MiniPlayerProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Fallback: in-page floating player (only visible on this tab —
-    // navigator.mediaSession in MiniPlayer.tsx covers the cross-tab/OS case)
     setIsMiniPlayerOpen(true);
     try {
       localStorage.setItem("mini-player-open", "true");
@@ -111,7 +124,6 @@ export function MiniPlayerProvider({ children }: { children: ReactNode }) {
     }
   }, [pipWindow, isMiniPlayerOpen, closeMiniPlayer, openMiniPlayer]);
 
-  // Clean up if window closes
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (pipWindow) {
@@ -131,6 +143,8 @@ export function MiniPlayerProvider({ children }: { children: ReactNode }) {
         isPipActive: !!pipWindow,
         isPipSupported,
         pipWindow,
+        design,
+        setDesign,
         setIsMiniPlayerOpen,
         openMiniPlayer,
         closeMiniPlayer,
