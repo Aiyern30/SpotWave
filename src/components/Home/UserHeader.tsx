@@ -54,6 +54,7 @@ import SearchSongs from "../SearchSongs";
 import { analyzePlaylistGenres } from "@/utils/analyzePlaylistGenres";
 import { decodeHtmlEntities } from "@/utils/decodeHtmlEntities";
 import { toast } from "sonner";
+import ShareToInstagram from "../templates/ShareToInstagram";
 
 interface UserHeaderProps {
   playlist: PlaylistProps;
@@ -385,11 +386,10 @@ export default function UserHeader({
       ];
       const trackNames = tracks.map((t) => t.track.name);
 
-      const playlistInfo = `Playlist contains ${
-        playlist.tracks.total
-      } tracks. Sample tracks: ${trackNames
-        .slice(0, 10)
-        .join(", ")}. Artists include: ${artists.slice(0, 10).join(", ")}.`;
+      const playlistInfo = `Playlist contains ${playlist.tracks.total
+        } tracks. Sample tracks: ${trackNames
+          .slice(0, 10)
+          .join(", ")}. Artists include: ${artists.slice(0, 10).join(", ")}.`;
 
       const response = await fetch("/api/ai-recommendations", {
         method: "POST",
@@ -583,9 +583,8 @@ export default function UserHeader({
                 {/* Upload Overlay for Owner */}
                 {isOwner && (
                   <div
-                    className={`absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center transition-all duration-300 ${
-                      isHovered ? "opacity-100" : "opacity-0 focus-within:opacity-100 [@media(hover:none)]:opacity-100"
-                    }`}
+                    className={`absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center transition-all duration-300 ${isHovered ? "opacity-100" : "opacity-0 focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+                      }`}
                   >
                     <Dialog
                       open={imageDialogOpen}
@@ -612,11 +611,10 @@ export default function UserHeader({
                         <div className="space-y-4">
                           {/* Drag & Drop Area */}
                           <div
-                            className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                              dragActive
-                                ? "border-brand bg-brand/10"
-                                : "border-brand/30 hover:border-brand/60"
-                            }`}
+                            className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive
+                              ? "border-brand bg-brand/10"
+                              : "border-brand/30 hover:border-brand/60"
+                              }`}
                             onDragEnter={handleDrag}
                             onDragLeave={handleDrag}
                             onDragOver={handleDrag}
@@ -835,26 +833,23 @@ export default function UserHeader({
                                     onClick={() =>
                                       setDescriptionLength("short")
                                     }
-                                    className={`flex-1 p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
-                                      descriptionLength === "short"
-                                        ? "bg-brand/20 border-brand shadow-lg shadow-brand/20"
-                                        : "bg-zinc-900/50 border-brand/20 text-zinc-500 hover:border-brand/40 hover:bg-brand/5"
-                                    }`}
+                                    className={`flex-1 p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${descriptionLength === "short"
+                                      ? "bg-brand/20 border-brand shadow-lg shadow-brand/20"
+                                      : "bg-zinc-900/50 border-brand/20 text-zinc-500 hover:border-brand/40 hover:bg-brand/5"
+                                      }`}
                                   >
                                     <div className="flex items-center gap-2 mb-1">
                                       <ListFilter
-                                        className={`h-4 w-4 ${
-                                          descriptionLength === "short"
-                                            ? "text-brand"
-                                            : ""
-                                        }`}
+                                        className={`h-4 w-4 ${descriptionLength === "short"
+                                          ? "text-brand"
+                                          : ""
+                                          }`}
                                       />
                                       <span
-                                        className={`font-bold text-sm ${
-                                          descriptionLength === "short"
-                                            ? "text-white"
-                                            : ""
-                                        }`}
+                                        className={`font-bold text-sm ${descriptionLength === "short"
+                                          ? "text-white"
+                                          : ""
+                                          }`}
                                       >
                                         Punchy
                                       </span>
@@ -866,26 +861,23 @@ export default function UserHeader({
 
                                   <div
                                     onClick={() => setDescriptionLength("long")}
-                                    className={`flex-1 p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
-                                      descriptionLength === "long"
-                                        ? "bg-brand/20 border-brand shadow-lg shadow-brand/20"
-                                        : "bg-zinc-900/50 border-brand/20 text-zinc-500 hover:border-brand/40 hover:bg-brand/5"
-                                    }`}
+                                    className={`flex-1 p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${descriptionLength === "long"
+                                      ? "bg-brand/20 border-brand shadow-lg shadow-brand/20"
+                                      : "bg-zinc-900/50 border-brand/20 text-zinc-500 hover:border-brand/40 hover:bg-brand/5"
+                                      }`}
                                   >
                                     <div className="flex items-center gap-2 mb-1">
                                       <AlignLeft
-                                        className={`h-4 w-4 ${
-                                          descriptionLength === "long"
-                                            ? "text-brand"
-                                            : ""
-                                        }`}
+                                        className={`h-4 w-4 ${descriptionLength === "long"
+                                          ? "text-brand"
+                                          : ""
+                                          }`}
                                       />
                                       <span
-                                        className={`font-bold text-sm ${
-                                          descriptionLength === "long"
-                                            ? "text-white"
-                                            : ""
-                                        }`}
+                                        className={`font-bold text-sm ${descriptionLength === "long"
+                                          ? "text-white"
+                                          : ""
+                                          }`}
                                       >
                                         Detailed
                                       </span>
@@ -933,9 +925,9 @@ export default function UserHeader({
                                         setGeneratedContent((prev) =>
                                           prev
                                             ? {
-                                                ...prev,
-                                                description: e.target.value,
-                                              }
+                                              ...prev,
+                                              description: e.target.value,
+                                            }
                                             : null,
                                         )
                                       }
@@ -1288,6 +1280,24 @@ export default function UserHeader({
                 </DialogContent>
               </Dialog>
             )}
+
+            {/* Share to Instagram - always rendered last so it sits at the far right */}
+            <ShareToInstagram
+              data={{
+                name: playlist.name,
+                description: descriptionValue,
+                coverImage:
+                  uploadedImage ||
+                  (playlistImages.length > 0
+                    ? playlistImages[0].url
+                    : playlist?.images?.[0]?.url) ||
+                  "/default-artist.png",
+                trackCount: playlist.tracks.total,
+                duration: formatDuration(totalDuration),
+                ownerName: playlist.owner.display_name,
+                ownerAvatar: ownerProfile?.images?.[0]?.url,
+              }}
+            />
           </div>
         </div>
       </div>
