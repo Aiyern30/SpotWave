@@ -413,6 +413,90 @@ function useMiniPlayerCore(isPip: boolean) {
 
 type CoreState = ReturnType<typeof useMiniPlayerCore>;
 
+/** Tracks the inner size of a window (used for the PiP window). */
+function useWindowSize(win: Window | null) {
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  useEffect(() => {
+    if (!win) return;
+    const update = () => setSize({ width: win.innerWidth, height: win.innerHeight });
+    update();
+    win.addEventListener("resize", update);
+    return () => win.removeEventListener("resize", update);
+  }, [win]);
+  return size;
+}
+
+/**
+ * In-page: the draggable floating widget.
+ * PiP: fills the window, and if the window is smaller than minWidth x minHeight,
+ * the content is laid out at that minimum size and scaled down to fit.
+ */
+function PlayerShell({
+  core,
+  minWidth,
+  minHeight,
+  bg,
+  pipPadding = 0,
+  className = "",
+  pipClassName = "",
+  inPageClassName = "",
+  children,
+}: {
+  core: CoreState;
+  minWidth: number;
+  minHeight: number;
+  bg: string;
+  pipPadding?: number;
+  className?: string;
+  pipClassName?: string;
+  inPageClassName?: string;
+  children: React.ReactNode;
+}) {
+  const { pipWindow } = useMiniPlayer();
+  const { width, height } = useWindowSize(core.isPip ? pipWindow : null);
+
+  if (!core.isPip) {
+    return (
+      <div
+        ref={core.containerRef}
+        style={{
+          transform: core.coords ? `translate3d(${core.coords.x}px, ${core.coords.y}px, 0)` : "none",
+          visibility: core.coords ? "visible" : "hidden",
+          ["--accent" as any]: core.themeColor,
+        }}
+        className={`select-none ${className} ${inPageClassName}`}
+      >
+        {children}
+      </div>
+    );
+  }
+
+  const ready = width > 0 && height > 0;
+  const scale = ready ? Math.min(1, width / minWidth, height / minHeight) : 1;
+
+  return (
+    <div style={{ position: "fixed", inset: 0, overflow: "hidden", backgroundColor: bg }}>
+      <div
+        ref={core.containerRef}
+        style={{
+          position: "relative",
+          width: ready ? width / scale : "100%",
+          height: ready ? height / scale : "100%",
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+          padding: pipPadding,
+          boxSizing: "border-box",
+          overflow: "auto",
+          ["--accent" as any]: core.themeColor,
+        }}
+        className={`select-none ${className} ${pipClassName}`}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 /** Renders artist name(s) as individually clickable links, comma-separated. */
 function ArtistLinks({
   core,
@@ -532,21 +616,14 @@ function DeckDesign({ core, onClose }: { core: CoreState; onClose: () => void })
   };
 
   return (
-    <div
-      ref={core.containerRef}
-      style={{
-        ...(core.isPip
-          ? { position: "fixed" as const, inset: 0, padding: "10px", boxSizing: "border-box" as const }
-          : {
-            transform: core.coords ? `translate3d(${core.coords.x}px, ${core.coords.y}px, 0)` : "none",
-            visibility: core.coords ? ("visible" as const) : ("hidden" as const),
-          }),
-        ["--accent" as any]: core.themeColor,
-      }}
-      className={`select-none bg-[#1B1A17] text-[#F2EAD7] flex flex-col justify-center ${core.isPip
-        ? ""
-        : "fixed top-0 left-0 z-[90] w-[440px] rounded-2xl border border-[#3a362c] p-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.7)] touch-none animate-in fade-in slide-in-from-bottom-4 duration-200"
-        }`}
+    <PlayerShell
+      core={core}
+      minWidth={440}
+      minHeight={showSecondaryRow ? 150 : 104}
+      bg="#1B1A17"
+      pipPadding={10}
+      className="bg-[#1B1A17] text-[#F2EAD7] flex flex-col justify-center"
+      inPageClassName="fixed top-0 left-0 z-[90] w-[440px] rounded-2xl border border-[#3a362c] p-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.7)] touch-none animate-in fade-in slide-in-from-bottom-4 duration-200"
     >
       <style>{`@keyframes spw-vinyl-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
 
@@ -745,7 +822,7 @@ function DeckDesign({ core, onClose }: { core: CoreState; onClose: () => void })
           </Button>
         </div>
       )}
-    </div>
+    </PlayerShell>
   );
 }
 
@@ -753,6 +830,11 @@ function DeckDesign({ core, onClose }: { core: CoreState; onClose: () => void })
 /* Design 2: Glass Card — full-bleed art, overlay controls           */
 /* ---------------------------------------------------------------- */
 function CardDesign({ core, onClose }: { core: CoreState; onClose: () => void }) {
+  const { pipWindow } = useMiniPlayer();
+  const { width: winW, height: winH } = useWindowSize(core.isPip ? pipWindow : null);
+  // Landscape layout only applies inside a wide PiP window
+  const isWide = core.isPip && winW > 0 && winH > 0 && winW / winH > 1.15;
+
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [showDesignPicker, setShowDesignPicker] = useState(false);
   const progressBarRef = useRef<HTMLDivElement>(null);
@@ -763,22 +845,143 @@ function CardDesign({ core, onClose }: { core: CoreState; onClose: () => void })
     core.seekToFraction((e.clientX - rect.left) / rect.width);
   };
 
+  const artwork = core.albumImage ? (
+    <img src={core.albumImage} alt={core.trackTitle} className="w-full h-full object-cover" />
+  ) : (
+    <div className="flex h-full w-full items-center justify-center bg-zinc-900 text-zinc-600">
+      <Music className="h-12 w-12" />
+    </div>
+  );
+
+  const volumeSlider = showVolumeSlider ? (
+    <div className="my-1.5 flex items-center gap-2 rounded-xl bg-zinc-900 border border-white/10 px-3 py-1.5 shrink-0">
+      <Volume2 className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+      <input
+        type="range" min="0" max="1" step="0.01" value={core.volume}
+        onChange={(e) => {
+          const val = parseFloat(e.target.value);
+          core.setVolume(val);
+          if (val > 0 && core.isMuted) core.setIsMuted(false);
+        }}
+        className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-zinc-700 accent-[var(--accent)]"
+      />
+      <span className="text-[10px] tabular-nums text-zinc-400 w-7 text-right shrink-0">{Math.round(core.volume * 100)}%</span>
+    </div>
+  ) : null;
+
+  const progressBar = (
+    <div className="shrink-0">
+      <div ref={progressBarRef} onClick={handleScrubberClick} className="group relative h-1.5 w-full cursor-pointer rounded-full bg-white/20 transition-all hover:h-2">
+        <div className="h-full rounded-full transition-all" style={{ width: `${core.progressPercent}%`, backgroundColor: core.themeColor }} />
+        <div className="absolute top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{ left: `calc(${core.progressPercent}% - 6px)` }} />
+      </div>
+      <div className="mt-1 flex items-center justify-between text-[11px] font-medium tabular-nums text-zinc-400">
+        <span>{formatTime(core.estimatedPosition)}</span>
+        <span>{formatTime(core.duration)}</span>
+      </div>
+    </div>
+  );
+
+  /* ---------------- Landscape layout (wide PiP window) ---------------- */
+  if (isWide) {
+    return (
+      <PlayerShell
+        core={core}
+        minWidth={420}
+        minHeight={170}
+        bg="#121214"
+        pipPadding={12}
+        className="bg-[#121214] text-white flex flex-row gap-3"
+      >
+        <DesignPicker open={showDesignPicker} onClose={() => setShowDesignPicker(false)} />
+
+        <div className="h-full aspect-square shrink-0 overflow-hidden rounded-2xl border border-white/10 shadow-lg bg-zinc-900">
+          {artwork}
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-col justify-between">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <h4
+                role="button"
+                tabIndex={0}
+                onClick={core.handleTrackClick}
+                className="truncate text-base font-bold leading-tight tracking-tight cursor-pointer hover:text-[var(--accent)] hover:underline transition-colors"
+              >
+                {core.trackTitle}
+              </h4>
+              <ArtistLinks core={core} className="block truncate text-xs text-zinc-400 mt-0.5" />
+            </div>
+            <div className="flex shrink-0 items-center">
+              <Button type="button" variant="ghost" size="icon" onClick={core.handleToggleSave} disabled={!core.currentTrack || core.isSaving} title={core.isSaved ? "Saved" : "Save"} className="h-7 w-7 text-zinc-400 hover:text-white hover:bg-transparent disabled:opacity-50">
+                {core.isSaved ? (
+                  <CheckCircle2 className="h-4 w-4" style={{ color: core.themeColor, fill: `${core.themeColor}33` }} />
+                ) : (
+                  <PlusCircle className="h-4 w-4" />
+                )}
+              </Button>
+              <Button type="button" variant="ghost" size="icon" onClick={() => setShowDesignPicker((v) => !v)} title="Change design" className={`h-7 w-7 hover:bg-transparent ${showDesignPicker ? "text-[var(--accent)]" : "text-zinc-400 hover:text-white"}`}>
+                <Palette className="h-3.5 w-3.5" />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" onClick={() => setShowVolumeSlider((v) => !v)} title="Volume" className="h-7 w-7 text-zinc-400 hover:text-white hover:bg-transparent">
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" onClick={onClose} title="Close" className="h-7 w-7 text-zinc-400 hover:text-red-400 hover:bg-transparent">
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+
+          {volumeSlider}
+          {progressBar}
+
+          <div className="flex shrink-0 items-center justify-between">
+            <Button type="button" variant="ghost" size="icon" onClick={core.handleToggleMute} title={core.isMuted ? "Unmute" : "Mute"} className="h-8 w-8 text-zinc-300 hover:text-white hover:bg-transparent hover:scale-110 active:scale-95 transition-all">
+              {core.isMuted ? <VolumeX className="h-4 w-4 text-red-400" /> : <Volume2 className="h-4 w-4" />}
+            </Button>
+            <Button type="button" variant="ghost" size="icon" onClick={() => core.setIsShuffle((p) => !p)} title="Shuffle" className={`h-8 w-8 hover:bg-transparent hover:scale-110 active:scale-95 transition-all ${core.isShuffle ? "text-[var(--accent)]" : "text-zinc-300 hover:text-white"}`}>
+              <Shuffle className="h-4 w-4" />
+            </Button>
+            <Button type="button" variant="ghost" size="icon" onClick={core.previousTrack} disabled={!core.currentTrack} title="Previous" className="h-9 w-9 text-white hover:text-[var(--accent)] hover:bg-transparent hover:scale-110 active:scale-95 transition-all disabled:opacity-40">
+              <SkipBack className="h-5 w-5 fill-current" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={core.handlePlayPause}
+              disabled={!core.currentTrack}
+              title={core.isPlaying ? "Pause" : "Play"}
+              style={{ backgroundColor: core.themeColor, color: core.contrastColor }}
+              className="flex h-11 w-11 items-center justify-center rounded-full shadow-xl transition-all hover:scale-105 active:scale-95 disabled:opacity-40 hover:brightness-105 shrink-0"
+            >
+              {core.isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 ml-0.5 fill-current" />}
+            </Button>
+            <Button type="button" variant="ghost" size="icon" onClick={core.nextTrack} disabled={!core.currentTrack} title="Next" className="h-9 w-9 text-white hover:text-[var(--accent)] hover:bg-transparent hover:scale-110 active:scale-95 transition-all disabled:opacity-40">
+              <SkipForward className="h-5 w-5 fill-current" />
+            </Button>
+            <Button type="button" variant="ghost" size="icon" onClick={core.toggleRepeat} title={`Repeat: ${core.repeatMode}`} className={`h-8 w-8 hover:bg-transparent hover:scale-110 active:scale-95 transition-all ${core.repeatMode !== "off" ? "text-[var(--accent)]" : "text-zinc-300 hover:text-white"}`}>
+              {core.repeatMode === "track" ? <Repeat1 className="h-4 w-4" /> : <Repeat className="h-4 w-4" />}
+            </Button>
+            <Button type="button" variant="ghost" size="icon" onClick={core.handleExpandOrPip} title="Full Screen" className="h-8 w-8 text-zinc-300 hover:text-white hover:bg-transparent hover:scale-110 active:scale-95 transition-all">
+              <Maximize2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </PlayerShell>
+    );
+  }
+
+  /* ---------------- Portrait layout (in-page, or tall PiP window) ---------------- */
   return (
-    <div
-      ref={core.containerRef}
-      style={{
-        ...(core.isPip
-          ? { position: "fixed" as const, inset: 0, padding: "12px", boxSizing: "border-box" as const }
-          : {
-            transform: core.coords ? `translate3d(${core.coords.x}px, ${core.coords.y}px, 0)` : "none",
-            visibility: core.coords ? ("visible" as const) : ("hidden" as const),
-          }),
-        ["--accent" as any]: core.themeColor,
-      }}
-      className={`select-none bg-[#121214] text-white flex flex-col justify-between ${core.isPip
-        ? ""
-        : "fixed top-0 left-0 z-[90] w-[340px] rounded-[28px] border border-white/10 p-4 shadow-[0_25px_60px_rgba(0,0,0,0.85)] backdrop-blur-2xl touch-none animate-in fade-in zoom-in-95 duration-200"
-        }`}
+    <PlayerShell
+      core={core}
+      minWidth={340}
+      minHeight={460}
+      bg="#121214"
+      pipPadding={12}
+      className="bg-[#121214] text-white flex flex-col justify-between"
+      inPageClassName="fixed top-0 left-0 z-[90] w-[340px] rounded-[28px] border border-white/10 p-4 shadow-[0_25px_60px_rgba(0,0,0,0.85)] backdrop-blur-2xl touch-none animate-in fade-in zoom-in-95 duration-200"
     >
       <div
         onPointerDown={core.handlePointerDown}
@@ -796,24 +999,10 @@ function CardDesign({ core, onClose }: { core: CoreState; onClose: () => void })
         />
         <GripHorizontal className="h-4 w-4 text-zinc-500" />
         <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowDesignPicker((v) => !v)}
-            title="Change design"
-            className={`h-6 w-6 hover:bg-transparent ${showDesignPicker ? "text-[var(--accent)]" : "text-zinc-400 hover:text-white"}`}
-          >
+          <Button type="button" variant="ghost" size="icon" onClick={() => setShowDesignPicker((v) => !v)} title="Change design" className={`h-6 w-6 hover:bg-transparent ${showDesignPicker ? "text-[var(--accent)]" : "text-zinc-400 hover:text-white"}`}>
             <Palette className="h-3.5 w-3.5" />
           </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowVolumeSlider((v) => !v)}
-            title="Volume"
-            className="h-6 w-6 text-zinc-400 hover:text-white hover:bg-transparent"
-          >
+          <Button type="button" variant="ghost" size="icon" onClick={() => setShowVolumeSlider((v) => !v)} title="Volume" className="h-6 w-6 text-zinc-400 hover:text-white hover:bg-transparent">
             <SlidersHorizontal className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -821,43 +1010,16 @@ function CardDesign({ core, onClose }: { core: CoreState; onClose: () => void })
 
       <DesignPicker open={showDesignPicker} onClose={() => setShowDesignPicker(false)} />
 
-      {showVolumeSlider && (
-        <div className="my-1.5 flex items-center gap-2 rounded-xl bg-zinc-900 border border-white/10 px-3 py-1.5 shrink-0">
-          <Volume2 className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
-          <input
-            type="range" min="0" max="1" step="0.01" value={core.volume}
-            onChange={(e) => {
-              const val = parseFloat(e.target.value);
-              core.setVolume(val);
-              if (val > 0 && core.isMuted) core.setIsMuted(false);
-            }}
-            className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-zinc-700 accent-[var(--accent)]"
-          />
-          <span className="text-[10px] tabular-nums text-zinc-400 w-7 text-right shrink-0">{Math.round(core.volume * 100)}%</span>
-        </div>
-      )}
+      {volumeSlider}
 
       <div className="relative my-2 aspect-square w-full flex-1 min-h-0 overflow-hidden rounded-2xl border border-white/10 shadow-lg">
-        {core.albumImage ? (
-          <img src={core.albumImage} alt={core.trackTitle} className="w-full h-full object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-zinc-900 text-zinc-600">
-            <Music className="h-16 w-16" />
-          </div>
-        )}
+        {artwork}
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/25 pointer-events-none" />
         <div className="absolute inset-0 flex items-center justify-between px-3">
           <Button type="button" variant="ghost" size="icon" onClick={core.handleToggleMute} title={core.isMuted ? "Unmute" : "Mute"} className="h-8 w-8 text-white/80 hover:text-white hover:bg-transparent hover:scale-110 active:scale-95 transition-all">
             {core.isMuted ? <VolumeX className="h-4 w-4 text-red-400" /> : <Volume2 className="h-4 w-4" />}
           </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => core.setIsShuffle((p) => !p)}
-            title="Shuffle"
-            className={`h-8 w-8 hover:bg-transparent hover:scale-110 active:scale-95 transition-all ${core.isShuffle ? "text-[var(--accent)]" : "text-white/80 hover:text-white"}`}
-          >
+          <Button type="button" variant="ghost" size="icon" onClick={() => core.setIsShuffle((p) => !p)} title="Shuffle" className={`h-8 w-8 hover:bg-transparent hover:scale-110 active:scale-95 transition-all ${core.isShuffle ? "text-[var(--accent)]" : "text-white/80 hover:text-white"}`}>
             <Shuffle className="h-4 w-4" />
           </Button>
           <Button type="button" variant="ghost" size="icon" onClick={core.previousTrack} disabled={!core.currentTrack} title="Previous" className="h-9 w-9 text-white hover:text-[var(--accent)] hover:bg-transparent hover:scale-110 active:scale-95 transition-all disabled:opacity-40">
@@ -878,14 +1040,7 @@ function CardDesign({ core, onClose }: { core: CoreState; onClose: () => void })
           <Button type="button" variant="ghost" size="icon" onClick={core.nextTrack} disabled={!core.currentTrack} title="Next" className="h-9 w-9 text-white hover:text-[var(--accent)] hover:bg-transparent hover:scale-110 active:scale-95 transition-all disabled:opacity-40">
             <SkipForward className="h-5 w-5 fill-current" />
           </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={core.toggleRepeat}
-            title={`Repeat: ${core.repeatMode}`}
-            className={`h-8 w-8 hover:bg-transparent hover:scale-110 active:scale-95 transition-all ${core.repeatMode !== "off" ? "text-[var(--accent)]" : "text-white/80 hover:text-white"}`}
-          >
+          <Button type="button" variant="ghost" size="icon" onClick={core.toggleRepeat} title={`Repeat: ${core.repeatMode}`} className={`h-8 w-8 hover:bg-transparent hover:scale-110 active:scale-95 transition-all ${core.repeatMode !== "off" ? "text-[var(--accent)]" : "text-white/80 hover:text-white"}`}>
             {core.repeatMode === "track" ? <Repeat1 className="h-4 w-4" /> : <Repeat className="h-4 w-4" />}
           </Button>
           <Button type="button" variant="ghost" size="icon" onClick={core.handleExpandOrPip} title={core.isPip ? "Full Screen" : "Picture in Picture"} className="h-8 w-8 text-white/80 hover:text-white hover:bg-transparent hover:scale-110 active:scale-95 transition-all">
@@ -894,16 +1049,7 @@ function CardDesign({ core, onClose }: { core: CoreState; onClose: () => void })
         </div>
       </div>
 
-      <div className="mt-1 px-1 shrink-0">
-        <div className="flex items-center justify-between text-[11px] font-medium tabular-nums text-zinc-400">
-          <span>{formatTime(core.estimatedPosition)}</span>
-          <span>{formatTime(core.duration)}</span>
-        </div>
-        <div ref={progressBarRef} onClick={handleScrubberClick} className="group relative mt-1 h-1.5 w-full cursor-pointer rounded-full bg-white/20 transition-all hover:h-2">
-          <div className="h-full rounded-full transition-all" style={{ width: `${core.progressPercent}%`, backgroundColor: core.themeColor }} />
-          <div className="absolute top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{ left: `calc(${core.progressPercent}% - 6px)` }} />
-        </div>
-      </div>
+      <div className="mt-1 px-1 shrink-0">{progressBar}</div>
 
       <div className="mt-2.5 flex items-center justify-between px-1 shrink-0">
         <div className="min-w-0 flex-1 pr-2">
@@ -917,15 +1063,7 @@ function CardDesign({ core, onClose }: { core: CoreState; onClose: () => void })
           </h4>
           <ArtistLinks core={core} className="block truncate text-xs text-zinc-400 mt-0.5" />
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={core.handleToggleSave}
-          disabled={!core.currentTrack || core.isSaving}
-          title={core.isSaved ? "Saved" : "Save"}
-          className="h-8 w-8 shrink-0 text-zinc-400 hover:text-white hover:bg-transparent disabled:opacity-50"
-        >
+        <Button type="button" variant="ghost" size="icon" onClick={core.handleToggleSave} disabled={!core.currentTrack || core.isSaving} title={core.isSaved ? "Saved" : "Save"} className="h-8 w-8 shrink-0 text-zinc-400 hover:text-white hover:bg-transparent disabled:opacity-50">
           {core.isSaved ? (
             <CheckCircle2 className="h-5 w-5" style={{ color: core.themeColor, fill: `${core.themeColor}33` }} />
           ) : (
@@ -933,7 +1071,7 @@ function CardDesign({ core, onClose }: { core: CoreState; onClose: () => void })
           )}
         </Button>
       </div>
-    </div>
+    </PlayerShell>
   );
 }
 
@@ -952,21 +1090,14 @@ function PillDesign({ core, onClose }: { core: CoreState; onClose: () => void })
   };
 
   return (
-    <div
-      ref={core.containerRef}
-      style={{
-        ...(core.isPip
-          ? { position: "fixed" as const, inset: 0, padding: "10px", boxSizing: "border-box" as const }
-          : {
-            transform: core.coords ? `translate3d(${core.coords.x}px, ${core.coords.y}px, 0)` : "none",
-            visibility: core.coords ? ("visible" as const) : ("hidden" as const),
-          }),
-        ["--accent" as any]: core.themeColor,
-      }}
-      className={`select-none bg-[#181818] text-white transition-all duration-200 ${core.isPip
-        ? "flex flex-col justify-center"
-        : `fixed top-0 left-0 z-[90] rounded-full border border-white/10 shadow-[0_15px_40px_rgba(0,0,0,0.6)] touch-none animate-in fade-in zoom-in-95 duration-200 ${expanded ? "w-[300px] rounded-3xl" : "w-16"
-        }`
+    <PlayerShell
+      core={core}
+      minWidth={300}
+      minHeight={190}
+      bg="#181818"
+      className="bg-[#181818] text-white"
+      pipClassName="flex flex-col justify-center"
+      inPageClassName={`fixed top-0 left-0 z-[90] rounded-full border border-white/10 shadow-[0_15px_40px_rgba(0,0,0,0.6)] touch-none transition-all duration-200 animate-in fade-in zoom-in-95 ${expanded ? "w-[300px] rounded-3xl" : "w-16"
         }`}
     >
       {!expanded && !core.isPip ? (
@@ -1080,6 +1211,144 @@ function PillDesign({ core, onClose }: { core: CoreState; onClose: () => void })
           </div>
         </div>
       )}
+    </PlayerShell>
+  );
+}
+
+const DESIGN_BG: Record<MiniPlayerDesign, string> = {
+  deck: "#1B1A17",
+  card: "#121214",
+  pill: "#181818",
+};
+
+/** Below this fraction of a design's minimum size, switch to the compact strip. */
+const COMPACT_BELOW = 0.85;
+
+/** Smallest size each layout is designed for. */
+function getDesignMin(design: MiniPlayerDesign, w: number, h: number) {
+  if (design === "deck") return { w: 440, h: 104 };
+  if (design === "pill") return { w: 300, h: 190 };
+  // card: landscape layout when the window is wide, portrait otherwise
+  return w / h > 1.15 ? { w: 420, h: 170 } : { w: 340, h: 460 };
+}
+
+/** Spotify-style strip for very small PiP windows. Controls drop out as width shrinks. */
+function CompactDesign({
+  core,
+  width,
+  height,
+  bg,
+}: {
+  core: CoreState;
+  width: number;
+  height: number;
+  bg: string;
+}) {
+  const artSize = Math.max(36, Math.min(height - 20, 96));
+  const playSize = Math.max(28, Math.min(height - 24, 44));
+
+  const showArt = width >= 170;
+  const showNext = width >= 250;
+  const showPrev = width >= 400;
+  const showArtist = height >= 58;
+
+  return (
+    <div
+      ref={core.containerRef}
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: bg,
+        ["--accent" as any]: core.themeColor,
+      }}
+      className="flex select-none items-center gap-3 overflow-hidden px-2.5 text-white"
+    >
+      {showArt && (
+        <div
+          className="shrink-0 overflow-hidden rounded-xl bg-zinc-900 shadow-md"
+          style={{ width: artSize, height: artSize }}
+        >
+          {core.albumImage ? (
+            <img src={core.albumImage} alt={core.trackTitle} className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-zinc-600">
+              <Music className="h-5 w-5" />
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="min-w-0 flex-1">
+        <h4
+          role="button"
+          tabIndex={0}
+          onClick={core.handleTrackClick}
+          className="truncate text-sm font-semibold leading-tight cursor-pointer hover:text-[var(--accent)] hover:underline transition-colors"
+        >
+          {core.trackTitle}
+        </h4>
+        {showArtist && (
+          <ArtistLinks core={core} className="block truncate text-xs text-zinc-400 mt-0.5" />
+        )}
+      </div>
+
+      <div className="flex shrink-0 items-center gap-1">
+        {showPrev && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={core.previousTrack}
+            disabled={!core.currentTrack}
+            title="Previous"
+            className="h-8 w-8 text-white hover:text-[var(--accent)] hover:bg-transparent active:scale-95 transition-all disabled:opacity-40"
+          >
+            <SkipBack className="h-4 w-4 fill-current" />
+          </Button>
+        )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={core.handlePlayPause}
+          disabled={!core.currentTrack}
+          title={core.isPlaying ? "Pause" : "Play"}
+          style={{
+            width: playSize,
+            height: playSize,
+            backgroundColor: core.themeColor,
+            color: core.contrastColor,
+          }}
+          className="flex items-center justify-center rounded-full shadow-md transition-all hover:scale-105 active:scale-95 hover:brightness-105 disabled:opacity-40 shrink-0"
+        >
+          {core.isPlaying ? (
+            <Pause className="h-4 w-4 fill-current" />
+          ) : (
+            <Play className="h-4 w-4 ml-0.5 fill-current" />
+          )}
+        </Button>
+        {showNext && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={core.nextTrack}
+            disabled={!core.currentTrack}
+            title="Next"
+            className="h-8 w-8 text-white hover:text-[var(--accent)] hover:bg-transparent active:scale-95 transition-all disabled:opacity-40"
+          >
+            <SkipForward className="h-4 w-4 fill-current" />
+          </Button>
+        )}
+      </div>
+
+      {/* thin progress line along the bottom edge */}
+      <div className="absolute inset-x-0 bottom-0 h-[3px] bg-white/10">
+        <div
+          className="h-full"
+          style={{ width: `${core.progressPercent}%`, backgroundColor: core.themeColor }}
+        />
+      </div>
     </div>
   );
 }
@@ -1088,8 +1357,18 @@ function PillDesign({ core, onClose }: { core: CoreState; onClose: () => void })
 /* Wrapper: picks the active design, shared across in-page & PiP     */
 /* ---------------------------------------------------------------- */
 function MiniPlayerContent({ isPip, onClose }: { isPip: boolean; onClose: () => void }) {
-  const { design } = useMiniPlayer();
+  const { design, pipWindow } = useMiniPlayer();
   const core = useMiniPlayerCore(isPip);
+  const { width, height } = useWindowSize(isPip ? pipWindow : null);
+
+  // Window too small for the chosen design -> compact strip instead of scaling
+  if (isPip && width > 0 && height > 0) {
+    const min = getDesignMin(design, width, height);
+    const fit = Math.min(width / min.w, height / min.h);
+    if (fit < COMPACT_BELOW) {
+      return <CompactDesign core={core} width={width} height={height} bg={DESIGN_BG[design]} />;
+    }
+  }
 
   if (design === "card") return <CardDesign core={core} onClose={onClose} />;
   if (design === "pill") return <PillDesign core={core} onClose={onClose} />;
