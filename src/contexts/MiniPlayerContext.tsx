@@ -2,11 +2,12 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 
-export type MiniPlayerDesign = "deck" | "card" | "pill";
+export type MiniPlayerDesign = "deck" | "card" | "pill" | "gradient";
 export const PIP_DIMENSIONS: Record<MiniPlayerDesign, { width: number; height: number }> = {
-  deck: { width: 460, height: 130 },
+  deck: { width: 480, height: 250 },
+  gradient: { width: 380, height: 350 },
   card: { width: 372, height: 480 },
-  pill: { width: 340, height: 210 },
+  pill: { width: 340, height: 280 },
 };
 export type MiniPlayerContextValue = {
   isMiniPlayerOpen: boolean;
@@ -59,7 +60,7 @@ export function MiniPlayerProvider({ children }: { children: ReactNode }) {
     );
     try {
       const savedDesign = localStorage.getItem(DESIGN_STORAGE_KEY) as MiniPlayerDesign | null;
-      if (savedDesign === "deck" || savedDesign === "card" || savedDesign === "pill") {
+      if (savedDesign === "deck" || savedDesign === "card" || savedDesign === "pill" || savedDesign === "gradient") {
         setDesignState(savedDesign);
       }
     } catch { }
@@ -126,7 +127,7 @@ export function MiniPlayerProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem("mini-player-open", "true");
     } catch { }
-  }, []);
+  }, [design]);
 
   const toggleMiniPlayer = useCallback(() => {
     if (pipWindow || isMiniPlayerOpen) {
