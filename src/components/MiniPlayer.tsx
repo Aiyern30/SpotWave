@@ -48,9 +48,9 @@ const formatTime = (ms: number) => {
 const TICK_COUNT = 40;
 
 const DESIGN_OPTIONS: { id: MiniPlayerDesign; label: string; blurb: string }[] = [
-  { id: "deck", label: "Deck", blurb: "Tape-deck bar, spinning disc" },
-  { id: "card", label: "Glass Card", blurb: "Full art, overlay controls" },
-  { id: "pill", label: "Pill", blurb: "Minimal, expands on click" },
+  { id: "deck", label: "Deck", blurb: "Tape-deck bar" },
+  { id: "card", label: "Glass Card", blurb: "Full artwork" },
+  { id: "pill", label: "Pill", blurb: "Minimal" },
 ];
 
 /** Returns readable text color (#111 or #fff) against a given hex background. */
@@ -459,37 +459,58 @@ function ArtistLinks({
 function DesignPicker({
   open,
   onClose,
-  align = "right",
 }: {
   open: boolean;
   onClose: () => void;
-  align?: "left" | "right";
 }) {
   const { design, setDesign } = useMiniPlayer();
   if (!open) return null;
 
   return (
-    <div
-      className={`absolute top-6 z-10 w-48 rounded-xl border border-white/10 bg-[#1c1c1e] p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-150 ${align === "right" ? "right-0" : "left-0"
-        }`}
-    >
-      {DESIGN_OPTIONS.map((opt) => (
-        <button
-          key={opt.id}
+    <div className="absolute inset-0 z-20 flex flex-col rounded-[inherit] bg-black/85 p-3 backdrop-blur-md animate-in fade-in duration-150">
+      <div className="mb-2 flex shrink-0 items-center justify-between">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+          Choose design
+        </span>
+        <Button
           type="button"
-          onClick={() => {
-            setDesign(opt.id);
-            onClose();
-          }}
-          className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-white/5 transition-colors cursor-pointer"
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          title="Close"
+          className="h-5 w-5 text-zinc-400 hover:bg-transparent hover:text-white"
         >
-          <span>
-            <span className="block text-xs font-semibold text-white">{opt.label}</span>
-            <span className="block text-[10px] text-zinc-400">{opt.blurb}</span>
-          </span>
-          {design === opt.id && <Check className="h-3.5 w-3.5 text-[var(--accent)] shrink-0" />}
-        </button>
-      ))}
+          <X className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+
+      <div className="grid min-h-0 flex-1 grid-cols-3 gap-2">
+        {DESIGN_OPTIONS.map((opt) => {
+          const active = design === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => {
+                setDesign(opt.id);
+                onClose();
+              }}
+              className={`flex flex-col items-center justify-center rounded-xl border px-2 py-2 text-center transition-colors cursor-pointer ${active
+                  ? "border-[var(--accent)] bg-white/10"
+                  : "border-white/10 hover:bg-white/5"
+                }`}
+            >
+              <span className="flex items-center gap-1 text-xs font-semibold text-white">
+                {opt.label}
+                {active && <Check className="h-3 w-3 text-[var(--accent)]" />}
+              </span>
+              <span className="mt-0.5 text-[10px] leading-tight text-zinc-400">
+                {opt.blurb}
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -523,8 +544,8 @@ function DeckDesign({ core, onClose }: { core: CoreState; onClose: () => void })
         ["--accent" as any]: core.themeColor,
       }}
       className={`relative select-none bg-[#1B1A17] text-[#F2EAD7] flex flex-col justify-center ${core.isPip
-          ? ""
-          : "fixed top-0 left-0 z-[90] w-[440px] rounded-2xl border border-[#3a362c] p-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.7)] touch-none animate-in fade-in slide-in-from-bottom-4 duration-200"
+        ? ""
+        : "fixed top-0 left-0 z-[90] w-[440px] rounded-2xl border border-[#3a362c] p-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.7)] touch-none animate-in fade-in slide-in-from-bottom-4 duration-200"
         }`}
     >
       <style>{`@keyframes spw-vinyl-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
@@ -755,8 +776,8 @@ function CardDesign({ core, onClose }: { core: CoreState; onClose: () => void })
         ["--accent" as any]: core.themeColor,
       }}
       className={`relative select-none bg-[#121214] text-white flex flex-col justify-between ${core.isPip
-          ? ""
-          : "fixed top-0 left-0 z-[90] w-[340px] rounded-[28px] border border-white/10 p-4 shadow-[0_25px_60px_rgba(0,0,0,0.85)] backdrop-blur-2xl touch-none animate-in fade-in zoom-in-95 duration-200"
+        ? ""
+        : "fixed top-0 left-0 z-[90] w-[340px] rounded-[28px] border border-white/10 p-4 shadow-[0_25px_60px_rgba(0,0,0,0.85)] backdrop-blur-2xl touch-none animate-in fade-in zoom-in-95 duration-200"
         }`}
     >
       <div
@@ -943,9 +964,9 @@ function PillDesign({ core, onClose }: { core: CoreState; onClose: () => void })
         ["--accent" as any]: core.themeColor,
       }}
       className={`relative select-none bg-[#181818] text-white transition-all duration-200 ${core.isPip
-          ? "flex flex-col justify-center"
-          : `fixed top-0 left-0 z-[90] rounded-full border border-white/10 shadow-[0_15px_40px_rgba(0,0,0,0.6)] touch-none animate-in fade-in zoom-in-95 duration-200 ${expanded ? "w-[300px] rounded-3xl" : "w-16"
-          }`
+        ? "flex flex-col justify-center"
+        : `fixed top-0 left-0 z-[90] rounded-full border border-white/10 shadow-[0_15px_40px_rgba(0,0,0,0.6)] touch-none animate-in fade-in zoom-in-95 duration-200 ${expanded ? "w-[300px] rounded-3xl" : "w-16"
+        }`
         }`}
     >
       {!expanded && !core.isPip ? (
