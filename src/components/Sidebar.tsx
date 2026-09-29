@@ -2,7 +2,7 @@
 
 import { clearSpotifySession } from "@/lib/spotify-session";
 import { createPortal } from "react-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -42,6 +42,26 @@ export default function Sidebar({ isOpen, onClose, onOpen, compact, onToggleComp
   const router = useRouter();
   const { currentTrack, isConnecting } = usePlayer();
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const [isNavScrolling, setIsNavScrolling] = useState(false);
+  const navScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleNavScroll = useCallback(() => {
+    setIsNavScrolling(true);
+    if (navScrollTimeoutRef.current) {
+      clearTimeout(navScrollTimeoutRef.current);
+    }
+    navScrollTimeoutRef.current = setTimeout(() => {
+      setIsNavScrolling(false);
+    }, 1000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (navScrollTimeoutRef.current) {
+        clearTimeout(navScrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => { onClose(); }, [pathname, onClose]);
   useEffect(() => {
@@ -61,7 +81,7 @@ export default function Sidebar({ isOpen, onClose, onOpen, compact, onToggleComp
         {mobile ? <Dialog.Close className={iconButton} aria-label="Close navigation"><X size={20} /></Dialog.Close> : !collapsed && <button className={iconButton} onClick={onToggleCompact} aria-label="Collapse sidebar"><PanelLeftClose size={18} /></button>}
       </div>
       {collapsed && <button className={`${iconButton} mx-auto mt-2`} onClick={onToggleCompact} aria-label="Expand sidebar" title="Expand sidebar"><PanelLeftOpen size={18} /></button>}
-      <nav aria-label="Main navigation" className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 [scrollbar-width:thin]">
+      <nav aria-label="Main navigation" onScroll={handleNavScroll} className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 [scrollbar-width:thin] ${isNavScrolling ? "is-scrolling" : ""}`}>
         {groups.map((group, index) => (
           <div key={group.label} className={index ? "mt-5" : ""}>
             {!collapsed && <p className="mb-2 px-3 text-xs font-medium text-zinc-500">{group.label}</p>}

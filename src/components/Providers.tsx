@@ -12,6 +12,7 @@ import InQueueWindow from "@/components/InQueueWindow";
 import { FullScreenPlayerProvider } from "@/contexts/FullScreenPlayerContext";
 import { MiniPlayerProvider } from "@/contexts/MiniPlayerContext";
 import MiniPlayer from "@/components/MiniPlayer";
+import ScrollbarManager from "@/components/ScrollbarManager";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [isQueueOpen, setIsQueueOpen] = useState(false);
@@ -19,6 +20,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthProvider>
+      <ScrollbarManager />
       <ThemeProvider>
         <PlayerProvider>
           <AudioCaptureProvider>

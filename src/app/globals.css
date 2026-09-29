@@ -270,10 +270,10 @@
 }
 
 
-/* Custom scrollbar styles */
+/* Custom scrollbar styles - hidden by default, only shown when scrolling */
 * {
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--brand-primary)) transparent;
+  scrollbar-color: transparent transparent;
 }
 
 ::-webkit-scrollbar {
@@ -282,13 +282,17 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: hsl(var(--brand-primary));
+  background-color: transparent;
   border-radius: 10px; /* Circle border-radius */
   transition: background-color 0.3s ease; /* Smooth hover transition */
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: hsl(var(--brand-primary) / 0.8);
+  background-color: hsl(var(--brand-primary) / 0.85);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: hsl(var(--brand-primary));
 }
 
 ::-webkit-scrollbar-track {
@@ -298,6 +302,35 @@
 
 ::-webkit-scrollbar-button {
   display: none; /* Hide up/down buttons */
+}
+
+/* Entire page scrollbar: only visible when the page is scrolling */
+html.is-scrolling,
+body.is-scrolling {
+  scrollbar-color: hsl(var(--brand-primary)) transparent;
+}
+
+html.is-scrolling::-webkit-scrollbar-thumb,
+body.is-scrolling::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--brand-primary));
+}
+
+/* Specific scroll containers (e.g. Sidebar nav): only visible when that element is scrolling */
+.is-scrolling {
+  scrollbar-color: hsl(var(--brand-primary)) transparent;
+}
+
+.is-scrolling::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--brand-primary));
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .search-results-scrollbar {
